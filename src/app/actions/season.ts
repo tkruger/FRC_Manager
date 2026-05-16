@@ -1,0 +1,114 @@
+"use server";
+
+import { z } from "zod";
+import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
+import { revalidatePath } from "next/cache";
+
+const SeasonSchema = z.object({
+  name: z.string().min(1),
+  year: z.coerce.number().int().min(2000).max(2100),
+  kickoffDate: z.string().min(1),
+  week0Date: z.string().min(1),
+  meetingDays: z.array(z.string()).min(1),
+  meetingStartTime: z.string().min(1),
+  meetingEndTime: z.string().min(1),
+  expectedAttendance: z.coerce.number().int().min(1).default(10),
+});
+
+export type SeasonActionState =
+  | { success: true; seasonId: string }
+  | { success: false; error: string };
+
+export async function createSeasonAction(
+  _prev: SeasonActionState | null,
+  formData: FormData
+): Promise<SeasonActionState> {
+  const session = await auth();
+  if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
+
+  const days = formData.getAll("meetingDays") as string[];
+  const parsed = SeasonSchema.safeParse({
+    name: formData.get("name"),
+    year: formData.get("year"),
+    kickoffDate: formData.get("kickoffDate"),
+    week0Date: formData.get("week0Date"),
+    meetingDays: days,
+    meetingStartTime: formData.get("meetingStartTime"),
+    meetingEndTime: formData.get("meetingEndTime"),
+    expectedAttendance: formData.get("expectedAttendance"),
+  });
+
+  if (!parsed.success) return { success: false, error: "Please fill in all required fields." };
+  const d = parsed.data;
+
+  // Deactivate any currently active season for this team
+  await prisma.season.updateMany({
+    where: { teamId: session.user.teamId, isActive: true },
+    data: { isActive: false },
+  });
+
+  const season = await prisma.season.create({
+    data: {
+      teamId: session.user.teamId,
+      name: d.name,
+      year: d.year,
+      kickoffDate: new Date(d.kickoffDate),
+      week0Date: new Date(d.week0Date),
+      isActive: true,
+      meetingDays: d.meetingDays,
+      meetingStartTime: d.meetingStartTime,
+      meetingEndTime: d.meetingEndTime,
+      expectedAttendance: d.expectedAttendance,
+    },
+  });
+
+  revalidatePath("/settings/season");
+  revalidatePath("/dashboard");
+  return { success: true, seasonId: season.id };
+}
+
+const RobotSchema = z.object({
+  name: z.string().min(1),
+  role: z.enum(["COMPETITION", "PRACTICE", "DEMO", "OTHER"]),
+  weightTarget: z.coerce.number().optional(),
+  description: z.string().optional(),
+});
+
+export async function createRobotAction(
+  seasonId: string,
+  formData: FormData
+): Promise<{ success: boolean; error?: string }> {
+  const session = await auth();
+  if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
+
+  const season = await prisma.season.findFirst({
+    where: { id: seasonId, teamId: session.user.teamId },
+  });
+  if (!season) return { success: false, error: "Season not found." };
+
+  const parsed = RobotSchema.safeParse({
+    name: formData.get("name"),
+    role: formData.get("role"),
+    weightTarget: formData.get("weightTarget") || undefined,
+    description: formData.get("description") || undefined,
+  });
+  if (!parsed.success) return { success: false, error: "Invalid robot data." };
+  const d = parsed.data;
+
+  await prisma.robot.create({
+    data: {
+      seasonId,
+      year: season.year,
+      name: d.name,
+      displayName: `${season.year} ${d.name}`,
+      role: d.role,
+      weightTarget: d.weightTarget,
+      description: d.description,
+    },
+  });
+
+  revalidatePath("/settings/season");
+  revalidatePath("/fleet");
+  return { success: true };
+}
