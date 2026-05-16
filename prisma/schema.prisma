@@ -1,0 +1,1033 @@
+// FRC Team Management Suite — Full Schema
+// Covers all 8 modules: Robot Fleet, Tools, Inventory, Procurement, Budget, Schedule, Compliance, Auth
+
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../src/generated/prisma"
+  // driverAdapters is GA in Prisma 7 — no previewFeatures flag needed
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────
+// AUTH & USERS (NextAuth v5 + custom fields)
+// ─────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?   // null for OAuth users
+
+  // Registration
+  status        UserStatus @default(PENDING)
+  approvedAt    DateTime?
+  approvedBy    String?
+  deniedAt      DateTime?
+  deniedReason  String?
+  registrationNote String?
+
+  // Profile
+  teamId        String?
+  team          Team?     @relation(fields: [teamId], references: [id])
+  roles         UserRole[]
+  displayMode   DisplayMode @default(AUTO_SYSTEM)
+
+  // NextAuth
+  accounts      Account[]
+  sessions      Session[]
+
+  // App relations
+  toolCheckouts        ToolCheckout[]
+  userCertifications   UserCertification[]
+  purchaseRequests     PurchaseRequest[]   @relation("Requester")
+  purchaseApprovals    PurchaseRequest[]   @relation("Approver")
+  assignedTasks        Task[]              @relation("TaskAssignees")
+  createdTasks         Task[]              @relation("TaskCreator")
+  incidentReports      SafetyIncident[]
+  activityLogs         ActivityLog[]
+  notifications        Notification[]
+  maintenanceLogs      ToolMaintenanceLog[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  DENIED
+}
+
+enum DisplayMode {
+  LIGHT
+  DARK
+  AUTO_SYSTEM
+  AUTO_TIME
+}
+
+model UserRole {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role
+
+  @@unique([userId, role])
+}
+
+enum Role {
+  TEAM_MEMBER
+  BUILD_LEAD
+  INVENTORY_ADMIN
+  BUDGET_MANAGER
+  SAFETY_CAPTAIN
+  HEAD_MENTOR
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─────────────────────────────────────────────
+// TEAM & SEASON
+// ─────────────────────────────────────────────
+
+model Team {
+  id          String  @id @default(cuid())
+  teamNumber  Int     @unique
+  name        String
+  accessCode  String?
+
+  users       User[]
+  seasons     Season[]
+  vendors     Vendor[]
+  tools       Tool[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Season {
+  id                 String   @id @default(cuid())
+  teamId             String
+  team               Team     @relation(fields: [teamId], references: [id])
+  name               String
+  year               Int
+  kickoffDate        DateTime
+  week0Date          DateTime
+  isActive           Boolean  @default(false)
+  meetingDays        String[]
+  meetingStartTime   String
+  meetingEndTime     String
+  expectedAttendance Int      @default(10)
+
+  robots             Robot[]
+  competitionEvents  CompetitionEvent[]
+  tasks              Task[]
+  budget             Budget?
+  baseInventoryItems BaseInventoryItem[]
+  purchaseRequests   PurchaseRequest[]
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([teamId, year])
+}
+
+model CompetitionEvent {
+  id        String    @id @default(cuid())
+  seasonId  String
+  season    Season    @relation(fields: [seasonId], references: [id])
+  name      String
+  location  String?
+  startDate DateTime
+  endDate   DateTime
+  eventType EventType @default(REGIONAL)
+
+  createdAt DateTime @default(now())
+}
+
+enum EventType {
+  REGIONAL
+  DISTRICT
+  DISTRICT_CHAMPIONSHIP
+  CHAMPIONSHIP
+  WEEK_0
+  OFFSEASON
+}
+
+// ─────────────────────────────────────────────
+// MODULE 1 — ROBOT FLEET
+// ─────────────────────────────────────────────
+
+model Robot {
+  id            String      @id @default(cuid())
+  seasonId      String
+  season        Season      @relation(fields: [seasonId], references: [id])
+  year          Int
+  name          String
+  displayName   String
+  role          RobotRole   @default(COMPETITION)
+  status        RobotStatus @default(ACTIVE_BUILD)
+  description   String?
+  weightTarget  Float?
+  photo         String?
+  gallery       String[]
+  archived      Boolean     @default(false)
+  completedDate DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  inUseItems    InUseInventoryItem[]
+  tasks         Task[]
+  bomItems      BomItem[]
+  weightSnaps   WeightSnapshot[]
+}
+
+enum RobotRole {
+  COMPETITION
+  PRACTICE
+  DEMO
+  RETIRED
+  OTHER
+}
+
+enum RobotStatus {
+  ACTIVE_BUILD
+  ACTIVE_COMPETITION_READY
+  RETIRED_DISPLAY
+  RETIRED_STORAGE
+  DECOMMISSIONED
+}
+
+model WeightSnapshot {
+  id        String   @id @default(cuid())
+  robotId   String
+  robot     Robot    @relation(fields: [robotId], references: [id])
+  weight    Float
+  notes     String?
+  createdAt DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────
+// MODULE 2 — TOOL MANAGEMENT
+// ─────────────────────────────────────────────
+
+model Tool {
+  id                      String        @id @default(cuid())
+  teamId                  String
+  team                    Team          @relation(fields: [teamId], references: [id])
+  name                    String
+  toolType                ToolType      @default(OTHER)
+  manufacturer            String?
+  model                   String?
+  assetTag                String?
+  serialNumber            String?
+  quantityOwned           Int           @default(1)
+  homeLocation            String?
+  space                   ToolSpace     @default(SHOP_ONLY)
+  condition               ToolCondition @default(GOOD)
+  requiresCertification   Boolean       @default(false)
+  certificationName       String?
+  lastMaintenanceDate     DateTime?
+  nextMaintenanceDue      DateTime?
+  maintenanceIntervalDays Int?
+  replacementCost         Float?
+  image                   String?
+  notes                   String?
+  retired                 Boolean       @default(false)
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+
+  checkouts       ToolCheckout[]
+  maintenanceLogs ToolMaintenanceLog[]
+}
+
+enum ToolType {
+  POWER_TOOL
+  HAND_TOOL
+  MEASUREMENT
+  SAFETY_EQUIPMENT
+  ELECTRICAL_TEST
+  FABRICATION_MACHINE
+  PRINTER_3D
+  OTHER
+}
+
+enum ToolSpace {
+  SHOP_ONLY
+  TRAVELS_TO_COMPETITION
+  COMPETITION_ONLY
+}
+
+enum ToolCondition {
+  EXCELLENT
+  GOOD
+  FAIR
+  NEEDS_REPAIR
+  OUT_OF_SERVICE
+  OUT_FOR_MAINTENANCE
+}
+
+model ToolCheckout {
+  id              String         @id @default(cuid())
+  toolId          String
+  tool            Tool           @relation(fields: [toolId], references: [id])
+  userId          String
+  user            User           @relation(fields: [userId], references: [id])
+  quantity        Int            @default(1)
+  intendedUse     String?
+  checkedOutAt    DateTime       @default(now())
+  expectedReturn  DateTime
+  returnedAt      DateTime?
+  returnCondition ToolCondition?
+  isOverdue       Boolean        @default(false)
+  notes           String?
+}
+
+model ToolMaintenanceLog {
+  id            String   @id @default(cuid())
+  toolId        String
+  tool          Tool     @relation(fields: [toolId], references: [id])
+  performedById String?
+  performedBy   User?    @relation(fields: [performedById], references: [id])
+  performedAt   DateTime
+  description   String
+  partsReplaced String?
+  nextDueDate   DateTime?
+  createdAt     DateTime @default(now())
+}
+
+model UserCertification {
+  id            String     @id @default(cuid())
+  userId        String
+  user          User       @relation(fields: [userId], references: [id])
+  certName      String
+  certifiedById String?
+  certifiedAt   DateTime
+  expiresAt     DateTime?
+  status        CertStatus @default(ACTIVE)
+  notes         String?
+
+  @@unique([userId, certName])
+}
+
+enum CertStatus {
+  ACTIVE
+  EXPIRED
+  REVOKED
+}
+
+// ─────────────────────────────────────────────
+// MODULE 3 — PARTS & MATERIALS INVENTORY
+// ─────────────────────────────────────────────
+
+model BaseInventoryItem {
+  id                   String        @id @default(cuid())
+  seasonId             String
+  season               Season        @relation(fields: [seasonId], references: [id])
+  name                 String
+  partNumber           String?
+  category             ItemCategory  @default(MECHANICAL)
+  itemType             ItemType      @default(DISCRETE)
+  description          String?
+  unitOfMeasure        UnitOfMeasure @default(EACH)
+  currentStock         Float         @default(0)
+  minStockThreshold    Float         @default(0)
+  reorderQuantity      Float         @default(1)
+  preferredSupplier    String?
+  alternateSupplier    String?
+  supplierLeadDays     Int?
+  unitCost             Float?
+  isKopItem            Boolean       @default(false)
+  kopSeason            Int?
+  isFirstChoiceItem    Boolean       @default(false)
+  firstChoiceCreditCost Float?
+  fairMarketValue      Float?
+  storageLocation      String?
+  image                String?
+  notes                String?
+  archived             Boolean       @default(false)
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  inUseItems       InUseInventoryItem[]
+  purchaseLineItems PurchaseLineItem[]
+  reorderRequests  ReorderRequest[]
+}
+
+enum ItemCategory {
+  MECHANICAL
+  ELECTRICAL
+  PNEUMATICS
+  HARDWARE
+  FASTENERS
+  RAW_STOCK
+  CONSUMABLES
+  SAFETY
+  ELECTRONICS
+  SENSORS
+}
+
+enum ItemType {
+  DISCRETE
+  RAW_MATERIAL
+  CONSUMABLE
+}
+
+enum UnitOfMeasure {
+  EACH
+  PACK
+  FOOT
+  METER
+  INCH
+  SHEET
+  POUND
+  GALLON
+  SPOOL
+  ROLL
+}
+
+model InUseInventoryItem {
+  id                 String         @id @default(cuid())
+  robotId            String?
+  robot              Robot?         @relation(fields: [robotId], references: [id])
+  baseItemId         String?
+  baseItem           BaseInventoryItem? @relation(fields: [baseItemId], references: [id])
+  name               String
+  source             ItemSource     @default(BASE_INVENTORY)
+  category           ItemCategory   @default(MECHANICAL)
+  quantity           Float          @default(1)
+  unitOfMeasure      UnitOfMeasure  @default(EACH)
+  currentLocation    String?
+  assignedToId       String?
+  status             InUseStatus    @default(AVAILABLE)
+  subsystem          RobotSubsystem?
+  unitWeight         Float?
+  onRobotBom         Boolean        @default(false)
+  packForCompetition Boolean        @default(false)
+  competitionPacked  Boolean        @default(false)
+  notes              String?
+  dateAdded          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  issues   InUseIssue[]
+  taskLinks Task[]
+  bomItem  BomItem?
+}
+
+enum ItemSource {
+  BASE_INVENTORY
+  KOP
+  FIRST_CHOICE
+  DIRECT
+  DONATED
+}
+
+enum InUseStatus {
+  AVAILABLE
+  IN_USE
+  INSTALLED_ROBOT
+  INSTALLED_PRACTICE
+  NEEDS_REPAIR
+  OUT_OF_SERVICE
+  RETURNED_TO_BASE
+}
+
+enum RobotSubsystem {
+  DRIVETRAIN
+  INTAKE
+  SHOOTER
+  CLIMBER
+  ELECTRICAL
+  PNEUMATICS
+  FRAME
+  CONTROLS
+  BUMPERS
+  OTHER
+}
+
+model InUseIssue {
+  id              String        @id @default(cuid())
+  itemId          String
+  item            InUseInventoryItem @relation(fields: [itemId], references: [id])
+  description     String
+  severity        IssueSeverity @default(MEDIUM)
+  reportedById    String?
+  reportedAt      DateTime      @default(now())
+  status          IssueStatus   @default(OPEN)
+  assignedToId    String?
+  resolutionNotes String?
+  resolvedAt      DateTime?
+}
+
+enum IssueSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum IssueStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+}
+
+model ReorderRequest {
+  id           String        @id @default(cuid())
+  baseItemId   String
+  baseItem     BaseInventoryItem @relation(fields: [baseItemId], references: [id])
+  requestedQty Float
+  status       ReorderStatus @default(PENDING)
+  notes        String?
+  createdAt    DateTime      @default(now())
+  resolvedAt   DateTime?
+}
+
+enum ReorderStatus {
+  PENDING
+  APPROVED
+  ORDERED
+  RECEIVED
+  DISMISSED
+}
+
+// ─────────────────────────────────────────────
+// MODULE 4 — PROCUREMENT & ORDERING
+// ─────────────────────────────────────────────
+
+model Vendor {
+  id              String   @id @default(cuid())
+  teamId          String
+  team            Team     @relation(fields: [teamId], references: [id])
+  name            String
+  website         String?
+  frcDiscount     String?
+  typicalLeadDays Int?
+  primaryContact  String?
+  accountNumber   String?
+  notes           String?
+  preferred       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  purchaseRequests PurchaseRequest[]
+  pdvs             ProductDonationVoucher[]
+}
+
+model ProductDonationVoucher {
+  id              String    @id @default(cuid())
+  vendorId        String
+  vendor          Vendor    @relation(fields: [vendorId], references: [id])
+  value           Float
+  expiresAt       DateTime?
+  usageConditions String?
+  redeemed        Boolean   @default(false)
+  redeemedAmount  Float?
+  notes           String?
+  createdAt       DateTime  @default(now())
+}
+
+model PurchaseRequest {
+  id                String          @id @default(cuid())
+  seasonId          String
+  season            Season          @relation(fields: [seasonId], references: [id])
+  title             String
+  requestedById     String
+  requestedBy       User            @relation("Requester", fields: [requestedById], references: [id])
+  submittedAt       DateTime        @default(now())
+  subTeam           SubTeam?
+  priority          RequestPriority @default(ROUTINE)
+  justification     String?
+  linkedTaskId      String?
+  linkedTask        Task?           @relation(fields: [linkedTaskId], references: [id])
+  preferredVendorId String?
+  preferredVendor   Vendor?         @relation(fields: [preferredVendorId], references: [id])
+  estimatedTotal    Float?
+  budgetCategory    BudgetCategoryType?
+  status            PurchaseStatus  @default(DRAFT)
+  approverId        String?
+  approver          User?           @relation("Approver", fields: [approverId], references: [id])
+  approvalNotes     String?
+  orderDate         DateTime?
+  expectedDelivery  DateTime?
+  receivedDate      DateTime?
+  orderConfirmation String?
+  actualTotal       Float?
+  updatedAt         DateTime        @updatedAt
+
+  lineItems PurchaseLineItem[]
+}
+
+enum RequestPriority {
+  ROUTINE
+  URGENT
+  EMERGENCY
+}
+
+enum PurchaseStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  DENIED
+  ORDERED
+  PARTIAL_RECEIVED
+  RECEIVED
+  CANCELLED
+}
+
+enum SubTeam {
+  MECHANICAL
+  ELECTRICAL
+  PROGRAMMING
+  DRIVE_TEAM
+  STRATEGY
+  DESIGN
+  OUTREACH
+  OPERATIONS
+}
+
+model PurchaseLineItem {
+  id               String         @id @default(cuid())
+  requestId        String
+  request          PurchaseRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  name             String
+  partNumber       String?
+  vendorProductUrl String?
+  quantity         Float
+  unitOfMeasure    UnitOfMeasure  @default(EACH)
+  unitCost         Float?
+  lineTotal        Float?
+  baseItemId       String?
+  baseItem         BaseInventoryItem? @relation(fields: [baseItemId], references: [id])
+  goesOnRobotBom   Boolean        @default(false)
+  isKopSource      Boolean        @default(false)
+  qtyReceived      Float?
+}
+
+// ─────────────────────────────────────────────
+// MODULE 5 — BUDGET MANAGEMENT
+// ─────────────────────────────────────────────
+
+model Budget {
+  id              String   @id @default(cuid())
+  seasonId        String   @unique
+  season          Season   @relation(fields: [seasonId], references: [id])
+  totalEstRevenue Float    @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  categories    BudgetCategory[]
+  fundingSources FundingSource[]
+  expenses      Expense[]
+  sponsors      Sponsor[]
+}
+
+model BudgetCategory {
+  id         String             @id @default(cuid())
+  budgetId   String
+  budget     Budget             @relation(fields: [budgetId], references: [id])
+  type       BudgetCategoryType
+  label      String
+  allocation Float              @default(0)
+  expenses   Expense[]
+}
+
+enum BudgetCategoryType {
+  REGISTRATION_FEES
+  ROBOT_MECHANICAL
+  ROBOT_ELECTRICAL
+  ROBOT_PNEUMATICS
+  RAW_MATERIALS
+  TOOLS_EQUIPMENT
+  CONSUMABLES
+  SAFETY_EQUIPMENT
+  TRAVEL_HOTEL
+  FOOD_MEALS
+  AWARDS_OUTREACH
+  CONTINGENCY
+  OTHER
+}
+
+model FundingSource {
+  id           String        @id @default(cuid())
+  budgetId     String
+  budget       Budget        @relation(fields: [budgetId], references: [id])
+  name         String
+  type         FundingType
+  amount       Float
+  status       FundingStatus @default(PLEDGED)
+  receivedDate DateTime?
+  notes        String?
+  createdAt    DateTime      @default(now())
+}
+
+enum FundingType {
+  SCHOOL_ALLOCATION
+  CORPORATE_SPONSOR
+  GRANT
+  FUNDRAISER
+  INDIVIDUAL_DONATION
+  PDV
+  OTHER
+}
+
+enum FundingStatus {
+  PLEDGED
+  RECEIVED
+  PARTIAL
+}
+
+model Expense {
+  id                String          @id @default(cuid())
+  budgetId          String
+  budget            Budget          @relation(fields: [budgetId], references: [id])
+  categoryId        String?
+  category          BudgetCategory? @relation(fields: [categoryId], references: [id])
+  date              DateTime
+  amount            Float
+  vendor            String?
+  description       String
+  paymentMethod     String?
+  isCommitment      Boolean         @default(false)
+  purchaseRequestId String?
+  createdAt         DateTime        @default(now())
+}
+
+model Sponsor {
+  id              String          @id @default(cuid())
+  budgetId        String
+  budget          Budget          @relation(fields: [budgetId], references: [id])
+  name            String
+  type            SponsorType
+  contactName     String?
+  contactEmail    String?
+  amount          Float?
+  inKindValue     Float?
+  season          Int?
+  agreementStatus AgreementStatus @default(PENDING)
+  renewalEligible Boolean         @default(true)
+  notes           String?
+  createdAt       DateTime        @default(now())
+}
+
+enum SponsorType {
+  CORPORATE_SPONSOR
+  GRANT
+  IN_KIND_DONATION
+}
+
+enum AgreementStatus {
+  PENDING
+  AGREEMENT_SENT
+  SIGNED
+  THANK_YOU_SENT
+}
+
+// ─────────────────────────────────────────────
+// MODULE 5b — ROBOT BOM
+// ─────────────────────────────────────────────
+
+model BomItem {
+  id               String              @id @default(cuid())
+  robotId          String
+  robot            Robot               @relation(fields: [robotId], references: [id])
+  inUseItemId      String?             @unique
+  inUseItem        InUseInventoryItem? @relation(fields: [inUseItemId], references: [id])
+  partName         String
+  partNumber       String?
+  subsystem        RobotSubsystem?
+  quantity         Float               @default(1)
+  unitFmv          Float?
+  totalFmv         Float?
+  source           ItemSource          @default(DIRECT)
+  exemptUnder5     Boolean             @default(false)
+  exemptKop        Boolean             @default(false)
+  exemptFirstChoice Boolean            @default(false)
+  fmvConfirmed     Boolean             @default(false)
+  notes            String?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+}
+
+model BomExport {
+  id             String   @id @default(cuid())
+  robotId        String
+  exportedAt     DateTime @default(now())
+  exportedById   String?
+  format         String
+  fileUrl        String?
+  eventName      String?
+}
+
+// ─────────────────────────────────────────────
+// MODULE 6 — BUILD SEASON SCHEDULE
+// ─────────────────────────────────────────────
+
+model Task {
+  id                   String             @id @default(cuid())
+  seasonId             String
+  season               Season             @relation(fields: [seasonId], references: [id])
+  robotId              String?
+  robot                Robot?             @relation(fields: [robotId], references: [id])
+  createdById          String?
+  createdBy            User?              @relation("TaskCreator", fields: [createdById], references: [id])
+  name                 String
+  description          String?
+  subTeam              SubTeam?
+  startDate            DateTime?
+  dueDate              DateTime?
+  startOffset          Int?
+  durationBuildDays    Int?
+  estimatedHours       Float?
+  actualHours          Float?
+  priority             TaskPriority       @default(MEDIUM)
+  status               TaskStatus         @default(NOT_STARTED)
+  blockersNotes        String?
+  isMilestone          Boolean            @default(false)
+  designReviewRequired Boolean            @default(false)
+  designReviewStatus   DesignReviewStatus @default(NOT_REQUIRED)
+  isTemplateTask       Boolean            @default(false)
+  templateId           String?
+  completionDate       DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  assignees        User[]              @relation("TaskAssignees")
+  prerequisites    Task[]              @relation("TaskDependencies")
+  dependents       Task[]              @relation("TaskDependencies")
+  linkedItems      InUseInventoryItem[]
+  purchaseRequests PurchaseRequest[]
+  designReview     DesignReview?
+}
+
+enum TaskPriority {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum TaskStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  BLOCKED
+  IN_REVIEW
+  COMPLETE
+}
+
+enum DesignReviewStatus {
+  NOT_REQUIRED
+  PENDING
+  APPROVED
+  CHANGES_REQUIRED
+}
+
+model DesignReview {
+  id          String                @id @default(cuid())
+  taskId      String                @unique
+  task        Task                  @relation(fields: [taskId], references: [id])
+  description String?
+  subsystem   RobotSubsystem?
+  reviewDate  DateTime?
+  decision    DesignReviewDecision?
+  comments    String?
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+}
+
+enum DesignReviewDecision {
+  APPROVED
+  CHANGES_REQUIRED
+  REJECTED
+}
+
+model SeasonTemplate {
+  id          String         @id @default(cuid())
+  name        String
+  description String?
+  createdById String?
+  isPublic    Boolean        @default(false)
+  tasks       TemplateTask[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model TemplateTask {
+  id                   String         @id @default(cuid())
+  templateId           String
+  template             SeasonTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  name                 String
+  description          String?
+  subTeam              SubTeam?
+  startOffset          Int
+  durationBuildDays    Int            @default(1)
+  priority             TaskPriority   @default(MEDIUM)
+  estimatedHours       Float?
+  isMilestone          Boolean        @default(false)
+  designReviewRequired Boolean        @default(false)
+  prerequisiteNames    String[]
+}
+
+// ─────────────────────────────────────────────
+// MODULE 7 — COMPLIANCE & SAFETY
+// ─────────────────────────────────────────────
+
+model SafetyIncident {
+  id               String           @id @default(cuid())
+  reportedById     String
+  reportedBy       User             @relation(fields: [reportedById], references: [id])
+  incidentDate     DateTime
+  description      String
+  toolOrMaterial   String?
+  peopleInvolved   String?
+  severity         IncidentSeverity
+  immediateAction  String?
+  correctiveAction String?
+  createdAt        DateTime         @default(now())
+}
+
+enum IncidentSeverity {
+  NEAR_MISS
+  MINOR_INJURY
+  SIGNIFICANT_INJURY
+}
+
+model InspectionChecklist {
+  id          String              @id @default(cuid())
+  robotId     String
+  eventName   String?
+  runNumber   Int                 @default(1)
+  status      ChecklistStatus     @default(IN_PROGRESS)
+  completedAt DateTime?
+  createdAt   DateTime            @default(now())
+
+  items InspectionCheckItem[]
+}
+
+enum ChecklistStatus {
+  IN_PROGRESS
+  PASSED
+  FAILED
+}
+
+model InspectionCheckItem {
+  id          String              @id @default(cuid())
+  checklistId String
+  checklist   InspectionChecklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  category    String
+  description String
+  status      CheckItemStatus     @default(NOT_CHECKED)
+  notes       String?
+  checkedAt   DateTime?
+}
+
+enum CheckItemStatus {
+  PASS
+  FAIL
+  NOT_CHECKED
+}
+
+model PreMatchChecklist {
+  id          String              @id @default(cuid())
+  robotId     String
+  matchNumber String?
+  eventName   String?
+  completedAt DateTime?
+  createdAt   DateTime            @default(now())
+
+  items PreMatchCheckItem[]
+}
+
+model PreMatchCheckItem {
+  id          String            @id @default(cuid())
+  checklistId String
+  checklist   PreMatchChecklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  description String
+  checked     Boolean           @default(false)
+  checkedAt   DateTime?
+}
+
+// ─────────────────────────────────────────────
+// SHARED — NOTIFICATIONS & ACTIVITY LOG
+// ─────────────────────────────────────────────
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id])
+  type      NotificationType
+  title     String
+  body      String?
+  linkUrl   String?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+}
+
+enum NotificationType {
+  REORDER_TRIGGERED
+  PURCHASE_SUBMITTED
+  PURCHASE_APPROVED
+  PURCHASE_DENIED
+  ORDER_RECEIVED
+  TASK_DUE_SOON
+  TASK_OVERDUE
+  TASK_BLOCKED
+  CRITICAL_ISSUE
+  WEIGHT_WARNING
+  BOM_CAP_WARNING
+  TOOL_OVERDUE
+  CERT_EXPIRING
+  SAFETY_INCIDENT
+  COMPETITION_APPROACHING
+  MEMBER_APPROVAL_NEEDED
+  ACCOUNT_APPROVED
+  ACCOUNT_DENIED
+}
+
+model ActivityLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  entityType String
+  entityId   String
+  action     String
+  detail     String?
+  createdAt  DateTime @default(now())
+}

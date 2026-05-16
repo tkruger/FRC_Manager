@@ -171,6 +171,11 @@ yarn-error.log*
 # vercel
 .vercel
 
+# Claude Code
+.claude/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/src/generated/prisma

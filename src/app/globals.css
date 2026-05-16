@@ -1,26 +1,160 @@
 @import "tailwindcss";
 
+/* ─── FRC Design System — Color Tokens ─── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Brand */
+  --color-primary:        #C1121F;
+  --color-secondary:      #1D3A8A;
+
+  /* Surfaces */
+  --color-surface:        #FFFFFF;
+  --color-surface-raised: #F4F5F7;
+  --color-surface-overlay:#ECEEF2;
+
+  /* Borders */
+  --color-border:         #DDE1E9;
+
+  /* Text */
+  --color-text-primary:   #0D0F12;
+  --color-text-secondary: #5A6272;
+  --color-text-disabled:  #A0A8B8;
+
+  /* Semantic */
+  --color-success:        #1A7F4B;
+  --color-warning:        #B45309;
+  --color-danger:         #C1121F;
+  --color-info:           #1D3A8A;
+
+  /* Misc */
+  --radius-card:          8px;
+  --shadow-card:          0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.06);
 }
 
+[data-theme="dark"] {
+  --color-primary:        #E63946;
+  --color-secondary:      #4F7FE8;
+
+  --color-surface:        #121418;
+  --color-surface-raised: #1E2126;
+  --color-surface-overlay:#272C34;
+
+  --color-border:         #2E343E;
+
+  --color-text-primary:   #F0F2F5;
+  --color-text-secondary: #9BA3B2;
+  --color-text-disabled:  #4A5262;
+
+  --color-success:        #34C77B;
+  --color-warning:        #F59E0B;
+  --color-danger:         #E63946;
+  --color-info:           #4F7FE8;
+}
+
+/* ─── Tailwind theme bridge ─── */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background:     var(--color-surface);
+  --color-foreground:     var(--color-text-primary);
+
+  /* Expose FRC tokens to Tailwind utilities */
+  --color-frc-primary:        var(--color-primary);
+  --color-frc-secondary:      var(--color-secondary);
+  --color-frc-surface:        var(--color-surface);
+  --color-frc-surface-raised: var(--color-surface-raised);
+  --color-frc-surface-overlay:var(--color-surface-overlay);
+  --color-frc-border:         var(--color-border);
+  --color-frc-text:           var(--color-text-primary);
+  --color-frc-text-secondary: var(--color-text-secondary);
+  --color-frc-text-disabled:  var(--color-text-disabled);
+  --color-frc-success:        var(--color-success);
+  --color-frc-warning:        var(--color-warning);
+  --color-frc-danger:         var(--color-danger);
+  --color-frc-info:           var(--color-info);
+
+  /* Typography */
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ─── Base styles ─── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  transition: background-color 200ms ease, color 200ms ease;
 }
+
+/* ─── Typography scale ─── */
+.text-display  { font-size: 2.25rem; font-weight: 700; line-height: 1.15; }
+.text-h1       { font-size: 1.75rem; font-weight: 700; line-height: 1.2; }
+.text-h2       { font-size: 1.25rem; font-weight: 600; line-height: 1.3; }
+.text-h3       { font-size: 1rem;    font-weight: 600; line-height: 1.4; }
+.text-body     { font-size: 0.9375rem; font-weight: 400; line-height: 1.6; }
+.text-small    { font-size: 0.8125rem; font-weight: 400; line-height: 1.5; }
+.text-label    { font-size: 0.75rem;   font-weight: 500; line-height: 1.4; letter-spacing: 0.01em; }
+.text-mono     { font-family: var(--font-mono); font-size: 0.875rem; font-weight: 400; }
+
+/* ─── Card ─── */
+.card {
+  background-color: var(--color-surface-raised);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-border);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-card);
+  transition: background-color 200ms ease, border-color 200ms ease;
+}
+
+[data-theme="dark"] .card {
+  border-color: transparent;
+  box-shadow: 0 0 0 1px var(--color-border);
+}
+
+/* ─── Status badges ─── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.125rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.badge::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: currentColor;
+  flex-shrink: 0;
+}
+
+.badge-success { background-color: color-mix(in srgb, var(--color-success) 12%, transparent); color: var(--color-success); }
+.badge-warning { background-color: color-mix(in srgb, var(--color-warning) 12%, transparent); color: var(--color-warning); }
+.badge-danger  { background-color: color-mix(in srgb, var(--color-danger)  12%, transparent); color: var(--color-danger); }
+.badge-info    { background-color: color-mix(in srgb, var(--color-info)    12%, transparent); color: var(--color-info); }
+.badge-neutral { background-color: color-mix(in srgb, var(--color-text-secondary) 10%, transparent); color: var(--color-text-secondary); }
+
+/* ─── Focus ring ─── */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ─── Scrollbar (webkit) ─── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-text-disabled); }
