@@ -18,11 +18,13 @@ interface DialogContentProps {
 export function DialogContent({ children, title, description, className }: DialogContentProps) {
   return (
     <RadixDialog.Portal>
-      <RadixDialog.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+      <RadixDialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
       <RadixDialog.Content
+        style={{ backgroundColor: "var(--color-surface)" }}
         className={cn(
           // Mobile: slide up from bottom as a sheet
-          "fixed z-50 w-full bg-[--color-surface-raised] shadow-xl",
+          // bg-[--color-surface] = white in light mode, dark in dark mode — clean against the overlay
+          "fixed z-50 w-full shadow-2xl",
           "inset-x-0 bottom-0 rounded-t-2xl",
           "data-[state=open]:animate-in data-[state=closed]:animate-out",
           "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
