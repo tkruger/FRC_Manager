@@ -7,7 +7,7 @@ export default async function DashboardPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
         <h1 className="text-h1 text-[--color-text-primary]">
-          Welcome back, {session?.user?.name?.split(" ")[0]}
+          Welcome back to FRC Manager, {session?.user?.name?.split(" ")[0]}
         </h1>
         <p className="text-body text-[--color-text-secondary] mt-1">
           FRC Team Management Suite — Season Dashboard
