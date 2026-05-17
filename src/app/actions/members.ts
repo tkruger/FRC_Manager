@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import type { Role } from "@/generated/prisma";
+import { createNotification } from "@/lib/notifications";
 
 async function requireAdmin() {
   const session = await auth();
@@ -29,6 +30,13 @@ export async function approveMemberAction(
       prisma.userRole.deleteMany({ where: { userId } }),
       prisma.userRole.createMany({ data: roles.map((role) => ({ userId, role })) }),
     ]);
+
+    await createNotification({
+      userId,
+      type: "ACCOUNT_APPROVED",
+      title: "Your account has been approved! Welcome to the team.",
+      linkUrl: "/dashboard",
+    });
 
     revalidatePath("/settings/members");
     return { success: true };

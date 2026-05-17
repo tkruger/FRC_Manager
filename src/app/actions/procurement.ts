@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import type { PurchaseStatus } from "@/generated/prisma";
+import { notifyTeam, createNotification } from "@/lib/notifications";
 
 // Auto-approve threshold (USD)
 const AUTO_APPROVE_THRESHOLD = 50;
@@ -104,6 +105,20 @@ export async function createPurchaseRequestAction(
     },
   });
 
+  // Notify budget managers of non-auto-approved requests
+  if (!autoApprove && session.user.teamId) {
+    await notifyTeam({
+      teamId: session.user.teamId,
+      roles: ["BUDGET_MANAGER", "HEAD_MENTOR"],
+      type: isEmergency ? "PURCHASE_SUBMITTED" : "PURCHASE_SUBMITTED",
+      title: isEmergency
+        ? `🚨 Emergency purchase request: "${parsed.data.title}"`
+        : `Purchase request needs approval: "${parsed.data.title}"`,
+      body: `$${estimatedTotal.toFixed(2)} · submitted by ${session.user.name}`,
+      linkUrl: `/procurement/requests/${request.id}`,
+    });
+  }
+
   revalidatePath("/procurement");
   return { success: true, requestId: request.id };
 }
@@ -112,9 +127,18 @@ export async function approvePurchaseRequestAction(requestId: string): Promise<{
   const session = await auth();
   if (!session) return { success: false, error: "Not authenticated." };
 
-  await prisma.purchaseRequest.update({
+  const req = await prisma.purchaseRequest.update({
     where: { id: requestId },
     data: { status: "APPROVED", approverId: session.user.id, approvalNotes: null },
+    select: { title: true, requestedById: true },
+  });
+
+  // Notify requester
+  await createNotification({
+    userId: req.requestedById,
+    type: "PURCHASE_APPROVED",
+    title: `Purchase request approved: "${req.title}"`,
+    linkUrl: `/procurement/requests/${requestId}`,
   });
 
   revalidatePath("/procurement");
@@ -126,9 +150,18 @@ export async function denyPurchaseRequestAction(requestId: string, reason: strin
   const session = await auth();
   if (!session) return { success: false, error: "Not authenticated." };
 
-  await prisma.purchaseRequest.update({
+  const denied = await prisma.purchaseRequest.update({
     where: { id: requestId },
     data: { status: "DENIED", approverId: session.user.id, approvalNotes: reason },
+    select: { title: true, requestedById: true },
+  });
+
+  await createNotification({
+    userId: denied.requestedById,
+    type: "PURCHASE_DENIED",
+    title: `Purchase request denied: "${denied.title}"`,
+    body: reason || undefined,
+    linkUrl: `/procurement/requests/${requestId}`,
   });
 
   revalidatePath("/procurement");

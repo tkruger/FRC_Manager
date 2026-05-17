@@ -24,9 +24,10 @@ interface Props {
   robots?: { id: string; displayName: string; status: string }[];
   activeRobotId?: string;
   pendingMemberCount?: number;
+  unreadNotificationCount?: number;
 }
 
-export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount = 0 }: Props) {
+export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount = 0, unreadNotificationCount = 0 }: Props) {
   const pathname = usePathname();
   const { resolvedTheme, toggle, mode } = useTheme();
 
@@ -90,6 +91,22 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
             </svg>
           )}
         </button>
+
+        {/* Notification bell */}
+        <Link
+          href="/notifications"
+          className="relative h-9 w-9 rounded-md flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors"
+          aria-label="Notifications"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+          </svg>
+          {unreadNotificationCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-[--color-primary] text-white text-[10px] font-bold flex items-center justify-center">
+              {unreadNotificationCount > 9 ? "9+" : unreadNotificationCount}
+            </span>
+          )}
+        </Link>
 
         {/* Settings / member approval — with pending badge */}
         <Link
