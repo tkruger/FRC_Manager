@@ -108,7 +108,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
           >
             <BellIcon />
             {unreadNotificationCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-[--color-primary] text-white text-[10px] font-bold flex items-center justify-center" aria-hidden>
+              <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full text-white text-[10px] font-bold flex items-center justify-center" style={{ backgroundColor: "var(--color-primary)" }} aria-hidden>
                 {unreadNotificationCount > 9 ? "9+" : unreadNotificationCount}
               </span>
             )}
@@ -220,7 +220,8 @@ function UserMenu({ user }: { user: { name?: string | null; email?: string | nul
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="h-9 w-9 rounded-full bg-[--color-primary] flex items-center justify-center text-white text-sm font-bold shrink-0 transition-opacity hover:opacity-90"
+        className="h-9 w-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0 transition-opacity hover:opacity-90"
+        style={{ backgroundColor: "var(--color-primary)" }}
         aria-label="User menu"
         aria-expanded={open}
         aria-haspopup="menu"
