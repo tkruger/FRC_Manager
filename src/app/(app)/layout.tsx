@@ -5,31 +5,38 @@ import { prisma } from "@/lib/prisma";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
-
   if (!session) redirect("/login");
 
-  // Load robots for active season (for Robot Selector)
   let robots: { id: string; displayName: string; status: string }[] = [];
+  let pendingMemberCount = 0;
+
   if (session.user.teamId) {
-    const activeSeason = await prisma.season.findFirst({
-      where: { teamId: session.user.teamId, isActive: true },
-      include: {
-        robots: {
-          where: { archived: false },
-          select: { id: true, displayName: true, status: true },
-          orderBy: { createdAt: "asc" },
+    const isAdmin = session.user.roles.some((r) => ["HEAD_MENTOR", "INVENTORY_ADMIN"].includes(r));
+
+    const [activeSeason, pendingCount] = await Promise.all([
+      prisma.season.findFirst({
+        where: { teamId: session.user.teamId, isActive: true },
+        include: {
+          robots: {
+            where: { archived: false },
+            select: { id: true, displayName: true, status: true },
+            orderBy: { createdAt: "asc" },
+          },
         },
-      },
-    });
+      }),
+      isAdmin
+        ? prisma.user.count({ where: { teamId: session.user.teamId, status: "PENDING" } })
+        : Promise.resolve(0),
+    ]);
+
     robots = activeSeason?.robots ?? [];
+    pendingMemberCount = pendingCount;
   }
 
   return (
     <div className="min-h-screen bg-[--color-surface]">
-      <TopNav session={session} robots={robots} />
-      <main className="pt-14">
-        {children}
-      </main>
+      <TopNav session={session} robots={robots} pendingMemberCount={pendingMemberCount} />
+      <main className="pt-14">{children}</main>
     </div>
   );
 }

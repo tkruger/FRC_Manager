@@ -50,12 +50,24 @@ export async function setupBudgetAction(
       where: { seasonId: activeSeason.id },
       data: { totalEstRevenue },
     });
+    // Fetch existing categories to decide update vs create
+    const existingCats = await prisma.budgetCategory.findMany({
+      where: { budgetId: existing.id },
+      select: { id: true, type: true },
+    });
+    const catById = Object.fromEntries(existingCats.map((c) => [c.type, c.id]));
+
     for (const cat of categoryAllocations) {
-      await prisma.budgetCategory.upsert({
-        where: { id: `${existing.id}_${cat.type}` },
-        create: { budgetId: existing.id, type: cat.type, label: cat.label, allocation: cat.allocation },
-        update: { allocation: cat.allocation },
-      });
+      if (catById[cat.type]) {
+        await prisma.budgetCategory.update({
+          where: { id: catById[cat.type] },
+          data: { allocation: cat.allocation, label: cat.label },
+        });
+      } else {
+        await prisma.budgetCategory.create({
+          data: { budgetId: existing.id, type: cat.type, label: cat.label, allocation: cat.allocation },
+        });
+      }
     }
   } else {
     await prisma.budget.create({
