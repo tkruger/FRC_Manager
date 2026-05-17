@@ -1,7 +1,11 @@
-import { auth } from "@/lib/auth";
+// Uses auth.config.ts (Edge-safe) — NOT auth.ts — to avoid importing
+// bcryptjs which requires Node.js crypto, unavailable in the Edge Runtime.
+import NextAuth from "next-auth";
+import { authConfig } from "@/lib/auth.config";
 import { NextResponse } from "next/server";
 
-// Public routes that don't need authentication
+const { auth } = NextAuth(authConfig);
+
 const PUBLIC_PATHS = ["/login", "/register", "/pending", "/api/auth"];
 
 export default auth((req) => {
