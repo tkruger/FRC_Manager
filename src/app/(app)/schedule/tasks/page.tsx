@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableHead, TableBody, Th, Td, Tr } from "@/components/ui/table";
 import { shortDate, STATUS_CONFIG, PRIORITY_CONFIG, SUBTEAM_COLORS, isOverdue } from "@/lib/schedule-helpers";
 import { TaskStatusButton } from "./TaskStatusButton";
+import { getActiveRobotId } from "@/app/actions/robot-context";
 
 export default async function TaskListPage({
   searchParams,
@@ -17,16 +18,24 @@ export default async function TaskListPage({
   const session = await auth();
   if (!session?.user?.teamId) redirect("/dashboard");
 
-  const activeSeason = await prisma.season.findFirst({
-    where: { teamId: session.user.teamId, isActive: true },
-  });
+  const [activeSeason, activeRobotId] = await Promise.all([
+    prisma.season.findFirst({ where: { teamId: session.user.teamId, isActive: true } }),
+    getActiveRobotId(),
+  ]);
   if (!activeSeason) redirect("/settings/season");
+
+  // Look up the active robot's name for the filter indicator
+  const activeRobot = activeRobotId
+    ? await prisma.robot.findFirst({ where: { id: activeRobotId, seasonId: activeSeason.id }, select: { displayName: true } })
+    : null;
 
   const now = new Date();
 
   const tasks = await prisma.task.findMany({
     where: {
       seasonId: activeSeason.id,
+      // Filter by robot context — null robotId tasks (team-wide) always show
+      ...(activeRobotId ? { OR: [{ robotId: activeRobotId }, { robotId: null }] } : {}),
       ...(subTeam ? { subTeam: subTeam as any } : {}),
       ...(status  ? { status:  status  as any } : {}),
     },
@@ -67,7 +76,12 @@ export default async function TaskListPage({
             <Link href="/schedule" className="hover:text-[--color-primary]">Schedule</Link>
             <span className="mx-2">›</span>Tasks
           </nav>
-          <h1 className="text-h1 text-[--color-text-primary]">Tasks</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-h1 text-[--color-text-primary]">Tasks</h1>
+            {activeRobot && (
+              <span className="badge badge-info">{activeRobot.displayName}</span>
+            )}
+          </div>
           <p className="text-body text-[--color-text-secondary] mt-0.5">{filtered.length} of {tasks.length} tasks</p>
         </div>
         <Link href="/schedule/tasks/new"><Button size="sm">+ New task</Button></Link>

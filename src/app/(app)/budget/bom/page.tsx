@@ -8,6 +8,7 @@ import { Table, TableHead, TableBody, Th, Td, Tr } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
 import { AddBomItemDialog } from "./AddBomItemDialog";
 import { BomItemActions } from "./BomItemActions";
+import { getActiveRobotId } from "@/app/actions/robot-context";
 
 const BOM_CAP = 5000;
 
@@ -16,16 +17,22 @@ export default async function BomPage({ searchParams }: { searchParams: Promise<
   const session = await auth();
   if (!session?.user?.teamId) redirect("/dashboard");
 
-  const activeSeason = await prisma.season.findFirst({
-    where: { teamId: session.user.teamId, isActive: true },
-    include: { robots: { where: { archived: false }, orderBy: { createdAt: "asc" } } },
-  });
+  const [activeSeason, cookieRobotId] = await Promise.all([
+    prisma.season.findFirst({
+      where: { teamId: session.user.teamId, isActive: true },
+      include: { robots: { where: { archived: false }, orderBy: { createdAt: "asc" } } },
+    }),
+    getActiveRobotId(),
+  ]);
 
   if (!activeSeason) redirect("/settings/season");
 
+  // searchParam takes priority, then cookie, then competition bot default
+  const effectiveRobotId = selectedRobotId ?? cookieRobotId ?? undefined;
+
   const compBot = activeSeason.robots.find((r) => r.role === "COMPETITION") ?? activeSeason.robots[0];
-  const robot = selectedRobotId
-    ? activeSeason.robots.find((r) => r.id === selectedRobotId) ?? compBot
+  const robot = effectiveRobotId
+    ? activeSeason.robots.find((r) => r.id === effectiveRobotId) ?? compBot
     : compBot;
 
   if (!robot) {

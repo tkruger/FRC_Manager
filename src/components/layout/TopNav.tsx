@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { cn } from "@/lib/utils";
 import type { Session } from "next-auth";
@@ -178,19 +178,28 @@ function RobotSelector({
   activeRobotId?: string;
   activeRobot?: { id: string; displayName: string; status: string };
 }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const isRetired = activeRobot?.status?.startsWith("RETIRED") || activeRobot?.status === "DECOMMISSIONED";
+
+  function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const robotId = e.target.value || null;
+    startTransition(async () => {
+      const { setActiveRobotAction } = await import("@/app/actions/robot-context");
+      await setActiveRobotAction(robotId);
+      router.refresh();
+    });
+  }
+
   return (
     <div className="flex items-center gap-1.5 rounded-md border border-[--color-border] bg-[--color-surface-raised] px-3 h-9 text-sm">
       <span className="text-[--color-text-secondary] text-xs">Robot:</span>
       <select
-        className="bg-transparent text-[--color-text-primary] text-sm font-medium focus:outline-none cursor-pointer max-w-[140px]"
+        className={cn("bg-transparent text-[--color-text-primary] text-sm font-medium focus:outline-none cursor-pointer max-w-[140px]", isPending && "opacity-50")}
         value={activeRobotId ?? ""}
-        onChange={(e) => {
-          const url = new URL(window.location.href);
-          url.searchParams.set("robotId", e.target.value);
-          window.location.href = url.toString();
-        }}
-        aria-label="Select robot"
+        onChange={handleChange}
+        disabled={isPending}
+        aria-label="Select robot context"
       >
         <option value="">All Robots</option>
         {robots.map((r) => (

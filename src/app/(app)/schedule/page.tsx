@@ -7,14 +7,16 @@ import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
 import { STATUS_CONFIG, PRIORITY_CONFIG, SUBTEAM_COLORS, isOverdue, daysBetween, shortDate } from "@/lib/schedule-helpers";
 import { differenceInCalendarDays, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
+import { getActiveRobotId } from "@/app/actions/robot-context";
 
 export default async function ScheduleDashboard() {
   const session = await auth();
   if (!session?.user?.teamId) redirect("/dashboard");
 
-  const activeSeason = await prisma.season.findFirst({
-    where: { teamId: session.user.teamId, isActive: true },
-  });
+  const [activeSeason, activeRobotId] = await Promise.all([
+    prisma.season.findFirst({ where: { teamId: session.user.teamId, isActive: true } }),
+    getActiveRobotId(),
+  ]);
 
   if (!activeSeason) {
     return (
@@ -38,7 +40,10 @@ export default async function ScheduleDashboard() {
   const buildProgress = Math.round(Math.min(Math.max((elapsed / totalBuildDays) * 100, 0), 100));
 
   const tasks = await prisma.task.findMany({
-    where: { seasonId: activeSeason.id },
+    where: {
+      seasonId: activeSeason.id,
+      ...(activeRobotId ? { OR: [{ robotId: activeRobotId }, { robotId: null }] } : {}),
+    },
     include: { assignees: { select: { id: true, name: true } }, robot: { select: { displayName: true } } },
     orderBy: [{ priority: "asc" }, { dueDate: "asc" }],
   });
@@ -73,7 +78,14 @@ export default async function ScheduleDashboard() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-h1 text-[--color-text-primary]">Schedule</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-h1 text-[--color-text-primary]">Schedule</h1>
+            {activeRobotId && (
+              <span className="badge badge-info">
+                {tasks.find((t) => t.robot?.displayName)?.robot?.displayName ?? "Robot filtered"}
+              </span>
+            )}
+          </div>
           <p className="text-body text-[--color-text-secondary] mt-1">{activeSeason.name}</p>
         </div>
         <div className="flex gap-2">

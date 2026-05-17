@@ -117,14 +117,14 @@ export default async function DashboardPage() {
       {/* Module grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {[
-          { title: "Robot Fleet",   href: "/fleet",       desc: "Manage your robots",      color: "var(--color-primary)" },
-          { title: "Tools",         href: "/tools",       desc: "Checkout & maintenance",  color: "#7C3AED" },
-          { title: "Inventory",     href: "/inventory",   desc: "Parts & materials",       color: "var(--color-secondary)" },
-          { title: "Procurement",   href: "/procurement", desc: "Orders & requests",       color: "#059669" },
-          { title: "Budget",        href: "/budget",      desc: "Spend & BOM tracking",    color: "#D97706" },
-          { title: "Schedule",      href: "/schedule",    desc: "Build season tasks",      color: "#DC2626" },
-          { title: "Safety",        href: "/safety",      desc: "Certs & checklists",      color: "#0891B2" },
-          { title: "Season",        href: "/settings/season", desc: "Season configuration", color: "#64748B" },
+          { title: "Robot Fleet",   href: "/fleet",           desc: "Manage your robots",     color: "var(--color-primary)",   icon: "🤖" },
+          { title: "Tools",         href: "/tools",           desc: "Checkout & maintenance", color: "#7C3AED",               icon: "🔧" },
+          { title: "Inventory",     href: "/inventory",       desc: "Parts & materials",      color: "var(--color-secondary)", icon: "📦" },
+          { title: "Procurement",   href: "/procurement",     desc: "Orders & requests",      color: "#059669",               icon: "🛒" },
+          { title: "Budget",        href: "/budget",          desc: "Spend & BOM tracking",   color: "#D97706",               icon: "💰" },
+          { title: "Schedule",      href: "/schedule",        desc: "Build season tasks",     color: "#DC2626",               icon: "📅" },
+          { title: "Safety",        href: "/safety",          desc: "Certs & checklists",     color: "#0891B2",               icon: "🛡️" },
+          { title: "Season",        href: "/settings/season", desc: "Season configuration",  color: "#64748B",               icon: "⚙️" },
         ].map((mod) => (
           <a
             key={mod.href}
@@ -132,6 +132,7 @@ export default async function DashboardPage() {
             className="card group hover:shadow-md transition-shadow flex flex-col gap-3 no-underline"
             style={{ borderLeftColor: mod.color, borderLeftWidth: "4px" }}
           >
+            <span className="text-2xl leading-none">{mod.icon}</span>
             <div>
               <p className="text-h3 text-[--color-text-primary] group-hover:text-[--color-primary] transition-colors">
                 {mod.title}

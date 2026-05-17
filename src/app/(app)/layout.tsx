@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { TopNav } from "@/components/layout/TopNav";
 import { prisma } from "@/lib/prisma";
+import { getActiveRobotId } from "@/app/actions/robot-context";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -11,11 +12,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   let pendingMemberCount = 0;
   let unreadNotificationCount = 0;
   let activeSeasonName: string | null = null;
+  let activeRobotId: string | null = null;
 
   if (session.user.teamId) {
     const isAdmin = session.user.roles.some((r) => ["HEAD_MENTOR", "INVENTORY_ADMIN"].includes(r));
 
-    const [activeSeason, pendingCount, unreadCount] = await Promise.all([
+    const [activeSeason, pendingCount, unreadCount, savedRobotId] = await Promise.all([
       prisma.season.findFirst({
         where: { teamId: session.user.teamId, isActive: true },
         include: {
@@ -30,12 +32,17 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         ? prisma.user.count({ where: { teamId: session.user.teamId, status: "PENDING" } })
         : Promise.resolve(0),
       prisma.notification.count({ where: { userId: session.user.id, read: false } }),
+      getActiveRobotId(),
     ]);
 
     robots = activeSeason?.robots ?? [];
     pendingMemberCount = pendingCount;
     unreadNotificationCount = unreadCount;
     activeSeasonName = activeSeason?.name ?? null;
+
+    // Validate saved robot still exists in the current season
+    const robotIds = new Set(robots.map((r) => r.id));
+    activeRobotId = savedRobotId && robotIds.has(savedRobotId) ? savedRobotId : null;
   }
 
   return (
@@ -43,6 +50,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <TopNav
         session={session}
         robots={robots}
+        activeRobotId={activeRobotId ?? undefined}
         pendingMemberCount={pendingMemberCount}
         unreadNotificationCount={unreadNotificationCount}
         activeSeasonName={activeSeasonName}
