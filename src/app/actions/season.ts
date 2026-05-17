@@ -68,6 +68,49 @@ export async function createSeasonAction(
   return { success: true, seasonId: season.id };
 }
 
+export async function updateSeasonAction(
+  seasonId: string,
+  _prev: SeasonActionState | null,
+  formData: FormData
+): Promise<SeasonActionState> {
+  const session = await auth();
+  if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
+
+  const days = formData.getAll("meetingDays") as string[];
+  const parsed = SeasonSchema.safeParse({
+    name: formData.get("name"),
+    year: formData.get("year"),
+    kickoffDate: formData.get("kickoffDate"),
+    week0Date: formData.get("week0Date"),
+    meetingDays: days.length > 0 ? days : ["MON"],
+    meetingStartTime: formData.get("meetingStartTime"),
+    meetingEndTime: formData.get("meetingEndTime"),
+    expectedAttendance: formData.get("expectedAttendance"),
+  });
+
+  if (!parsed.success) return { success: false, error: "Please fill in all required fields." };
+  const d = parsed.data;
+
+  await prisma.season.updateMany({
+    where: { id: seasonId, teamId: session.user.teamId },
+    data: {
+      name: d.name,
+      year: d.year,
+      kickoffDate: new Date(d.kickoffDate),
+      week0Date: new Date(d.week0Date),
+      meetingDays: d.meetingDays,
+      meetingStartTime: d.meetingStartTime,
+      meetingEndTime: d.meetingEndTime,
+      expectedAttendance: d.expectedAttendance,
+    },
+  });
+
+  revalidatePath("/settings/season");
+  revalidatePath("/dashboard");
+  revalidatePath("/schedule");
+  return { success: true, seasonId };
+}
+
 const RobotSchema = z.object({
   name: z.string().min(1),
   role: z.enum(["COMPETITION", "PRACTICE", "DEMO", "OTHER"]),
