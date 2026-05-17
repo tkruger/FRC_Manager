@@ -22,16 +22,23 @@ export function TiltCard({ children, className, intensity = 6, glare = true, sty
     const rx = ((y - cy) / cy) * -intensity;
     const ry = ((x - cx) / cx) * intensity;
 
-    ref.current.style.transform = `perspective(900px) rotateX(${rx}deg) rotateY(${ry}deg) translateZ(8px)`;
-    ref.current.style.boxShadow = `
-      ${ry * -2}px ${rx * 2}px 40px -8px rgba(0,0,0,0.35),
-      0 0 0 1px rgba(255,255,255,0.07)
-    `;
+    ref.current.style.transform = `perspective(900px) rotateX(${rx}deg) rotateY(${ry}deg) translateZ(10px)`;
+
+    // Directional shadow + primary color edge glow
+    const primary = getComputedStyle(document.documentElement).getPropertyValue("--color-primary").trim();
+    ref.current.style.boxShadow = [
+      `${ry * -2}px ${rx * 2}px 40px -8px rgba(0,0,0,0.40)`,
+      `0 0 0 1px rgba(255,255,255,0.10)`,
+      `0 0 28px -4px color-mix(in srgb, var(--color-primary) 40%, transparent)`,
+    ].join(", ");
+
+    // Border highlight
+    ref.current.style.borderColor = `color-mix(in srgb, var(--color-primary) 55%, transparent)`;
 
     if (glare && glareRef.current) {
       const glareX = (x / rect.width) * 100;
       const glareY = (y / rect.height) * 100;
-      glareRef.current.style.background = `radial-gradient(circle at ${glareX}% ${glareY}%, rgba(255,255,255,0.08) 0%, transparent 65%)`;
+      glareRef.current.style.background = `radial-gradient(circle at ${glareX}% ${glareY}%, rgba(255,255,255,0.13) 0%, transparent 60%)`;
       glareRef.current.style.opacity = "1";
     }
   }
@@ -40,6 +47,7 @@ export function TiltCard({ children, className, intensity = 6, glare = true, sty
     if (!ref.current) return;
     ref.current.style.transform = "";
     ref.current.style.boxShadow = "";
+    ref.current.style.borderColor = "";
     if (glareRef.current) glareRef.current.style.opacity = "0";
   }
 

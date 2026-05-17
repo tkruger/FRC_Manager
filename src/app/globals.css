@@ -163,21 +163,6 @@ body {
   50%       { transform: translate(calc(-50% + 60px), calc(-50% - 40px)) scale(1.2); }
 }
 
-/* Mouse-following spotlight */
-.bg-mouse-orb {
-  position: fixed;
-  width: 600px;
-  height: 600px;
-  border-radius: 50%;
-  background: radial-gradient(circle, color-mix(in srgb, var(--color-primary) 10%, transparent) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-  will-change: transform;
-  top: 0;
-  left: 0;
-  transition: none;
-}
-
 /* Ensure app content sits above orbs */
 #app-shell {
   position: relative;
@@ -245,7 +230,7 @@ body {
   z-index: 0;
 }
 
-/* Lift clickable cards */
+/* Clickable cards lift AND glow on hover */
 a.card, button.card {
   cursor: pointer;
   text-decoration: none;
@@ -253,8 +238,11 @@ a.card, button.card {
 
 a.card:hover, button.card:hover {
   transform: translateY(-3px) scale(1.01);
-  box-shadow: var(--shadow-lg);
-  border-color: var(--color-border-strong);
+  border-color: color-mix(in srgb, var(--color-primary) 50%, transparent);
+  box-shadow:
+    var(--shadow-lg),
+    0 0 0 1px color-mix(in srgb, var(--color-primary) 30%, transparent),
+    0 0 24px -4px color-mix(in srgb, var(--color-primary) 35%, transparent);
 }
 
 /* ─── Badges ─── */
