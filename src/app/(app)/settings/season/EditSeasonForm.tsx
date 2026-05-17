@@ -85,7 +85,7 @@ export function EditSeasonForm({ season, onClose }: Props) {
                 className="sr-only peer"
               />
               <span className="inline-flex items-center justify-center px-4 py-2 rounded-md text-sm font-medium border transition-colors
-                border-[--color-border] text-[--color-text-secondary]
+                bg-[--color-surface] border-[--color-border] text-[--color-text-secondary]
                 peer-checked:bg-[--color-primary] peer-checked:text-white peer-checked:border-[--color-primary]
                 hover:border-[--color-primary] hover:text-[--color-primary]
                 peer-checked:hover:brightness-90">
