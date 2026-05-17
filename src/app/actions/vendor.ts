@@ -5,6 +5,16 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
+const ADMIN_ROLES = ["HEAD_MENTOR", "INVENTORY_ADMIN", "BUDGET_MANAGER"] as const;
+
+async function requireAdmin() {
+  const session = await auth();
+  if (!session?.user?.teamId) throw new Error("Not authenticated.");
+  const isAdmin = session.user.roles.some((r) => ADMIN_ROLES.includes(r as any));
+  if (!isAdmin) throw new Error("Only admins can manage vendors.");
+  return session;
+}
+
 const FRC_VENDORS = [
   { name: "AndyMark", website: "https://www.andymark.com", typicalLeadDays: 5, frcDiscount: "PDV accepted", preferred: true },
   { name: "REV Robotics", website: "https://www.revrobotics.com", typicalLeadDays: 5, frcDiscount: "PDV accepted", preferred: true },
@@ -19,8 +29,9 @@ const FRC_VENDORS = [
 ];
 
 export async function seedFrcVendorsAction(): Promise<{ success: boolean; error?: string; count?: number }> {
-  const session = await auth();
-  if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
+  let session;
+  try { session = await requireAdmin(); }
+  catch (e: any) { return { success: false, error: e.message }; }
 
   const existing = await prisma.vendor.findMany({
     where: { teamId: session.user.teamId },
@@ -54,8 +65,9 @@ export async function createVendorAction(
   _prev: { success: boolean; error?: string } | null,
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
-  const session = await auth();
-  if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
+  let session;
+  try { session = await requireAdmin(); }
+  catch (e: any) { return { success: false, error: e.message }; }
 
   const parsed = VendorSchema.safeParse({
     name: formData.get("name"),
@@ -71,7 +83,7 @@ export async function createVendorAction(
   if (!parsed.success) return { success: false, error: "Please fill in all required fields." };
 
   await prisma.vendor.create({
-    data: { ...parsed.data, teamId: session.user.teamId, website: parsed.data.website || null },
+    data: { ...parsed.data, teamId: session.user.teamId!, website: parsed.data.website || null },
   });
 
   revalidatePath("/procurement/vendors");
@@ -82,8 +94,9 @@ export async function updateVendorAction(
   vendorId: string,
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
-  const session = await auth();
-  if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
+  let session;
+  try { session = await requireAdmin(); }
+  catch (e: any) { return { success: false, error: e.message }; }
 
   const parsed = VendorSchema.safeParse({
     name: formData.get("name"),

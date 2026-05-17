@@ -5,10 +5,15 @@ import { Table, TableHead, TableBody, Th, Td, Tr } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { SeedVendorsButton } from "./SeedVendorsButton";
 import { AddVendorDialog } from "./AddVendorDialog";
+import { EditVendorDialog } from "./EditVendorDialog";
+
+const ADMIN_ROLES = ["HEAD_MENTOR", "INVENTORY_ADMIN", "BUDGET_MANAGER"];
 
 export default async function VendorsPage() {
   const session = await auth();
   if (!session?.user?.teamId) redirect("/dashboard");
+
+  const isAdmin = session.user.roles.some((r) => ADMIN_ROLES.includes(r));
 
   const vendors = await prisma.vendor.findMany({
     where: { teamId: session.user.teamId },
@@ -20,18 +25,30 @@ export default async function VendorsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-h1 text-[--color-text-primary]">Vendors</h1>
-          <p className="text-body text-[--color-text-secondary] mt-1">{vendors.length} vendor{vendors.length !== 1 ? "s" : ""}</p>
+          <p className="text-body text-[--color-text-secondary] mt-1">
+            {vendors.length} vendor{vendors.length !== 1 ? "s" : ""}
+            {!isAdmin && <span className="ml-2 text-small text-[--color-text-disabled]">— read-only view</span>}
+          </p>
         </div>
-        <div className="flex gap-2">
-          {vendors.length === 0 && <SeedVendorsButton />}
-          <AddVendorDialog />
-        </div>
+        {isAdmin && (
+          <div className="flex gap-2">
+            {vendors.length === 0 && <SeedVendorsButton />}
+            <AddVendorDialog />
+          </div>
+        )}
       </div>
+
+      {/* Admin notice for non-admins */}
+      {!isAdmin && vendors.length > 0 && (
+        <div className="rounded-md bg-[--color-surface-overlay] border border-[--color-border] px-4 py-3 text-small text-[--color-text-secondary]">
+          Vendor management is restricted to admins (Head Mentor, Inventory Admin, Budget Manager).
+        </div>
+      )}
 
       {vendors.length === 0 ? (
         <div className="card text-center py-12">
           <p className="text-body text-[--color-text-secondary] mb-4">No vendors yet.</p>
-          <SeedVendorsButton label="Import FRC vendor list" />
+          {isAdmin && <SeedVendorsButton label="Import FRC vendor list" />}
         </div>
       ) : (
         <Table>
@@ -42,6 +59,7 @@ export default async function VendorsPage() {
               <Th>FRC discount / notes</Th>
               <Th>Contact</Th>
               <Th>Status</Th>
+              {isAdmin && <Th />}
             </tr>
           </TableHead>
           <TableBody>
@@ -70,6 +88,11 @@ export default async function VendorsPage() {
                     ? <Badge variant="success">Preferred</Badge>
                     : <Badge variant="neutral">Standard</Badge>}
                 </Td>
+                {isAdmin && (
+                  <Td>
+                    <EditVendorDialog vendor={v} />
+                  </Td>
+                )}
               </Tr>
             ))}
           </TableBody>
