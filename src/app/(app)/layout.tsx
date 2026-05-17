@@ -10,6 +10,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   let robots: { id: string; displayName: string; status: string }[] = [];
   let pendingMemberCount = 0;
   let unreadNotificationCount = 0;
+  let activeSeasonName: string | null = null;
 
   if (session.user.teamId) {
     const isAdmin = session.user.roles.some((r) => ["HEAD_MENTOR", "INVENTORY_ADMIN"].includes(r));
@@ -34,6 +35,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     robots = activeSeason?.robots ?? [];
     pendingMemberCount = pendingCount;
     unreadNotificationCount = unreadCount;
+    activeSeasonName = activeSeason?.name ?? null;
   }
 
   return (
@@ -43,6 +45,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         robots={robots}
         pendingMemberCount={pendingMemberCount}
         unreadNotificationCount={unreadNotificationCount}
+        activeSeasonName={activeSeasonName}
       />
       {/* pt-14 clears the top nav; pb-14 clears the mobile bottom tab bar (hidden on lg+) */}
       <main className="pt-14 pb-14 lg:pb-0">{children}</main>
