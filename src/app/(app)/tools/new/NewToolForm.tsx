@@ -31,55 +31,60 @@ const CONDITION_OPTS = [
   { value: "FAIR",      label: "Fair" },
 ];
 
-export function NewToolForm() {
+export function NewToolForm({ onClose }: { onClose?: () => void } = {}) {
   const router = useRouter();
   const [state, action, pending] = useActionState(createToolAction, null);
 
   useEffect(() => {
-    if (state?.success) router.push("/tools");
-  }, [state, router]);
+    if (state?.success) {
+      if (onClose) { onClose(); router.refresh(); }
+      else router.push("/tools");
+    }
+  }, [state, router, onClose]);
 
   return (
-    <form action={action} className="space-y-6">
+    <form action={action} className="space-y-5">
       {state && !state.success && (
         <div className="rounded-md bg-[--color-danger]/10 border border-[--color-danger]/20 px-4 py-3 text-sm text-[--color-danger]">{state.error}</div>
       )}
-      <div className="card space-y-4">
-        <Field label="Tool name" name="name" required placeholder='e.g. Cordless Drill — DeWalt 20V #3' />
-        <div className="grid grid-cols-2 gap-4">
-          <Select label="Type" name="toolType" options={TYPE_OPTS} defaultValue="OTHER" />
-          <Select label="Space" name="space" options={SPACE_OPTS} defaultValue="SHOP_ONLY" />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Manufacturer" name="manufacturer" placeholder="DeWalt" />
-          <Field label="Model" name="model" placeholder="DCD791D2" />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Asset tag / serial" name="assetTag" placeholder="TOOL-001" />
-          <Field label="Quantity owned" name="quantityOwned" type="number" min="1" defaultValue={1} />
-        </div>
-        <Field label="Home location" name="homeLocation" placeholder='e.g. Red Toolbox — Top Drawer' />
-        <Select label="Condition" name="condition" options={CONDITION_OPTS} defaultValue="GOOD" />
+
+      <Field label="Tool name" name="name" required placeholder='e.g. Cordless Drill — DeWalt 20V #3' />
+      <div className="grid grid-cols-2 gap-4">
+        <Select label="Type" name="toolType" options={TYPE_OPTS} defaultValue="OTHER" />
+        <Select label="Space" name="space" options={SPACE_OPTS} defaultValue="SHOP_ONLY" />
       </div>
-      <div className="card space-y-4">
-        <h2 className="text-h3 text-[--color-text-primary]">Certification</h2>
+      <div className="grid grid-cols-2 gap-4">
+        <Field label="Manufacturer" name="manufacturer" placeholder="DeWalt" />
+        <Field label="Model" name="model" placeholder="DCD791D2" />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <Field label="Asset tag / serial" name="assetTag" placeholder="TOOL-001" />
+        <Field label="Quantity owned" name="quantityOwned" type="number" min="1" defaultValue={1} />
+      </div>
+      <Field label="Home location" name="homeLocation" placeholder='e.g. Red Toolbox — Top Drawer' />
+      <Select label="Condition" name="condition" options={CONDITION_OPTS} defaultValue="GOOD" />
+
+      <div className="border-t border-[--color-border] pt-4 space-y-3">
+        <p className="text-label font-medium text-[--color-text-secondary] uppercase tracking-wide">Certification</p>
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" name="requiresCertification" className="rounded" />
           <span className="text-sm text-[--color-text-primary]">Requires safety certification to check out</span>
         </label>
         <Field label="Certification name" name="certificationName" placeholder='e.g. Drill Press Safety' />
       </div>
-      <div className="card space-y-4">
-        <h2 className="text-h3 text-[--color-text-primary]">Maintenance</h2>
+
+      <div className="border-t border-[--color-border] pt-4 space-y-3">
+        <p className="text-label font-medium text-[--color-text-secondary] uppercase tracking-wide">Maintenance</p>
         <div className="grid grid-cols-2 gap-4">
-          <Field label="Maintenance interval (days)" name="maintenanceIntervalDays" type="number" placeholder="90" />
+          <Field label="Interval (days)" name="maintenanceIntervalDays" type="number" placeholder="90" />
           <Field label="Replacement cost ($)" name="replacementCost" type="number" step="0.01" placeholder="0.00" />
         </div>
-        <Textarea label="Notes" name="notes" rows={2} placeholder="Special instructions, quirks, use guidelines..." />
+        <Textarea label="Notes" name="notes" rows={2} placeholder="Special instructions, quirks..." />
       </div>
-      <div className="flex gap-3">
+
+      <div className="flex gap-3 pt-2">
         <Button type="submit" isLoading={pending}>Add tool</Button>
-        <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
+        <Button type="button" variant="outline" onClick={() => onClose ? onClose() : router.back()}>Cancel</Button>
       </div>
     </form>
   );

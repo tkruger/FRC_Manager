@@ -2,11 +2,11 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableHead, TableBody, Th, Td, Tr } from "@/components/ui/table";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import { CheckinButton } from "./CheckinButton";
+import { AddToolDialog } from "./AddToolDialog";
 
 const CONDITION_BADGE: Record<string, "success"|"warning"|"danger"|"neutral"> = {
   EXCELLENT: "success", GOOD: "success", FAIR: "warning",
@@ -58,7 +58,7 @@ export default async function ToolsPage({ searchParams }: { searchParams: Promis
           <h1 className="text-h1 text-[--color-text-primary]">Tools</h1>
           <p className="text-body text-[--color-text-secondary] mt-0.5">{tools.length} tools in catalog</p>
         </div>
-        <Link href="/tools/new"><Button size="sm">+ Add tool</Button></Link>
+        <AddToolDialog />
       </div>
 
       {/* View tabs */}
@@ -87,7 +87,7 @@ export default async function ToolsPage({ searchParams }: { searchParams: Promis
       {filtered.length === 0 ? (
         <div className="card text-center py-12">
           <p className="text-body text-[--color-text-secondary] mb-4">No tools found.</p>
-          <Link href="/tools/new"><Button size="sm">Add tool</Button></Link>
+          <AddToolDialog />
         </div>
       ) : (
         <Table>

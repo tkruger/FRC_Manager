@@ -2,11 +2,11 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableHead, TableBody, Th, Td, Tr } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
 import { AcquireButton } from "./AcquireButton";
+import { AddInventoryItemDialog } from "./AddInventoryItemDialog";
 
 export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ view?: string; category?: string }> }) {
   const { view, category } = await searchParams;
@@ -55,7 +55,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
           <p className="text-body text-[--color-text-secondary] mt-0.5">{items.length} items · {activeSeason.name}</p>
         </div>
         <div className="flex gap-2">
-          <Link href="/inventory/base/new"><Button size="sm">+ Add item</Button></Link>
+          <AddInventoryItemDialog />
         </div>
       </div>
 
@@ -95,7 +95,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
       {displayed.length === 0 ? (
         <div className="card text-center py-12">
           <p className="text-body text-[--color-text-secondary] mb-4">No items found.</p>
-          <Link href="/inventory/base/new"><Button size="sm">Add item</Button></Link>
+          <AddInventoryItemDialog />
         </div>
       ) : (
         <Table>
