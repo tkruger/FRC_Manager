@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { formatDate } from "@/lib/utils";
 import { differenceInCalendarDays } from "date-fns";
+import { TiltCard } from "@/components/ui/TiltCard";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -131,20 +132,20 @@ export default async function DashboardPage() {
           { title: "Safety",        href: "/safety",          desc: "Certs & checklists",     color: "#0891B2",               icon: "🛡️" },
           { title: "Season",        href: "/settings/season", desc: "Season configuration",  color: "#64748B",               icon: "⚙️" },
         ].map((mod) => (
-          <a
-            key={mod.href}
-            href={mod.href}
-            className="card group hover:shadow-md transition-shadow flex flex-col gap-3 no-underline"
-            style={{ borderLeftColor: mod.color, borderLeftWidth: "4px" }}
-          >
-            <span className="text-2xl leading-none">{mod.icon}</span>
-            <div>
-              <p className="text-h3 text-[--color-text-primary] group-hover:text-[--color-primary] transition-colors">
-                {mod.title}
-              </p>
-              <p className="text-small text-[--color-text-secondary] mt-0.5">{mod.desc}</p>
-            </div>
-          </a>
+          <Link key={mod.href} href={mod.href} className="block no-underline">
+            <TiltCard
+              className="flex flex-col gap-3 h-full cursor-pointer"
+              style={{ borderLeftColor: mod.color, borderLeftWidth: "4px" }}
+            >
+              <span className="text-2xl leading-none">{mod.icon}</span>
+              <div>
+                <p className="text-h3 text-[--color-text-primary] group-hover:text-[--color-primary] transition-colors">
+                  {mod.title}
+                </p>
+                <p className="text-small text-[--color-text-secondary] mt-0.5">{mod.desc}</p>
+              </div>
+            </TiltCard>
+          </Link>
         ))}
       </div>
     </div>

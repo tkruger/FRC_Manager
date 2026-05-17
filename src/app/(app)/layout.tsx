@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { TopNav } from "@/components/layout/TopNav";
 import { prisma } from "@/lib/prisma";
 import { getActiveRobotId } from "@/app/actions/robot-context";
+import { AnimatedBackground } from "@/components/providers/AnimatedBackground";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -47,16 +48,22 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen bg-[--color-surface]">
-      <TopNav
-        session={session}
-        robots={robots}
-        activeRobotId={activeRobotId ?? undefined}
-        pendingMemberCount={pendingMemberCount}
-        unreadNotificationCount={unreadNotificationCount}
-        activeSeasonName={activeSeasonName}
-      />
-      {/* pt-14 clears the top nav; pb-14 clears the mobile bottom tab bar (hidden on lg+) */}
-      <main className="pt-14 pb-14 lg:pb-0">{children}</main>
+      {/* Animated background — orbs + mouse follower, sits behind all content */}
+      <AnimatedBackground />
+
+      {/* App shell — z-index 1 so it sits above background orbs */}
+      <div id="app-shell">
+        <TopNav
+          session={session}
+          robots={robots}
+          activeRobotId={activeRobotId ?? undefined}
+          pendingMemberCount={pendingMemberCount}
+          unreadNotificationCount={unreadNotificationCount}
+          activeSeasonName={activeSeasonName}
+        />
+        {/* pt-14 clears the top nav; pb-14 clears the mobile bottom tab bar (hidden on lg+) */}
+        <main className="pt-14 pb-14 lg:pb-0">{children}</main>
+      </div>
     </div>
   );
 }
