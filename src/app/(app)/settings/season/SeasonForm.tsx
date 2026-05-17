@@ -18,14 +18,17 @@ const DAYS = [
 
 const DEFAULT_DAYS = ["MON", "WED", "FRI", "SAT"];
 
-export function SeasonForm() {
+export function SeasonForm({ onClose }: { onClose?: () => void } = {}) {
   const router = useRouter();
   const [state, action, pending] = useActionState(createSeasonAction, null);
   const currentYear = new Date().getFullYear();
 
   useEffect(() => {
-    if (state?.success) router.refresh();
-  }, [state, router]);
+    if (state?.success) {
+      router.refresh();
+      onClose?.();
+    }
+  }, [state, router, onClose]);
 
   return (
     <form action={action} className="space-y-5">
@@ -77,7 +80,10 @@ export function SeasonForm() {
         <Field label="Expected attendance" name="expectedAttendance" type="number" defaultValue={15} min={1} />
       </div>
 
-      <Button type="submit" isLoading={pending}>Activate season</Button>
+      <div className="flex gap-3">
+        <Button type="submit" isLoading={pending}>Activate season</Button>
+        {onClose && <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>}
+      </div>
     </form>
   );
 }
