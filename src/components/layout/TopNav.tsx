@@ -48,7 +48,14 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
   return (
     <>
       {/* ── Top navigation bar ── */}
-      <header className="fixed inset-x-0 top-0 z-40 h-14 border-b border-[--color-border] bg-[--color-surface]/95 backdrop-blur-sm flex items-center px-4 gap-3 transition-colors">
+      <header className="fixed inset-x-0 top-0 z-40 h-14 flex items-center px-4 gap-3 transition-colors"
+        style={{
+          backgroundColor: "color-mix(in srgb, var(--color-surface) 88%, transparent)",
+          backdropFilter: "blur(20px) saturate(180%)",
+          WebkitBackdropFilter: "blur(20px) saturate(180%)",
+          borderBottom: "1px solid color-mix(in srgb, var(--color-border) 80%, transparent)",
+          boxShadow: "0 1px 0 0 color-mix(in srgb, var(--color-border) 40%, transparent), 0 4px 12px -4px rgb(0 0 0 / .06)",
+        }}>
 
         {/* Logo + season pill */}
         <div className="flex items-center gap-2 shrink-0">
@@ -142,7 +149,14 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
 
       {/* ── Mobile bottom tab bar (hidden on lg+) ── */}
       <nav
-        className="fixed bottom-0 inset-x-0 z-40 lg:hidden border-t border-[--color-border] bg-[--color-surface]/95 backdrop-blur-sm safe-bottom"
+        className="fixed bottom-0 inset-x-0 z-40 lg:hidden safe-bottom"
+        style={{
+          backgroundColor: "color-mix(in srgb, var(--color-surface) 92%, transparent)",
+          backdropFilter: "blur(20px) saturate(180%)",
+          WebkitBackdropFilter: "blur(20px) saturate(180%)",
+          borderTop: "1px solid color-mix(in srgb, var(--color-border) 80%, transparent)",
+          boxShadow: "0 -4px 12px -4px rgb(0 0 0 / .06)",
+        }}
         aria-label="Mobile navigation"
       >
         <div className="flex items-stretch h-14">

@@ -2,35 +2,37 @@
 
 /* ─── FRC Design System — Color Tokens ─── */
 :root {
-  /* Brand */
   --color-primary:        #C1121F;
   --color-secondary:      #1D3A8A;
 
-  /* Surfaces */
   --color-surface:        #FFFFFF;
   --color-surface-raised: #F4F5F7;
   --color-surface-overlay:#ECEEF2;
 
-  /* Borders */
   --color-border:         #DDE1E9;
 
-  /* Text */
   --color-text-primary:   #0D0F12;
   --color-text-secondary: #5A6272;
   --color-text-disabled:  #A0A8B8;
 
-  /* Semantic */
   --color-success:        #1A7F4B;
   --color-warning:        #B45309;
   --color-danger:         #C1121F;
   --color-info:           #1D3A8A;
 
-  /* Misc */
-  --radius-card:          8px;
-  --shadow-card:          0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+  /* Shadow system */
+  --shadow-sm:   0 1px 2px 0 rgb(0 0 0 / .05);
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / .06), 0 1px 2px -1px rgb(0 0 0 / .04);
+  --shadow-md:   0 4px 6px -1px rgb(0 0 0 / .07), 0 2px 4px -2px rgb(0 0 0 / .04);
+  --shadow-lg:   0 10px 20px -4px rgb(0 0 0 / .08), 0 4px 8px -4px rgb(0 0 0 / .04);
+  --shadow-xl:   0 20px 32px -8px rgb(0 0 0 / .10), 0 8px 16px -8px rgb(0 0 0 / .04);
 
-  /* Tell the browser to render native controls (date pickers, selects,
-     scrollbars) in light mode so they match our light theme */
+  --radius-card: 10px;
+
+  /* Dot-grid texture values (updated per theme) */
+  --dot-color: rgb(0 0 0 / .055);
+  --dot-size: 20px;
+
   color-scheme: light;
 }
 
@@ -38,58 +40,59 @@
   --color-primary:        #E63946;
   --color-secondary:      #4F7FE8;
 
-  --color-surface:        #121418;
-  --color-surface-raised: #1E2126;
-  --color-surface-overlay:#272C34;
+  --color-surface:        #0F1117;
+  --color-surface-raised: #181C24;
+  --color-surface-overlay:#1F2430;
 
-  --color-border:         #2E343E;
+  --color-border:         #262D3A;
 
-  --color-text-primary:   #F0F2F5;
-  --color-text-secondary: #9BA3B2;
-  --color-text-disabled:  #4A5262;
+  --color-text-primary:   #EEF0F5;
+  --color-text-secondary: #8892A4;
+  --color-text-disabled:  #3E4758;
 
   --color-success:        #34C77B;
   --color-warning:        #F59E0B;
   --color-danger:         #E63946;
   --color-info:           #4F7FE8;
 
-  /* This single property fixes ALL browser-native dark-mode rendering:
-     date/time picker icons, calendar popups, select arrows, scrollbars */
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / .25), 0 1px 2px -1px rgb(0 0 0 / .20);
+  --shadow-md:   0 4px 6px -1px rgb(0 0 0 / .30), 0 2px 4px -2px rgb(0 0 0 / .20);
+  --shadow-lg:   0 10px 20px -4px rgb(0 0 0 / .35), 0 4px 8px -4px rgb(0 0 0 / .20);
+  --shadow-xl:   0 20px 32px -8px rgb(0 0 0 / .40), 0 8px 16px -8px rgb(0 0 0 / .20);
+
+  --dot-color: rgb(255 255 255 / .03);
+
   color-scheme: dark;
 }
 
 /* ─── Tailwind theme bridge ─── */
 @theme inline {
-  --color-background:     var(--color-surface);
-  --color-foreground:     var(--color-text-primary);
-
-  --color-frc-primary:        var(--color-primary);
-  --color-frc-secondary:      var(--color-secondary);
-  --color-frc-surface:        var(--color-surface);
-  --color-frc-surface-raised: var(--color-surface-raised);
-  --color-frc-surface-overlay:var(--color-surface-overlay);
-  --color-frc-border:         var(--color-border);
-  --color-frc-text:           var(--color-text-primary);
-  --color-frc-text-secondary: var(--color-text-secondary);
-  --color-frc-text-disabled:  var(--color-text-disabled);
-  --color-frc-success:        var(--color-success);
-  --color-frc-warning:        var(--color-warning);
-  --color-frc-danger:         var(--color-danger);
-  --color-frc-info:           var(--color-info);
+  --color-background:          var(--color-surface);
+  --color-foreground:          var(--color-text-primary);
+  --color-frc-primary:         var(--color-primary);
+  --color-frc-secondary:       var(--color-secondary);
+  --color-frc-surface:         var(--color-surface);
+  --color-frc-surface-raised:  var(--color-surface-raised);
+  --color-frc-surface-overlay: var(--color-surface-overlay);
+  --color-frc-border:          var(--color-border);
+  --color-frc-text:            var(--color-text-primary);
+  --color-frc-text-secondary:  var(--color-text-secondary);
+  --color-frc-text-disabled:   var(--color-text-disabled);
+  --color-frc-success:         var(--color-success);
+  --color-frc-warning:         var(--color-warning);
+  --color-frc-danger:          var(--color-danger);
+  --color-frc-info:            var(--color-info);
 
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
-/* ─── Base styles ─── */
-*, *::before, *::after {
-  box-sizing: border-box;
-}
+/* ─── Base ─── */
+*, *::before, *::after { box-sizing: border-box; }
 
 html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
-  /* Allow momentum scrolling on iOS */
   -webkit-overflow-scrolling: touch;
 }
 
@@ -98,34 +101,67 @@ body {
   color: var(--color-text-primary);
   font-family: var(--font-sans);
   line-height: 1.6;
-  transition: background-color 200ms ease, color 200ms ease;
-  /* Prevent horizontal overflow on mobile */
   overflow-x: hidden;
+  transition: background-color 200ms ease, color 200ms ease;
+
+  /* Subtle dot-grid texture */
+  background-image: radial-gradient(var(--dot-color) 1px, transparent 1px);
+  background-size: var(--dot-size) var(--dot-size);
 }
 
-/* ─── Typography scale ─── */
-.text-display  { font-size: 2.25rem; font-weight: 700; line-height: 1.15; }
-.text-h1       { font-size: 1.75rem; font-weight: 700; line-height: 1.2; }
-.text-h2       { font-size: 1.25rem; font-weight: 600; line-height: 1.3; }
-.text-h3       { font-size: 1rem;    font-weight: 600; line-height: 1.4; }
-.text-body     { font-size: 0.9375rem; font-weight: 400; line-height: 1.6; }
-.text-small    { font-size: 0.8125rem; font-weight: 400; line-height: 1.5; }
-.text-label    { font-size: 0.75rem;   font-weight: 500; line-height: 1.4; letter-spacing: 0.01em; }
-.text-mono     { font-family: var(--font-mono); font-size: 0.875rem; font-weight: 400; }
+/* ─── Typography ─── */
+.text-display { font-size: 2.25rem; font-weight: 700; line-height: 1.15; letter-spacing: -0.02em; }
+.text-h1      { font-size: 1.75rem; font-weight: 700; line-height: 1.2;  letter-spacing: -0.015em; }
+.text-h2      { font-size: 1.25rem; font-weight: 600; line-height: 1.3;  letter-spacing: -0.01em; }
+.text-h3      { font-size: 1rem;    font-weight: 600; line-height: 1.4; }
+.text-body    { font-size: 0.9375rem; font-weight: 400; line-height: 1.6; }
+.text-small   { font-size: 0.8125rem; font-weight: 400; line-height: 1.5; }
+.text-label   { font-size: 0.75rem;   font-weight: 500; line-height: 1.4; letter-spacing: 0.01em; }
+.text-mono    { font-family: var(--font-mono); font-size: 0.875rem; font-weight: 400; }
+
+/* Gradient text utility — use on headings for emphasis */
+.text-gradient {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 
 /* ─── Card ─── */
 .card {
+  position: relative;
   background-color: var(--color-surface-raised);
   border-radius: var(--radius-card);
   border: 1px solid var(--color-border);
   padding: 1.25rem;
   box-shadow: var(--shadow-card);
-  transition: background-color 200ms ease, border-color 200ms ease;
+  transition: transform 180ms ease, box-shadow 180ms ease,
+              background-color 200ms ease, border-color 200ms ease;
+  overflow: hidden;
+}
+
+/* Subtle top-left sheen — adds perceived depth without being flashy */
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgb(255 255 255 / .06) 0%, transparent 50%);
+  pointer-events: none;
+}
+[data-theme="dark"] .card::before {
+  background: linear-gradient(135deg, rgb(255 255 255 / .04) 0%, transparent 50%);
+}
+
+/* Lift on hover for clickable cards */
+a.card:hover, button.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
 [data-theme="dark"] .card {
-  border-color: transparent;
-  box-shadow: 0 0 0 1px var(--color-border);
+  border-color: var(--color-border);
+  box-shadow: var(--shadow-card);
 }
 
 /* ─── Status badges ─── */
@@ -140,38 +176,30 @@ body {
   line-height: 1.4;
   white-space: nowrap;
 }
-
 .badge::before {
   content: "";
   display: inline-block;
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   background-color: currentColor;
   flex-shrink: 0;
 }
-
-.badge-success { background-color: color-mix(in srgb, var(--color-success) 15%, transparent); color: var(--color-success); }
-.badge-warning { background-color: color-mix(in srgb, var(--color-warning) 15%, transparent); color: var(--color-warning); }
-.badge-danger  { background-color: color-mix(in srgb, var(--color-danger)  15%, transparent); color: var(--color-danger); }
-.badge-info    { background-color: color-mix(in srgb, var(--color-info)    15%, transparent); color: var(--color-info); }
+.badge-success { background-color: color-mix(in srgb, var(--color-success) 14%, transparent); color: var(--color-success); }
+.badge-warning { background-color: color-mix(in srgb, var(--color-warning) 14%, transparent); color: var(--color-warning); }
+.badge-danger  { background-color: color-mix(in srgb, var(--color-danger)  14%, transparent); color: var(--color-danger); }
+.badge-info    { background-color: color-mix(in srgb, var(--color-info)    14%, transparent); color: var(--color-info); }
 .badge-neutral { background-color: color-mix(in srgb, var(--color-text-secondary) 12%, transparent); color: var(--color-text-secondary); }
 
-/* ─── Native form controls — accessibility ─── */
-
-/* Select elements: explicit bg so dropdown list is always readable */
+/* ─── Native form controls ─── */
 select {
   background-color: var(--color-surface);
   color: var(--color-text-primary);
 }
-
-/* Ensure options are always readable regardless of OS theme */
 option {
   background-color: var(--color-surface);
   color: var(--color-text-primary);
 }
-
-/* Checkbox and radio — make them inherit the brand accent */
 input[type="checkbox"],
 input[type="radio"] {
   accent-color: var(--color-primary);
@@ -180,42 +208,36 @@ input[type="radio"] {
 }
 
 /* ─── Touch targets (WCAG 2.5.5) ─── */
-/* All interactive elements get a minimum tap target on touch devices */
 @media (pointer: coarse) {
-  button,
-  [role="button"],
-  input[type="checkbox"],
-  input[type="radio"],
-  select,
-  a {
+  button, [role="button"], input[type="checkbox"], input[type="radio"], select, a {
     min-height: 44px;
     min-width: 44px;
   }
-
-  /* But don't bloat inline text links */
-  p a,
-  .text-small a,
-  .badge,
-  nav a {
-    min-height: unset;
-    min-width: unset;
-  }
+  p a, .text-small a, .badge, nav a { min-height: unset; min-width: unset; }
 }
 
 /* ─── Focus ring ─── */
 :focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
-  border-radius: 2px;
+  border-radius: 3px;
 }
 
-/* ─── Scrollbar (webkit) ─── */
+/* ─── Scrollbar ─── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-text-disabled); }
 
-/* ─── Safe area insets (iPhone notch / Dynamic Island) ─── */
-.safe-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+/* ─── Safe area (iPhone notch) ─── */
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+/* ─── Gradient hero section ─── */
+.hero-gradient {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-primary) 6%, var(--color-surface)) 0%,
+    var(--color-surface) 40%,
+    color-mix(in srgb, var(--color-secondary) 4%, var(--color-surface)) 100%
+  );
 }

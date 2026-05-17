@@ -46,16 +46,21 @@ export default async function DashboardPage() {
     : 0;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-h1 text-[--color-text-primary]">
-          Welcome back, {session?.user?.name?.split(" ")[0]}
-        </h1>
-        <p className="text-body text-[--color-text-secondary] mt-1">
-          {activeSeason ? activeSeason.name : "FRC Team Management Suite"}
-        </p>
+    <div className="space-y-0">
+      {/* ── Hero gradient header ── */}
+      <div className="hero-gradient border-b border-[--color-border]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <p className="text-label font-semibold text-[--color-text-secondary] uppercase tracking-widest mb-2">
+            {activeSeason ? activeSeason.name : "FRC Team Management Suite"}
+          </p>
+          <h1 className="text-display text-[--color-text-primary]" style={{ letterSpacing: "-0.02em" }}>
+            Welcome back,{" "}
+            <span className="text-gradient">{session?.user?.name?.split(" ")[0]}</span>
+          </h1>
+        </div>
       </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
       {/* Season banner — only shown when no active season */}
       {!activeSeason && (
@@ -142,6 +147,7 @@ export default async function DashboardPage() {
           </a>
         ))}
       </div>
+    </div>
     </div>
   );
 }

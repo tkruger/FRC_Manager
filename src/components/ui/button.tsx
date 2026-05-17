@@ -2,12 +2,24 @@ import { cn } from "@/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 import { forwardRef } from "react";
 
-// Inline style maps for colored variants — guarantees CSS variable resolution
-// in both light and dark mode regardless of Tailwind class scanning.
+// Inline styles guarantee CSS variable resolution in both modes.
+// Gradient + shadow glow adds depth and makes buttons "pop".
 const VARIANT_STYLES: Record<string, React.CSSProperties> = {
-  primary:   { backgroundColor: "var(--color-primary)",   color: "#ffffff" },
-  secondary: { backgroundColor: "var(--color-secondary)", color: "#ffffff" },
-  danger:    { backgroundColor: "var(--color-danger)",    color: "#ffffff" },
+  primary: {
+    background: "linear-gradient(160deg, color-mix(in srgb, var(--color-primary) 90%, white 10%) 0%, var(--color-primary) 100%)",
+    color: "#ffffff",
+    boxShadow: "0 2px 8px -2px color-mix(in srgb, var(--color-primary) 50%, transparent), inset 0 1px 0 rgb(255 255 255 / .12)",
+  },
+  secondary: {
+    background: "linear-gradient(160deg, color-mix(in srgb, var(--color-secondary) 90%, white 10%) 0%, var(--color-secondary) 100%)",
+    color: "#ffffff",
+    boxShadow: "0 2px 8px -2px color-mix(in srgb, var(--color-secondary) 50%, transparent), inset 0 1px 0 rgb(255 255 255 / .12)",
+  },
+  danger: {
+    background: "linear-gradient(160deg, color-mix(in srgb, var(--color-danger) 90%, white 10%) 0%, var(--color-danger) 100%)",
+    color: "#ffffff",
+    boxShadow: "0 2px 8px -2px color-mix(in srgb, var(--color-danger) 50%, transparent), inset 0 1px 0 rgb(255 255 255 / .12)",
+  },
 };
 
 const buttonVariants = cva(
