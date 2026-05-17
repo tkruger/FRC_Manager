@@ -3,18 +3,28 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
+import { useEffect, useRef, useState } from "react";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { cn } from "@/lib/utils";
 import type { Session } from "next-auth";
 
 const MODULE_TABS = [
-  { label: "Fleet",       href: "/fleet" },
-  { label: "Tools",       href: "/tools" },
-  { label: "Inventory",   href: "/inventory" },
-  { label: "Procurement", href: "/procurement" },
-  { label: "Budget",      href: "/budget" },
-  { label: "Schedule",    href: "/schedule" },
-  { label: "Safety",      href: "/safety" },
+  { label: "Fleet",       href: "/fleet",       icon: FleetIcon },
+  { label: "Tools",       href: "/tools",       icon: ToolsIcon },
+  { label: "Inventory",   href: "/inventory",   icon: InventoryIcon },
+  { label: "Procurement", href: "/procurement", icon: ProcurementIcon },
+  { label: "Budget",      href: "/budget",      icon: BudgetIcon },
+  { label: "Schedule",    href: "/schedule",    icon: ScheduleIcon },
+  { label: "Safety",      href: "/safety",      icon: SafetyIcon },
+];
+
+// Five tabs shown on mobile bottom bar (most-used modules)
+const MOBILE_TABS = [
+  { label: "Fleet",     href: "/fleet",       icon: FleetIcon },
+  { label: "Inventory", href: "/inventory",   icon: InventoryIcon },
+  { label: "Orders",    href: "/procurement", icon: ProcurementIcon },
+  { label: "Schedule",  href: "/schedule",    icon: ScheduleIcon },
+  { label: "More",      href: "/dashboard",   icon: MoreIcon },
 ];
 
 const ROBOT_CONTEXT_PATHS = ["/fleet", "/inventory", "/schedule", "/budget"];
@@ -35,105 +45,126 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
   const activeRobot = robots.find((r) => r.id === activeRobotId);
 
   return (
-    <header className="fixed inset-x-0 top-0 z-40 h-14 border-b border-[--color-border] bg-[--color-surface]/95 backdrop-blur-sm flex items-center px-4 gap-4 transition-colors">
-      {/* Logo */}
-      <Link href="/dashboard" className="flex items-center gap-2 shrink-0">
-        <div className="w-7 h-7 rounded bg-[--color-primary] flex items-center justify-center">
-          <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-white" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z" />
-          </svg>
+    <>
+      {/* ── Top navigation bar ── */}
+      <header className="fixed inset-x-0 top-0 z-40 h-14 border-b border-[--color-border] bg-[--color-surface]/95 backdrop-blur-sm flex items-center px-4 gap-3 transition-colors">
+
+        {/* Logo */}
+        <Link href="/dashboard" className="flex items-center gap-2 shrink-0" aria-label="FRC Manager home">
+          <div className="w-7 h-7 rounded bg-[--color-primary] flex items-center justify-center shrink-0">
+            <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-white" stroke="currentColor" strokeWidth={2.5} aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z" />
+            </svg>
+          </div>
+          <span className="font-bold text-sm text-[--color-text-primary] hidden sm:block">FRC Manager</span>
+        </Link>
+
+        {/* Desktop module tabs (hidden on mobile — replaced by bottom bar) */}
+        <nav className="hidden lg:flex items-center gap-1 flex-1 justify-center" aria-label="Modules">
+          {MODULE_TABS.map(({ label, href }) => {
+            const active = pathname.startsWith(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={cn(
+                  "relative px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+                  active
+                    ? "text-[--color-primary]"
+                    : "text-[--color-text-secondary] hover:text-[--color-text-primary] hover:bg-[--color-surface-overlay]"
+                )}
+              >
+                {label}
+                {active && <span className="absolute bottom-0 inset-x-0 h-0.5 rounded-t-full bg-[--color-primary]" />}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Right controls */}
+        <div className="flex items-center gap-1.5 ml-auto shrink-0">
+          {/* Robot selector — hide on very small screens */}
+          {showRobotSelector && robots.length > 0 && (
+            <div className="hidden sm:flex">
+              <RobotSelector robots={robots} activeRobotId={activeRobotId} activeRobot={activeRobot} />
+            </div>
+          )}
+
+          {/* Theme toggle */}
+          <button
+            onClick={toggle}
+            className="h-9 w-9 rounded-md flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors"
+            aria-label={resolvedTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            title={`Mode: ${mode}`}
+          >
+            {resolvedTheme === "dark" ? <SunIcon /> : <MoonIcon />}
+          </button>
+
+          {/* Notification bell */}
+          <Link
+            href="/notifications"
+            className="relative h-9 w-9 rounded-md flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors"
+            aria-label={`Notifications${unreadNotificationCount > 0 ? ` (${unreadNotificationCount} unread)` : ""}`}
+          >
+            <BellIcon />
+            {unreadNotificationCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-[--color-primary] text-white text-[10px] font-bold flex items-center justify-center" aria-hidden>
+                {unreadNotificationCount > 9 ? "9+" : unreadNotificationCount}
+              </span>
+            )}
+          </Link>
+
+          {/* Settings / member approval */}
+          <Link
+            href="/settings/members"
+            className="relative h-9 w-9 rounded-md flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors hidden sm:flex"
+            aria-label={`Team settings${pendingMemberCount > 0 ? ` (${pendingMemberCount} pending approvals)` : ""}`}
+          >
+            <UserCircleIcon />
+            {pendingMemberCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-[--color-warning] text-white text-[10px] font-bold flex items-center justify-center" aria-hidden>
+                {pendingMemberCount > 9 ? "9+" : pendingMemberCount}
+              </span>
+            )}
+          </Link>
+
+          {session?.user && <UserMenu user={session.user} />}
         </div>
-        <span className="font-bold text-sm text-[--color-text-primary] hidden sm:block">FRC Manager</span>
-      </Link>
+      </header>
 
-      {/* Module tabs */}
-      <nav className="hidden lg:flex items-center gap-1 flex-1 justify-center" aria-label="Modules">
-        {MODULE_TABS.map((tab) => {
-          const active = pathname.startsWith(tab.href);
-          return (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              className={cn(
-                "relative px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
-                active
-                  ? "text-[--color-primary]"
-                  : "text-[--color-text-secondary] hover:text-[--color-text-primary] hover:bg-[--color-surface-overlay]"
-              )}
-            >
-              {tab.label}
-              {active && <span className="absolute bottom-0 inset-x-0 h-0.5 rounded-t-full bg-[--color-primary]" />}
-            </Link>
-          );
-        })}
+      {/* ── Mobile bottom tab bar (hidden on lg+) ── */}
+      <nav
+        className="fixed bottom-0 inset-x-0 z-40 lg:hidden border-t border-[--color-border] bg-[--color-surface]/95 backdrop-blur-sm safe-bottom"
+        aria-label="Mobile navigation"
+      >
+        <div className="flex items-stretch h-14">
+          {MOBILE_TABS.map(({ label, href, icon: Icon }) => {
+            const active = href !== "/dashboard" && pathname.startsWith(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={cn(
+                  "flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors py-2",
+                  active
+                    ? "text-[--color-primary]"
+                    : "text-[--color-text-secondary]"
+                )}
+                aria-current={active ? "page" : undefined}
+              >
+                <Icon className={cn("w-5 h-5", active && "text-[--color-primary]")} />
+                {label}
+              </Link>
+            );
+          })}
+        </div>
       </nav>
-
-      {/* Right controls */}
-      <div className="flex items-center gap-2 ml-auto shrink-0">
-        {showRobotSelector && robots.length > 0 && (
-          <RobotSelector robots={robots} activeRobotId={activeRobotId} activeRobot={activeRobot} />
-        )}
-
-        {/* Theme toggle */}
-        <button
-          onClick={toggle}
-          className="h-9 w-9 rounded-md flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors"
-          aria-label={resolvedTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-          title={`Mode: ${mode}`}
-        >
-          {resolvedTheme === "dark" ? (
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
-            </svg>
-          ) : (
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
-            </svg>
-          )}
-        </button>
-
-        {/* Notification bell */}
-        <Link
-          href="/notifications"
-          className="relative h-9 w-9 rounded-md flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors"
-          aria-label="Notifications"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-          </svg>
-          {unreadNotificationCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-[--color-primary] text-white text-[10px] font-bold flex items-center justify-center">
-              {unreadNotificationCount > 9 ? "9+" : unreadNotificationCount}
-            </span>
-          )}
-        </Link>
-
-        {/* Settings / member approval — with pending badge */}
-        <Link
-          href="/settings/members"
-          className="relative h-9 w-9 rounded-md flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors"
-          aria-label="Team settings"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-          {pendingMemberCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-[--color-warning] text-white text-[10px] font-bold flex items-center justify-center">
-              {pendingMemberCount > 9 ? "9+" : pendingMemberCount}
-            </span>
-          )}
-        </Link>
-
-        {session?.user && <UserMenu user={session.user} />}
-      </div>
-    </header>
+    </>
   );
 }
 
 function RobotSelector({
-  robots,
-  activeRobotId,
-  activeRobot,
+  robots, activeRobotId, activeRobot,
 }: {
   robots: { id: string; displayName: string; status: string }[];
   activeRobotId?: string;
@@ -144,13 +175,14 @@ function RobotSelector({
     <div className="flex items-center gap-1.5 rounded-md border border-[--color-border] bg-[--color-surface-raised] px-3 h-9 text-sm">
       <span className="text-[--color-text-secondary] text-xs">Robot:</span>
       <select
-        className="bg-transparent text-[--color-text-primary] text-sm font-medium focus:outline-none cursor-pointer max-w-[160px]"
+        className="bg-transparent text-[--color-text-primary] text-sm font-medium focus:outline-none cursor-pointer max-w-[140px]"
         value={activeRobotId ?? ""}
         onChange={(e) => {
           const url = new URL(window.location.href);
           url.searchParams.set("robotId", e.target.value);
           window.location.href = url.toString();
         }}
+        aria-label="Select robot"
       >
         <option value="">All Robots</option>
         {robots.map((r) => (
@@ -163,32 +195,183 @@ function RobotSelector({
 }
 
 function UserMenu({ user }: { user: { name?: string | null; email?: string | null } }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Close when clicking outside
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    if (open) document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  // Close on Escape
+  useEffect(() => {
+    function handler(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    if (open) document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [open]);
+
   return (
-    <div className="relative group">
+    <div ref={ref} className="relative">
       <button
-        className="h-9 w-9 rounded-full bg-[--color-primary] flex items-center justify-center text-white text-sm font-bold shrink-0"
+        onClick={() => setOpen((v) => !v)}
+        className="h-9 w-9 rounded-full bg-[--color-primary] flex items-center justify-center text-white text-sm font-bold shrink-0 transition-opacity hover:opacity-90"
         aria-label="User menu"
+        aria-expanded={open}
+        aria-haspopup="menu"
       >
         {user.name?.[0]?.toUpperCase() ?? "U"}
       </button>
-      <div className="absolute right-0 top-full mt-1 w-52 rounded-md border border-[--color-border] bg-[--color-surface-raised] shadow-lg py-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50">
-        <div className="px-3 py-2 border-b border-[--color-border]">
-          <p className="text-sm font-medium text-[--color-text-primary] truncate">{user.name}</p>
-          <p className="text-xs text-[--color-text-secondary] truncate">{user.email}</p>
-        </div>
-        <Link href="/settings/members" className="flex items-center gap-2 px-3 py-2 text-sm text-[--color-text-primary] hover:bg-[--color-surface-overlay]">
-          Team members
-        </Link>
-        <Link href="/settings/season" className="flex items-center gap-2 px-3 py-2 text-sm text-[--color-text-primary] hover:bg-[--color-surface-overlay]">
-          Season settings
-        </Link>
-        <button
-          onClick={() => signOut({ callbackUrl: "/login" })}
-          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[--color-danger] hover:bg-[--color-surface-overlay]"
+
+      {open && (
+        <div
+          className="absolute right-0 top-full mt-1 w-56 rounded-lg border border-[--color-border] bg-[--color-surface-raised] shadow-xl py-1 z-50"
+          role="menu"
         >
-          Sign out
-        </button>
-      </div>
+          <div className="px-3 py-2.5 border-b border-[--color-border]">
+            <p className="text-sm font-semibold text-[--color-text-primary] truncate">{user.name}</p>
+            <p className="text-xs text-[--color-text-secondary] truncate mt-0.5">{user.email}</p>
+          </div>
+          <Link href="/settings/members" role="menuitem" onClick={() => setOpen(false)}
+            className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-[--color-text-primary] hover:bg-[--color-surface-overlay] transition-colors">
+            <UserCircleIcon className="w-4 h-4 text-[--color-text-secondary]" />
+            Team members
+          </Link>
+          <Link href="/settings/season" role="menuitem" onClick={() => setOpen(false)}
+            className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-[--color-text-primary] hover:bg-[--color-surface-overlay] transition-colors">
+            <CalendarIcon className="w-4 h-4 text-[--color-text-secondary]" />
+            Season settings
+          </Link>
+          <div className="border-t border-[--color-border] mt-1 pt-1">
+            <button
+              role="menuitem"
+              onClick={() => signOut({ callbackUrl: "/login" })}
+              className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-[--color-danger] hover:bg-[--color-surface-overlay] transition-colors"
+            >
+              <SignOutIcon className="w-4 h-4" />
+              Sign out
+            </button>
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+// ── SVG icon components ──────────────────────────────────────────
+function FleetIcon({ className }: { className?: string }) {
+  return (
+    <svg className={cn("w-4 h-4", className)} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+    </svg>
+  );
+}
+
+function ToolsIcon({ className }: { className?: string }) {
+  return (
+    <svg className={cn("w-4 h-4", className)} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z" />
+    </svg>
+  );
+}
+
+function InventoryIcon({ className }: { className?: string }) {
+  return (
+    <svg className={cn("w-4 h-4", className)} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+    </svg>
+  );
+}
+
+function ProcurementIcon({ className }: { className?: string }) {
+  return (
+    <svg className={cn("w-4 h-4", className)} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+    </svg>
+  );
+}
+
+function BudgetIcon({ className }: { className?: string }) {
+  return (
+    <svg className={cn("w-4 h-4", className)} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+}
+
+function ScheduleIcon({ className }: { className?: string }) {
+  return (
+    <svg className={cn("w-4 h-4", className)} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+    </svg>
+  );
+}
+
+function SafetyIcon({ className }: { className?: string }) {
+  return (
+    <svg className={cn("w-4 h-4", className)} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+    </svg>
+  );
+}
+
+function MoreIcon({ className }: { className?: string }) {
+  return (
+    <svg className={cn("w-4 h-4", className)} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+    </svg>
+  );
+}
+
+function SunIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+    </svg>
+  );
+}
+
+function BellIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+    </svg>
+  );
+}
+
+function UserCircleIcon({ className }: { className?: string }) {
+  return (
+    <svg className={cn("w-4 h-4", className)} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  );
+}
+
+function CalendarIcon({ className }: { className?: string }) {
+  return (
+    <svg className={cn("w-4 h-4", className)} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+    </svg>
+  );
+}
+
+function SignOutIcon({ className }: { className?: string }) {
+  return (
+    <svg className={cn("w-4 h-4", className)} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+    </svg>
   );
 }
