@@ -7,13 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 
 const DAYS = [
-  { value: "MON", label: "Mon" },
-  { value: "TUE", label: "Tue" },
-  { value: "WED", label: "Wed" },
-  { value: "THU", label: "Thu" },
-  { value: "FRI", label: "Fri" },
-  { value: "SAT", label: "Sat" },
-  { value: "SUN", label: "Sun" },
+  { value: "MON", label: "Monday" },
+  { value: "TUE", label: "Tuesday" },
+  { value: "WED", label: "Wednesday" },
+  { value: "THU", label: "Thursday" },
+  { value: "FRI", label: "Friday" },
+  { value: "SAT", label: "Saturday" },
+  { value: "SUN", label: "Sunday" },
 ];
 
 interface Season {
@@ -69,37 +69,38 @@ export function EditSeasonForm({ season, onClose }: Props) {
           hint="Your internal robot-complete deadline" />
       </div>
 
-      {/* Meeting days */}
+      {/* Meeting days — checkbox list */}
       <div>
         <p className="block text-label font-medium text-[--color-text-primary] mb-2">
           Build meeting days <span className="text-[--color-danger]">*</span>
         </p>
-        <div className="flex gap-2 flex-wrap">
+        <div className="rounded-md border border-[--color-border] overflow-hidden divide-y divide-[--color-border]/40">
           {DAYS.map(({ value, label }) => (
-            <label key={value} className="cursor-pointer select-none">
+            <label key={value} className="flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors hover:bg-[--color-surface-overlay] has-[:checked]:bg-[--color-primary]/8">
               <input
                 type="checkbox"
                 name="meetingDays"
                 value={value}
                 defaultChecked={season.meetingDays.includes(value)}
-                className="sr-only peer"
+                className="rounded flex-shrink-0"
               />
-              <span className="inline-flex items-center justify-center px-4 py-2 rounded-md text-sm font-medium border transition-colors
-                bg-[--color-surface] border-[--color-border] text-[--color-text-secondary]
-                peer-checked:bg-[--color-primary] peer-checked:text-white peer-checked:border-[--color-primary]
-                hover:border-[--color-primary] hover:text-[--color-primary]
-                peer-checked:hover:brightness-90">
-                {label}
-              </span>
+              <span className="text-sm text-[--color-text-primary]">{label}</span>
             </label>
           ))}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Field label="Meeting start" name="meetingStartTime" type="time" required defaultValue={season.meetingStartTime} />
-        <Field label="Meeting end" name="meetingEndTime" type="time" required defaultValue={season.meetingEndTime} />
-        <Field label="Expected attendance" name="expectedAttendance" type="number" defaultValue={season.expectedAttendance} min={1} />
+      {/* Default meeting times */}
+      <div>
+        <p className="block text-label font-medium text-[--color-text-primary] mb-1">
+          Default meeting times
+        </p>
+        <p className="text-small text-[--color-text-secondary] mb-3">Applied to all selected build days</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <Field label="Start time" name="meetingStartTime" type="time" required defaultValue={season.meetingStartTime} />
+          <Field label="End time"   name="meetingEndTime"   type="time" required defaultValue={season.meetingEndTime} />
+          <Field label="Expected attendance" name="expectedAttendance" type="number" defaultValue={season.expectedAttendance} min={1} />
+        </div>
       </div>
 
       <div className="flex gap-3">
