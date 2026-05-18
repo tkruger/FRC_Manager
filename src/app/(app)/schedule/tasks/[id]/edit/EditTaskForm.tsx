@@ -120,22 +120,21 @@ export function EditTaskForm({ task, robots, members, existingTasks, kickoffDate
       {members.length > 0 && (
         <div className="card space-y-3">
           <h2 className="text-h3 text-[--color-text-primary]">Assignees</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <div className="max-h-48 overflow-y-auto space-y-0.5">
             {members.map((m) => {
               const active = selectedAssignees.includes(m.id);
               return (
                 <label key={m.id}
-                  className={`flex items-center gap-2 rounded-md border px-3 py-2 cursor-pointer transition-colors ${
-                    active ? "border-[--color-primary] bg-[--color-primary]/8" : "border-[--color-border] hover:border-[--color-primary]/50"
+                  className={`flex items-center gap-3 rounded-md px-2 py-2 cursor-pointer transition-colors ${
+                    active ? "bg-[--color-primary]/10" : "hover:bg-[--color-surface-overlay]"
                   }`}>
                   <input type="checkbox" name="assigneeIds" value={m.id} checked={active}
-                    onChange={() => toggleAssignee(m.id)} className="sr-only" />
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                    active ? "bg-[--color-primary] text-white" : "bg-[--color-surface-overlay] text-[--color-text-secondary]"
-                  }`}>
+                    onChange={() => toggleAssignee(m.id)} className="rounded flex-shrink-0" />
+                  <div style={{ backgroundColor: "var(--color-primary)" }}
+                    className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
                     {m.name[0].toUpperCase()}
                   </div>
-                  <span className="text-sm text-[--color-text-primary] truncate">{m.name}</span>
+                  <span className="text-sm text-[--color-text-primary]">{m.name}</span>
                 </label>
               );
             })}
