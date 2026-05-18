@@ -7,6 +7,7 @@ import { Table, TableHead, TableBody, Th, Td, Tr } from "@/components/ui/table";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import { CheckinButton } from "./CheckinButton";
 import { AddToolDialog } from "./AddToolDialog";
+import { Button } from "@/components/ui/button";
 
 const CONDITION_BADGE: Record<string, "success"|"warning"|"danger"|"neutral"> = {
   EXCELLENT: "success", GOOD: "success", FAIR: "warning",
@@ -121,7 +122,7 @@ export default async function ToolsPage({ searchParams }: { searchParams: Promis
                     {checkout ? (
                       <CheckinButton checkoutId={checkout.id} toolName={t.name} />
                     ) : available > 0 ? (
-                      <Link href={`/tools/${t.id}`} className="text-small text-[--color-secondary] hover:underline">Check out</Link>
+                      <Link href={`/tools/${t.id}`}><Button variant="outline" size="sm">Check out</Button></Link>
                     ) : (
                       <span className="text-small text-[--color-text-disabled]">Unavailable</span>
                     )}

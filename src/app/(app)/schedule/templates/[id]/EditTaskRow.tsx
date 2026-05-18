@@ -30,9 +30,7 @@ export function EditTaskRow({ task }: { task: TemplateTask }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="text-small text-[--color-secondary] hover:underline px-1" title="Edit task">
-          Edit
-        </button>
+        <Button variant="outline" size="sm">Edit</Button>
       </DialogTrigger>
       <DialogContent title={`Edit: ${task.name}`}>
         <form onSubmit={handleSubmit} className="space-y-4">

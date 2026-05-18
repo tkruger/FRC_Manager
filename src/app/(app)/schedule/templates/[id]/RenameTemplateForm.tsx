@@ -31,10 +31,9 @@ export function RenameTemplateForm({ templateId, currentName, currentDescription
           <h1 className="text-h1 text-[--color-text-primary]">{currentName}</h1>
           {currentDescription && <p className="text-body text-[--color-text-secondary] mt-1">{currentDescription}</p>}
         </div>
-        <button onClick={() => setEditing(true)}
-          className="mt-1 text-small text-[--color-secondary] hover:underline shrink-0">
+        <Button variant="outline" size="sm" onClick={() => setEditing(true)} className="mt-1 shrink-0">
           Rename
-        </button>
+        </Button>
       </div>
     );
   }

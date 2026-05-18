@@ -1,9 +1,10 @@
+"use client";
+
 import { cn } from "@/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
-import { forwardRef } from "react";
+import { forwardRef, useState } from "react";
 
-// Inline styles guarantee CSS variable resolution in both modes.
-// Gradient + shadow glow adds depth and makes buttons "pop".
+// Base (resting) styles per variant
 const VARIANT_STYLES: Record<string, React.CSSProperties> = {
   primary: {
     background: "linear-gradient(160deg, color-mix(in srgb, var(--color-primary) 90%, white 10%) 0%, var(--color-primary) 100%)",
@@ -22,35 +23,39 @@ const VARIANT_STYLES: Record<string, React.CSSProperties> = {
   },
 };
 
+// Hover → always transitions to secondary (blue) so hover intent is clear
+const HOVER_STYLE: React.CSSProperties = {
+  background: "linear-gradient(160deg, color-mix(in srgb, var(--color-secondary) 90%, white 10%) 0%, var(--color-secondary) 100%)",
+  color: "#ffffff",
+  boxShadow: "0 2px 12px -2px color-mix(in srgb, var(--color-secondary) 55%, transparent), inset 0 1px 0 rgb(255 255 255 / .15)",
+};
+
+// For outline/ghost buttons — hover tints with the secondary colour
+const OUTLINE_HOVER_STYLE: React.CSSProperties = {
+  backgroundColor: "color-mix(in srgb, var(--color-secondary) 10%, transparent)",
+  borderColor: "color-mix(in srgb, var(--color-secondary) 60%, transparent)",
+  color: "var(--color-secondary)",
+};
+
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 rounded-md font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer",
+  "inline-flex items-center justify-center gap-2 rounded-md font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer",
   {
     variants: {
       variant: {
-        // background/color set via inline style — class only adds hover/focus
-        primary:
-          "hover:opacity-85 active:opacity-75 focus-visible:ring-[--color-primary]",
-        secondary:
-          "hover:opacity-85 active:opacity-75 focus-visible:ring-[--color-secondary]",
-        danger:
-          "hover:opacity-85 active:opacity-75 focus-visible:ring-[--color-danger]",
-        // outline/ghost — no inline bg needed
-        outline:
-          "border border-[--color-border] bg-[--color-surface] text-[--color-text-primary] hover:bg-[--color-surface-overlay] active:bg-[--color-surface-overlay]",
-        ghost:
-          "bg-transparent text-[--color-text-primary] hover:bg-[--color-surface-overlay]",
+        primary:   "focus-visible:ring-[--color-secondary]",
+        secondary: "focus-visible:ring-[--color-secondary]",
+        danger:    "focus-visible:ring-[--color-secondary]",
+        outline:   "border border-[--color-border] bg-[--color-surface] text-[--color-text-primary]",
+        ghost:     "bg-transparent text-[--color-text-primary]",
       },
       size: {
-        sm: "h-9 px-3 text-sm",
-        md: "h-10 px-4 text-sm",
-        lg: "h-11 px-6 text-base",
+        sm:   "h-9 px-3 text-sm",
+        md:   "h-10 px-4 text-sm",
+        lg:   "h-11 px-6 text-base",
         icon: "h-9 w-9",
       },
     },
-    defaultVariants: {
-      variant: "primary",
-      size: "md",
-    },
+    defaultVariants: { variant: "primary", size: "md" },
   }
 );
 
@@ -61,14 +66,27 @@ interface ButtonProps
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, isLoading, children, disabled, style, ...props }, ref) => {
-    const variantStyle = VARIANT_STYLES[variant ?? "primary"] ?? {};
+  ({ className, variant, size, isLoading, children, disabled, style,
+     onMouseEnter, onMouseLeave, ...props }, ref) => {
+    const [hovered, setHovered] = useState(false);
+    const v = variant ?? "primary";
+
+    // Build inline style based on variant + hover state
+    let inlineStyle: React.CSSProperties = {};
+    if (v === "primary" || v === "secondary" || v === "danger") {
+      inlineStyle = hovered ? HOVER_STYLE : (VARIANT_STYLES[v] ?? {});
+    } else if ((v === "outline" || v === "ghost") && hovered) {
+      inlineStyle = OUTLINE_HOVER_STYLE;
+    }
+
     return (
       <button
         ref={ref}
         className={cn(buttonVariants({ variant, size }), className)}
-        style={{ ...variantStyle, ...style }}
+        style={{ ...inlineStyle, ...style }}
         disabled={disabled || isLoading}
+        onMouseEnter={(e) => { setHovered(true);  onMouseEnter?.(e); }}
+        onMouseLeave={(e) => { setHovered(false); onMouseLeave?.(e); }}
         {...props}
       >
         {isLoading && (

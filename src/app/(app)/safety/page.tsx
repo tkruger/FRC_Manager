@@ -73,7 +73,7 @@ export default async function SafetyPage() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-h2 text-[--color-text-primary]">Incident log</h2>
-            <Link href="/safety/incidents/new" className="text-small text-[--color-secondary] hover:underline">+ File</Link>
+            <Link href="/safety/incidents/new"><Button variant="outline" size="sm">+ File incident</Button></Link>
           </div>
           <div className="card divide-y divide-[--color-border]">
             {incidents.length === 0 ? (

@@ -42,7 +42,7 @@ export function MemberRoleEditor({ userId, currentRoles }: { userId: string; cur
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="text-small text-[--color-secondary] hover:underline">Edit roles</button>
+        <Button variant="outline" size="sm">Edit roles</Button>
       </DialogTrigger>
       <DialogContent title="Edit member roles">
         {error && <div className="text-sm text-[--color-danger] bg-[--color-danger]/10 rounded px-3 py-2 mb-4">{error}</div>}

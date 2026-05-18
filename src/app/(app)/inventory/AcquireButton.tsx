@@ -45,10 +45,7 @@ export function AcquireButton({ itemId, itemName, robots, maxQty }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button disabled={maxQty <= 0}
-          className="text-small text-[--color-secondary] hover:underline disabled:text-[--color-text-disabled] disabled:cursor-not-allowed">
-          Acquire
-        </button>
+        <Button variant="outline" size="sm" disabled={maxQty <= 0}>Acquire</Button>
       </DialogTrigger>
       <DialogContent title={`Acquire: ${itemName}`}>
         <form onSubmit={handleSubmit} className="space-y-4">

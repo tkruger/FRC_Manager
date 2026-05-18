@@ -25,9 +25,9 @@ export function WeightLogger({ robotId }: { robotId: string }) {
   }
 
   if (!open) return (
-    <button onClick={() => setOpen(true)} className="text-small text-[--color-secondary] hover:underline">
+    <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
       + Log weight snapshot
-    </button>
+    </Button>
   );
 
   return (

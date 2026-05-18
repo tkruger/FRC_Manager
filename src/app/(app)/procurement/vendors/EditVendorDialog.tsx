@@ -40,9 +40,7 @@ export function EditVendorDialog({ vendor }: { vendor: Vendor }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="text-small text-[--color-secondary] hover:underline">
-          Edit
-        </button>
+        <Button variant="outline" size="sm">Edit</Button>
       </DialogTrigger>
       <DialogContent title={`Edit: ${vendor.name}`}>
         <form onSubmit={handleSubmit} className="space-y-4">

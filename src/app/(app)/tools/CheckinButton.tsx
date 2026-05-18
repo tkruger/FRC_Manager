@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { checkinToolAction } from "@/app/actions/tools";
+import { Button } from "@/components/ui/button";
 
 export function CheckinButton({ checkoutId, toolName }: { checkoutId: string; toolName: string }) {
   const router = useRouter();
@@ -17,9 +18,8 @@ export function CheckinButton({ checkoutId, toolName }: { checkoutId: string; to
   }
 
   return (
-    <button onClick={handle} disabled={isPending}
-      className="text-small text-[--color-success] hover:underline disabled:opacity-50">
+    <Button variant="outline" size="sm" onClick={handle} isLoading={isPending}>
       Check in
-    </button>
+    </Button>
   );
 }
