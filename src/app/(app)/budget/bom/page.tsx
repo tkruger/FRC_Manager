@@ -7,6 +7,7 @@ import { Table, TableHead, TableBody, Th, Td, Tr } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
 import { AddBomItemDialog } from "./AddBomItemDialog";
 import { BomItemActions } from "./BomItemActions";
+import { RobotSwitcher } from "./RobotSwitcher";
 import { getActiveRobotId } from "@/app/actions/robot-context";
 
 export default async function BomPage({ searchParams }: { searchParams: Promise<{ robotId?: string }> }) {
@@ -66,15 +67,7 @@ export default async function BomPage({ searchParams }: { searchParams: Promise<
         </div>
         <div className="flex gap-2 items-center">
           {activeSeason.robots.length > 1 && (
-            <select
-              className="h-9 rounded-md border border-[--color-border] bg-[--color-surface] px-3 text-sm text-[--color-text-primary] focus:outline-none"
-              value={robot.id}
-              onChange={(e) => { window.location.href = `/budget/bom?robotId=${e.target.value}`; }}
-            >
-              {activeSeason.robots.map((r) => (
-                <option key={r.id} value={r.id}>{r.displayName}</option>
-              ))}
-            </select>
+            <RobotSwitcher robots={activeSeason.robots} currentId={robot.id} />
           )}
           <AddBomItemDialog robotId={robot.id} />
           <a

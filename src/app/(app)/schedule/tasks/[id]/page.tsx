@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
 import { STATUS_CONFIG, PRIORITY_CONFIG, SUBTEAM_COLORS, shortDate, isOverdue } from "@/lib/schedule-helpers";
 import { TaskStatusButton } from "../TaskStatusButton";
@@ -60,9 +61,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
         </div>
         <div className="flex gap-2 shrink-0">
           <Link href={`/schedule/tasks/${id}/edit`}>
-            <button className="h-9 px-3 rounded-md border border-[--color-border] text-sm text-[--color-text-primary] hover:bg-[--color-surface-overlay] transition-colors">
-              Edit
-            </button>
+            <Button variant="outline" size="sm">Edit</Button>
           </Link>
           <DeleteTaskButton taskId={id} />
         </div>
