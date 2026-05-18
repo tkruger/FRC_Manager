@@ -9,12 +9,12 @@ import { cn } from "@/lib/utils";
 import type { Session } from "next-auth";
 
 const MODULE_TABS = [
-  { label: "Fleet",       href: "/fleet",       icon: FleetIcon },
+  { label: "Schedule",    href: "/schedule",    icon: ScheduleIcon },
   { label: "Tools",       href: "/tools",       icon: ToolsIcon },
   { label: "Inventory",   href: "/inventory",   icon: InventoryIcon },
   { label: "Procurement", href: "/procurement", icon: ProcurementIcon },
   { label: "Budget",      href: "/budget",      icon: BudgetIcon },
-  { label: "Schedule",    href: "/schedule",    icon: ScheduleIcon },
+  { label: "Robots",       href: "/fleet",       icon: FleetIcon },
   { label: "Safety",      href: "/safety",      icon: SafetyIcon },
 ];
 
