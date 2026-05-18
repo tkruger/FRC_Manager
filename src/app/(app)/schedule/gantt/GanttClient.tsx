@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -60,17 +60,37 @@ export function GanttClient({ tasks, kickoffDate, week0Date, meetingDays, season
   const todayOff  = clamp(daysBetween(kickoff, today), 0, totalDays);
 
   // ── State ──────────────────────────────────────────────────────────────────
-  const [zoomIdx,     setZoomIdx]     = useState(1);
-  const [viewStart,   setViewStart]   = useState(0);           // day offset from kickoff
-  const [modalTask,   setModalTask]   = useState<GanttTask | null>(null);
-  const [tooltip,     setTooltip]     = useState<{ task: GanttTask; x: number; y: number } | null>(null);
+  const [zoomIdx,      setZoomIdx]     = useState(1);
+  const [viewStart,    setViewStart]   = useState(0);
+  const [modalTask,    setModalTask]   = useState<GanttTask | null>(null);
+  const [tooltip,      setTooltip]     = useState<{ task: GanttTask; x: number; y: number } | null>(null);
+  const [effectiveColW, setEffectiveColW] = useState(ZOOM_LEVELS[1].colW);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const colW     = ZOOM_LEVELS[zoomIdx].colW;
-  const viewDays = ZOOM_LEVELS[zoomIdx].label === "Season"  ? totalDays
-                 : ZOOM_LEVELS[zoomIdx].label === "2 weeks" ? 14
-                 : 7;
-  const viewEnd  = Math.min(viewStart + viewDays - 1, totalDays - 1);
+  const baseColW  = ZOOM_LEVELS[zoomIdx].colW;
+  const viewDays  = ZOOM_LEVELS[zoomIdx].label === "Season"  ? totalDays
+                  : ZOOM_LEVELS[zoomIdx].label === "2 weeks" ? 14
+                  : 7;
+  const viewEnd   = Math.min(viewStart + viewDays - 1, totalDays - 1);
+  const colW      = effectiveColW; // actual px/day used for rendering
+
+  // Stretch colW to fill container width when natural size is smaller
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    function recalc() {
+      if (!el) return;
+      const available = el.clientWidth - LABEL_W;
+      const natural   = viewDays * baseColW;
+      setEffectiveColW(natural < available ? available / viewDays : baseColW);
+    }
+
+    recalc();
+    const observer = new ResizeObserver(recalc);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [viewDays, baseColW]);
 
   // Days actually rendered
   const days: Date[] = [];
