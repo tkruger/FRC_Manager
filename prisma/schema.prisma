@@ -52,6 +52,7 @@ model User {
   activityLogs         ActivityLog[]
   notifications        Notification[]
   maintenanceLogs      ToolMaintenanceLog[]
+  discordLink          DiscordLink?
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -133,10 +134,11 @@ model Team {
   name        String
   accessCode  String?
 
-  users       User[]
-  seasons     Season[]
-  vendors     Vendor[]
-  tools       Tool[]
+  users         User[]
+  seasons       Season[]
+  vendors       Vendor[]
+  tools         Tool[]
+  discordConfig DiscordConfig?
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -1030,4 +1032,71 @@ model ActivityLog {
   action     String
   detail     String?
   createdAt  DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────
+// MODULE 9 — DISCORD INTEGRATION
+// ─────────────────────────────────────────────
+
+model DiscordConfig {
+  id            String  @id @default(cuid())
+  teamId        String  @unique
+  team          Team    @relation(fields: [teamId], references: [id])
+
+  guildId       String  // Discord server ID
+  guildName     String?
+  active        Boolean @default(true)
+
+  // Channel routing (Discord channel IDs)
+  channelBuildAlerts  String?
+  channelOrders       String?
+  channelInventory    String?
+  channelTasks        String?
+  channelSafety       String?
+  channelGeneral      String?
+  channelMilestones   String?
+
+  // Daily build summary
+  dailySummaryEnabled Boolean @default(false)
+  dailySummaryChannel String?
+  dailySummaryTime    String  @default("08:00")
+
+  // Per-channel public read (unlinked members can use read cmds)
+  publicReadEnabled   Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  interactionLogs DiscordInteractionLog[]
+}
+
+model DiscordLink {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  discordUserId   String    @unique
+  discordUsername String?
+  revokedAt       DateTime?
+  linkedAt        DateTime  @default(now())
+}
+
+model DiscordLinkToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique @default(cuid())
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model DiscordInteractionLog {
+  id            String        @id @default(cuid())
+  configId      String?
+  config        DiscordConfig? @relation(fields: [configId], references: [id])
+  discordUserId String
+  command       String
+  params        String?       // JSON
+  success       Boolean       @default(true)
+  errorMessage  String?
+  createdAt     DateTime      @default(now())
 }

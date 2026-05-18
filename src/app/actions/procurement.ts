@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import type { PurchaseStatus } from "@/generated/prisma";
 import { notifyTeam, createNotification } from "@/lib/notifications";
+import { notifyPurchaseSubmitted, notifyPurchaseApproved, notifyPurchaseDenied } from "@/lib/discord-notify";
 
 // Auto-approve threshold (USD)
 const AUTO_APPROVE_THRESHOLD = 50;
@@ -119,6 +120,11 @@ export async function createPurchaseRequestAction(
     });
   }
 
+  // Discord notification (best-effort)
+  if (session.user.teamId) {
+    notifyPurchaseSubmitted(session.user.teamId, parsed.data.title, estimatedTotal, parsed.data.priority, request.id).catch(() => {});
+  }
+
   revalidatePath("/procurement");
   return { success: true, requestId: request.id };
 }
@@ -133,13 +139,17 @@ export async function approvePurchaseRequestAction(requestId: string): Promise<{
     select: { title: true, requestedById: true },
   });
 
-  // Notify requester
+  // Notify requester (in-app + Discord DM)
   await createNotification({
     userId: req.requestedById,
     type: "PURCHASE_APPROVED",
     title: `Purchase request approved: "${req.title}"`,
     linkUrl: `/procurement/requests/${requestId}`,
   });
+  const approverName = session.user.name ?? "Mentor";
+  if (session.user.teamId) {
+    notifyPurchaseApproved(session.user.teamId, req.requestedById, req.title, approverName).catch(() => {});
+  }
 
   revalidatePath("/procurement");
   revalidatePath(`/procurement/requests/${requestId}`);
