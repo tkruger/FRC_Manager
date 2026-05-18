@@ -49,8 +49,9 @@ export default async function GanttPage({ searchParams }: { searchParams: Promis
   ) + 1;
 
   return (
-    <div className="max-w-full px-4 sm:px-6 lg:px-8 py-8 space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="py-6 space-y-4">
+      {/* Header — padded */}
+      <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8">
         <div>
           <nav className="text-small text-[--color-text-secondary] mb-1">
             <Link href="/schedule" className="hover:text-[--color-primary]">Schedule</Link>
@@ -66,7 +67,7 @@ export default async function GanttPage({ searchParams }: { searchParams: Promis
       </div>
 
       {ganttTasks.length === 0 ? (
-        <div className="card text-center py-12">
+        <div className="card text-center py-12 mx-4 sm:mx-6 lg:mx-8">
           <p className="text-body text-[--color-text-secondary] mb-4">
             No tasks with dates yet. Tasks need a start and due date to appear on the Gantt.
           </p>

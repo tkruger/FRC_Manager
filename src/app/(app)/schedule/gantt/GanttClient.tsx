@@ -141,7 +141,7 @@ export function GanttClient({ tasks, kickoffDate, week0Date, meetingDays, season
   return (
     <>
       {/* ── Controls ────────────────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-center gap-3 mb-4">
+      <div className="flex flex-wrap items-center gap-3 mb-4 px-4 sm:px-6 lg:px-8">
         {/* Zoom buttons */}
         <div className="flex rounded-md border border-[--color-border] overflow-hidden">
           {ZOOM_LEVELS.map((z, i) => (
@@ -175,7 +175,7 @@ export function GanttClient({ tasks, kickoffDate, week0Date, meetingDays, season
       </div>
 
       {/* ── Gantt grid ──────────────────────────────────────────────────── */}
-      <div ref={containerRef} className="overflow-x-auto rounded-lg border border-[--color-border]">
+      <div ref={containerRef} className="overflow-x-auto" style={{ borderTop: "1px solid var(--color-border)", borderBottom: "1px solid var(--color-border)" }}>
         <div style={{ minWidth: `${LABEL_W + days.length * colW}px` }}>
 
           {/* Header row */}
@@ -303,7 +303,7 @@ export function GanttClient({ tasks, kickoffDate, week0Date, meetingDays, season
       </div>
 
       {/* ── Legend ──────────────────────────────────────────────────────── */}
-      <div className="flex flex-wrap gap-4 text-small text-[--color-text-secondary]">
+      <div className="flex flex-wrap gap-4 text-small text-[--color-text-secondary] px-4 sm:px-6 lg:px-8">
         <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-sm bg-[--color-success]" />Complete</span>
         <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-sm bg-[--color-danger]" />Blocked</span>
         <span className="flex items-center gap-1.5"><span className="inline-block w-px h-3 bg-[--color-primary]" />Today</span>
