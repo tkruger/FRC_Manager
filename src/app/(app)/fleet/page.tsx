@@ -5,10 +5,9 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ProgressBar } from "@/components/ui/progress";
-import { formatWeight, formatCurrency } from "@/lib/utils";
+import { formatWeight } from "@/lib/utils";
 
 const ROBOT_WEIGHT_LIMIT = 115; // lbs body
-const BOM_CAP = 5000;
 
 const ROLE_LABELS: Record<string, string> = {
   COMPETITION: "Competition Bot",
@@ -38,7 +37,7 @@ export default async function FleetPage() {
           where: { archived: false },
           include: {
             inUseItems: { where: { status: { in: ["INSTALLED_ROBOT", "INSTALLED_PRACTICE"] } }, select: { unitWeight: true, quantity: true, subsystem: true } },
-            bomItems:   { select: { totalFmv: true, exemptKop: true, exemptFirstChoice: true, exemptUnder5: true } },
+            bomItems:   { select: { totalFmv: true } },
             weightSnaps:{ orderBy: { createdAt: "desc" }, take: 1, select: { weight: true } },
           },
           orderBy: { createdAt: "asc" },
@@ -63,9 +62,7 @@ export default async function FleetPage() {
   }
 
   function getBomFmv(robot: ActiveRobot) {
-    return robot.bomItems
-      .filter((b) => !b.exemptKop && !b.exemptFirstChoice && !b.exemptUnder5)
-      .reduce((s, b) => s + (b.totalFmv ?? 0), 0);
+    return robot.bomItems.reduce((s, b) => s + (b.totalFmv ?? 0), 0);
   }
 
   return (
@@ -88,8 +85,7 @@ export default async function FleetPage() {
       {activeSeason && activeSeason.robots.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {activeSeason.robots.map((robot) => {
-            const weight  = getWeight(robot);
-            const bomFmv  = getBomFmv(robot);
+            const weight      = getWeight(robot);
             const statusBadge = STATUS_BADGE[robot.status] ?? "neutral";
 
             return (
@@ -117,18 +113,6 @@ export default async function FleetPage() {
                     sublabel={`${formatWeight(weight)} / ${formatWeight(robot.weightTarget ?? ROBOT_WEIGHT_LIMIT)}`}
                     warnAt={90}
                     dangerAt={98}
-                  />
-                </div>
-
-                {/* BOM progress */}
-                <div>
-                  <ProgressBar
-                    value={bomFmv}
-                    max={BOM_CAP}
-                    label="BOM FMV"
-                    sublabel={`${formatCurrency(bomFmv)} / ${formatCurrency(BOM_CAP)}`}
-                    warnAt={80}
-                    dangerAt={95}
                   />
                 </div>
 

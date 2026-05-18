@@ -142,7 +142,7 @@ export async function createInspectionChecklistAction(
     { category: "Electronics",  description: "Radio configured at event kiosk" },
     { category: "Software",     description: "roboRIO image is current season version" },
     { category: "Software",     description: "Driver Station software is current version" },
-    { category: "BOM",          description: "BOM present and total FMV ≤ $5,000" },
+    { category: "BOM",          description: "BOM present and complete" },
     { category: "Safety",       description: "No prohibited materials (lasers, flammable gases)" },
     { category: "Safety",       description: "No sharp or hazardous protrusions" },
   ];

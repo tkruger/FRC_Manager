@@ -9,10 +9,10 @@ import { Field } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
 
 const SOURCE_OPTIONS = [
-  { value: "DIRECT",        label: "Purchased directly" },
-  { value: "KOP",           label: "Kit of Parts (KOP)" },
-  { value: "FIRST_CHOICE",  label: "FIRST Choice" },
-  { value: "DONATED",       label: "Donated" },
+  { value: "DIRECT",         label: "Purchased directly" },
+  { value: "KOP",            label: "Kit of Parts (KOP)" },
+  { value: "FIRST_CHOICE",   label: "FIRST Choice" },
+  { value: "DONATED",        label: "Donated" },
   { value: "BASE_INVENTORY", label: "From base inventory" },
 ];
 
@@ -34,7 +34,6 @@ export function AddBomItemDialog({ robotId }: { robotId: string }) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const [source, setSource] = useState("DIRECT");
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -46,9 +45,6 @@ export function AddBomItemDialog({ robotId }: { robotId: string }) {
       else setError(result.error ?? "Failed.");
     });
   }
-
-  const isKop = source === "KOP";
-  const isFirstChoice = source === "FIRST_CHOICE";
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -66,13 +62,7 @@ export function AddBomItemDialog({ robotId }: { robotId: string }) {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <Select
-              label="Source"
-              name="source"
-              options={SOURCE_OPTIONS}
-              value={source}
-              onChange={(e) => setSource(e.target.value)}
-            />
+            <Select label="Source" name="source" options={SOURCE_OPTIONS} defaultValue="DIRECT" />
             <Select label="Subsystem" name="subsystem" placeholder="Select subsystem" options={SUBSYSTEM_OPTIONS} />
           </div>
 
@@ -82,26 +72,8 @@ export function AddBomItemDialog({ robotId }: { robotId: string }) {
             type="number"
             step="0.01"
             min="0"
-            placeholder="Fair market value per unit"
-            hint="Required for cost cap tracking. Items under $5 each are automatically exempted."
+            placeholder="Fair market value per unit (optional)"
           />
-
-          {isKop && (
-            <div className="flex items-center gap-2 rounded-md bg-[--color-info]/10 px-3 py-2">
-              <input type="checkbox" name="exemptKop" id="exemptKop" defaultChecked />
-              <label htmlFor="exemptKop" className="text-sm text-[--color-text-primary]">
-                KOP exempt — counts as $0 toward the $5,000 cap
-              </label>
-            </div>
-          )}
-          {isFirstChoice && (
-            <div className="flex items-center gap-2 rounded-md bg-[--color-success]/10 px-3 py-2">
-              <input type="checkbox" name="exemptFirstChoice" id="exemptFC" defaultChecked />
-              <label htmlFor="exemptFC" className="text-sm text-[--color-text-primary]">
-                FIRST Choice exempt — $0 acquisition cost
-              </label>
-            </div>
-          )}
 
           <div className="flex gap-2 pt-2">
             <Button type="submit" isLoading={isPending}>Add item</Button>

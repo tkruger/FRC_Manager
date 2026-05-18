@@ -9,7 +9,6 @@ import { formatWeight, formatCurrency, formatDate } from "@/lib/utils";
 import { WeightLogger } from "./WeightLogger";
 
 const ROBOT_WEIGHT_LIMIT = 115;
-const BOM_CAP = 5000;
 
 const SUBSYSTEM_ORDER = ["DRIVETRAIN","INTAKE","SHOOTER","CLIMBER","ELECTRICAL","PNEUMATICS","FRAME","CONTROLS","BUMPERS","OTHER"];
 
@@ -28,7 +27,7 @@ export default async function RobotDetailPage({ params }: { params: Promise<{ id
         orderBy: { subsystem: "asc" },
       },
       bomItems: {
-        select: { id: true, partName: true, subsystem: true, quantity: true, unitFmv: true, totalFmv: true, exemptKop: true, exemptFirstChoice: true, exemptUnder5: true, source: true },
+        select: { id: true, partName: true, subsystem: true, quantity: true, unitFmv: true, totalFmv: true, source: true },
         orderBy: { subsystem: "asc" },
       },
       weightSnaps: { orderBy: { createdAt: "desc" }, take: 10 },
@@ -50,9 +49,7 @@ export default async function RobotDetailPage({ params }: { params: Promise<{ id
     weightBySubsystem[sub] = (weightBySubsystem[sub] ?? 0) + (item.unitWeight ?? 0) * item.quantity;
   }
 
-  const bomFmv = robot.bomItems
-    .filter((b) => !b.exemptKop && !b.exemptFirstChoice && !b.exemptUnder5)
-    .reduce((s, b) => s + (b.totalFmv ?? 0), 0);
+  const bomFmv = robot.bomItems.reduce((s, b) => s + (b.totalFmv ?? 0), 0);
 
   const weightLimit = robot.weightTarget ?? ROBOT_WEIGHT_LIMIT;
 
@@ -101,13 +98,8 @@ export default async function RobotDetailPage({ params }: { params: Promise<{ id
         </div>
 
         <div className="card space-y-3">
-          <h2 className="text-h3 text-[--color-text-primary]">BOM FMV vs. Cap</h2>
-          <ProgressBar
-            value={bomFmv}
-            max={BOM_CAP}
-            sublabel={`${formatCurrency(bomFmv)} / ${formatCurrency(BOM_CAP)}`}
-            warnAt={80} dangerAt={95}
-          />
+          <h2 className="text-h3 text-[--color-text-primary]">Bill of Materials</h2>
+          <p className="text-body text-[--color-text-primary]">{formatCurrency(bomFmv)} total FMV</p>
           <Link href={`/budget/bom?robotId=${robot.id}`} className="text-small text-[--color-secondary] hover:underline">
             View & edit BOM →
           </Link>

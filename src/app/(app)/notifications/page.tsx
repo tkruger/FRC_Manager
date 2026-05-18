@@ -16,7 +16,7 @@ const TYPE_ICONS: Record<string, string> = {
   TASK_BLOCKED:            "🚧",
   CRITICAL_ISSUE:          "🔴",
   WEIGHT_WARNING:          "⚖️",
-  BOM_CAP_WARNING:         "💰",
+  BOM_CAP_WARNING:         "📋",
   TOOL_OVERDUE:            "🔧",
   CERT_EXPIRING:           "🎓",
   SAFETY_INCIDENT:         "🚨",
