@@ -179,15 +179,15 @@ export function GanttClient({ tasks, kickoffDate, week0Date, meetingDays, season
         <div style={{ minWidth: `${LABEL_W + days.length * colW}px` }}>
 
           {/* Header row */}
-          <div className="flex bg-[--color-surface-raised] border-b border-[--color-border]" style={{ height: 36 }}>
-            <div className="shrink-0 px-3 flex items-center text-label font-medium text-[--color-text-secondary] border-r border-[--color-border]"
-              style={{ width: LABEL_W }}>
+          <div className="flex bg-[--color-surface-raised]" style={{ height: 36, borderBottom: "1px solid color-mix(in srgb, var(--color-border) 60%, transparent)" }}>
+            <div className="shrink-0 px-3 flex items-center text-label font-medium text-[--color-text-secondary]"
+              style={{ width: LABEL_W, borderRight: "1px solid color-mix(in srgb, var(--color-border) 50%, transparent)" }}>
               Task
             </div>
             <div className="flex-1 relative">
               {weeks.map((w, i) => (
-                <div key={i} className="absolute top-0 bottom-0 flex items-center px-2 text-label text-[--color-text-secondary] border-r border-[--color-border]"
-                  style={{ left: w.start * colW, width: w.width * colW }}>
+                <div key={i} className="absolute top-0 bottom-0 flex items-center px-2 text-label text-[--color-text-secondary]"
+                  style={{ left: w.start * colW, width: w.width * colW, borderRight: "1px solid color-mix(in srgb, var(--color-border) 30%, transparent)" }}>
                   {w.label}
                 </div>
               ))}
@@ -204,8 +204,8 @@ export function GanttClient({ tasks, kickoffDate, week0Date, meetingDays, season
             return (
               <div key={st}>
                 {/* Group header */}
-                <div className="flex bg-[--color-surface-overlay] border-b border-[--color-border]" style={{ height: 26 }}>
-                  <div className="shrink-0 px-3 flex items-center border-r border-[--color-border]" style={{ width: LABEL_W }}>
+                <div className="flex bg-[--color-surface-overlay]" style={{ height: 26, borderBottom: "1px solid color-mix(in srgb, var(--color-border) 50%, transparent)" }}>
+                  <div className="shrink-0 px-3 flex items-center" style={{ width: LABEL_W, borderRight: "1px solid color-mix(in srgb, var(--color-border) 50%, transparent)" }}>
                     <span className="text-label font-semibold" style={{ color }}>{st.replace("_", " ")}</span>
                   </div>
                   <div className="flex-1 relative">
@@ -224,9 +224,9 @@ export function GanttClient({ tasks, kickoffDate, week0Date, meetingDays, season
                   const barColor  = isBlocked ? "var(--color-danger)" : isDone ? "var(--color-success)" : color;
 
                   return (
-                    <div key={task.id} className="flex border-b border-[--color-border] hover:bg-[--color-surface-raised] transition-colors" style={{ height: 36 }}>
+                    <div key={task.id} className="flex hover:bg-[--color-surface-raised] transition-colors" style={{ height: 36, borderBottom: "1px solid color-mix(in srgb, var(--color-border) 25%, transparent)" }}>
                       {/* Name */}
-                      <div className="shrink-0 px-3 flex items-center gap-1.5 border-r border-[--color-border]" style={{ width: LABEL_W }}>
+                      <div className="shrink-0 px-3 flex items-center gap-1.5" style={{ width: LABEL_W, borderRight: "1px solid color-mix(in srgb, var(--color-border) 40%, transparent)" }}>
                         {task.isMilestone && <span className="text-[--color-primary] text-xs shrink-0">◆</span>}
                         <Link href={`/schedule/tasks/${task.id}`}
                           className="text-small text-[--color-text-primary] hover:text-[--color-primary] truncate">
@@ -282,8 +282,8 @@ export function GanttClient({ tasks, kickoffDate, week0Date, meetingDays, season
           })}
 
           {/* Week 0 footer */}
-          <div className="flex bg-[--color-surface-raised] border-t border-[--color-border]" style={{ height: 26 }}>
-            <div className="shrink-0 px-3 flex items-center border-r border-[--color-border]" style={{ width: LABEL_W }}>
+          <div className="flex bg-[--color-surface-raised]" style={{ height: 26, borderTop: "1px solid color-mix(in srgb, var(--color-border) 60%, transparent)" }}>
+            <div className="shrink-0 px-3 flex items-center" style={{ width: LABEL_W, borderRight: "1px solid color-mix(in srgb, var(--color-border) 50%, transparent)" }}>
               <span className="text-label font-semibold text-[--color-primary]">Week 0</span>
             </div>
             <div className="flex-1 relative">
