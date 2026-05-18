@@ -37,7 +37,6 @@ export default async function FleetPage() {
           where: { archived: false },
           include: {
             inUseItems: { where: { status: { in: ["INSTALLED_ROBOT", "INSTALLED_PRACTICE"] } }, select: { unitWeight: true, quantity: true, subsystem: true } },
-            bomItems:   { select: { totalFmv: true } },
             weightSnaps:{ orderBy: { createdAt: "desc" }, take: 1, select: { weight: true } },
           },
           orderBy: { createdAt: "asc" },
@@ -59,10 +58,6 @@ export default async function FleetPage() {
     const snap = robot.weightSnaps[0];
     if (snap) return snap.weight;
     return robot.inUseItems.reduce((s, i) => s + (i.unitWeight ?? 0) * i.quantity, 0);
-  }
-
-  function getBomFmv(robot: ActiveRobot) {
-    return robot.bomItems.reduce((s, b) => s + (b.totalFmv ?? 0), 0);
   }
 
   return (

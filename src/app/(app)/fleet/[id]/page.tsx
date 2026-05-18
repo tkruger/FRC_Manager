@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ProgressBar } from "@/components/ui/progress";
 import { Table, TableHead, TableBody, Th, Td, Tr } from "@/components/ui/table";
 import { formatWeight, formatCurrency, formatDate } from "@/lib/utils";
@@ -73,10 +74,10 @@ export default async function RobotDetailPage({ params }: { params: Promise<{ id
         </div>
         <div className="flex gap-2">
           <Link href={`/budget/bom?robotId=${robot.id}`}>
-            <button className="h-9 px-3 rounded-md border border-[--color-border] text-sm text-[--color-text-primary] hover:bg-[--color-surface-overlay]">BOM</button>
+            <Button variant="outline" size="sm">BOM</Button>
           </Link>
           <Link href={`/schedule/tasks?robotId=${robot.id}`}>
-            <button className="h-9 px-3 rounded-md border border-[--color-border] text-sm text-[--color-text-primary] hover:bg-[--color-surface-overlay]">Tasks</button>
+            <Button variant="outline" size="sm">Tasks</Button>
           </Link>
         </div>
       </div>
@@ -100,8 +101,8 @@ export default async function RobotDetailPage({ params }: { params: Promise<{ id
         <div className="card space-y-3">
           <h2 className="text-h3 text-[--color-text-primary]">Bill of Materials</h2>
           <p className="text-body text-[--color-text-primary]">{formatCurrency(bomFmv)} total FMV</p>
-          <Link href={`/budget/bom?robotId=${robot.id}`} className="text-small text-[--color-secondary] hover:underline">
-            View & edit BOM →
+          <Link href={`/budget/bom?robotId=${robot.id}`}>
+            <Button variant="outline" size="sm">View &amp; edit BOM</Button>
           </Link>
         </div>
       </div>
