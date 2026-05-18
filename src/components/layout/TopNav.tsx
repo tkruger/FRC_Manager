@@ -262,7 +262,11 @@ function UserMenu({ user }: { user: { name?: string | null; email?: string | nul
 
       {open && (
         <div
-          className="absolute right-0 top-full mt-1 w-56 rounded-lg border border-[--color-border] bg-[--color-surface-raised] shadow-xl py-1 z-50"
+          className="absolute right-0 top-full mt-1 w-56 rounded-lg border border-[--color-border] py-1 z-50"
+          style={{
+            backgroundColor: "var(--color-surface)",
+            boxShadow: "0 8px 32px -4px rgba(0,0,0,0.18), 0 0 0 1px var(--color-border)",
+          }}
           role="menu"
         >
           <div className="px-3 py-2.5 border-b border-[--color-border]">
