@@ -4,9 +4,12 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { BudgetSetupForm } from "./BudgetSetupForm";
 
+const BUDGET_ROLES = ["HEAD_MENTOR", "BUDGET_MANAGER"];
+
 export default async function BudgetSetupPage() {
   const session = await auth();
   if (!session?.user?.teamId) redirect("/dashboard");
+  if (!session.user.roles.some((r) => BUDGET_ROLES.includes(r))) redirect("/dashboard");
 
   const activeSeason = await prisma.season.findFirst({
     where: { teamId: session.user.teamId, isActive: true },

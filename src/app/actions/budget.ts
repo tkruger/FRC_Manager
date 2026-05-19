@@ -6,6 +6,16 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import type { BudgetCategoryType, FundingType } from "@/generated/prisma";
 
+const BUDGET_ROLES = ["HEAD_MENTOR", "BUDGET_MANAGER"] as const;
+
+async function requireBudgetRole() {
+  const session = await auth();
+  if (!session?.user?.teamId) throw new Error("Not authenticated.");
+  if (!session.user.roles.some((r) => BUDGET_ROLES.includes(r as any)))
+    throw new Error("Only Head Mentors and Budget Managers can modify the budget.");
+  return session;
+}
+
 const DEFAULT_CATEGORIES: { type: BudgetCategoryType; label: string }[] = [
   { type: "REGISTRATION_FEES",  label: "Registration & Competition Fees" },
   { type: "ROBOT_MECHANICAL",   label: "Robot Parts — Mechanical" },
@@ -25,8 +35,8 @@ export async function setupBudgetAction(
   _prev: { success: boolean; error?: string } | null,
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
-  const session = await auth();
-  if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
+  let session;
+  try { session = await requireBudgetRole(); } catch (e: any) { return { success: false, error: e.message }; }
 
   const activeSeason = await prisma.season.findFirst({
     where: { teamId: session.user.teamId, isActive: true },
@@ -96,8 +106,7 @@ export async function addFundingSourceAction(
   budgetId: string,
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
-  const session = await auth();
-  if (!session) return { success: false, error: "Not authenticated." };
+  try { await requireBudgetRole(); } catch (e: any) { return { success: false, error: e.message }; }
 
   const parsed = FundingSchema.safeParse({
     name: formData.get("name"),
@@ -136,8 +145,7 @@ export async function logExpenseAction(
   budgetId: string,
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
-  const session = await auth();
-  if (!session) return { success: false, error: "Not authenticated." };
+  try { await requireBudgetRole(); } catch (e: any) { return { success: false, error: e.message }; }
 
   const parsed = ExpenseSchema.safeParse({
     date: formData.get("date"),

@@ -10,9 +10,14 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { AddFundingDialog } from "./AddFundingDialog";
 import { LogExpenseDialog } from "./LogExpenseDialog";
 
+const BUDGET_ROLES = ["HEAD_MENTOR", "BUDGET_MANAGER"];
+
 export default async function BudgetDashboard() {
   const session = await auth();
   if (!session?.user?.teamId) redirect("/dashboard");
+
+  const canEdit = session.user.roles.some((r) => BUDGET_ROLES.includes(r));
+  if (!canEdit) redirect("/dashboard");
 
   const activeSeason = await prisma.season.findFirst({
     where: { teamId: session.user.teamId, isActive: true },
