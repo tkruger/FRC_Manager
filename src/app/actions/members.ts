@@ -5,12 +5,13 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import type { Role } from "@/generated/prisma";
 import { createNotification } from "@/lib/notifications";
+import { LEADERSHIP_ROLES } from "@/lib/rbac";
 
 async function requireAdmin() {
   const session = await auth();
   if (!session?.user?.teamId) throw new Error("Not authenticated.");
-  const isAdmin = session.user.roles.includes("HEAD_MENTOR" as any);
-  if (!isAdmin) throw new Error("Only Head Mentors can manage team members.");
+  const isAdmin = session.user.roles.some((r) => LEADERSHIP_ROLES.includes(r as any));
+  if (!isAdmin) throw new Error("Only Head Mentors and Team Leadership can manage team members.");
   return session;
 }
 

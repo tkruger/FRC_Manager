@@ -14,7 +14,7 @@ export default async function MembersPage() {
   const session = await auth();
   if (!session?.user?.teamId) redirect("/dashboard");
 
-  const isAdmin = session.user.roles.includes("HEAD_MENTOR" as any);
+  const isAdmin = session.user.roles.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP"].includes(r));
   if (!isAdmin) redirect("/dashboard");
 
   const [team, users] = await Promise.all([

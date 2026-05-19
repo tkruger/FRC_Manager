@@ -44,7 +44,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
 
   const showRobotSelector = ROBOT_CONTEXT_PATHS.some((p) => pathname.startsWith(p));
   const activeRobot = robots.find((r) => r.id === activeRobotId);
-  const isHeadMentor = session?.user?.roles?.includes("HEAD_MENTOR" as any) ?? false;
+  const canManageTeam = session?.user?.roles?.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP"].includes(r)) ?? false;
 
   return (
     <>
@@ -131,7 +131,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
           </Link>
 
           {/* Settings / member approval — Head Mentor only */}
-          {isHeadMentor && (
+          {canManageTeam && (
             <Link
               href="/settings/members"
               className="relative h-9 w-9 rounded-md flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors hidden sm:flex"
@@ -146,7 +146,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
             </Link>
           )}
 
-          {session?.user && <UserMenu user={session.user} isHeadMentor={isHeadMentor} />}
+          {session?.user && <UserMenu user={session.user} canManageTeam={canManageTeam} />}
         </div>
       </header>
 
@@ -228,7 +228,7 @@ function RobotSelector({
   );
 }
 
-function UserMenu({ user, isHeadMentor }: { user: { name?: string | null; email?: string | null }; isHeadMentor: boolean }) {
+function UserMenu({ user, canManageTeam }: { user: { name?: string | null; email?: string | null }; canManageTeam: boolean }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -276,7 +276,7 @@ function UserMenu({ user, isHeadMentor }: { user: { name?: string | null; email?
             <p className="text-sm font-semibold text-[--color-text-primary] truncate">{user.name}</p>
             <p className="text-xs text-[--color-text-secondary] truncate mt-0.5">{user.email}</p>
           </div>
-          {isHeadMentor && (
+          {canManageTeam && (
             <Link href="/settings/members" role="menuitem" onClick={() => setOpen(false)}
               className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-[--color-text-primary] hover:bg-[--color-surface-overlay] transition-colors">
               <UserCircleIcon className="w-4 h-4 text-[--color-text-secondary]" />

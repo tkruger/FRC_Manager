@@ -3,11 +3,12 @@
 // Requires: DISCORD_BOT_TOKEN, DISCORD_APPLICATION_ID
 import { auth } from "@/lib/auth";
 import { SLASH_COMMANDS } from "@/lib/discord";
+import { LEADERSHIP_ROLES } from "@/lib/rbac";
 import { NextResponse } from "next/server";
 
 export async function POST() {
   const session = await auth();
-  if (!session?.user?.roles?.includes("HEAD_MENTOR" as any)) {
+  if (!session?.user?.roles?.some((r) => LEADERSHIP_ROLES.includes(r as any))) {
     return new NextResponse("Forbidden", { status: 403 });
   }
 

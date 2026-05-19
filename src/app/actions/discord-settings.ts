@@ -4,12 +4,13 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { LEADERSHIP_ROLES } from "@/lib/rbac";
 
 async function requireAdmin() {
   const session = await auth();
   if (!session?.user?.teamId) throw new Error("Not authenticated.");
-  if (!session.user.roles.some((r) => ["HEAD_MENTOR", "INVENTORY_ADMIN"].includes(r)))
-    throw new Error("Admin access required.");
+  if (!session.user.roles.some((r) => LEADERSHIP_ROLES.includes(r as any)))
+    throw new Error("Only Head Mentors and Team Leadership can manage Discord settings.");
   return session;
 }
 

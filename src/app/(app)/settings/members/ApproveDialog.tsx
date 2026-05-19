@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ROLE_LABELS } from "@/lib/rbac";
 import type { Role } from "@/generated/prisma";
 
-const ALL_ROLES: Role[] = ["TEAM_MEMBER", "BUILD_LEAD", "INVENTORY_ADMIN", "BUDGET_MANAGER", "SAFETY_CAPTAIN", "HEAD_MENTOR"];
+const ALL_ROLES: Role[] = ["TEAM_MEMBER", "BUILD_LEAD", "INVENTORY_ADMIN", "BUDGET_MANAGER", "SAFETY_CAPTAIN", "TEAM_LEADERSHIP", "HEAD_MENTOR"];
 
 export function ApproveDialog({ userId, userName }: { userId: string; userName: string }) {
   const router = useRouter();

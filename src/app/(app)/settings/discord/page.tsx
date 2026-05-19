@@ -13,7 +13,7 @@ export default async function DiscordSettingsPage() {
   const session = await auth();
   if (!session?.user?.teamId) redirect("/dashboard");
 
-  const isAdmin = session.user.roles.some((r) => ["HEAD_MENTOR", "INVENTORY_ADMIN"].includes(r));
+  const isAdmin = session.user.roles.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP"].includes(r));
   if (!isAdmin) redirect("/dashboard");
 
   const [config, members, recentLogs] = await Promise.all([
