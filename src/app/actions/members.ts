@@ -9,8 +9,8 @@ import { createNotification } from "@/lib/notifications";
 async function requireAdmin() {
   const session = await auth();
   if (!session?.user?.teamId) throw new Error("Not authenticated.");
-  const isAdmin = session.user.roles.some((r) => ["HEAD_MENTOR", "INVENTORY_ADMIN"].includes(r));
-  if (!isAdmin) throw new Error("Not authorized.");
+  const isAdmin = session.user.roles.includes("HEAD_MENTOR" as any);
+  if (!isAdmin) throw new Error("Only Head Mentors can manage team members.");
   return session;
 }
 

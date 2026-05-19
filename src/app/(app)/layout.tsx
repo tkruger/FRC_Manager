@@ -16,7 +16,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   let activeRobotId: string | null = null;
 
   if (session.user.teamId) {
-    const isAdmin = session.user.roles.some((r) => ["HEAD_MENTOR", "INVENTORY_ADMIN"].includes(r));
+    const isAdmin = session.user.roles.includes("HEAD_MENTOR" as any);
 
     const [activeSeason, pendingCount, unreadCount, savedRobotId] = await Promise.all([
       prisma.season.findFirst({
