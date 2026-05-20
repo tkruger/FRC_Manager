@@ -6,7 +6,12 @@ import { NextResponse } from "next/server";
 
 const { auth } = NextAuth(authConfig);
 
-const PUBLIC_PATHS = ["/login", "/register", "/pending", "/api/auth"];
+const PUBLIC_PATHS = [
+  "/login", "/register", "/pending",
+  "/api/auth",
+  "/api/calendar",    // iCal feed — must be accessible without auth for calendar apps
+  "/public/schedule", // Public team schedule page
+];
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
