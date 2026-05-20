@@ -66,9 +66,10 @@ export function CalendarClient({ season, meetings, allTasks, isLeadership }: Pro
   const defaultYear  = today >= kickoff && today <= week0 ? today.getFullYear() : kickoff.getFullYear();
   const defaultMonth = today >= kickoff && today <= week0 ? today.getMonth()     : kickoff.getMonth();
 
-  const [viewYear,  setViewYear]  = useState(defaultYear);
-  const [viewMonth, setViewMonth] = useState(defaultMonth);
-  const [selected,  setSelected]  = useState<Meeting | null>(null);
+  const [viewYear,    setViewYear]    = useState(defaultYear);
+  const [viewMonth,   setViewMonth]   = useState(defaultMonth);
+  const [fullSeason,  setFullSeason]  = useState(false);
+  const [selected,    setSelected]    = useState<Meeting | null>(null);
   const [showAdd,   setShowAdd]   = useState(false);
   const [addDate,   setAddDate]   = useState("");
 
@@ -98,25 +99,34 @@ export function CalendarClient({ season, meetings, allTasks, isLeadership }: Pro
     setViewMonth(today.getMonth());
   }
 
-  // Build grid: 6 rows × 7 cols
-  const firstDay    = new Date(viewYear, viewMonth, 1).getDay();
-  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-  const daysInPrev  = new Date(viewYear, viewMonth, 0).getDate();
+  // Build a month's cell grid (6 rows × 7 cols)
+  function buildCells(year: number, month: number) {
+    const firstDay    = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const daysInPrev  = new Date(year, month, 0).getDate();
+    const cells: { date: Date; isCurrentMonth: boolean }[] = [];
+    for (let i = firstDay - 1; i >= 0; i--)
+      cells.push({ date: new Date(year, month - 1, daysInPrev - i), isCurrentMonth: false });
+    for (let d = 1; d <= daysInMonth; d++)
+      cells.push({ date: new Date(year, month, d), isCurrentMonth: true });
+    const trailing = 42 - cells.length;
+    for (let d = 1; d <= trailing; d++)
+      cells.push({ date: new Date(year, month + 1, d), isCurrentMonth: false });
+    return cells;
+  }
 
-  const cells: { date: Date; isCurrentMonth: boolean }[] = [];
-  // Leading days from previous month
-  for (let i = firstDay - 1; i >= 0; i--) {
-    cells.push({ date: new Date(viewYear, viewMonth - 1, daysInPrev - i), isCurrentMonth: false });
+  // All season months for full-season view
+  const seasonMonths: { year: number; month: number }[] = [];
+  {
+    const cur = new Date(kickoff.getFullYear(), kickoff.getMonth(), 1);
+    const end = new Date(week0.getFullYear(),  week0.getMonth(),   1);
+    while (cur <= end) {
+      seasonMonths.push({ year: cur.getFullYear(), month: cur.getMonth() });
+      cur.setMonth(cur.getMonth() + 1);
+    }
   }
-  // Current month
-  for (let d = 1; d <= daysInMonth; d++) {
-    cells.push({ date: new Date(viewYear, viewMonth, d), isCurrentMonth: true });
-  }
-  // Trailing days to complete 6 rows
-  let trailing = 42 - cells.length;
-  for (let d = 1; d <= trailing; d++) {
-    cells.push({ date: new Date(viewYear, viewMonth + 1, d), isCurrentMonth: false });
-  }
+
+  const cells = buildCells(viewYear, viewMonth);
 
   function handleCancel(meetingId: string) {
     const reason = prompt("Reason for cancellation (optional):") ?? undefined;
@@ -160,7 +170,14 @@ export function CalendarClient({ season, meetings, allTasks, isLeadership }: Pro
           </button>
         </div>
 
-        <Button variant="outline" size="sm" onClick={goToday}>Today</Button>
+        <Button variant="outline" size="sm" onClick={goToday} className={fullSeason ? "opacity-50" : ""}>Today</Button>
+        <Button
+          variant="outline" size="sm"
+          onClick={() => setFullSeason(f => !f)}
+          style={fullSeason ? { backgroundColor: "var(--color-primary)", color: "#fff", borderColor: "var(--color-primary)" } : undefined}
+        >
+          {fullSeason ? "Month view" : "Full season"}
+        </Button>
 
         {isLeadership && (
           <>
@@ -183,103 +200,93 @@ export function CalendarClient({ season, meetings, allTasks, isLeadership }: Pro
         <div className="rounded-xl border border-[--color-border]/60 overflow-hidden"
           style={{ boxShadow: "var(--shadow-card)" }}>
 
-          {/* Day of week header */}
-          <div className="grid grid-cols-7 bg-[--color-surface-raised]">
+          {/* Shared DOW header — shown once */}
+          <div className="grid grid-cols-7"
+            style={{ background: "linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 20%, var(--color-surface-raised)) 0%, color-mix(in srgb, var(--color-secondary) 14%, var(--color-surface-raised)) 100%)" }}>
             {DOW_LABELS.map((d) => (
-              <div key={d} className="py-2 text-center text-label font-medium text-[--color-text-secondary]">{d}</div>
+              <div key={d} className="py-2.5 text-center text-label font-semibold text-[--color-text-primary] tracking-wide">{d}</div>
             ))}
           </div>
 
-          {/* Grid rows */}
-          <div className="grid grid-cols-7 bg-[--color-surface]"
-            style={{ borderTop: "1px solid color-mix(in srgb, var(--color-border) 40%, transparent)" }}>
-            {cells.map(({ date, isCurrentMonth }, idx) => {
-              const key      = ymd(date);
-              const isToday  = key === ymd(today);
-              const isKickoff = key === kickoffKey;
-              const isWeek0  = key === week0Key;
-              const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-              const dayMeetings = meetingMap[key] ?? [];
-              const MAX_CHIPS = 3;
-
-              return (
-                <div
-                  key={idx}
-                  className={[
-                    "relative min-h-[110px] p-1.5 border-b border-r",
-                    "border-[--color-border]/20",
-                    !isCurrentMonth && "bg-[--color-surface-overlay]/30",
-                    isWeekend && isCurrentMonth && "bg-[--color-surface-raised]/40",
-                    isLeadership && "cursor-pointer group",
-                  ].filter(Boolean).join(" ")}
-                  onClick={() => {
-                    if (isLeadership && dayMeetings.length === 0) {
-                      setAddDate(key);
-                      setShowAdd(true);
-                    }
-                  }}
-                >
-                  {/* Day number */}
-                  <div className="flex items-center gap-1 mb-1">
-                    <span className={[
-                      "text-xs font-semibold w-6 h-6 flex items-center justify-center rounded-full transition-colors",
-                      isToday
-                        ? "text-white"
-                        : isCurrentMonth
-                        ? "text-[--color-text-primary]"
-                        : "text-[--color-text-disabled]",
-                    ].join(" ")}
-                    style={isToday ? { backgroundColor: "var(--color-primary)" } : undefined}>
-                      {date.getDate()}
-                    </span>
-
-                    {/* Season markers inline */}
-                    {isKickoff && (
-                      <span className="text-[9px] font-bold text-[--color-success] leading-none">KICKOFF</span>
-                    )}
-                    {isWeek0 && (
-                      <span className="text-[9px] font-bold text-[--color-primary] leading-none">WEEK&nbsp;0</span>
-                    )}
+          {/* One or all months */}
+          {(fullSeason ? seasonMonths : [{ year: viewYear, month: viewMonth }]).map(({ year, month }, mi) => {
+            const mCells = buildCells(year, month);
+            return (
+              <div key={`${year}-${month}`}>
+                {/* Month label — only in full-season mode */}
+                {fullSeason && (
+                  <div className="px-3 py-1 text-small font-semibold text-[--color-text-secondary] border-t border-[--color-border]/30"
+                    style={{ backgroundColor: "color-mix(in srgb, var(--color-surface-overlay) 60%, transparent)" }}>
+                    {MONTH_NAMES[month]} {year}
                   </div>
+                )}
 
-                  {/* Meeting chips — Google Calendar style */}
-                  <div className="space-y-0.5">
-                    {dayMeetings.slice(0, MAX_CHIPS).map((m) => (
-                      <button
-                        key={m.id}
-                        onClick={(e) => { e.stopPropagation(); setSelected(m); }}
+                <div className="grid grid-cols-7 bg-[--color-surface]"
+                  style={{ borderTop: fullSeason && mi === 0 ? undefined : "1px solid color-mix(in srgb, var(--color-border) 30%, transparent)" }}>
+                  {mCells.map(({ date, isCurrentMonth }, idx) => {
+                    const key         = ymd(date);
+                    const isToday     = key === ymd(today);
+                    const isKickoff   = key === kickoffKey;
+                    const isWeek0     = key === week0Key;
+                    const isWeekend   = date.getDay() === 0 || date.getDay() === 6;
+                    const dayMeetings = meetingMap[key] ?? [];
+                    const MAX_CHIPS   = 3;
+
+                    return (
+                      <div
+                        key={idx}
                         className={[
-                          "w-full text-left text-[10px] font-medium px-1.5 py-0.5 rounded-sm truncate leading-relaxed transition-opacity",
-                          m.cancelled
-                            ? "line-through opacity-40 bg-[--color-surface-overlay] text-[--color-text-secondary]"
-                            : "text-white hover:opacity-85",
-                        ].join(" ")}
-                        style={!m.cancelled ? { backgroundColor: "var(--color-secondary)" } : undefined}
+                          "relative min-h-[110px] p-1.5 border-b border-r border-[--color-border]/20",
+                          !isCurrentMonth && "bg-[--color-surface-overlay]/30",
+                          isWeekend && isCurrentMonth && "bg-[--color-surface-raised]/40",
+                          isLeadership && "cursor-pointer group",
+                        ].filter(Boolean).join(" ")}
+                        onClick={() => {
+                          if (isLeadership && dayMeetings.length === 0) { setAddDate(key); setShowAdd(true); }
+                        }}
                       >
-                        {fmt12(m.startTime)} {m.title ?? "Build meeting"}
-                      </button>
-                    ))}
+                        <div className="flex items-center gap-1 mb-1">
+                          <span className={[
+                            "text-xs font-semibold w-6 h-6 flex items-center justify-center rounded-full",
+                            isToday ? "text-white" : isCurrentMonth ? "text-[--color-text-primary]" : "text-[--color-text-disabled]",
+                          ].join(" ")}
+                            style={isToday ? { backgroundColor: "var(--color-primary)" } : undefined}>
+                            {date.getDate()}
+                          </span>
+                          {isKickoff && <span className="text-[9px] font-bold text-[--color-success] leading-none">KICKOFF</span>}
+                          {isWeek0   && <span className="text-[9px] font-bold text-[--color-primary] leading-none">WEEK&nbsp;0</span>}
+                        </div>
 
-                    {dayMeetings.length > MAX_CHIPS && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setSelected(dayMeetings[MAX_CHIPS]); }}
-                        className="text-[10px] text-[--color-secondary] hover:underline px-1.5"
-                      >
-                        +{dayMeetings.length - MAX_CHIPS} more
-                      </button>
-                    )}
-                  </div>
+                        <div className="space-y-0.5">
+                          {dayMeetings.slice(0, MAX_CHIPS).map((m) => (
+                            <button key={m.id}
+                              onClick={(e) => { e.stopPropagation(); setSelected(m); }}
+                              className={[
+                                "w-full text-left text-[10px] font-medium px-1.5 py-0.5 rounded-sm truncate leading-relaxed transition-opacity",
+                                m.cancelled ? "line-through opacity-40 bg-[--color-surface-overlay] text-[--color-text-secondary]" : "text-white hover:opacity-85",
+                              ].join(" ")}
+                              style={!m.cancelled ? { backgroundColor: "var(--color-secondary)" } : undefined}>
+                              {fmt12(m.startTime)} {m.title ?? "Build meeting"}
+                            </button>
+                          ))}
+                          {dayMeetings.length > MAX_CHIPS && (
+                            <button onClick={(e) => { e.stopPropagation(); setSelected(dayMeetings[MAX_CHIPS]); }}
+                              className="text-[10px] text-[--color-secondary] hover:underline px-1.5">
+                              +{dayMeetings.length - MAX_CHIPS} more
+                            </button>
+                          )}
+                        </div>
 
-                  {/* Add meeting hover hint for leadership */}
-                  {isLeadership && isCurrentMonth && dayMeetings.length === 0 && (
-                    <span className="absolute bottom-1 right-1.5 text-[10px] text-[--color-text-disabled] opacity-0 group-hover:opacity-100 transition-opacity select-none">
-                      + add
-                    </span>
-                  )}
+                        {isLeadership && isCurrentMonth && dayMeetings.length === 0 && (
+                          <span className="absolute bottom-1 right-1.5 text-[10px] text-[--color-text-disabled] opacity-0 group-hover:opacity-100 transition-opacity select-none">+ add</span>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })}
         </div>
 
         {/* Legend */}
