@@ -16,6 +16,39 @@ async function requireHeadMentor() {
 
 const ALL_DAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
+/**
+ * Check if the proposed kickoff→week0 range overlaps any existing season
+ * for this team. Excludes `excludeSeasonId` (used when editing an existing season).
+ * Two ranges overlap when: proposedKickoff < existingWeek0 AND proposedWeek0 > existingKickoff
+ */
+async function checkSeasonOverlap(
+  teamId: string,
+  kickoffDate: Date,
+  week0Date: Date,
+  excludeSeasonId?: string
+): Promise<string | null> {
+  const overlapping = await prisma.season.findFirst({
+    where: {
+      teamId,
+      ...(excludeSeasonId ? { id: { not: excludeSeasonId } } : {}),
+      kickoffDate: { lt: week0Date },    // existing starts before proposed ends
+      week0Date:   { gt: kickoffDate },  // existing ends after proposed starts
+    },
+    select: { name: true, kickoffDate: true, week0Date: true },
+  });
+
+  if (!overlapping) return null;
+
+  const fmt = (d: Date) =>
+    d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
+  return (
+    `This season's schedule overlaps with "${overlapping.name}" ` +
+    `(${fmt(overlapping.kickoffDate)} – ${fmt(overlapping.week0Date)}). ` +
+    `Adjust the dates so they don't conflict.`
+  );
+}
+
 const SeasonSchema = z.object({
   name:               z.string().min(1),
   year:               z.coerce.number().int().min(2000).max(2100),
@@ -74,6 +107,14 @@ export async function createSeasonAction(
 
   if (!parsed.success) return { success: false, error: "Please fill in all required fields." };
   const d = parsed.data;
+
+  const overlapError = await checkSeasonOverlap(
+    session.user.teamId!,
+    new Date(d.kickoffDate),
+    new Date(d.week0Date)
+  );
+  if (overlapError) return { success: false, error: overlapError };
+
   const { dayTimes, globalStart, globalEnd } = extractDayTimes(formData, d.meetingDays);
 
   await prisma.season.updateMany({
@@ -123,6 +164,15 @@ export async function updateSeasonAction(
 
   if (!parsed.success) return { success: false, error: "Please fill in all required fields." };
   const d = parsed.data;
+
+  const overlapError = await checkSeasonOverlap(
+    session.user.teamId!,
+    new Date(d.kickoffDate),
+    new Date(d.week0Date),
+    seasonId  // exclude self when editing
+  );
+  if (overlapError) return { success: false, error: overlapError };
+
   const { dayTimes, globalStart, globalEnd } = extractDayTimes(formData, d.meetingDays);
 
   await prisma.season.updateMany({
