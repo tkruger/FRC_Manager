@@ -128,8 +128,7 @@ export function CalendarClient({ season, meetings, allTasks, isLeadership }: Pro
 
   const cells = buildCells(viewYear, viewMonth);
 
-  function handleCancel(meetingId: string) {
-    const reason = prompt("Reason for cancellation (optional):") ?? undefined;
+  function handleCancel(meetingId: string, reason?: string) {
     startTransition(async () => {
       await cancelMeetingAction(meetingId, reason);
       setSelected(null);
@@ -359,7 +358,7 @@ function MeetingDialog({
   meeting: Meeting;
   allTasks: TaskOption[];
   isLeadership: boolean;
-  onCancel: (id: string) => void;
+  onCancel: (id: string, reason?: string) => void;
   onRestore: (id: string) => void;
   onClose: () => void;
   onSave: (id: string, data: any) => void;
@@ -367,11 +366,13 @@ function MeetingDialog({
   const date = new Date(meeting.date);
   const dateLabel = date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
 
-  const [editing, setEditing]             = useState(false);
-  const [title, setTitle]                 = useState(meeting.title ?? "");
-  const [notes, setNotes]                 = useState(meeting.notes ?? "");
-  const [startTime, setStartTime]         = useState(meeting.startTime);
-  const [endTime, setEndTime]             = useState(meeting.endTime);
+  const [editing,    setEditing]    = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+  const [title,      setTitle]      = useState(meeting.title ?? "");
+  const [notes,      setNotes]      = useState(meeting.notes ?? "");
+  const [startTime,  setStartTime]  = useState(meeting.startTime);
+  const [endTime,    setEndTime]    = useState(meeting.endTime);
   const [selectedTasks, setSelectedTasks] = useState<string[]>(meeting.tasks.map(t => t.id));
 
   return (
@@ -414,13 +415,36 @@ function MeetingDialog({
                   </div>
                 </div>
               )}
+              {/* Cancel-meeting inline form */}
+              {cancelling && (
+                <div className="rounded-md border border-[--color-danger]/30 bg-[--color-danger]/5 p-3 space-y-3">
+                  <p className="text-sm font-medium text-[--color-danger]">Cancel this meeting?</p>
+                  <input
+                    type="text"
+                    value={cancelReason}
+                    onChange={(e) => setCancelReason(e.target.value)}
+                    placeholder="Reason (optional)"
+                    className="h-9 w-full rounded-md border border-[--color-border] bg-[--color-surface] px-3 text-sm text-[--color-text-primary] focus:outline-none focus:border-[--color-primary]"
+                    autoFocus
+                  />
+                  <div className="flex gap-2">
+                    <Button variant="danger" size="sm" onClick={() => { onCancel(meeting.id, cancelReason || undefined); setCancelling(false); }}>
+                      Confirm cancel
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => { setCancelling(false); setCancelReason(""); }}>
+                      Keep meeting
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               <div className="flex gap-2 pt-1">
-                {isLeadership && (
+                {isLeadership && !cancelling && (
                   <>
                     <Button size="sm" onClick={() => setEditing(true)}>Edit</Button>
                     {meeting.cancelled
                       ? <Button variant="outline" size="sm" onClick={() => onRestore(meeting.id)}>Restore</Button>
-                      : <Button variant="danger" size="sm" onClick={() => onCancel(meeting.id)}>Cancel meeting</Button>}
+                      : <Button variant="danger" size="sm" onClick={() => setCancelling(true)}>Cancel meeting</Button>}
                   </>
                 )}
                 <DialogClose asChild>
