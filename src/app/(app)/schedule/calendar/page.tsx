@@ -59,7 +59,7 @@ export default async function CalendarPage() {
           {/* Share / subscribe buttons */}
           {calendarUrl
             ? <SubscribeCalendarButton icsUrl={calendarUrl} />
-            : isLeadership && <GenerateShareLinkButton seasonId={activeSeason.id} />}
+            : <GenerateShareLinkButton seasonId={activeSeason.id} />}
           {publicUrl && (
             <Link href={publicUrl} target="_blank">
               <Button variant="outline" size="sm">Public view ↗</Button>

@@ -145,8 +145,8 @@ export async function addMeetingAction(
 export async function generateCalendarTokenAction(
   seasonId: string
 ): Promise<{ success: boolean; token?: string; error?: string }> {
-  let session;
-  try { session = await requireLeadership(); } catch (e: any) { return { success: false, error: e.message }; }
+  const session = await auth();
+  if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
 
   const crypto = await import("crypto");
   const token  = crypto.randomBytes(16).toString("hex");
