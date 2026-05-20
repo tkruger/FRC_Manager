@@ -172,7 +172,6 @@ model Season {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
-  @@unique([teamId, year])
 }
 
 model CompetitionEvent {
