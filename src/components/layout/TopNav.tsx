@@ -116,6 +116,15 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
             {resolvedTheme === "dark" ? <SunIcon /> : <MoonIcon />}
           </button>
 
+          {/* Calendar quick link */}
+          <Link
+            href="/schedule/calendar"
+            className="h-9 w-9 rounded-md flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors hidden sm:flex"
+            aria-label="Meeting calendar"
+          >
+            <CalendarIcon className="w-4 h-4" />
+          </Link>
+
           {/* Notification bell */}
           <Link
             href="/notifications"

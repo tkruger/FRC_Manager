@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CalendarClient } from "./CalendarClient";
+import { SubscribeCalendarButton } from "./SubscribeCalendarButton";
 
 export default async function CalendarPage() {
   const session = await auth();
@@ -54,11 +55,7 @@ export default async function CalendarPage() {
           <p className="text-body text-[--color-text-secondary] mt-1">{activeSeason.name}</p>
         </div>
         <div className="flex gap-2">
-          {calendarUrl && (
-            <a href={calendarUrl} download>
-              <Button variant="outline" size="sm">Subscribe (.ics)</Button>
-            </a>
-          )}
+          {calendarUrl && <SubscribeCalendarButton icsUrl={calendarUrl} />}
           {publicUrl && (
             <Link href={publicUrl} target="_blank">
               <Button variant="outline" size="sm">Public view ↗</Button>
