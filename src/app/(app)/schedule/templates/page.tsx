@@ -33,7 +33,8 @@ export default async function TemplatesPage() {
   const session = await auth();
   if (!session?.user?.teamId) redirect("/dashboard");
 
-  const isMentor = session.user.roles.some((r) => MENTOR_ROLES.includes(r));
+  const isMentor      = session.user.roles.some((r) => MENTOR_ROLES.includes(r));
+  const isHeadMentor  = session.user.roles.includes("HEAD_MENTOR" as any);
 
   const teamUserIds = (await prisma.user.findMany({
     where: { teamId: session.user.teamId },
@@ -98,7 +99,7 @@ export default async function TemplatesPage() {
                     {milestoneCount > 0 && <><span>·</span><span>{milestoneCount} milestones</span></>}
                   </div>
                   <div className="flex gap-2 mt-auto pt-2 border-t border-[--color-border]">
-                    <ApplyCustomTemplateButton templateId={t.id} disabled={!activeSeason} />
+                    {isHeadMentor && <ApplyCustomTemplateButton templateId={t.id} disabled={!activeSeason} />}
                     {isMentor && (
                       <Link href={`/schedule/templates/${t.id}`}>
                         <Button variant="outline" size="sm">Edit tasks</Button>
@@ -129,7 +130,7 @@ export default async function TemplatesPage() {
                 </p>
               )}
             </div>
-            <ApplyTemplateButton disabled={!activeSeason} existingTaskCount={taskCount} />
+            {isHeadMentor && <ApplyTemplateButton disabled={!activeSeason} existingTaskCount={taskCount} />}
           </div>
 
           <div className="border border-[--color-border] rounded-md overflow-hidden">

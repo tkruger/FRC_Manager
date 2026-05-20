@@ -16,6 +16,14 @@ async function requireMentor() {
   return session;
 }
 
+async function requireHeadMentor() {
+  const session = await auth();
+  if (!session?.user?.teamId) throw new Error("Not authenticated.");
+  if (!session.user.roles.includes("HEAD_MENTOR" as any))
+    throw new Error("Only Head Mentors can apply templates to an active season.");
+  return session;
+}
+
 // ─── Custom template CRUD ───────────────────────────────────────────────────
 
 export async function createTemplateAction(
@@ -233,8 +241,8 @@ export async function saveSeasonAsTemplateAction(
 export async function applyCustomTemplateAction(
   templateId: string
 ): Promise<{ success: boolean; error?: string; count?: number }> {
-  const session = await auth();
-  if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
+  let session;
+  try { session = await requireHeadMentor(); } catch (e: any) { return { success: false, error: e.message }; }
 
   const [template, activeSeason] = await Promise.all([
     prisma.seasonTemplate.findUnique({
@@ -309,8 +317,8 @@ function resolveDate(offset: number, kickoff: Date, week0: Date): Date {
 }
 
 export async function applyStandardTemplateAction(): Promise<{ success: boolean; error?: string; count?: number }> {
-  const session = await auth();
-  if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
+  let session;
+  try { session = await requireHeadMentor(); } catch (e: any) { return { success: false, error: e.message }; }
 
   const activeSeason = await prisma.season.findFirst({
     where: { teamId: session.user.teamId, isActive: true },
