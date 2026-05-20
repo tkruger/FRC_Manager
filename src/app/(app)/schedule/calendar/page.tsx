@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CalendarClient } from "./CalendarClient";
-import { SubscribeCalendarButton } from "./SubscribeCalendarButton";
+import { SubscribeCalendarButton } from "@/components/calendar/SubscribeCalendarButton";
 import { GenerateShareLinkButton } from "./GenerateShareLinkButton";
 
 export default async function CalendarPage() {

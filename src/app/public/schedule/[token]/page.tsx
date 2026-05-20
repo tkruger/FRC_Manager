@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
+import { SubscribeCalendarButton } from "@/components/calendar/SubscribeCalendarButton";
 
 export default async function PublicSchedulePage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -33,7 +34,8 @@ export default async function PublicSchedulePage({ params }: { params: Promise<{
     return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${ampm}`;
   }
 
-  const icsUrl = `/api/calendar/${token}.ics`;
+  const baseUrl = process.env.NEXTAUTH_URL ?? "https://frc-manager.vercel.app";
+  const icsUrl  = `${baseUrl}/api/calendar/${token}.ics`;
 
   return (
     <div className="min-h-screen bg-[--color-surface]">
@@ -55,14 +57,8 @@ export default async function PublicSchedulePage({ params }: { params: Promise<{
             <span>Week 0: <strong className="text-[--color-text-primary]">{season.week0Date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</strong></span>
             <span>Meeting days: <strong className="text-[--color-text-primary]">{season.meetingDays.join(", ")}</strong></span>
           </div>
-          <div className="mt-3 flex gap-2">
-            <a href={icsUrl}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[--color-border] text-sm text-[--color-text-primary] hover:bg-[--color-surface-overlay] transition-colors">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-              </svg>
-              Add to Google / Apple Calendar
-            </a>
+          <div className="mt-3">
+            <SubscribeCalendarButton icsUrl={icsUrl} />
           </div>
         </div>
       </header>
