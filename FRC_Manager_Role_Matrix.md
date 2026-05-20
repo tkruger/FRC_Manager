@@ -1,6 +1,7 @@
 # FRC Manager — Role Capability Matrix
 
-Generated: 2026-05-20
+Generated: 2026-05-20  
+Last updated: 2026-05-20
 
 ## Roles
 
@@ -31,7 +32,7 @@ Generated: 2026-05-20
 | Create, edit, delete tasks | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Assign / reassign tasks | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Create & edit season task templates | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ |
-| Apply templates to active season | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Apply templates to active season | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Add / edit / cancel meetings on calendar | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Generate meetings from season config | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | **Tools** |
@@ -82,7 +83,7 @@ Generated: 2026-05-20
 | Configure Discord / register commands | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
 | **Calendar & Public Schedule** |
 | View meeting calendar | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Generate share link / iCal feed | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Generate share link / iCal feed | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Public schedule page (no login) | 🌐 | 🌐 | 🌐 | 🌐 | 🌐 | 🌐 | 🌐 |
 
 ---
@@ -97,3 +98,11 @@ Generated: 2026-05-20
 - TEAM_LEADERSHIP is a leadership role focused on people management and Discord — it does not grant technical build permissions.
 - Server-side role checks enforce all restrictions; hiding UI elements is supplementary only.
 - Write actions via Discord follow the same role rules as the web app.
+
+## Changelog
+
+| Date | Change |
+|---|---|
+| 2026-05-20 | Initial matrix generated |
+| 2026-05-20 | Apply templates to active season restricted to Head Mentor only (was all roles) |
+| 2026-05-20 | Generate share link / iCal feed opened to all team members (was leadership only) |
