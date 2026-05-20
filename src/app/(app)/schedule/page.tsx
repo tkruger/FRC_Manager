@@ -89,7 +89,8 @@ export default async function ScheduleDashboard() {
           <p className="text-body text-[--color-text-secondary] mt-1">{activeSeason.name}</p>
         </div>
         <div className="flex gap-2">
-          <Link href="/schedule/gantt"><Button variant="outline" size="sm">Gantt view</Button></Link>
+          <Link href="/schedule/calendar"><Button variant="outline" size="sm">Calendar</Button></Link>
+          <Link href="/schedule/gantt"><Button variant="outline" size="sm">Gantt</Button></Link>
           <Link href="/schedule/templates"><Button variant="outline" size="sm">Templates</Button></Link>
           <Link href="/schedule/tasks/new"><Button size="sm">+ New task</Button></Link>
         </div>

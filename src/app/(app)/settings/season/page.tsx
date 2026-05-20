@@ -41,7 +41,12 @@ export default async function SeasonSettingsPage() {
       )}
 
       {/* Active season card */}
-      {activeSeason && <ActiveSeasonCard season={activeSeason} />}
+      {activeSeason && (
+        <ActiveSeasonCard season={{
+          ...activeSeason,
+          meetingDayTimes: activeSeason.meetingDayTimes as Record<string, { start: string; end: string }> | null,
+        }} />
+      )}
 
       {/* Past seasons */}
       {pastSeasons.length > 0 && (

@@ -23,6 +23,7 @@ interface Season {
   meetingDays: string[];
   meetingStartTime: string;
   meetingEndTime: string;
+  meetingDayTimes: Record<string, { start: string; end: string }> | null;
   expectedAttendance: number;
   robots: Robot[];
 }

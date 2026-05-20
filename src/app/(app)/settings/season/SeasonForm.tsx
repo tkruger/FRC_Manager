@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createSeasonAction } from "@/app/actions/season";
 import { Button } from "@/components/ui/button";
@@ -17,10 +17,20 @@ const DAYS = [
 ];
 
 const DEFAULT_DAYS = ["MON", "WED", "FRI", "SAT"];
+const DEFAULT_TIMES: Record<string, { start: string; end: string }> = {
+  MON: { start: "15:00", end: "20:00" },
+  TUE: { start: "15:00", end: "20:00" },
+  WED: { start: "15:00", end: "20:00" },
+  THU: { start: "15:00", end: "20:00" },
+  FRI: { start: "15:00", end: "20:00" },
+  SAT: { start: "09:00", end: "17:00" },
+  SUN: { start: "09:00", end: "17:00" },
+};
 
 export function SeasonForm({ onClose }: { onClose?: () => void } = {}) {
   const router = useRouter();
   const [state, action, pending] = useActionState(createSeasonAction, null);
+  const [selectedDays, setSelectedDays] = useState<string[]>(DEFAULT_DAYS);
   const currentYear = new Date().getFullYear();
 
   useEffect(() => {
@@ -47,39 +57,58 @@ export function SeasonForm({ onClose }: { onClose?: () => void } = {}) {
         <Field label="Week 0 date" name="week0Date" type="date" required hint="Your internal robot-complete deadline" />
       </div>
 
-      {/* Meeting days — checkbox list */}
+      {/* Per-day meeting times */}
       <div>
-        <p className="block text-label font-medium text-[--color-text-primary] mb-2">
-          Build meeting days <span className="text-[--color-danger]">*</span>
+        <p className="block text-label font-medium text-[--color-text-primary] mb-1">
+          Build meeting days &amp; times <span className="text-[--color-danger]">*</span>
+        </p>
+        <p className="text-small text-[--color-text-secondary] mb-3">
+          Select which days the team meets and set the start/end time for each day.
         </p>
         <div className="rounded-md border border-[--color-border] overflow-hidden divide-y divide-[--color-border]/40">
-          {DAYS.map(({ value, label }) => (
-            <label key={value} className="flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors hover:bg-[--color-surface-overlay] has-[:checked]:bg-[--color-primary]/8">
-              <input
-                type="checkbox"
-                name="meetingDays"
-                value={value}
-                defaultChecked={DEFAULT_DAYS.includes(value)}
-                className="rounded flex-shrink-0"
-              />
-              <span className="text-sm text-[--color-text-primary]">{label}</span>
-            </label>
-          ))}
+          {DAYS.map(({ value, label }) => {
+            const checked = selectedDays.includes(value);
+            return (
+              <div key={value} className={`flex items-center gap-3 px-3 py-3 transition-colors ${checked ? "bg-[--color-primary]/8" : "hover:bg-[--color-surface-overlay]"}`}>
+                <label className="flex items-center gap-3 cursor-pointer flex-shrink-0 min-w-[140px]">
+                  <input
+                    type="checkbox"
+                    name="meetingDays"
+                    value={value}
+                    checked={checked}
+                    onChange={(e) => setSelectedDays((prev) =>
+                      e.target.checked ? [...prev, value] : prev.filter((d) => d !== value)
+                    )}
+                    className="rounded flex-shrink-0"
+                  />
+                  <span className="text-sm text-[--color-text-primary]">{label}</span>
+                </label>
+                {checked && (
+                  <div className="flex items-center gap-2 ml-auto">
+                    <label className="text-small text-[--color-text-secondary]">Start</label>
+                    <input
+                      type="time"
+                      name={`dayStart_${value}`}
+                      defaultValue={DEFAULT_TIMES[value]?.start ?? "15:00"}
+                      className="h-8 rounded border border-[--color-border] bg-[--color-surface] px-2 text-sm text-[--color-text-primary] focus:outline-none focus:border-[--color-primary]"
+                    />
+                    <label className="text-small text-[--color-text-secondary]">End</label>
+                    <input
+                      type="time"
+                      name={`dayEnd_${value}`}
+                      defaultValue={DEFAULT_TIMES[value]?.end ?? "20:00"}
+                      className="h-8 rounded border border-[--color-border] bg-[--color-surface] px-2 text-sm text-[--color-text-primary] focus:outline-none focus:border-[--color-primary]"
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Default meeting times */}
-      <div>
-        <p className="block text-label font-medium text-[--color-text-primary] mb-1">
-          Default meeting times
-        </p>
-        <p className="text-small text-[--color-text-secondary] mb-3">Applied to all selected build days</p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <Field label="Start time" name="meetingStartTime" type="time" required defaultValue="15:00" />
-          <Field label="End time"   name="meetingEndTime"   type="time" required defaultValue="20:00" />
-          <Field label="Expected attendance" name="expectedAttendance" type="number" defaultValue={15} min={1} />
-        </div>
-      </div>
+      <Field label="Expected attendance" name="expectedAttendance" type="number" defaultValue={15} min={1}
+        hint="Typical number of students present per meeting" />
 
       <div className="flex gap-3">
         <Button type="submit" isLoading={pending}>Activate season</Button>

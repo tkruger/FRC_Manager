@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateSeasonAction } from "@/app/actions/season";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,8 @@ const DAYS = [
   { value: "SUN", label: "Sunday" },
 ];
 
+interface DayTime { start: string; end: string; }
+
 interface Season {
   id: string;
   name: string;
@@ -25,29 +27,30 @@ interface Season {
   meetingDays: string[];
   meetingStartTime: string;
   meetingEndTime: string;
+  meetingDayTimes: Record<string, DayTime> | null;
   expectedAttendance: number;
 }
 
-interface Props {
-  season: Season;
-  onClose: () => void;
-}
-
-export function EditSeasonForm({ season, onClose }: Props) {
+export function EditSeasonForm({ season, onClose }: { season: Season; onClose: () => void }) {
   const router = useRouter();
 
   const boundAction = updateSeasonAction.bind(null, season.id);
   const [state, action, pending] = useActionState(boundAction, null);
+  const [selectedDays, setSelectedDays] = useState<string[]>(season.meetingDays);
 
   useEffect(() => {
-    if (state?.success) {
-      router.refresh();
-      onClose();
-    }
+    if (state?.success) { router.refresh(); onClose(); }
   }, [state, router, onClose]);
 
   function toDateInputValue(d: Date) {
     return new Date(d).toISOString().split("T")[0];
+  }
+
+  function defaultStart(day: string) {
+    return season.meetingDayTimes?.[day]?.start ?? season.meetingStartTime;
+  }
+  function defaultEnd(day: string) {
+    return season.meetingDayTimes?.[day]?.end ?? season.meetingEndTime;
   }
 
   return (
@@ -69,39 +72,57 @@ export function EditSeasonForm({ season, onClose }: Props) {
           hint="Your internal robot-complete deadline" />
       </div>
 
-      {/* Meeting days — checkbox list */}
+      {/* Per-day meeting times */}
       <div>
-        <p className="block text-label font-medium text-[--color-text-primary] mb-2">
-          Build meeting days <span className="text-[--color-danger]">*</span>
+        <p className="block text-label font-medium text-[--color-text-primary] mb-1">
+          Build meeting days &amp; times <span className="text-[--color-danger]">*</span>
+        </p>
+        <p className="text-small text-[--color-text-secondary] mb-3">
+          Toggle days and set individual start/end times for each.
         </p>
         <div className="rounded-md border border-[--color-border] overflow-hidden divide-y divide-[--color-border]/40">
-          {DAYS.map(({ value, label }) => (
-            <label key={value} className="flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors hover:bg-[--color-surface-overlay] has-[:checked]:bg-[--color-primary]/8">
-              <input
-                type="checkbox"
-                name="meetingDays"
-                value={value}
-                defaultChecked={season.meetingDays.includes(value)}
-                className="rounded flex-shrink-0"
-              />
-              <span className="text-sm text-[--color-text-primary]">{label}</span>
-            </label>
-          ))}
+          {DAYS.map(({ value, label }) => {
+            const checked = selectedDays.includes(value);
+            return (
+              <div key={value} className={`flex items-center gap-3 px-3 py-3 transition-colors ${checked ? "bg-[--color-primary]/8" : "hover:bg-[--color-surface-overlay]"}`}>
+                <label className="flex items-center gap-3 cursor-pointer flex-shrink-0 min-w-[140px]">
+                  <input
+                    type="checkbox"
+                    name="meetingDays"
+                    value={value}
+                    checked={checked}
+                    onChange={(e) => setSelectedDays((prev) =>
+                      e.target.checked ? [...prev, value] : prev.filter((d) => d !== value)
+                    )}
+                    className="rounded flex-shrink-0"
+                  />
+                  <span className="text-sm text-[--color-text-primary]">{label}</span>
+                </label>
+                {checked && (
+                  <div className="flex items-center gap-2 ml-auto">
+                    <span className="text-small text-[--color-text-secondary]">Start</span>
+                    <input
+                      type="time"
+                      name={`dayStart_${value}`}
+                      defaultValue={defaultStart(value)}
+                      className="h-8 rounded border border-[--color-border] bg-[--color-surface] px-2 text-sm text-[--color-text-primary] focus:outline-none focus:border-[--color-primary]"
+                    />
+                    <span className="text-small text-[--color-text-secondary]">End</span>
+                    <input
+                      type="time"
+                      name={`dayEnd_${value}`}
+                      defaultValue={defaultEnd(value)}
+                      className="h-8 rounded border border-[--color-border] bg-[--color-surface] px-2 text-sm text-[--color-text-primary] focus:outline-none focus:border-[--color-primary]"
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Default meeting times */}
-      <div>
-        <p className="block text-label font-medium text-[--color-text-primary] mb-1">
-          Default meeting times
-        </p>
-        <p className="text-small text-[--color-text-secondary] mb-3">Applied to all selected build days</p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <Field label="Start time" name="meetingStartTime" type="time" required defaultValue={season.meetingStartTime} />
-          <Field label="End time"   name="meetingEndTime"   type="time" required defaultValue={season.meetingEndTime} />
-          <Field label="Expected attendance" name="expectedAttendance" type="number" defaultValue={season.expectedAttendance} min={1} />
-        </div>
-      </div>
+      <Field label="Expected attendance" name="expectedAttendance" type="number" defaultValue={season.expectedAttendance} min={1} />
 
       <div className="flex gap-3">
         <Button type="submit" isLoading={pending}>Save changes</Button>

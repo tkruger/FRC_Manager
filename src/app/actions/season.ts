@@ -4,21 +4,48 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import crypto from "crypto";
+
+const ALL_DAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
 const SeasonSchema = z.object({
-  name: z.string().min(1),
-  year: z.coerce.number().int().min(2000).max(2100),
-  kickoffDate: z.string().min(1),
-  week0Date: z.string().min(1),
-  meetingDays: z.array(z.string()).min(1),
-  meetingStartTime: z.string().min(1),
-  meetingEndTime: z.string().min(1),
+  name:               z.string().min(1),
+  year:               z.coerce.number().int().min(2000).max(2100),
+  kickoffDate:        z.string().min(1),
+  week0Date:          z.string().min(1),
+  meetingDays:        z.array(z.string()).min(1),
   expectedAttendance: z.coerce.number().int().min(1).default(10),
 });
 
 export type SeasonActionState =
   | { success: true; seasonId: string }
   | { success: false; error: string };
+
+/** Extract per-day time config from form data:
+ *  dayStart_MON, dayEnd_MON, dayStart_WED, dayEnd_WED, etc.
+ *  Falls back to global meetingStartTime / meetingEndTime if no per-day fields. */
+function extractDayTimes(
+  formData: FormData,
+  selectedDays: string[]
+): { dayTimes: Record<string, { start: string; end: string }>; globalStart: string; globalEnd: string } {
+  const globalStart = (formData.get("meetingStartTime") as string) || "15:00";
+  const globalEnd   = (formData.get("meetingEndTime")   as string) || "20:00";
+
+  const dayTimes: Record<string, { start: string; end: string }> = {};
+  for (const day of selectedDays) {
+    const start = (formData.get(`dayStart_${day}`) as string) || globalStart;
+    const end   = (formData.get(`dayEnd_${day}`)   as string) || globalEnd;
+    dayTimes[day] = { start, end };
+  }
+
+  // Use the first selected day's times as the global fallback
+  const firstDay = selectedDays[0];
+  return {
+    dayTimes,
+    globalStart: dayTimes[firstDay]?.start ?? globalStart,
+    globalEnd:   dayTimes[firstDay]?.end   ?? globalEnd,
+  };
+}
 
 export async function createSeasonAction(
   _prev: SeasonActionState | null,
@@ -34,15 +61,13 @@ export async function createSeasonAction(
     kickoffDate: formData.get("kickoffDate"),
     week0Date: formData.get("week0Date"),
     meetingDays: days,
-    meetingStartTime: formData.get("meetingStartTime"),
-    meetingEndTime: formData.get("meetingEndTime"),
     expectedAttendance: formData.get("expectedAttendance"),
   });
 
   if (!parsed.success) return { success: false, error: "Please fill in all required fields." };
   const d = parsed.data;
+  const { dayTimes, globalStart, globalEnd } = extractDayTimes(formData, d.meetingDays);
 
-  // Deactivate any currently active season for this team
   await prisma.season.updateMany({
     where: { teamId: session.user.teamId, isActive: true },
     data: { isActive: false },
@@ -50,16 +75,18 @@ export async function createSeasonAction(
 
   const season = await prisma.season.create({
     data: {
-      teamId: session.user.teamId,
-      name: d.name,
-      year: d.year,
-      kickoffDate: new Date(d.kickoffDate),
-      week0Date: new Date(d.week0Date),
-      isActive: true,
-      meetingDays: d.meetingDays,
-      meetingStartTime: d.meetingStartTime,
-      meetingEndTime: d.meetingEndTime,
+      teamId:             session.user.teamId,
+      name:               d.name,
+      year:               d.year,
+      kickoffDate:        new Date(d.kickoffDate),
+      week0Date:          new Date(d.week0Date),
+      isActive:           true,
+      meetingDays:        d.meetingDays,
+      meetingStartTime:   globalStart,
+      meetingEndTime:     globalEnd,
+      meetingDayTimes:    dayTimes,
       expectedAttendance: d.expectedAttendance,
+      calendarToken:      crypto.randomBytes(16).toString("hex"),
     },
   });
 
@@ -78,29 +105,29 @@ export async function updateSeasonAction(
 
   const days = formData.getAll("meetingDays") as string[];
   const parsed = SeasonSchema.safeParse({
-    name: formData.get("name"),
-    year: formData.get("year"),
-    kickoffDate: formData.get("kickoffDate"),
-    week0Date: formData.get("week0Date"),
-    meetingDays: days.length > 0 ? days : ["MON"],
-    meetingStartTime: formData.get("meetingStartTime"),
-    meetingEndTime: formData.get("meetingEndTime"),
+    name:               formData.get("name"),
+    year:               formData.get("year"),
+    kickoffDate:        formData.get("kickoffDate"),
+    week0Date:          formData.get("week0Date"),
+    meetingDays:        days.length > 0 ? days : ["MON"],
     expectedAttendance: formData.get("expectedAttendance"),
   });
 
   if (!parsed.success) return { success: false, error: "Please fill in all required fields." };
   const d = parsed.data;
+  const { dayTimes, globalStart, globalEnd } = extractDayTimes(formData, d.meetingDays);
 
   await prisma.season.updateMany({
     where: { id: seasonId, teamId: session.user.teamId },
     data: {
-      name: d.name,
-      year: d.year,
-      kickoffDate: new Date(d.kickoffDate),
-      week0Date: new Date(d.week0Date),
-      meetingDays: d.meetingDays,
-      meetingStartTime: d.meetingStartTime,
-      meetingEndTime: d.meetingEndTime,
+      name:               d.name,
+      year:               d.year,
+      kickoffDate:        new Date(d.kickoffDate),
+      week0Date:          new Date(d.week0Date),
+      meetingDays:        d.meetingDays,
+      meetingStartTime:   globalStart,
+      meetingEndTime:     globalEnd,
+      meetingDayTimes:    dayTimes,
       expectedAttendance: d.expectedAttendance,
     },
   });
@@ -112,10 +139,10 @@ export async function updateSeasonAction(
 }
 
 const RobotSchema = z.object({
-  name: z.string().min(1),
-  role: z.enum(["COMPETITION", "PRACTICE", "DEMO", "OTHER"]),
+  name:         z.string().min(1),
+  role:         z.enum(["COMPETITION", "PRACTICE", "DEMO", "OTHER"]),
   weightTarget: z.coerce.number().optional(),
-  description: z.string().optional(),
+  description:  z.string().optional(),
 });
 
 export async function createRobotAction(
@@ -131,10 +158,10 @@ export async function createRobotAction(
   if (!season) return { success: false, error: "Season not found." };
 
   const parsed = RobotSchema.safeParse({
-    name: formData.get("name"),
-    role: formData.get("role"),
+    name:         formData.get("name"),
+    role:         formData.get("role"),
     weightTarget: formData.get("weightTarget") || undefined,
-    description: formData.get("description") || undefined,
+    description:  formData.get("description") || undefined,
   });
   if (!parsed.success) return { success: false, error: "Invalid robot data." };
   const d = parsed.data;
@@ -142,11 +169,11 @@ export async function createRobotAction(
   await prisma.robot.create({
     data: {
       seasonId,
-      year: season.year,
-      name: d.name,
+      year:        season.year,
+      name:        d.name,
       displayName: `${season.year} ${d.name}`,
-      role: d.role,
-      weightTarget: d.weightTarget,
+      role:        d.role,
+      weightTarget:d.weightTarget,
       description: d.description,
     },
   });

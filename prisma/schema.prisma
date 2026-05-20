@@ -155,13 +155,16 @@ model Season {
   week0Date          DateTime
   isActive           Boolean  @default(false)
   meetingDays        String[]
-  meetingStartTime   String
-  meetingEndTime     String
+  meetingStartTime   String          // default start time (fallback when no per-day override)
+  meetingEndTime     String          // default end time
+  meetingDayTimes    Json?           // { "MON": { "start": "15:00", "end": "20:00" }, ... }
   expectedAttendance Int      @default(10)
+  calendarToken      String?  @unique // secret token for public iCal feed
 
   robots             Robot[]
   competitionEvents  CompetitionEvent[]
   tasks              Task[]
+  meetings           Meeting[]
   budget             Budget?
   baseInventoryItems BaseInventoryItem[]
   purchaseRequests   PurchaseRequest[]
@@ -838,6 +841,7 @@ model Task {
   linkedItems      InUseInventoryItem[]
   purchaseRequests PurchaseRequest[]
   designReview     DesignReview?
+  meetings         Meeting[]   @relation("MeetingTasks")
 }
 
 enum TaskPriority {
@@ -1100,4 +1104,24 @@ model DiscordInteractionLog {
   success       Boolean       @default(true)
   errorMessage  String?
   createdAt     DateTime      @default(now())
+}
+
+// ─────────────────────────────────────────────
+// MEETING CALENDAR
+// ─────────────────────────────────────────────
+
+model Meeting {
+  id           String   @id @default(cuid())
+  seasonId     String
+  season       Season   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  date         DateTime // date of the meeting (time stored in startTime/endTime)
+  startTime    String   // "HH:MM" 24h
+  endTime      String   // "HH:MM" 24h
+  title        String?  // optional topic / agenda headline
+  notes        String?  // full agenda / notes (markdown)
+  cancelled    Boolean  @default(false)
+  cancelReason String?
+  tasks        Task[]   @relation("MeetingTasks")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
