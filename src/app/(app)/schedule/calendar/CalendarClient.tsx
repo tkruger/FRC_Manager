@@ -237,11 +237,11 @@ export function CalendarClient({ season, meetings, allTasks, isLeadership }: Pro
                         key={idx}
                         className={[
                           "relative min-h-[110px] p-1.5 border-b border-r border-[--color-border]/20 transition-colors",
-                          isToday && "bg-[--color-primary]/6",
                           !isToday && !isCurrentMonth && "bg-[--color-surface-overlay]/30",
                           !isToday && isWeekend && isCurrentMonth && "bg-[--color-surface-raised]/40",
                           isLeadership && "cursor-pointer group",
                         ].filter(Boolean).join(" ")}
+                        style={isToday ? { backgroundColor: "color-mix(in srgb, var(--color-primary) 10%, transparent)" } : undefined}
                         onClick={() => {
                           if (isLeadership && dayMeetings.length === 0) { setAddDate(key); setShowAdd(true); }
                         }}
