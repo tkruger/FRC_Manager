@@ -236,9 +236,10 @@ export function CalendarClient({ season, meetings, allTasks, isLeadership }: Pro
                       <div
                         key={idx}
                         className={[
-                          "relative min-h-[110px] p-1.5 border-b border-r border-[--color-border]/20",
-                          !isCurrentMonth && "bg-[--color-surface-overlay]/30",
-                          isWeekend && isCurrentMonth && "bg-[--color-surface-raised]/40",
+                          "relative min-h-[110px] p-1.5 border-b border-r border-[--color-border]/20 transition-colors",
+                          isToday && "bg-[--color-primary]/6",
+                          !isToday && !isCurrentMonth && "bg-[--color-surface-overlay]/30",
+                          !isToday && isWeekend && isCurrentMonth && "bg-[--color-surface-raised]/40",
                           isLeadership && "cursor-pointer group",
                         ].filter(Boolean).join(" ")}
                         onClick={() => {

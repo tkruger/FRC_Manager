@@ -9,7 +9,7 @@ export default async function PublicSchedulePage({ params }: { params: Promise<{
     include: {
       team: { select: { teamNumber: true, name: true } },
       meetings: {
-        where: { cancelled: false },
+        where: { cancelled: false, date: { gte: new Date(new Date().toDateString()) } },
         orderBy: { date: "asc" },
         include: { tasks: { select: { name: true, subTeam: true } } },
       },
@@ -81,10 +81,9 @@ export default async function PublicSchedulePage({ params }: { params: Promise<{
             <div className="space-y-3">
               {monthMeetings.map((m) => {
                 const isToday = m.date.toDateString() === new Date().toDateString();
-                const isPast  = m.date < new Date(new Date().toDateString());
                 return (
                   <div key={m.id}
-                    className={`rounded-lg border px-4 py-3 ${isToday ? "border-[--color-primary] bg-[--color-primary]/5" : "border-[--color-border]"} ${isPast ? "opacity-60" : ""}`}>
+                    className={`rounded-lg border px-4 py-3 ${isToday ? "border-[--color-primary] bg-[--color-primary]/5" : "border-[--color-border]"}`}>
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <div className="flex items-center gap-2">
