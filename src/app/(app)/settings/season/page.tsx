@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { ActiveSeasonCard } from "./ActiveSeasonCard";
 import { NewSeasonButton } from "./NewSeasonButton";
+import { PastSeasonsCard } from "./PastSeasonsCard";
 
 export default async function SeasonSettingsPage() {
   const session = await auth();
@@ -10,12 +11,27 @@ export default async function SeasonSettingsPage() {
 
   const seasons = await prisma.season.findMany({
     where: { teamId: session.user.teamId },
-    include: { robots: { where: { archived: false }, orderBy: { createdAt: "asc" } } },
+    include: {
+      robots: { where: { archived: false }, orderBy: { createdAt: "asc" } },
+      _count: { select: { tasks: true, meetings: true } },
+    },
     orderBy: { year: "desc" },
   });
 
   const activeSeason = seasons.find((s) => s.isActive);
-  const pastSeasons = seasons.filter((s) => !s.isActive);
+  const pastSeasons  = seasons.filter((s) => !s.isActive);
+
+  // Task completion stats for past seasons
+  const pastSeasonStats = await Promise.all(
+    pastSeasons.map(async (s) => {
+      const [complete, total] = await Promise.all([
+        prisma.task.count({ where: { seasonId: s.id, status: "COMPLETE" } }),
+        prisma.task.count({ where: { seasonId: s.id } }),
+      ]);
+      return { id: s.id, complete, total };
+    })
+  );
+  const statsById = Object.fromEntries(pastSeasonStats.map((s) => [s.id, s]));
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -50,17 +66,29 @@ export default async function SeasonSettingsPage() {
 
       {/* Past seasons */}
       {pastSeasons.length > 0 && (
-        <div className="card">
-          <h2 className="text-h3 text-[--color-text-primary] mb-3">Past seasons</h2>
-          <div className="space-y-2">
-            {pastSeasons.map((s) => (
-              <div key={s.id} className="flex items-center justify-between py-2 border-b border-[--color-border] last:border-0">
-                <span className="text-sm text-[--color-text-primary]">{s.name}</span>
-                <span className="text-small text-[--color-text-secondary]">{s.robots.length} robot(s)</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        <PastSeasonsCard
+          seasons={pastSeasons.map((s) => ({
+            id:                s.id,
+            name:              s.name,
+            year:              s.year,
+            kickoffDate:       s.kickoffDate.toISOString(),
+            week0Date:         s.week0Date.toISOString(),
+            meetingDays:       s.meetingDays,
+            meetingStartTime:  s.meetingStartTime,
+            meetingEndTime:    s.meetingEndTime,
+            meetingDayTimes:   s.meetingDayTimes as Record<string, { start: string; end: string }> | null,
+            expectedAttendance:s.expectedAttendance,
+            robots: s.robots.map((r) => ({
+              id:          r.id,
+              displayName: r.displayName,
+              role:        r.role,
+              status:      r.status,
+            })),
+            taskCount:     statsById[s.id]?.total  ?? 0,
+            taskComplete:  statsById[s.id]?.complete ?? 0,
+            meetingCount:  s._count.meetings,
+          }))}
+        />
       )}
     </div>
   );

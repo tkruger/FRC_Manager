@@ -9,6 +9,7 @@ import { Table, TableHead, TableBody, Th, Td, Tr } from "@/components/ui/table";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { AddFundingDialog } from "./AddFundingDialog";
 import { LogExpenseDialog } from "./LogExpenseDialog";
+import { BudgetBurndownCard } from "./BudgetBurndownCard";
 
 const BUDGET_ROLES = ["HEAD_MENTOR", "BUDGET_MANAGER"];
 
@@ -41,7 +42,7 @@ export default async function BudgetDashboard() {
     include: {
       categories: { orderBy: { type: "asc" } },
       fundingSources: { orderBy: { createdAt: "desc" } },
-      expenses: { orderBy: { date: "desc" }, take: 20 },
+      expenses: { orderBy: { date: "asc" } }, // all expenses, ascending for burndown
     },
   });
 
@@ -71,6 +72,20 @@ export default async function BudgetDashboard() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      {/* Burndown chart */}
+      <BudgetBurndownCard
+        totalAllocated={totalAllocated}
+        totalSpent={totalSpent}
+        kickoffDate={activeSeason.kickoffDate.toISOString()}
+        week0Date={activeSeason.week0Date.toISOString()}
+        categories={budget.categories.map((c) => ({ id: c.id, label: c.label, allocation: c.allocation }))}
+        expenses={budget.expenses.map((e) => ({
+          date:       e.date.toISOString(),
+          amount:     e.amount,
+          categoryId: e.categoryId ?? null,
+        }))}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
