@@ -6,6 +6,14 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
 
+async function requireHeadMentor() {
+  const session = await auth();
+  if (!session?.user?.teamId) throw new Error("Not authenticated.");
+  if (!session.user.roles.includes("HEAD_MENTOR" as any))
+    throw new Error("Only Head Mentors can manage seasons.");
+  return session;
+}
+
 const ALL_DAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
 const SeasonSchema = z.object({
@@ -51,8 +59,8 @@ export async function createSeasonAction(
   _prev: SeasonActionState | null,
   formData: FormData
 ): Promise<SeasonActionState> {
-  const session = await auth();
-  if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
+  let session;
+  try { session = await requireHeadMentor(); } catch (e: any) { return { success: false, error: e.message }; }
 
   const days = formData.getAll("meetingDays") as string[];
   const parsed = SeasonSchema.safeParse({
@@ -75,7 +83,7 @@ export async function createSeasonAction(
 
   const season = await prisma.season.create({
     data: {
-      teamId:             session.user.teamId,
+      teamId:             session.user.teamId!,
       name:               d.name,
       year:               d.year,
       kickoffDate:        new Date(d.kickoffDate),
@@ -100,8 +108,8 @@ export async function updateSeasonAction(
   _prev: SeasonActionState | null,
   formData: FormData
 ): Promise<SeasonActionState> {
-  const session = await auth();
-  if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
+  let session;
+  try { session = await requireHeadMentor(); } catch (e: any) { return { success: false, error: e.message }; }
 
   const days = formData.getAll("meetingDays") as string[];
   const parsed = SeasonSchema.safeParse({
@@ -149,8 +157,8 @@ export async function createRobotAction(
   seasonId: string,
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
-  const session = await auth();
-  if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
+  let session;
+  try { session = await requireHeadMentor(); } catch (e: any) { return { success: false, error: e.message }; }
 
   const season = await prisma.season.findFirst({
     where: { id: seasonId, teamId: session.user.teamId },

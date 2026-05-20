@@ -28,7 +28,7 @@ interface Season {
   robots: Robot[];
 }
 
-export function ActiveSeasonCard({ season }: { season: Season }) {
+export function ActiveSeasonCard({ season, canEdit = false }: { season: Season; canEdit?: boolean }) {
   const [editing, setEditing] = useState(false);
 
   return (
@@ -50,9 +50,11 @@ export function ActiveSeasonCard({ season }: { season: Season }) {
                 <span>Attendance: <strong className="text-[--color-text-primary]">{season.expectedAttendance}</strong></span>
               </div>
             </div>
-            <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
-              Edit
-            </Button>
+            {canEdit && (
+              <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+                Edit
+              </Button>
+            )}
           </div>
 
           {/* Robots */}
@@ -75,7 +77,7 @@ export function ActiveSeasonCard({ season }: { season: Season }) {
                 ))}
               </div>
             )}
-            <RobotForm seasonId={season.id} />
+            {canEdit && <RobotForm seasonId={season.id} />}
           </div>
         </>
       ) : (

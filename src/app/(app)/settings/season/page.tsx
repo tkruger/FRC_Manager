@@ -9,6 +9,8 @@ export default async function SeasonSettingsPage() {
   const session = await auth();
   if (!session?.user?.teamId) redirect("/dashboard");
 
+  const isHeadMentor = session.user.roles.includes("HEAD_MENTOR" as any);
+
   const seasons = await prisma.season.findMany({
     where: { teamId: session.user.teamId },
     include: {
@@ -43,7 +45,7 @@ export default async function SeasonSettingsPage() {
             Configure the active build season, kickoff date, and robots.
           </p>
         </div>
-        <NewSeasonButton hasActiveSeason={!!activeSeason} />
+        {isHeadMentor && <NewSeasonButton hasActiveSeason={!!activeSeason} />}
       </div>
 
       {/* No active season prompt */}
@@ -52,16 +54,21 @@ export default async function SeasonSettingsPage() {
           <p className="text-body text-[--color-text-secondary] mb-4">
             No active season yet. Create one to start tracking robots, tasks, and inventory.
           </p>
-          <NewSeasonButton hasActiveSeason={false} label="Create first season" />
+          {isHeadMentor
+            ? <NewSeasonButton hasActiveSeason={false} label="Create first season" />
+            : <p className="text-small text-[--color-text-disabled]">Contact your Head Mentor to set up a season.</p>}
         </div>
       )}
 
       {/* Active season card */}
       {activeSeason && (
-        <ActiveSeasonCard season={{
-          ...activeSeason,
-          meetingDayTimes: activeSeason.meetingDayTimes as Record<string, { start: string; end: string }> | null,
-        }} />
+        <ActiveSeasonCard
+          season={{
+            ...activeSeason,
+            meetingDayTimes: activeSeason.meetingDayTimes as Record<string, { start: string; end: string }> | null,
+          }}
+          canEdit={isHeadMentor}
+        />
       )}
 
       {/* Past seasons */}
