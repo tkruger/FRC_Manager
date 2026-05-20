@@ -18,7 +18,6 @@ export default async function BudgetDashboard() {
   if (!session?.user?.teamId) redirect("/dashboard");
 
   const canEdit = session.user.roles.some((r) => BUDGET_ROLES.includes(r));
-  if (!canEdit) redirect("/dashboard");
 
   const activeSeason = await prisma.season.findFirst({
     where: { teamId: session.user.teamId, isActive: true },
@@ -52,7 +51,9 @@ export default async function BudgetDashboard() {
         <h1 className="text-h1 text-[--color-text-primary]">Budget</h1>
         <div className="card text-center py-12">
           <p className="text-body text-[--color-text-secondary] mb-4">No budget configured for {activeSeason.name}.</p>
-          <Link href="/budget/setup"><Button>Set up budget</Button></Link>
+          {canEdit
+            ? <Link href="/budget/setup"><Button>Set up budget</Button></Link>
+            : <p className="text-small text-[--color-text-disabled]">A Budget Manager or Head Mentor can set up the budget.</p>}
         </div>
       </div>
     );
@@ -92,10 +93,17 @@ export default async function BudgetDashboard() {
           <h1 className="text-h1 text-[--color-text-primary]">Budget</h1>
           <p className="text-body text-[--color-text-secondary] mt-1">{activeSeason.name}</p>
         </div>
-        <div className="flex gap-2">
-          <Link href="/budget/setup"><Button variant="outline" size="sm">Edit budget</Button></Link>
+        <div className="flex gap-2 items-center">
+          {!canEdit && (
+            <span className="text-small text-[--color-text-secondary] italic">Read-only view</span>
+          )}
+          {canEdit && (
+            <Link href="/budget/setup"><Button variant="outline" size="sm">Edit budget</Button></Link>
+          )}
           <Link href="/budget/bom"><Button variant="outline" size="sm">Robot BOM</Button></Link>
-          <LogExpenseDialog budgetId={budget.id} categories={budget.categories} />
+          {canEdit && (
+            <LogExpenseDialog budgetId={budget.id} categories={budget.categories} />
+          )}
         </div>
       </div>
 
@@ -162,7 +170,7 @@ export default async function BudgetDashboard() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-h2 text-[--color-text-primary]">Funding sources</h2>
-            <AddFundingDialog budgetId={budget.id} />
+            {canEdit && <AddFundingDialog budgetId={budget.id} />}
           </div>
           <div className="card space-y-3">
             {budget.fundingSources.length === 0 ? (
