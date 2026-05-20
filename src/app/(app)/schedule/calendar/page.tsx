@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CalendarClient } from "./CalendarClient";
 import { SubscribeCalendarButton } from "./SubscribeCalendarButton";
+import { GenerateShareLinkButton } from "./GenerateShareLinkButton";
 
 export default async function CalendarPage() {
   const session = await auth();
@@ -34,12 +35,12 @@ export default async function CalendarPage() {
       })
     : [];
 
+  const baseUrl = process.env.NEXTAUTH_URL ?? "https://frc-manager.vercel.app";
   const calendarUrl = activeSeason.calendarToken
-    ? `${process.env.NEXTAUTH_URL ?? ""}/api/calendar/${activeSeason.calendarToken}.ics`
+    ? `${baseUrl}/api/calendar/${activeSeason.calendarToken}.ics`
     : null;
-
   const publicUrl = activeSeason.calendarToken
-    ? `${process.env.NEXTAUTH_URL ?? ""}/public/schedule/${activeSeason.calendarToken}`
+    ? `${baseUrl}/public/schedule/${activeSeason.calendarToken}`
     : null;
 
   return (
@@ -54,8 +55,11 @@ export default async function CalendarPage() {
           <h1 className="text-h1 text-[--color-text-primary]">Meeting Calendar</h1>
           <p className="text-body text-[--color-text-secondary] mt-1">{activeSeason.name}</p>
         </div>
-        <div className="flex gap-2">
-          {calendarUrl && <SubscribeCalendarButton icsUrl={calendarUrl} />}
+        <div className="flex gap-2 flex-wrap justify-end">
+          {/* Share / subscribe buttons */}
+          {calendarUrl
+            ? <SubscribeCalendarButton icsUrl={calendarUrl} />
+            : isLeadership && <GenerateShareLinkButton seasonId={activeSeason.id} />}
           {publicUrl && (
             <Link href={publicUrl} target="_blank">
               <Button variant="outline" size="sm">Public view ↗</Button>
@@ -69,11 +73,11 @@ export default async function CalendarPage() {
 
       <CalendarClient
         season={{
-          id:          activeSeason.id,
-          name:        activeSeason.name,
-          kickoffDate: activeSeason.kickoffDate.toISOString(),
-          week0Date:   activeSeason.week0Date.toISOString(),
-          meetingDays: activeSeason.meetingDays,
+          id:            activeSeason.id,
+          name:          activeSeason.name,
+          kickoffDate:   activeSeason.kickoffDate.toISOString(),
+          week0Date:     activeSeason.week0Date.toISOString(),
+          meetingDays:   activeSeason.meetingDays,
           calendarToken: activeSeason.calendarToken,
         }}
         meetings={activeSeason.meetings.map((m) => ({
@@ -95,7 +99,7 @@ export default async function CalendarPage() {
           dueDate: t.dueDate?.toISOString() ?? null,
         }))}
         isLeadership={isLeadership}
-        nextauthUrl={process.env.NEXTAUTH_URL ?? ""}
+        nextauthUrl={baseUrl}
       />
     </div>
   );

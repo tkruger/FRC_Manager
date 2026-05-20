@@ -140,3 +140,22 @@ export async function addMeetingAction(
   revalidatePath("/schedule/calendar");
   return { success: true };
 }
+
+/** Generate (or regenerate) the calendar share token for a season */
+export async function generateCalendarTokenAction(
+  seasonId: string
+): Promise<{ success: boolean; token?: string; error?: string }> {
+  let session;
+  try { session = await requireLeadership(); } catch (e: any) { return { success: false, error: e.message }; }
+
+  const crypto = await import("crypto");
+  const token  = crypto.randomBytes(16).toString("hex");
+
+  await prisma.season.updateMany({
+    where: { id: seasonId, teamId: session.user.teamId },
+    data:  { calendarToken: token },
+  });
+
+  revalidatePath("/schedule/calendar");
+  return { success: true, token };
+}
