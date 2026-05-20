@@ -87,8 +87,9 @@ export async function GET(
     return new Response("Not found", { status: 404, headers: { "Content-Type": "text/plain" } });
   }
 
-  const now = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "") + "Z";
-  // Remove sub-second precision and dots, ensure Z suffix:  20260101T120000Z
+  // RFC 5545 UTC date-time: YYYYMMDDTHHMMSSZ
+  // toISOString() already ends in Z — strip hyphens/colons/milliseconds, keep the Z
+  const now = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
 
   const lines: string[] = [];
   const L = (...items: string[]) => lines.push(...items);
