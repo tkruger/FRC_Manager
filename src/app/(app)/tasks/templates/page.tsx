@@ -68,12 +68,17 @@ export default async function TemplatesPage() {
             Apply a task template to instantly populate your build season schedule.
           </p>
         </div>
-        {isMentor && (
-          <div className="flex gap-2 shrink-0">
-            {activeSeason && taskCount > 0 && <SaveSeasonDialog />}
-            <NewTemplateDialog />
-          </div>
-        )}
+        <div className="flex flex-wrap gap-2 shrink-0">
+          <a href="/api/templates/empty" download>
+            <Button variant="outline" size="sm">Download blank CSV</Button>
+          </a>
+          {isMentor && (
+            <>
+              {activeSeason && taskCount > 0 && <SaveSeasonDialog />}
+              <NewTemplateDialog />
+            </>
+          )}
+        </div>
       </div>
 
       {/* Custom templates */}
@@ -98,13 +103,16 @@ export default async function TemplatesPage() {
                     <span>{t.tasks.length} tasks</span>
                     {milestoneCount > 0 && <><span>·</span><span>{milestoneCount} milestones</span></>}
                   </div>
-                  <div className="flex gap-2 mt-auto pt-2 border-t border-[--color-border]">
+                  <div className="flex flex-wrap gap-2 mt-auto pt-2 border-t border-[--color-border]">
                     {isHeadMentor && <ApplyCustomTemplateButton templateId={t.id} disabled={!activeSeason} />}
                     {isMentor && (
-                      <Link href={`/schedule/templates/${t.id}`}>
+                      <Link href={`/tasks/templates/${t.id}`}>
                         <Button variant="outline" size="sm">Edit tasks</Button>
                       </Link>
                     )}
+                    <a href={`/api/templates/${t.id}/csv`} download>
+                      <Button variant="outline" size="sm">Download CSV</Button>
+                    </a>
                   </div>
                 </div>
               );
@@ -130,7 +138,12 @@ export default async function TemplatesPage() {
                 </p>
               )}
             </div>
-            {isHeadMentor && <ApplyTemplateButton disabled={!activeSeason} existingTaskCount={taskCount} />}
+            <div className="flex flex-wrap gap-2 shrink-0">
+              <a href="/api/templates/standard/csv" download>
+                <Button variant="outline" size="sm">Download CSV</Button>
+              </a>
+              {isHeadMentor && <ApplyTemplateButton disabled={!activeSeason} existingTaskCount={taskCount} />}
+            </div>
           </div>
 
           <div className="border border-[--color-border] rounded-md overflow-hidden">

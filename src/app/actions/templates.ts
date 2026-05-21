@@ -359,6 +359,49 @@ export async function applyStandardTemplateAction(): Promise<{ success: boolean;
   return { success: true, count: toCreate.length };
 }
 
+export async function importTemplateTasksAction(
+  templateId: string,
+  tasks: {
+    name: string;
+    description: string;
+    subTeam: string | null;
+    startOffset: number;
+    durationBuildDays: number;
+    priority: string;
+    estimatedHours: number | null;
+    isMilestone: boolean;
+    designReviewRequired: boolean;
+    prerequisiteNames: string[];
+  }[]
+): Promise<{ success: boolean; error?: string; count?: number }> {
+  try { await requireMentor(); } catch (e: any) { return { success: false, error: e.message }; }
+
+  if (!tasks.length) return { success: false, error: "No tasks to import." };
+
+  const template = await prisma.seasonTemplate.findUnique({ where: { id: templateId } });
+  if (!template) return { success: false, error: "Template not found." };
+
+  await prisma.templateTask.createMany({
+    data: tasks.map((t) => ({
+      templateId,
+      name:                 t.name,
+      description:          t.description || null,
+      subTeam:              (t.subTeam as SubTeam) || null,
+      startOffset:          t.startOffset,
+      durationBuildDays:    t.durationBuildDays,
+      priority:             t.priority as TaskPriority,
+      estimatedHours:       t.estimatedHours,
+      isMilestone:          t.isMilestone,
+      designReviewRequired: t.designReviewRequired,
+      prerequisiteNames:    t.prerequisiteNames,
+    })),
+  });
+
+  revalidatePath(`/tasks/templates/${templateId}`);
+  revalidatePath("/tasks/templates");
+  return { success: true, count: tasks.length };
+}
+
 export async function clearAllTasksAction(): Promise<{ success: boolean; error?: string }> {
   const session = await auth();
   if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };

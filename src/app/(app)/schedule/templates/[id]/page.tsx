@@ -8,6 +8,8 @@ import { AddTaskForm } from "./AddTaskForm";
 import { EditTaskRow } from "./EditTaskRow";
 import { DeleteTaskButton } from "./DeleteTaskButton";
 import { RenameTemplateForm } from "./RenameTemplateForm";
+import { TemplateCSVImport } from "@/app/(app)/tasks/templates/TemplateCSVImport";
+import { Button } from "@/components/ui/button";
 
 const MENTOR_ROLES = ["HEAD_MENTOR", "BUILD_LEAD", "INVENTORY_ADMIN"];
 
@@ -41,15 +43,23 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Breadcrumb */}
       <nav className="text-small text-[--color-text-secondary]">
-        <Link href="/schedule" className="hover:text-[--color-primary]">Schedule</Link>
+        <Link href="/tasks" className="hover:text-[--color-primary]">Tasks</Link>
         <span className="mx-2">›</span>
-        <Link href="/schedule/templates" className="hover:text-[--color-primary]">Templates</Link>
+        <Link href="/tasks/templates" className="hover:text-[--color-primary]">Templates</Link>
         <span className="mx-2">›</span>
         <span className="text-[--color-text-primary]">{template.name}</span>
       </nav>
 
       {/* Header */}
-      <div>
+      <div className="space-y-3">
+        {/* CSV tools */}
+        <div className="flex flex-wrap gap-2">
+          <a href={`/api/templates/${id}/csv`} download>
+            <Button variant="outline" size="sm">Download CSV</Button>
+          </a>
+          {isMentor && <TemplateCSVImport templateId={id} />}
+        </div>
+
         {isMentor
           ? <RenameTemplateForm templateId={id} currentName={template.name} currentDescription={template.description} />
           : (
