@@ -47,8 +47,8 @@ export function InventoryTableClient({ items, robots, emptyMessage, canAdd }: Pr
     : items;
 
   return (
-    <div className="space-y-3">
-      {/* Search — same style as tools */}
+    <>
+      {/* Search — matches tools pattern; parent space-y-6 handles gap to table */}
       <input
         type="search"
         value={search}
@@ -117,6 +117,6 @@ export function InventoryTableClient({ items, robots, emptyMessage, canAdd }: Pr
           </TableBody>
         </Table>
       )}
-    </div>
+    </>
   );
 }
