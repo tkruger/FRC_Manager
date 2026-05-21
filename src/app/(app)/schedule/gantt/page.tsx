@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { getActiveRobotId } from "@/app/actions/robot-context";
 import { GanttClient } from "./GanttClient";
+import { ScheduleTabBar } from "../ScheduleTabBar";
 
 export default async function GanttPage({ searchParams }: { searchParams: Promise<{ subTeam?: string }> }) {
   const { subTeam } = await searchParams;
@@ -48,26 +49,27 @@ export default async function GanttPage({ searchParams }: { searchParams: Promis
     (activeSeason.week0Date.getTime() - activeSeason.kickoffDate.getTime()) / 86_400_000
   ) + 1;
 
+  const canEdit = session.user.roles.some((r) =>
+    ["HEAD_MENTOR", "BUILD_LEAD"].includes(r)
+  );
+
   return (
-    <div className="py-6 space-y-4">
-      {/* Header — padded */}
-      <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8">
+    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5">
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <div>
-          <nav className="text-small text-[--color-text-secondary] mb-1">
-            <Link href="/schedule" className="hover:text-[--color-primary]">Schedule</Link>
-            <span className="mx-2">›</span>Gantt
-          </nav>
-          <h1 className="text-h1 text-[--color-text-primary]">Gantt chart</h1>
-          <p className="text-body text-[--color-text-secondary] mt-1">
-            {activeSeason.name} · {totalDays} days
+          <h1 className="text-h1 text-[--color-text-primary]">Schedule</h1>
+          <p className="text-body text-[--color-text-secondary] mt-0.5">
+            {activeSeason.name} · Gantt · {totalDays} days
             {activeRobotId && <span className="ml-2 badge badge-info">Robot filtered</span>}
           </p>
         </div>
-        <Link href="/schedule/tasks/new"><Button size="sm">+ New task</Button></Link>
       </div>
 
+      <ScheduleTabBar canEdit={canEdit} />
+
       {ganttTasks.length === 0 ? (
-        <div className="card text-center py-12 mx-4 sm:mx-6 lg:mx-8">
+        <div className="card text-center py-12">
           <p className="text-body text-[--color-text-secondary] mb-4">
             No tasks with dates yet. Tasks need a start and due date to appear on the Gantt.
           </p>

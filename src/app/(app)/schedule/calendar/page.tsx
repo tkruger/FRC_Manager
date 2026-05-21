@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { CalendarClient } from "./CalendarClient";
 import { SubscribeCalendarButton } from "@/components/calendar/SubscribeCalendarButton";
 import { GenerateShareLinkButton } from "./GenerateShareLinkButton";
+import { ScheduleTabBar } from "../ScheduleTabBar";
 
 export default async function CalendarPage() {
   const session = await auth();
@@ -43,20 +44,19 @@ export default async function CalendarPage() {
     ? `${baseUrl}/public/schedule/${activeSeason.calendarToken}`
     : null;
 
+  const isEditor = session.user.roles.some((r) =>
+    ["HEAD_MENTOR", "BUILD_LEAD"].includes(r)
+  );
+
   return (
-    <div className="py-6 space-y-4">
+    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="flex items-center justify-between">
         <div>
-          <nav className="text-small text-[--color-text-secondary] mb-1">
-            <Link href="/schedule" className="hover:text-[--color-primary]">Schedule</Link>
-            <span className="mx-2">›</span>Calendar
-          </nav>
-          <h1 className="text-h1 text-[--color-text-primary]">Meeting Calendar</h1>
-          <p className="text-body text-[--color-text-secondary] mt-1">{activeSeason.name}</p>
+          <h1 className="text-h1 text-[--color-text-primary]">Schedule</h1>
+          <p className="text-body text-[--color-text-secondary] mt-0.5">{activeSeason.name} · Calendar</p>
         </div>
         <div className="flex gap-2 flex-wrap justify-end">
-          {/* Share / subscribe buttons */}
           {calendarUrl
             ? <SubscribeCalendarButton icsUrl={calendarUrl} />
             : <GenerateShareLinkButton seasonId={activeSeason.id} />}
@@ -65,11 +65,10 @@ export default async function CalendarPage() {
               <Button variant="outline" size="sm">Public view ↗</Button>
             </Link>
           )}
-          <Link href="/schedule/tasks/new">
-            <Button size="sm">+ New task</Button>
-          </Link>
         </div>
       </div>
+
+      <ScheduleTabBar canEdit={isEditor} />
 
       <CalendarClient
         season={{
