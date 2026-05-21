@@ -30,8 +30,6 @@ export default async function NewTaskPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <nav className="text-small text-[--color-text-secondary] mb-3">
-        <Link href="/tasks" className="hover:text-[--color-primary]">Schedule</Link>
-        <span className="mx-2">›</span>
         <Link href="/tasks" className="hover:text-[--color-primary]">Tasks</Link>
         <span className="mx-2">›</span>New task
       </nav>

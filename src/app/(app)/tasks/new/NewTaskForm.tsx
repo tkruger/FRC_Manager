@@ -24,7 +24,7 @@ export function NewTaskForm({ robots, members, existingTasks, kickoffDate, week0
   const [selectedPrereqs, setSelectedPrereqs] = useState<string[]>([]);
 
   useEffect(() => {
-    if (state?.success) router.push(`/tasks/${state.taskId}`);
+    if (state?.success) router.push("/tasks");
   }, [state, router]);
 
   const robotOptions = robots.map((r) => ({ value: r.id, label: r.displayName }));
