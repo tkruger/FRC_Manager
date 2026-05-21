@@ -53,7 +53,11 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
   const { resolvedTheme, toggle, mode } = useTheme();
 
   const activeRobot = robots.find((r) => r.id === activeRobotId);
-  const canManageTeam = session?.user?.roles?.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP"].includes(r)) ?? false;
+  const roles             = session?.user?.roles ?? [];
+  const canManageTeam     = roles.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP"].includes(r));
+  const canManageSeason   = roles.includes("HEAD_MENTOR" as any);
+  const canManageDiscord  = roles.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP"].includes(r));
+  const canManageTemplates = roles.some((r) => ["HEAD_MENTOR", "BUILD_LEAD", "INVENTORY_ADMIN"].includes(r));
   const [moreOpen, setMoreOpen] = useState(false);
 
   return (
@@ -143,7 +147,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
           {/* Notifications dropdown */}
           <NotificationsDropdown unreadCount={unreadNotificationCount} />
 
-          {session?.user && <UserMenu user={session.user} canManageTeam={canManageTeam} pendingMemberCount={pendingMemberCount} />}
+          {session?.user && <UserMenu user={session.user} canManageTeam={canManageTeam} canManageSeason={canManageSeason} canManageDiscord={canManageDiscord} canManageTemplates={canManageTemplates} pendingMemberCount={pendingMemberCount} />}
         </div>
         </div>
 
@@ -173,7 +177,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
               <CalendarIcon className="w-4 h-4" />
             </Link>
             <NotificationsDropdown unreadCount={unreadNotificationCount} />
-            {session?.user && <UserMenu user={session.user} canManageTeam={canManageTeam} />}
+            {session?.user && <UserMenu user={session.user} canManageTeam={canManageTeam} canManageSeason={canManageSeason} canManageDiscord={canManageDiscord} canManageTemplates={canManageTemplates} />}
           </div>
         </div>
       </header>
@@ -323,7 +327,14 @@ function RobotSelector({
   );
 }
 
-function UserMenu({ user, canManageTeam, pendingMemberCount = 0 }: { user: { name?: string | null; email?: string | null }; canManageTeam: boolean; pendingMemberCount?: number }) {
+function UserMenu({ user, canManageTeam, canManageSeason, canManageDiscord, canManageTemplates, pendingMemberCount = 0 }: {
+  user: { name?: string | null; email?: string | null };
+  canManageTeam:      boolean;
+  canManageSeason:    boolean;
+  canManageDiscord:   boolean;
+  canManageTemplates: boolean;
+  pendingMemberCount?: number;
+}) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -390,18 +401,31 @@ function UserMenu({ user, canManageTeam, pendingMemberCount = 0 }: { user: { nam
               Team members
             </Link>
           )}
-          <Link href="/settings/season" role="menuitem" onClick={() => setOpen(false)}
-            className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-[--color-text-primary] hover:bg-[--color-surface-overlay] transition-colors">
-            <CalendarIcon className="w-4 h-4 text-[--color-text-secondary]" />
-            Season settings
-          </Link>
-          <Link href="/settings/discord" role="menuitem" onClick={() => setOpen(false)}
-            className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-[--color-text-primary] hover:bg-[--color-surface-overlay] transition-colors">
-            <svg className="w-4 h-4 text-[--color-text-secondary]" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-              <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/>
-            </svg>
-            Discord integration
-          </Link>
+          {canManageTemplates && (
+            <Link href="/tasks/templates" role="menuitem" onClick={() => setOpen(false)}
+              className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-[--color-text-primary] hover:bg-[--color-surface-overlay] transition-colors">
+              <svg className="w-4 h-4 text-[--color-text-secondary]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
+              </svg>
+              Templates
+            </Link>
+          )}
+          {canManageSeason && (
+            <Link href="/settings/season" role="menuitem" onClick={() => setOpen(false)}
+              className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-[--color-text-primary] hover:bg-[--color-surface-overlay] transition-colors">
+              <CalendarIcon className="w-4 h-4 text-[--color-text-secondary]" />
+              Season settings
+            </Link>
+          )}
+          {canManageDiscord && (
+            <Link href="/settings/discord" role="menuitem" onClick={() => setOpen(false)}
+              className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-[--color-text-primary] hover:bg-[--color-surface-overlay] transition-colors">
+              <svg className="w-4 h-4 text-[--color-text-secondary]" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/>
+              </svg>
+              Discord integration
+            </Link>
+          )}
           <div className="border-t border-[--color-border] mt-1 pt-1">
             <button
               role="menuitem"
