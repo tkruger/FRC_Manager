@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 export function Table({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("w-full overflow-x-auto rounded-lg border border-[--color-border]", className)}>
+    <div className={cn("w-full overflow-x-auto rounded-lg border border-[--color-table-border]", className)}>
       <table className="w-full text-sm">{children}</table>
     </div>
   );
@@ -10,14 +10,14 @@ export function Table({ children, className }: { children: React.ReactNode; clas
 
 export function TableHead({ children }: { children: React.ReactNode }) {
   return (
-    <thead className="border-b border-[--color-border] bg-[--color-surface-raised]">
+    <thead className="border-b border-[--color-table-border] bg-[--color-surface-raised]">
       {children}
     </thead>
   );
 }
 
 export function TableBody({ children }: { children: React.ReactNode }) {
-  return <tbody className="bg-[--color-surface] divide-y divide-[--color-border]">{children}</tbody>;
+  return <tbody className="bg-[--color-surface] divide-y divide-[--color-table-border]">{children}</tbody>;
 }
 
 export function Th({ children, className, right }: { children?: React.ReactNode; className?: string; right?: boolean }) {

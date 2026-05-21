@@ -27,6 +27,7 @@
   --shadow-xl:   0 32px 64px -16px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.06);
 
   --radius-card: 14px;
+  --color-table-border: color-mix(in srgb, var(--color-border) 40%, transparent);
   color-scheme: light;
 }
 
@@ -105,9 +106,6 @@ tr:has(a:hover) {
   cursor: pointer;
 }
 
-/* Softer table row dividers — 50% of the normal border opacity */
-thead { border-bottom-color: color-mix(in srgb, var(--color-border) 50%, transparent) !important; }
-tbody tr { border-color: color-mix(in srgb, var(--color-border) 50%, transparent); }
 td a:hover { text-decoration: underline; text-underline-offset: 3px; }
 
 html {
