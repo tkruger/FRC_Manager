@@ -103,7 +103,7 @@ export default async function DashboardPage() {
               value: overdueCount,
               sub: overdueCount > 0 ? "Need attention" : "All on track",
               urgent: overdueCount > 0,
-              href: "/tasks?filter=overdue",
+              href: "/tasks",
               accent: overdueCount > 0 ? "var(--color-danger)" : "var(--color-secondary)",
             },
             {
@@ -135,7 +135,8 @@ export default async function DashboardPage() {
           { title: "Inventory",     href: "/inventory",       desc: "Parts & materials",      color: "var(--color-secondary)", icon: "📦" },
           { title: "Procurement",   href: "/procurement",     desc: "Orders & requests",      color: "#059669",               icon: "🛒" },
           { title: "Budget",        href: "/budget",          desc: "Spend & BOM tracking",   color: "#D97706",               icon: "💰" },
-          { title: "Schedule",      href: "/tasks",        desc: "Build season tasks",     color: "#DC2626",               icon: "📅" },
+          { title: "Tasks",         href: "/tasks",           desc: "Kanban & build schedule", color: "#DC2626",              icon: "✅" },
+          { title: "Calendar",      href: "/calendar",        desc: "Meeting schedule",        color: "#7C3AED",              icon: "📅" },
           { title: "Safety",        href: "/safety",          desc: "Certs & checklists",     color: "#0891B2",               icon: "🛡️" },
           { title: "Season",        href: "/settings/season", desc: "Season configuration",  color: "#64748B",               icon: "⚙️" },
         ].map((mod) => (
