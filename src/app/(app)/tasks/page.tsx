@@ -2,6 +2,7 @@
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { daysBetween, isOverdue } from "@/lib/schedule-helpers";
 import { getActiveRobotId } from "@/app/actions/robot-context";
 import { TasksTabBar } from "./TasksTabBar";
@@ -125,7 +126,7 @@ export default async function SchedulePage({
     <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5">
 
       {/* Page header */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-h1 text-[--color-text-primary]">Tasks</h1>
           <p className="text-body text-[--color-text-secondary] mt-0.5">
@@ -134,6 +135,16 @@ export default async function SchedulePage({
               <span className="ml-2 badge badge-info">Robot filtered</span>
             )}
           </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {canEdit && (
+            <Link href="/tasks/templates">
+              <Button variant="outline" size="sm">Templates</Button>
+            </Link>
+          )}
+          <Link href="/tasks/new">
+            <Button size="sm">+ New task</Button>
+          </Link>
         </div>
       </div>
 
@@ -149,7 +160,7 @@ export default async function SchedulePage({
       />
 
       {/* Tab bar */}
-      <TasksTabBar canEdit={canEdit} />
+      <TasksTabBar />
 
       {/* View content */}
       {view === "list" ? (

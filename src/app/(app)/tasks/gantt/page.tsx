@@ -99,7 +99,7 @@ export default async function GanttPage({ searchParams }: { searchParams: Promis
         subteamStats={subteamStats}
       />
 
-      <TasksTabBar canEdit={canEdit} />
+      <TasksTabBar />
 
       {ganttTasks.length === 0 ? (
         <div className="card text-center py-12">
@@ -120,6 +120,7 @@ export default async function GanttPage({ searchParams }: { searchParams: Promis
     </div>
   );
 }
+
 
 
 
