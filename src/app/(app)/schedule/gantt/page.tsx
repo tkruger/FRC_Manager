@@ -106,7 +106,7 @@ export default async function GanttPage({ searchParams }: { searchParams: Promis
           <p className="text-body text-[--color-text-secondary] mb-4">
             No tasks with dates yet. Tasks need a start and due date to appear on the Gantt.
           </p>
-          <Link href="/schedule/tasks/new"><Button size="sm">Create task</Button></Link>
+          <Link href="/tasks/new"><Button size="sm">Create task</Button></Link>
         </div>
       ) : (
         <GanttClient

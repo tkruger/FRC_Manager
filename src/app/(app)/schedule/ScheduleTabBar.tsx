@@ -54,7 +54,7 @@ export function ScheduleTabBar({ canEdit }: { canEdit: boolean }) {
             <Link href="/schedule/templates">
               <Button variant="outline" size="sm">Templates</Button>
             </Link>
-            <Link href="/schedule/tasks/new">
+            <Link href="/tasks/new">
               <Button size="sm">+ New task</Button>
             </Link>
           </>

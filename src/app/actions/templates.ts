@@ -1,4 +1,4 @@
-﻿"use server";
+"use server";
 
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
@@ -279,7 +279,7 @@ export async function applyCustomTemplateAction(
   });
 
   revalidatePath("/tasks");
-  revalidatePath("/schedule/tasks");
+  revalidatePath("/tasks");
   return { success: true, count: toCreate.length };
 }
 
@@ -355,7 +355,7 @@ export async function applyStandardTemplateAction(): Promise<{ success: boolean;
   });
 
   revalidatePath("/tasks");
-  revalidatePath("/schedule/tasks");
+  revalidatePath("/tasks");
   return { success: true, count: toCreate.length };
 }
 

@@ -1,4 +1,4 @@
-﻿import { auth } from "@/lib/auth";
+import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -32,7 +32,7 @@ export default async function NewTaskPage() {
       <nav className="text-small text-[--color-text-secondary] mb-3">
         <Link href="/tasks" className="hover:text-[--color-primary]">Schedule</Link>
         <span className="mx-2">›</span>
-        <Link href="/schedule/tasks" className="hover:text-[--color-primary]">Tasks</Link>
+        <Link href="/tasks" className="hover:text-[--color-primary]">Tasks</Link>
         <span className="mx-2">›</span>New task
       </nav>
       <h1 className="text-h1 text-[--color-text-primary] mb-6">New task</h1>

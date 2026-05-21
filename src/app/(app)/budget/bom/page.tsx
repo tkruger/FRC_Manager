@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+﻿import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -54,7 +54,7 @@ export default async function BomPage({ searchParams }: { searchParams: Promise<
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <nav className="text-small text-[--color-text-secondary] mb-1">
             <Link href="/budget" className="hover:text-[--color-primary]">Budget</Link>
@@ -65,7 +65,7 @@ export default async function BomPage({ searchParams }: { searchParams: Promise<
             {bomItems.length} line items · Total FMV: <strong>{formatCurrency(totalFmv)}</strong>
           </p>
         </div>
-        <div className="flex gap-2 items-center">
+        <div className="flex flex-wrap gap-2 items-center">
           {activeSeason.robots.length > 1 && (
             <RobotSwitcher robots={activeSeason.robots} currentId={robot.id} />
           )}
@@ -134,3 +134,4 @@ export default async function BomPage({ searchParams }: { searchParams: Promise<
     </div>
   );
 }
+

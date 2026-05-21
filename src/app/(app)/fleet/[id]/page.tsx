@@ -154,7 +154,7 @@ export default async function RobotDetailPage({ params }: { params: Promise<{ id
           </div>
           <div className="space-y-2">
             {robot.tasks.map((t) => (
-              <Link key={t.id} href={`/schedule/tasks/${t.id}`}
+              <Link key={t.id} href={`/tasks/${t.id}`}
                 className="flex items-center justify-between py-2 border-b border-[--color-border] last:border-0 hover:text-[--color-primary] transition-colors">
                 <span className="text-sm text-[--color-text-primary]">{t.name}</span>
                 <span className="text-small text-[--color-text-secondary]">{t.dueDate ? formatDate(t.dueDate) : "No due date"}</span>

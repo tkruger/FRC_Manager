@@ -248,7 +248,7 @@ export function GanttClient({ tasks, kickoffDate, week0Date, meetingDays, season
                       {/* Name */}
                       <div className="shrink-0 px-3 flex items-center gap-1.5" style={{ width: LABEL_W, borderRight: "1px solid color-mix(in srgb, var(--color-border) 40%, transparent)" }}>
                         {task.isMilestone && <span className="text-[--color-primary] text-xs shrink-0">◆</span>}
-                        <Link href={`/schedule/tasks/${task.id}`}
+                        <Link href={`/tasks/${task.id}`}
                           className="text-small text-[--color-text-primary] hover:text-[--color-primary] truncate">
                           {task.name}
                         </Link>
@@ -424,7 +424,7 @@ export function GanttClient({ tasks, kickoffDate, week0Date, meetingDays, season
               )}
 
               {/* Open full detail */}
-              <Link href={`/schedule/tasks/${modalTask.id}`} onClick={() => setModalTask(null)}
+              <Link href={`/tasks/${modalTask.id}`} onClick={() => setModalTask(null)}
                 className="inline-flex items-center gap-1 text-sm text-[--color-secondary] hover:underline">
                 Open full task →
               </Link>
