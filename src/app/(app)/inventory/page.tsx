@@ -153,15 +153,26 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
               const isRestrictedView = view === "low-stock" || view === "reorder";
 
               return (
-                <Tr key={item.id}>
+                <Tr key={item.id} className="group hover:bg-[--color-surface-overlay] transition-colors cursor-pointer">
                   <Td>
-                    <Link href={`/inventory/${item.id}`} className="font-medium text-[--color-text-primary] hover:text-[--color-primary] transition-colors">
+                    <Link
+                      href={`/inventory/${item.id}`}
+                      className="font-medium text-[--color-secondary] hover:underline group-hover:text-[--color-primary] transition-colors"
+                    >
                       {item.name}
                     </Link>
                     {item.partNumber && <p className="text-mono text-[--color-text-secondary]">{item.partNumber}</p>}
                   </Td>
-                  <Td>{item.category.replace(/_/g, " ")}</Td>
-                  <Td>{item.itemType.replace(/_/g, " ")}</Td>
+                  <Td>
+                    <Link href={`/inventory/${item.id}`} className="block text-[--color-text-secondary] group-hover:text-[--color-text-primary]">
+                      {item.category.replace(/_/g, " ")}
+                    </Link>
+                  </Td>
+                  <Td>
+                    <Link href={`/inventory/${item.id}`} className="block text-[--color-text-secondary] group-hover:text-[--color-text-primary]">
+                      {item.itemType.replace(/_/g, " ")}
+                    </Link>
+                  </Td>
                   <Td right>
                     <Badge variant={stockVariant(item)}>
                       {item.currentStock} {item.unitOfMeasure.toLowerCase()}
