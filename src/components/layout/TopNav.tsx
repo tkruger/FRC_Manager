@@ -143,23 +143,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
           {/* Notifications dropdown */}
           <NotificationsDropdown unreadCount={unreadNotificationCount} />
 
-          {/* Settings / member approval — Head Mentor only */}
-          {canManageTeam && (
-            <Link
-              href="/settings/members"
-              className="relative h-8 w-8 rounded-md flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors"
-              aria-label={`Team members${pendingMemberCount > 0 ? ` (${pendingMemberCount} pending approvals)` : ""}`}
-            >
-              <UserCircleIcon />
-              {pendingMemberCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-[--color-warning] text-white text-[10px] font-bold flex items-center justify-center" aria-hidden>
-                  {pendingMemberCount > 9 ? "9+" : pendingMemberCount}
-                </span>
-              )}
-            </Link>
-          )}
-
-          {session?.user && <UserMenu user={session.user} canManageTeam={canManageTeam} />}
+          {session?.user && <UserMenu user={session.user} canManageTeam={canManageTeam} pendingMemberCount={pendingMemberCount} />}
         </div>
         </div>
 
@@ -321,7 +305,7 @@ function RobotSelector({
 
   return (
     <div className="flex items-center gap-1.5 rounded-md border border-[--color-border] bg-[--color-surface-raised] px-3 h-9 text-sm">
-      <span className="text-[--color-text-secondary] text-xs">Robot:</span>
+      <span className="hidden sm:inline text-[--color-text-secondary] text-xs">Robot:</span>
       <select
         className={cn("bg-transparent text-[--color-text-primary] text-sm font-medium focus:outline-none cursor-pointer max-w-[140px]", isPending && "opacity-50")}
         value={activeRobotId ?? ""}
@@ -339,7 +323,7 @@ function RobotSelector({
   );
 }
 
-function UserMenu({ user, canManageTeam }: { user: { name?: string | null; email?: string | null }; canManageTeam: boolean }) {
+function UserMenu({ user, canManageTeam, pendingMemberCount = 0 }: { user: { name?: string | null; email?: string | null }; canManageTeam: boolean; pendingMemberCount?: number }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -365,13 +349,18 @@ function UserMenu({ user, canManageTeam }: { user: { name?: string | null; email
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="h-8 w-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 transition-opacity hover:opacity-90"
+        className="relative h-8 w-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 transition-opacity hover:opacity-90"
         style={{ backgroundColor: "var(--color-primary)" }}
-        aria-label="User menu"
+        aria-label={`User menu${pendingMemberCount > 0 ? ` (${pendingMemberCount} pending approvals)` : ""}`}
         aria-expanded={open}
         aria-haspopup="menu"
       >
         {user.name?.[0]?.toUpperCase() ?? "U"}
+        {pendingMemberCount > 0 && (
+          <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-[--color-warning] text-white text-[10px] font-bold flex items-center justify-center" aria-hidden>
+            {pendingMemberCount > 9 ? "9+" : pendingMemberCount}
+          </span>
+        )}
       </button>
 
       {open && (
