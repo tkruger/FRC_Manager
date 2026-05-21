@@ -58,19 +58,49 @@ export function KanbanView({
 }: Props) {
   const router = useRouter();
   const [, startTransition]   = useTransition();
-  const [selectedTask,   setSelectedTask]   = useState<KanbanTask | null>(null);
-  const [filterSubteam,  setFilterSubteam]  = useState("");
-  const [filterPriority, setFilterPriority] = useState("");
-  const [filterAssignee, setFilterAssignee] = useState("");
+  const [selectedTask,    setSelectedTask]   = useState<KanbanTask | null>(null);
+  const [filterSubteam,   setFilterSubteam]  = useState("");
+  const [filterPriority,  setFilterPriority] = useState("");
+  const [filterAssignee,  setFilterAssignee] = useState("");
+  const [datePreset,      setDatePreset]     = useState<"" | "week" | "2weeks" | "month" | "custom">("");
+  const [customFrom,      setCustomFrom]     = useState("");
+  const [customTo,        setCustomTo]       = useState("");
   // DnD state
   const [draggingId,    setDraggingId]    = useState<string | null>(null);
   const [dragOverColId, setDragOverColId] = useState<string | null>(null);
   const [localStatuses, setLocalStatuses] = useState<Record<string, string>>({});
 
+  // Compute date range from preset
+  const dateRange: { from: Date; to: Date } | null = (() => {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    if (datePreset === "week") {
+      const to = new Date(today); to.setDate(to.getDate() + 7);
+      return { from: today, to };
+    }
+    if (datePreset === "2weeks") {
+      const to = new Date(today); to.setDate(to.getDate() + 14);
+      return { from: today, to };
+    }
+    if (datePreset === "month") {
+      const to = new Date(today); to.setDate(to.getDate() + 30);
+      return { from: today, to };
+    }
+    if (datePreset === "custom" && customFrom && customTo) {
+      return { from: new Date(customFrom + "T00:00:00"), to: new Date(customTo + "T23:59:59") };
+    }
+    return null;
+  })();
+
   const filtered = tasks.filter((t) => {
     if (filterSubteam && t.subTeam !== filterSubteam) return false;
     if (filterPriority && t.priority !== filterPriority) return false;
     if (filterAssignee && !t.assignees.some((a) => a.id === filterAssignee)) return false;
+    if (dateRange && t.dueDate) {
+      const due = new Date(t.dueDate);
+      if (due < dateRange.from || due > dateRange.to) return false;
+    } else if (dateRange && !t.dueDate) {
+      return false; // no due date — exclude when a date filter is active
+    }
     return true;
   });
 
@@ -158,8 +188,31 @@ export function KanbanView({
           </select>
         )}
 
-        {(filterSubteam || filterPriority || filterAssignee) && (
-          <button onClick={() => { setFilterSubteam(""); setFilterPriority(""); setFilterAssignee(""); }}
+        {/* Date filter */}
+        <select
+          value={datePreset}
+          onChange={(e) => { setDatePreset(e.target.value as typeof datePreset); setCustomFrom(""); setCustomTo(""); }}
+          className="text-sm rounded-md border border-[--color-border] bg-[--color-surface] text-[--color-text-primary] px-2 py-1.5"
+        >
+          <option value="">All dates</option>
+          <option value="week">Next 7 days</option>
+          <option value="2weeks">Next 2 weeks</option>
+          <option value="month">Next 30 days</option>
+          <option value="custom">Custom range…</option>
+        </select>
+
+        {datePreset === "custom" && (
+          <>
+            <input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)}
+              className="text-sm rounded-md border border-[--color-border] bg-[--color-surface] text-[--color-text-primary] px-2 py-1.5" />
+            <span className="text-small text-[--color-text-secondary]">to</span>
+            <input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)}
+              className="text-sm rounded-md border border-[--color-border] bg-[--color-surface] text-[--color-text-primary] px-2 py-1.5" />
+          </>
+        )}
+
+        {(filterSubteam || filterPriority || filterAssignee || datePreset) && (
+          <button onClick={() => { setFilterSubteam(""); setFilterPriority(""); setFilterAssignee(""); setDatePreset(""); setCustomFrom(""); setCustomTo(""); }}
             className="text-sm text-[--color-text-secondary] hover:text-[--color-danger] transition-colors">
             Clear filters
           </button>
