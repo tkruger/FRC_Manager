@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { VendorSupplierPicker } from "@/components/ui/VendorSupplierPicker";
 
 const CATEGORY_OPTS = [
   { value: "MECHANICAL",  label: "Mechanical" },  { value: "ELECTRICAL", label: "Electrical" },
@@ -30,7 +31,13 @@ const UOM_OPTS = [
   { value: "SPOOL",  label: "Spool" }, { value: "ROLL",   label: "Roll" },
 ];
 
-export function NewBaseItemForm({ onClose }: { onClose?: () => void } = {}) {
+export function NewBaseItemForm({
+  onClose,
+  vendors = [],
+}: {
+  onClose?: () => void;
+  vendors?: { id: string; name: string }[];
+} = {}) {
   const router = useRouter();
   const [state, action, pending] = useActionState(createBaseItemAction, null);
 
@@ -66,7 +73,7 @@ export function NewBaseItemForm({ onClose }: { onClose?: () => void } = {}) {
           <Field label="Reorder qty" name="reorderQuantity" type="number" min="0" step="0.01" defaultValue={1} />
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <Field label="Preferred supplier" name="preferredSupplier" placeholder="e.g. AndyMark" />
+          <VendorSupplierPicker vendors={vendors} />
           <Field label="Lead time (days)" name="supplierLeadDays" type="number" min="0" placeholder="5" />
         </div>
         <div className="grid grid-cols-2 gap-4">

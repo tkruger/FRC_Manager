@@ -45,9 +45,9 @@ export function AcquireButton({ itemId, itemName, robots, maxQty }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" disabled={maxQty <= 0}>Acquire</Button>
+        <Button variant="outline" size="sm" disabled={maxQty <= 0}>Use on Robot</Button>
       </DialogTrigger>
-      <DialogContent title={`Acquire: ${itemName}`}>
+      <DialogContent title={`Use on Robot: ${itemName}`}>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && <div className="text-sm text-[--color-danger] bg-[--color-danger]/10 rounded px-3 py-2">{error}</div>}
           <Field label="Quantity" name="quantity" type="number" required min="1" max={maxQty} defaultValue="1"

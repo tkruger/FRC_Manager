@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { VendorSupplierPicker } from "@/components/ui/VendorSupplierPicker";
 
 const CATEGORY_OPTS = [
   { value: "MECHANICAL",  label: "Mechanical" },  { value: "ELECTRICAL", label: "Electrical" },
@@ -51,7 +52,13 @@ interface Item {
   notes: string | null;
 }
 
-export function EditBaseItemForm({ item }: { item: Item }) {
+export function EditBaseItemForm({
+  item,
+  vendors = [],
+}: {
+  item: Item;
+  vendors?: { id: string; name: string }[];
+}) {
   const router = useRouter();
   const boundAction = updateBaseItemAction.bind(null, item.id);
   const [state, action, pending] = useActionState(boundAction, null);
@@ -92,7 +99,7 @@ export function EditBaseItemForm({ item }: { item: Item }) {
           <Field label="Reorder qty"    name="reorderQuantity"   type="number" min="0" step="0.01" defaultValue={item.reorderQuantity ?? 1} />
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <Field label="Preferred supplier" name="preferredSupplier" defaultValue={item.preferredSupplier ?? ""} />
+          <VendorSupplierPicker vendors={vendors} defaultValue={item.preferredSupplier} />
           <Field label="Lead time (days)"   name="supplierLeadDays"  type="number" min="0" defaultValue={item.supplierLeadDays ?? ""} />
         </div>
         <div className="grid grid-cols-2 gap-4">

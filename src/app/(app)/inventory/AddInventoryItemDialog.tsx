@@ -5,7 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { NewBaseItemForm } from "./base/new/NewBaseItemForm";
 
-export function AddInventoryItemDialog() {
+interface Props {
+  vendors?: { id: string; name: string }[];
+}
+
+export function AddInventoryItemDialog({ vendors = [] }: Props) {
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -13,7 +17,7 @@ export function AddInventoryItemDialog() {
         <Button size="sm">+ Add item</Button>
       </DialogTrigger>
       <DialogContent title="Add inventory item" className="sm:max-w-xl">
-        <NewBaseItemForm onClose={() => setOpen(false)} />
+        <NewBaseItemForm vendors={vendors} onClose={() => setOpen(false)} />
       </DialogContent>
     </Dialog>
   );

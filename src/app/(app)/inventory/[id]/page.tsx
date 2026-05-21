@@ -17,9 +17,16 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
   const session = await auth();
   if (!session?.user?.teamId) redirect("/dashboard");
 
-  const item = await prisma.baseInventoryItem.findFirst({
-    where: { id, season: { teamId: session.user.teamId } },
-  });
+  const [item, vendors] = await Promise.all([
+    prisma.baseInventoryItem.findFirst({
+      where: { id, season: { teamId: session.user.teamId } },
+    }),
+    prisma.vendor.findMany({
+      where: { teamId: session.user.teamId },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+  ]);
   if (!item) notFound();
 
   const canEdit = session.user.roles.some((r) => ["INVENTORY_ADMIN", "HEAD_MENTOR"].includes(r));
@@ -110,7 +117,7 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
       {canEdit && (
         <div className="card space-y-4">
           <h2 className="text-h3 text-[--color-text-primary]">Edit item</h2>
-          <EditBaseItemForm item={{
+          <EditBaseItemForm vendors={vendors} item={{
             id:                item.id,
             name:              item.name,
             partNumber:        item.partNumber,

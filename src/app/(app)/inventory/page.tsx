@@ -30,7 +30,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   });
   if (!activeSeason) redirect("/settings/season");
 
-  const [items, reorderRequests] = await Promise.all([
+  const [items, reorderRequests, vendors] = await Promise.all([
     prisma.baseInventoryItem.findMany({
       where: {
         seasonId: activeSeason.id,
@@ -45,6 +45,11 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
           include: { baseItem: { select: { name: true, preferredSupplier: true, unitCost: true } } },
         })
       : Promise.resolve([]),
+    prisma.vendor.findMany({
+      where: { teamId: session.user.teamId },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
   ]);
 
   const lowStock  = items.filter((i) => i.currentStock <= i.minStockThreshold && i.minStockThreshold > 0);
@@ -75,7 +80,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
         </div>
         {canManageInventory && (
           <div className="flex gap-2">
-            <AddInventoryItemDialog />
+            <AddInventoryItemDialog vendors={vendors} />
           </div>
         )}
       </div>
@@ -136,7 +141,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
              view === "reorder"   ? "No pending reorder requests." :
              "No items found."}
           </p>
-          {!view && canManageInventory && <AddInventoryItemDialog />}
+          {!view && canManageInventory && <AddInventoryItemDialog vendors={vendors} />}
         </div>
       ) : (
         <Table>
