@@ -21,13 +21,22 @@ const MODULE_TABS = [
   { label: "Season",      href: "/settings/season", icon: SettingsNavIcon, exact: false },
 ];
 
-// Five tabs shown on mobile bottom bar (most-used modules)
+// Four priority tabs shown on mobile bottom bar
 const MOBILE_TABS = [
-  { label: "Fleet",     href: "/fleet",       icon: FleetIcon },
-  { label: "Inventory", href: "/inventory",   icon: InventoryIcon },
-  { label: "Orders",    href: "/procurement", icon: ProcurementIcon },
-  { label: "Tasks",     href: "/tasks",    icon: TasksIcon },
-  { label: "More",      href: "/dashboard",   icon: MoreIcon },
+  { label: "Tasks",  href: "/tasks",            icon: TasksIcon },
+  { label: "Tools",  href: "/tools",            icon: ToolsIcon },
+  { label: "Safety", href: "/safety",           icon: SafetyIcon },
+  { label: "Season", href: "/settings/season",  icon: SettingsNavIcon },
+];
+
+// Items shown in the mobile "More" popup
+const MOBILE_MORE = [
+  { label: "Home",       href: "/dashboard",   icon: HomeIcon },
+  { label: "Fleet",      href: "/fleet",       icon: FleetIcon },
+  { label: "Inventory",  href: "/inventory",   icon: InventoryIcon },
+  { label: "Orders",     href: "/procurement", icon: ProcurementIcon },
+  { label: "Budget",     href: "/budget",      icon: BudgetIcon },
+  { label: "Calendar",   href: "/calendar",    icon: CalendarIcon },
 ];
 
 interface Props {
@@ -45,6 +54,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
 
   const activeRobot = robots.find((r) => r.id === activeRobotId);
   const canManageTeam = session?.user?.roles?.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP"].includes(r)) ?? false;
+  const [moreOpen, setMoreOpen] = useState(false);
 
   return (
     <>
@@ -185,39 +195,106 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
       </header>
 
       {/* ── Mobile bottom tab bar (hidden on lg+) ── */}
-      <nav
-        className="fixed bottom-0 inset-x-0 z-40 lg:hidden safe-bottom"
-        style={{
-          backgroundColor: "color-mix(in srgb, var(--color-surface) 92%, transparent)",
-          backdropFilter: "blur(20px) saturate(180%)",
-          WebkitBackdropFilter: "blur(20px) saturate(180%)",
-          borderTop: "1px solid color-mix(in srgb, var(--color-border) 80%, transparent)",
-          boxShadow: "0 -4px 12px -4px rgb(0 0 0 / .06)",
-        }}
-        aria-label="Mobile navigation"
-      >
-        <div className="flex items-stretch h-14">
-          {MOBILE_TABS.map(({ label, href, icon: Icon }) => {
-            const active = href !== "/dashboard" && pathname.startsWith(href);
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={cn(
-                  "flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors py-2",
-                  active
-                    ? "text-[--color-primary]"
-                    : "text-[--color-text-secondary]"
-                )}
-                aria-current={active ? "page" : undefined}
-              >
-                <Icon className={cn("w-5 h-5", active && "text-[--color-primary]")} />
-                {label}
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
+      <>
+        {/* More popup backdrop */}
+        {moreOpen && (
+          <div
+            className="fixed inset-0 z-40 lg:hidden bg-black/40"
+            onClick={() => setMoreOpen(false)}
+            aria-hidden
+          />
+        )}
+
+        {/* More popup sheet */}
+        {moreOpen && (
+          <div
+            className="fixed bottom-14 inset-x-0 z-50 lg:hidden rounded-t-2xl safe-bottom"
+            style={{
+              backgroundColor: "var(--color-surface)",
+              boxShadow: "0 -8px 32px -4px rgb(0 0 0 / .25)",
+              borderTop: "1px solid color-mix(in srgb, var(--color-border) 60%, transparent)",
+            }}
+          >
+            <div className="px-4 pt-4 pb-2">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-semibold text-[--color-text-primary]">More</p>
+                <button
+                  onClick={() => setMoreOpen(false)}
+                  className="h-7 w-7 rounded-full flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors text-base leading-none"
+                >×</button>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {MOBILE_MORE.map(({ label, href, icon: Icon }) => {
+                  const active = href === "/dashboard" ? pathname === href : pathname.startsWith(href);
+                  return (
+                    <Link
+                      key={href}
+                      href={href}
+                      onClick={() => setMoreOpen(false)}
+                      className={cn(
+                        "flex flex-col items-center gap-1.5 rounded-xl py-3 px-2 transition-colors",
+                        active
+                          ? "bg-[--color-primary]/10 text-[--color-primary]"
+                          : "text-[--color-text-secondary] hover:bg-[--color-surface-overlay] hover:text-[--color-text-primary]"
+                      )}
+                    >
+                      <Icon className="w-6 h-6" />
+                      <span className="text-[11px] font-medium">{label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <nav
+          className="fixed bottom-0 inset-x-0 z-50 lg:hidden safe-bottom"
+          style={{
+            backgroundColor: "color-mix(in srgb, var(--color-surface) 92%, transparent)",
+            backdropFilter: "blur(20px) saturate(180%)",
+            WebkitBackdropFilter: "blur(20px) saturate(180%)",
+            borderTop: "1px solid color-mix(in srgb, var(--color-border) 80%, transparent)",
+            boxShadow: "0 -4px 12px -4px rgb(0 0 0 / .06)",
+          }}
+          aria-label="Mobile navigation"
+        >
+          <div className="flex items-stretch h-14">
+            {MOBILE_TABS.map(({ label, href, icon: Icon }) => {
+              const active = pathname.startsWith(href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={() => setMoreOpen(false)}
+                  className={cn(
+                    "flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors py-2",
+                    active ? "text-[--color-primary]" : "text-[--color-text-secondary]"
+                  )}
+                  aria-current={active ? "page" : undefined}
+                >
+                  <Icon className={cn("w-5 h-5", active && "text-[--color-primary]")} />
+                  {label}
+                </Link>
+              );
+            })}
+
+            {/* More button */}
+            <button
+              onClick={() => setMoreOpen((o) => !o)}
+              className={cn(
+                "flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors py-2",
+                moreOpen ? "text-[--color-primary]" : "text-[--color-text-secondary]"
+              )}
+              aria-expanded={moreOpen}
+            >
+              <MoreIcon className={cn("w-5 h-5", moreOpen && "text-[--color-primary]")} />
+              More
+            </button>
+          </div>
+        </nav>
+      </>
+
     </>
   );
 }
