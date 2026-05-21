@@ -158,7 +158,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
               const isRestrictedView = view === "low-stock" || view === "reorder";
 
               return (
-                <Tr key={item.id} className="group hover:bg-[--color-surface-overlay] transition-colors cursor-pointer">
+                <Tr key={item.id} className="group">
                   <Td>
                     <Link
                       href={`/inventory/${item.id}`}

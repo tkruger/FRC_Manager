@@ -100,9 +100,12 @@
   td a:hover { text-decoration: underline; text-underline-offset: 3px; }
 }
 
-/* Unlayered — beats @layer utilities so the row highlight always applies */
+/* Table row hover — unlayered + !important so no Tailwind utility can override */
+tr:hover {
+  background-color: color-mix(in srgb, var(--color-border) 60%, var(--color-surface)) !important;
+}
 tr:has(a:hover) {
-  background-color: color-mix(in srgb, var(--color-primary) 6%, var(--color-surface-raised));
+  background-color: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface)) !important;
   cursor: pointer;
 }
 
