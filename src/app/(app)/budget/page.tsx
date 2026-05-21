@@ -73,20 +73,6 @@ export default async function BudgetDashboard() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      {/* Burndown chart */}
-      <BudgetBurndownCard
-        totalAllocated={totalAllocated}
-        totalSpent={totalSpent}
-        kickoffDate={activeSeason.kickoffDate.toISOString()}
-        week0Date={activeSeason.week0Date.toISOString()}
-        categories={budget.categories.map((c) => ({ id: c.id, label: c.label, allocation: c.allocation }))}
-        expenses={budget.expenses.map((e) => ({
-          date:       e.date.toISOString(),
-          amount:     e.amount,
-          categoryId: e.categoryId ?? null,
-        }))}
-      />
-
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -106,6 +92,20 @@ export default async function BudgetDashboard() {
           )}
         </div>
       </div>
+
+      {/* Burndown chart */}
+      <BudgetBurndownCard
+        totalAllocated={totalAllocated}
+        totalSpent={totalSpent}
+        kickoffDate={activeSeason.kickoffDate.toISOString()}
+        week0Date={activeSeason.week0Date.toISOString()}
+        categories={budget.categories.map((c) => ({ id: c.id, label: c.label, allocation: c.allocation }))}
+        expenses={budget.expenses.map((e) => ({
+          date:       e.date.toISOString(),
+          amount:     e.amount,
+          categoryId: e.categoryId ?? null,
+        }))}
+      />
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
