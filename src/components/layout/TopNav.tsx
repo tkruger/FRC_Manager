@@ -30,8 +30,6 @@ const MOBILE_TABS = [
   { label: "More",      href: "/dashboard",   icon: MoreIcon },
 ];
 
-const ROBOT_CONTEXT_PATHS = ["/fleet", "/inventory", "/tasks", "/budget"];
-
 interface Props {
   session: Session | null;
   robots?: { id: string; displayName: string; status: string }[];
@@ -45,7 +43,6 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
   const pathname = usePathname();
   const { resolvedTheme, toggle, mode } = useTheme();
 
-  const showRobotSelector = ROBOT_CONTEXT_PATHS.some((p) => pathname.startsWith(p));
   const activeRobot = robots.find((r) => r.id === activeRobotId);
   const canManageTeam = session?.user?.roles?.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP"].includes(r)) ?? false;
 
@@ -113,7 +110,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
 
           {/* Right: controls */}
           <div className="flex items-center gap-1 justify-end">
-          {showRobotSelector && robots.length > 0 && (
+          {robots.length > 0 && (
             <RobotSelector robots={robots} activeRobotId={activeRobotId} activeRobot={activeRobot} />
           )}
           <button
@@ -170,7 +167,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
             </Link>
           </div>
           <div className="flex items-center gap-1.5 ml-auto">
-            {showRobotSelector && robots.length > 0 && <RobotSelector robots={robots} activeRobotId={activeRobotId} activeRobot={activeRobot} />}
+            {robots.length > 0 && <RobotSelector robots={robots} activeRobotId={activeRobotId} activeRobot={activeRobot} />}
             <button onClick={toggle} className="h-9 w-9 rounded-md flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors">
               {resolvedTheme === "dark" ? <SunIcon /> : <MoonIcon />}
             </button>
