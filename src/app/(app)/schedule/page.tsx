@@ -2,12 +2,12 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { SUBTEAM_COLORS, shortDate, daysBetween, isOverdue } from "@/lib/schedule-helpers";
-import { differenceInCalendarDays, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
+import { daysBetween, isOverdue } from "@/lib/schedule-helpers";
 import { getActiveRobotId } from "@/app/actions/robot-context";
 import { ScheduleTabBar } from "./ScheduleTabBar";
 import { KanbanView } from "./KanbanView";
 import { ListView } from "./ListView";
+import { SeasonProgressBar } from "./SeasonProgressBar";
 
 export default async function SchedulePage({
   searchParams,
@@ -138,51 +138,15 @@ export default async function SchedulePage({
       </div>
 
       {/* Season progress bar */}
-      <div className="card py-4">
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <p className="text-small text-[--color-text-secondary]">
-              Kickoff {shortDate(kickoff)} → Week 0 {shortDate(week0)}
-              {daysToWeek0 >= 0
-                ? ` · ${daysToWeek0} days remaining`
-                : ` · Week 0 was ${Math.abs(daysToWeek0)} days ago`}
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-h3 text-[--color-text-primary]">{completeTasks}/{totalTasks}</p>
-            <p className="text-small text-[--color-text-secondary]">tasks complete</p>
-          </div>
-        </div>
-        <div className="w-full h-2 rounded-full bg-[--color-surface-overlay] overflow-hidden">
-          <div
-            className="h-full rounded-full bg-[--color-primary] transition-all"
-            style={{ width: `${buildProgress}%` }}
-          />
-        </div>
-
-        {Object.keys(subteamStats).length > 0 && (
-          <div className="mt-3 pt-3 border-t border-[--color-border] grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-            {Object.entries(subteamStats).map(([st, s]) => {
-              const pct = s.total ? Math.round((s.done / s.total) * 100) : 0;
-              const color = SUBTEAM_COLORS[st] ?? "#64748B";
-              return (
-                <div key={st}>
-                  <div className="flex justify-between text-small mb-1">
-                    <span style={{ color }} className="font-medium truncate">{st.replace("_", " ")}</span>
-                    <span className="text-[--color-text-secondary] shrink-0 ml-1">{s.done}/{s.total}</span>
-                  </div>
-                  <div className="h-1.5 rounded-full bg-[--color-surface-overlay]">
-                    <div
-                      className="h-full rounded-full transition-all"
-                      style={{ width: `${pct}%`, backgroundColor: color }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+      <SeasonProgressBar
+        kickoffDate={activeSeason.kickoffDate.toISOString()}
+        week0Date={activeSeason.week0Date.toISOString()}
+        daysToWeek0={daysToWeek0}
+        buildProgress={buildProgress}
+        totalTasks={totalTasks}
+        completeTasks={completeTasks}
+        subteamStats={subteamStats}
+      />
 
       {/* Tab bar */}
       <ScheduleTabBar canEdit={canEdit} />

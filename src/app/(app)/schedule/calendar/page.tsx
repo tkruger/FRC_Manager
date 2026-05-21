@@ -7,6 +7,8 @@ import { CalendarClient } from "./CalendarClient";
 import { SubscribeCalendarButton } from "@/components/calendar/SubscribeCalendarButton";
 import { GenerateShareLinkButton } from "./GenerateShareLinkButton";
 import { ScheduleTabBar } from "../ScheduleTabBar";
+import { SeasonProgressBar } from "../SeasonProgressBar";
+import { daysBetween } from "@/lib/schedule-helpers";
 
 export default async function CalendarPage() {
   const session = await auth();
@@ -27,14 +29,39 @@ export default async function CalendarPage() {
   const isLeadership = session.user.roles.some((r) =>
     ["HEAD_MENTOR", "TEAM_LEADERSHIP", "BUILD_LEAD"].includes(r)
   );
+  const isEditor = session.user.roles.some((r) =>
+    ["HEAD_MENTOR", "BUILD_LEAD"].includes(r)
+  );
 
-  const allTasks = isLeadership
-    ? await prisma.task.findMany({
-        where: { seasonId: activeSeason.id },
-        select: { id: true, name: true, status: true, subTeam: true, dueDate: true },
-        orderBy: { name: "asc" },
-      })
-    : [];
+  const [allTaskStats, calendarTasks] = await Promise.all([
+    prisma.task.findMany({
+      where: { seasonId: activeSeason.id },
+      select: { status: true, subTeam: true },
+    }),
+    isLeadership
+      ? prisma.task.findMany({
+          where: { seasonId: activeSeason.id },
+          select: { id: true, name: true, status: true, subTeam: true, dueDate: true },
+          orderBy: { name: "asc" },
+        })
+      : Promise.resolve([] as { id: string; name: string; status: string; subTeam: string | null; dueDate: Date | null }[]),
+  ]);
+
+  // Progress stats
+  const now = new Date();
+  const daysToWeek0 = daysBetween(now, activeSeason.week0Date);
+  const totalBuildDays = daysBetween(activeSeason.kickoffDate, activeSeason.week0Date);
+  const elapsed = daysBetween(activeSeason.kickoffDate, now);
+  const buildProgress = Math.round(Math.min(Math.max((elapsed / totalBuildDays) * 100, 0), 100));
+  const totalTasks = allTaskStats.length;
+  const completeTasks = allTaskStats.filter((t) => t.status === "COMPLETE").length;
+  const subteamStats: Record<string, { total: number; done: number }> = {};
+  for (const t of allTaskStats) {
+    const st = t.subTeam ?? "OTHER";
+    if (!subteamStats[st]) subteamStats[st] = { total: 0, done: 0 };
+    subteamStats[st].total++;
+    if (t.status === "COMPLETE") subteamStats[st].done++;
+  }
 
   const baseUrl = process.env.NEXTAUTH_URL ?? "https://frc-manager.vercel.app";
   const calendarUrl = activeSeason.calendarToken
@@ -44,17 +71,13 @@ export default async function CalendarPage() {
     ? `${baseUrl}/public/schedule/${activeSeason.calendarToken}`
     : null;
 
-  const isEditor = session.user.roles.some((r) =>
-    ["HEAD_MENTOR", "BUILD_LEAD"].includes(r)
-  );
-
   return (
     <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-h1 text-[--color-text-primary]">Schedule</h1>
-          <p className="text-body text-[--color-text-secondary] mt-0.5">{activeSeason.name} · Calendar</p>
+          <p className="text-body text-[--color-text-secondary] mt-0.5">{activeSeason.name}</p>
         </div>
         <div className="flex gap-2 flex-wrap justify-end">
           {calendarUrl
@@ -67,6 +90,16 @@ export default async function CalendarPage() {
           )}
         </div>
       </div>
+
+      <SeasonProgressBar
+        kickoffDate={activeSeason.kickoffDate.toISOString()}
+        week0Date={activeSeason.week0Date.toISOString()}
+        daysToWeek0={daysToWeek0}
+        buildProgress={buildProgress}
+        totalTasks={totalTasks}
+        completeTasks={completeTasks}
+        subteamStats={subteamStats}
+      />
 
       <ScheduleTabBar canEdit={isEditor} />
 
@@ -90,7 +123,7 @@ export default async function CalendarPage() {
           cancelReason: m.cancelReason,
           tasks:        m.tasks,
         }))}
-        allTasks={allTasks.map((t) => ({
+        allTasks={calendarTasks.map((t) => ({
           id:      t.id,
           name:    t.name,
           status:  t.status,
