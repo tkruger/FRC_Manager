@@ -130,15 +130,15 @@ export default async function DashboardPage() {
       {/* Module grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {[
-          { title: "Robot Fleet",   href: "/fleet",           desc: "Manage your robots",     color: "var(--color-primary)",   icon: "🤖" },
-          { title: "Tools",         href: "/tools",           desc: "Checkout & maintenance", color: "#7C3AED",               icon: "🔧" },
-          { title: "Inventory",     href: "/inventory",       desc: "Parts & materials",      color: "var(--color-secondary)", icon: "📦" },
-          { title: "Procurement",   href: "/procurement",     desc: "Orders & requests",      color: "#059669",               icon: "🛒" },
-          { title: "Budget",        href: "/budget",          desc: "Spend & BOM tracking",   color: "#D97706",               icon: "💰" },
           { title: "Tasks",         href: "/tasks",           desc: "Kanban & build schedule", color: "#DC2626",              icon: "✅" },
+          { title: "Tools",         href: "/tools",           desc: "Checkout & maintenance",  color: "#7C3AED",              icon: "🔧" },
+          { title: "Inventory",     href: "/inventory",       desc: "Parts & materials",       color: "var(--color-secondary)", icon: "📦" },
+          { title: "Procurement",   href: "/procurement",     desc: "Orders & requests",       color: "#059669",              icon: "🛒" },
+          { title: "Budget",        href: "/budget",          desc: "Spend & BOM tracking",    color: "#D97706",              icon: "💰" },
+          { title: "Fleet",         href: "/fleet",           desc: "Manage your robots",      color: "var(--color-primary)", icon: "🤖" },
+          { title: "Safety",        href: "/safety",          desc: "Certs & checklists",      color: "#0891B2",              icon: "🛡️" },
+          { title: "Season",        href: "/settings/season", desc: "Season configuration",   color: "#64748B",              icon: "⚙️" },
           { title: "Calendar",      href: "/calendar",        desc: "Meeting schedule",        color: "#7C3AED",              icon: "📅" },
-          { title: "Safety",        href: "/safety",          desc: "Certs & checklists",     color: "#0891B2",               icon: "🛡️" },
-          { title: "Season",        href: "/settings/season", desc: "Season configuration",  color: "#64748B",               icon: "⚙️" },
         ].map((mod) => (
           <Link key={mod.href} href={mod.href} className="block no-underline">
             <TiltCard
