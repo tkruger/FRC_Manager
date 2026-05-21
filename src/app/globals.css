@@ -91,7 +91,13 @@
 
 /* ─── Base ─── */
 *, *::before, *::after { box-sizing: border-box; }
-a { color: inherit; text-decoration: none; }
+
+@layer base {
+  /* Reset browser link defaults without fighting Tailwind utilities */
+  a { color: inherit; text-decoration: none; }
+  /* Table links underline on hover so users know they're clickable */
+  td a:hover { text-decoration: underline; text-underline-offset: 3px; }
+}
 td a:hover { text-decoration: underline; text-underline-offset: 3px; }
 
 html {
