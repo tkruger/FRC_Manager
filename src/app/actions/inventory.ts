@@ -90,6 +90,67 @@ export async function createBaseItemAction(
   return { success: true };
 }
 
+export async function updateBaseItemAction(
+  itemId: string,
+  _prev: InventoryActionState | null,
+  formData: FormData
+): Promise<InventoryActionState> {
+  const session = await auth();
+  if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
+
+  const canEdit = session.user.roles.some((r) => ["INVENTORY_ADMIN", "HEAD_MENTOR"].includes(r));
+  if (!canEdit) return { success: false, error: "Not authorized." };
+
+  const parsed = BaseItemSchema.safeParse({
+    name:               formData.get("name"),
+    partNumber:         formData.get("partNumber") || undefined,
+    category:           formData.get("category") || "MECHANICAL",
+    itemType:           formData.get("itemType") || "DISCRETE",
+    description:        formData.get("description") || undefined,
+    unitOfMeasure:      formData.get("unitOfMeasure") || "EACH",
+    currentStock:       formData.get("currentStock") || 0,
+    minStockThreshold:  formData.get("minStockThreshold") || 0,
+    reorderQuantity:    formData.get("reorderQuantity") || 1,
+    preferredSupplier:  formData.get("preferredSupplier") || undefined,
+    supplierLeadDays:   formData.get("supplierLeadDays") || undefined,
+    unitCost:           formData.get("unitCost") || undefined,
+    fairMarketValue:    formData.get("fairMarketValue") || undefined,
+    storageLocation:    formData.get("storageLocation") || undefined,
+    isKopItem:          formData.get("isKopItem") === "on",
+    isFirstChoiceItem:  formData.get("isFirstChoiceItem") === "on",
+    notes:              formData.get("notes") || undefined,
+  });
+  if (!parsed.success) return { success: false, error: "Please fill in all required fields." };
+
+  const d = parsed.data;
+  await prisma.baseInventoryItem.update({
+    where: { id: itemId },
+    data: {
+      name:              d.name,
+      partNumber:        d.partNumber,
+      category:          d.category as ItemCategory,
+      itemType:          d.itemType as ItemType,
+      description:       d.description,
+      unitOfMeasure:     d.unitOfMeasure as UnitOfMeasure,
+      currentStock:      d.currentStock,
+      minStockThreshold: d.minStockThreshold,
+      reorderQuantity:   d.reorderQuantity,
+      preferredSupplier: d.preferredSupplier,
+      supplierLeadDays:  d.supplierLeadDays,
+      unitCost:          d.unitCost,
+      fairMarketValue:   d.fairMarketValue,
+      storageLocation:   d.storageLocation,
+      isKopItem:         d.isKopItem ?? false,
+      isFirstChoiceItem: d.isFirstChoiceItem ?? false,
+      notes:             d.notes,
+    },
+  });
+
+  revalidatePath("/inventory");
+  revalidatePath(`/inventory/${itemId}`);
+  return { success: true };
+}
+
 const AcquireSchema = z.object({
   quantity:    z.coerce.number().positive(),
   robotId:     z.string().optional(),

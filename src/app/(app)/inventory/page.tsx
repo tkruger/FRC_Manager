@@ -152,7 +152,9 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
               return (
                 <Tr key={item.id}>
                   <Td>
-                    <p className="font-medium text-[--color-text-primary]">{item.name}</p>
+                    <Link href={`/inventory/${item.id}`} className="font-medium text-[--color-text-primary] hover:text-[--color-primary] transition-colors">
+                      {item.name}
+                    </Link>
                     {item.partNumber && <p className="text-mono text-[--color-text-secondary]">{item.partNumber}</p>}
                   </Td>
                   <Td>{item.category.replace(/_/g, " ")}</Td>

@@ -60,6 +60,7 @@ export default async function AllRequestsPage() {
               <Th>Status</Th>
               <Th right>Est. total</Th>
               <Th>Submitted</Th>
+              <Th />
             </tr>
           </TableHead>
           <TableBody>
@@ -78,6 +79,12 @@ export default async function AllRequestsPage() {
                 <Td><Badge variant={statusBadgeVariant(r.status)}>{statusLabel(r.status)}</Badge></Td>
                 <Td right>{formatCurrency(r.estimatedTotal)}</Td>
                 <Td>{formatDate(r.submittedAt)}</Td>
+                <Td>
+                  <Link href={`/procurement/requests/${r.id}`}
+                    className="text-sm text-[--color-secondary] hover:underline whitespace-nowrap">
+                    View →
+                  </Link>
+                </Td>
               </Tr>
             ))}
           </TableBody>

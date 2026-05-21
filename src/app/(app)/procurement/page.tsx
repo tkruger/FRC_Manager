@@ -111,6 +111,7 @@ export default async function ProcurementDashboard() {
                 <Th>Status</Th>
                 <Th right>Est. total</Th>
                 <Th>Delivery / lead risk</Th>
+                <Th />
               </tr>
             </TableHead>
             <TableBody>
@@ -149,6 +150,12 @@ export default async function ProcurementDashboard() {
                           {deliveryRisk === "warning" && " ⚡ Close"}
                         </span>
                       ) : "—"}
+                    </Td>
+                    <Td>
+                      <Link href={`/procurement/requests/${r.id}`}
+                        className="text-sm text-[--color-secondary] hover:underline whitespace-nowrap">
+                        View →
+                      </Link>
                     </Td>
                   </Tr>
                 );
