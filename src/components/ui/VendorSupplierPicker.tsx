@@ -24,7 +24,7 @@ export function VendorSupplierPicker({ vendors, defaultValue, required }: Props)
   return (
     <div className="space-y-2">
       <label className="block">
-        <span className="text-label font-medium text-[--color-text-primary]">
+        <span className="text-sm font-medium text-[--color-text-primary]">
           Preferred supplier{required && <span className="text-[--color-danger] ml-0.5">*</span>}
         </span>
         <select

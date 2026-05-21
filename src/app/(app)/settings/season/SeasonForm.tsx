@@ -59,7 +59,7 @@ export function SeasonForm({ onClose }: { onClose?: () => void } = {}) {
 
       {/* Per-day meeting times */}
       <div>
-        <p className="block text-label font-medium text-[--color-text-primary] mb-1">
+        <p className="block text-sm font-medium text-[--color-text-primary] mb-1">
           Build meeting days &amp; times <span className="text-[--color-danger]">*</span>
         </p>
         <p className="text-small text-[--color-text-secondary] mb-3">

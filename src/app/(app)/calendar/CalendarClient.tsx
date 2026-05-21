@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useTransition, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -458,7 +458,7 @@ function MeetingDialog({
               <div className="grid grid-cols-2 gap-3">
                 {[["Start time","startTime",startTime,setStartTime],["End time","endTime",endTime,setEndTime]].map(([label,,val,setter]:any) => (
                   <div key={label}>
-                    <label className="text-label font-medium text-[--color-text-primary] block mb-1.5">{label}</label>
+                    <label className="text-sm font-medium text-[--color-text-primary] block mb-1.5">{label}</label>
                     <input type="time" value={val} onChange={(e) => setter(e.target.value)}
                       className="h-11 w-full rounded-md border border-[--color-border] bg-[--color-surface] px-3 text-sm text-[--color-text-primary] focus:outline-none focus:border-[--color-primary]" />
                   </div>
@@ -467,7 +467,7 @@ function MeetingDialog({
               <Textarea label="Agenda / notes" rows={4} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Topics for this meeting..." />
               {allTasks.length > 0 && (
                 <div>
-                  <p className="text-label font-medium text-[--color-text-primary] mb-2">Link tasks</p>
+                  <p className="text-sm font-medium text-[--color-text-primary] mb-2">Link tasks</p>
                   <div className="max-h-40 overflow-y-auto space-y-0.5 rounded-md border border-[--color-border] p-2">
                     {allTasks.map((t) => (
                       <label key={t.id} className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer text-sm ${

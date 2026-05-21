@@ -86,7 +86,7 @@ export function ProfileForm({ initialName, initialEmail }: Props) {
 
         {/* Display mode */}
         <div>
-          <p className="text-label font-medium text-[--color-text-primary] mb-3">Display mode</p>
+          <p className="text-sm font-medium text-[--color-text-primary] mb-3">Display mode</p>
           <div className="flex flex-wrap gap-2">
             {(
               [
@@ -118,7 +118,7 @@ export function ProfileForm({ initialName, initialEmail }: Props) {
 
         {/* Background style */}
         <div>
-          <p className="text-label font-medium text-[--color-text-primary] mb-3">Background</p>
+          <p className="text-sm font-medium text-[--color-text-primary] mb-3">Background</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
             {BG_MODES.map((opt) => {
               const isActive = bgMode === opt.id;
@@ -186,7 +186,7 @@ export function ProfileForm({ initialName, initialEmail }: Props) {
 
         {/* Color theme */}
         <div>
-          <p className="text-label font-medium text-[--color-text-primary] mb-3">Color theme</p>
+          <p className="text-sm font-medium text-[--color-text-primary] mb-3">Color theme</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {COLOR_THEMES.map((theme) => {
               const isActive = colorTheme === theme.id;

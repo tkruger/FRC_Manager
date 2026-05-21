@@ -94,7 +94,7 @@ export default function RegisterPage() {
         <div>
           <label
             htmlFor="registrationNote"
-            className="block text-label font-medium text-[--color-text-primary] mb-1.5"
+            className="block text-sm font-medium text-[--color-text-primary] mb-1.5"
           >
             Message to admin{" "}
             <span className="font-normal text-[--color-text-secondary]">(optional)</span>

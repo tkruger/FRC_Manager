@@ -323,7 +323,7 @@ function EditTaskForm({ task, allTasks, allMembers, allRobots, kickoffDate, week
       {/* Assignees — searchable picker */}
       {allMembers.length > 0 && (
         <div>
-          <p className="text-label font-medium text-[--color-text-primary] mb-2">Assignees</p>
+          <p className="text-sm font-medium text-[--color-text-primary] mb-2">Assignees</p>
 
           {/* Hidden inputs carry selected IDs to the form */}
           {selectedAssignees.map((id) => (
@@ -396,7 +396,7 @@ function EditTaskForm({ task, allTasks, allMembers, allRobots, kickoffDate, week
       {/* Prerequisites */}
       {allTasks.length > 0 && (
         <div>
-          <p className="text-label font-medium text-[--color-text-primary] mb-2">Prerequisites</p>
+          <p className="text-sm font-medium text-[--color-text-primary] mb-2">Prerequisites</p>
           <div className="max-h-36 overflow-y-auto space-y-0.5 rounded-md border border-[--color-border] p-2">
             {allTasks.filter((t) => t.id !== task.id).map((t) => (
               <label key={t.id} className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer text-sm ${selectedPrereqs.includes(t.id) ? "bg-[--color-primary]/10" : "hover:bg-[--color-surface-overlay]"}`}>
