@@ -365,7 +365,10 @@ function EditTaskForm({ task, allTasks, allMembers, allRobots, kickoffDate, week
               className="w-full rounded-md border border-[--color-border] bg-[--color-surface] text-[--color-text-primary] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary]/40 focus:border-[--color-primary]"
             />
             {searchResults.length > 0 && (
-              <div className="absolute z-10 top-full mt-1 w-full rounded-md border border-[--color-border] bg-[--color-surface] shadow-lg max-h-40 overflow-y-auto">
+              <div
+                className="absolute z-50 top-full mt-1 w-full rounded-md border border-[--color-border] max-h-40 overflow-y-auto"
+                style={{ backgroundColor: "var(--color-surface)", boxShadow: "var(--shadow-lg)" }}
+              >
                 {searchResults.map((m) => (
                   <button key={m.id} type="button" onClick={() => addAssignee(m.id)}
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-[--color-surface-overlay] transition-colors text-left">
@@ -379,7 +382,10 @@ function EditTaskForm({ task, allTasks, allMembers, allRobots, kickoffDate, week
               </div>
             )}
             {assigneeSearch.trim() && searchResults.length === 0 && (
-              <div className="absolute z-10 top-full mt-1 w-full rounded-md border border-[--color-border] bg-[--color-surface] px-3 py-2 text-sm text-[--color-text-secondary]">
+              <div
+                className="absolute z-50 top-full mt-1 w-full rounded-md border border-[--color-border] px-3 py-2 text-sm text-[--color-text-secondary]"
+                style={{ backgroundColor: "var(--color-surface)" }}
+              >
                 No members found
               </div>
             )}
