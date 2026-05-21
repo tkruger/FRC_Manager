@@ -1,8 +1,10 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+
+const STORAGE_KEY = "frc-tasks-mine";
 
 const TABS = [
   {
@@ -22,7 +24,6 @@ const TABS = [
   },
 ];
 
-// Single person — "My tasks"
 function PersonIcon({ className }: { className?: string }) {
   return (
     <svg className={cn("w-4 h-4", className)} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
@@ -31,7 +32,6 @@ function PersonIcon({ className }: { className?: string }) {
   );
 }
 
-// Group of people — "All tasks"
 function PeopleIcon({ className }: { className?: string }) {
   return (
     <svg className={cn("w-4 h-4", className)} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
@@ -41,28 +41,47 @@ function PeopleIcon({ className }: { className?: string }) {
 }
 
 export function TasksTabBar() {
+  const router      = useRouter();
   const pathname    = usePathname();
   const searchParams = useSearchParams();
   const view        = searchParams.get("view") ?? "";
-  const showMineOnly = searchParams.get("mine") !== "0"; // default ON
+  const showMineOnly = searchParams.get("mine") !== "0";
 
-  // Build tab hrefs that preserve the mine param
+  // On mount: if URL has no explicit mine param, apply saved preference
+  useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored === "0" && searchParams.get("mine") === null) {
+      // Saved preference is "all tasks" but URL is using the default (mine)
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("mine", "0");
+      router.replace(`${pathname}?${params.toString()}`);
+    }
+    // If stored is null or "1" and URL has no param, default (mine=on) is already correct
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   function tabHref(base: string) {
-    if (showMineOnly) return base; // mine=on is the default, no extra param needed
+    if (showMineOnly) return base;
     const sep = base.includes("?") ? "&" : "?";
     return `${base}${sep}mine=0`;
   }
 
-  // Build toggle href: preserve current path+view, flip mine
-  function mineToggleHref() {
+  function handleToggle() {
+    const nowShowingMine = showMineOnly;
+    // Persist to localStorage
+    if (nowShowingMine) {
+      localStorage.setItem(STORAGE_KEY, "0"); // switching to "all tasks"
+    } else {
+      localStorage.removeItem(STORAGE_KEY);   // switching to "my tasks" (default)
+    }
+    // Navigate to new URL
     const params = new URLSearchParams(searchParams.toString());
-    if (showMineOnly) {
+    if (nowShowingMine) {
       params.set("mine", "0");
     } else {
       params.delete("mine");
     }
     const qs = params.toString();
-    return `${pathname}${qs ? `?${qs}` : ""}`;
+    router.push(`${pathname}${qs ? `?${qs}` : ""}`);
   }
 
   return (
@@ -72,7 +91,7 @@ export function TasksTabBar() {
         {TABS.map((tab) => {
           const active = tab.match(pathname, view);
           return (
-            <Link
+            <a
               key={tab.label}
               href={tabHref(tab.baseHref)}
               className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
@@ -82,15 +101,15 @@ export function TasksTabBar() {
               }`}
             >
               {tab.label}
-            </Link>
+            </a>
           );
         })}
       </div>
 
-      {/* My tasks / All tasks toggle */}
+      {/* My tasks / All tasks toggle — persisted in localStorage */}
       <div className="flex items-center py-1 pr-1">
-        <Link
-          href={mineToggleHref()}
+        <button
+          onClick={handleToggle}
           title={showMineOnly ? "Showing my tasks — click to show all" : "Showing all tasks — click to show mine only"}
           className={cn(
             "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold transition-all border",
@@ -103,7 +122,7 @@ export function TasksTabBar() {
             ? <PersonIcon className="shrink-0" />
             : <PeopleIcon className="shrink-0" />}
           <span>{showMineOnly ? "My tasks" : "All tasks"}</span>
-        </Link>
+        </button>
       </div>
     </div>
   );
