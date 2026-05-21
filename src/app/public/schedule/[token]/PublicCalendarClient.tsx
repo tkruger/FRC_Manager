@@ -18,11 +18,9 @@ interface Props {
   week0Date:   string;
 }
 
-const MONTH_NAMES = [
-  "January","February","March","April","May","June",
-  "July","August","September","October","November","December",
-];
-const DOW = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const DOW_FULL  = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const DOW_SHORT = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const MONTHS    = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
 function fmt12(time24: string) {
   const [h, m] = time24.split(":").map(Number);
@@ -33,11 +31,19 @@ function ymd(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
-export function PublicCalendarClient({ meetings, kickoffDate, week0Date }: Props) {
-  const [view, setView] = useState<"list" | "month">("list");
-  const [monthIdx, setMonthIdx] = useState(0);
+function getWeekSunday(offset: number): Date {
+  const now = new Date();
+  const d   = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  d.setDate(d.getDate() - d.getDay() + offset * 7);
+  return d;
+}
+
+export function PublicCalendarClient({ meetings }: Props) {
+  const [view,       setView]       = useState<"list" | "week">("list");
+  const [weekOffset, setWeekOffset] = useState(0);
 
   const todayStr = ymd(new Date());
+
   const meetingsByDate = new Map<string, Meeting[]>();
   for (const m of meetings) {
     const key = m.date.slice(0, 10);
@@ -45,44 +51,45 @@ export function PublicCalendarClient({ meetings, kickoffDate, week0Date }: Props
     meetingsByDate.get(key)!.push(m);
   }
 
-  // Build list of months to show
-  const kickoff = new Date(kickoffDate);
-  const week0   = new Date(week0Date);
-  const months: { year: number; month: number }[] = [];
-  const cur = new Date(kickoff.getFullYear(), kickoff.getMonth(), 1);
-  const end = new Date(week0.getFullYear(), week0.getMonth(), 1);
-  while (cur <= end) {
-    months.push({ year: cur.getFullYear(), month: cur.getMonth() });
-    cur.setMonth(cur.getMonth() + 1);
-  }
-
-  // Group meetings by month label for list view
+  // Group meetings by month for list view
   const byMonth: { label: string; meetings: Meeting[] }[] = [];
   for (const m of meetings) {
-    const d = new Date(m.date);
-    const label = d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    const d     = new Date(m.date);
+    const label = `${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
     const existing = byMonth.find((b) => b.label === label);
     if (existing) existing.meetings.push(m);
     else byMonth.push({ label, meetings: [m] });
   }
 
-  const currentMonth = months[monthIdx] ?? months[0];
+  // Week view data
+  const weekSunday = getWeekSunday(weekOffset);
+  const weekDays   = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(weekSunday);
+    d.setDate(weekSunday.getDate() + i);
+    return d;
+  });
+  const weekLabel = (() => {
+    const s = weekDays[0], e = weekDays[6];
+    if (s.getMonth() === e.getMonth())
+      return `${MONTHS[s.getMonth()]} ${s.getDate()}–${e.getDate()}, ${s.getFullYear()}`;
+    return `${MONTHS[s.getMonth()]} ${s.getDate()} – ${MONTHS[e.getMonth()]} ${e.getDate()}, ${e.getFullYear()}`;
+  })();
 
   return (
     <div className="space-y-4">
-      {/* View toggle */}
-      <div className="flex items-center gap-2 border-b border-[--color-border] pb-0">
-        {(["list", "month"] as const).map((v) => (
+      {/* Tab toggle */}
+      <div className="flex items-center gap-0 border-b border-[--color-border]">
+        {(["list", "week"] as const).map((v) => (
           <button
             key={v}
             onClick={() => setView(v)}
-            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors capitalize ${
+            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
               view === v
                 ? "text-[--color-primary] border-[--color-primary]"
                 : "text-[--color-text-secondary] border-transparent hover:text-[--color-text-primary]"
             }`}
           >
-            {v === "list" ? "List" : "Month"}
+            {v === "list" ? "List" : "Week"}
           </button>
         ))}
       </div>
@@ -106,29 +113,17 @@ export function PublicCalendarClient({ meetings, kickoffDate, week0Date }: Props
                     <div
                       key={m.id}
                       className={`rounded-lg border px-4 py-3 ${
-                        isToday
-                          ? "border-[--color-primary] bg-[--color-primary]/5"
-                          : "border-[--color-border]"
+                        isToday ? "border-[--color-primary] bg-[--color-primary]/5" : "border-[--color-border]"
                       }`}
                     >
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <p className="text-sm font-semibold text-[--color-text-primary]">
-                            {d.toLocaleDateString("en-US", {
-                              weekday: "long", month: "short", day: "numeric",
-                            })}
-                            {isToday && (
-                              <span className="ml-2 badge badge-info text-xs">Today</span>
-                            )}
-                          </p>
-                          {m.title && (
-                            <p className="text-body text-[--color-text-primary] mt-0.5">{m.title}</p>
-                          )}
-                          <p className="text-small text-[--color-text-secondary] mt-0.5">
-                            {fmt12(m.startTime)} – {fmt12(m.endTime)}
-                          </p>
-                        </div>
-                      </div>
+                      <p className="text-sm font-semibold text-[--color-text-primary]">
+                        {d.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
+                        {isToday && <span className="ml-2 badge badge-info text-xs">Today</span>}
+                      </p>
+                      {m.title && <p className="text-body text-[--color-text-primary] mt-0.5">{m.title}</p>}
+                      <p className="text-small text-[--color-text-secondary] mt-0.5">
+                        {fmt12(m.startTime)} – {fmt12(m.endTime)}
+                      </p>
                       {m.tasks.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-1">
                           {m.tasks.map((t, i) => (
@@ -137,9 +132,7 @@ export function PublicCalendarClient({ meetings, kickoffDate, week0Date }: Props
                         </div>
                       )}
                       {m.notes && (
-                        <p className="text-small text-[--color-text-secondary] mt-2 whitespace-pre-wrap">
-                          {m.notes}
-                        </p>
+                        <p className="text-small text-[--color-text-secondary] mt-2 whitespace-pre-wrap">{m.notes}</p>
                       )}
                     </div>
                   );
@@ -149,144 +142,143 @@ export function PublicCalendarClient({ meetings, kickoffDate, week0Date }: Props
           ))}
         </div>
       ) : (
-        /* ── Month grid view ── */
-        <div className="space-y-4">
-          {/* Month navigator */}
+        /* ── Week view ── */
+        <div className="space-y-3">
+          {/* Week navigator */}
           <div className="flex items-center justify-between">
             <button
-              onClick={() => setMonthIdx((i) => Math.max(0, i - 1))}
-              disabled={monthIdx === 0}
-              className="p-2 rounded-md text-[--color-text-secondary] hover:bg-[--color-surface-overlay] disabled:opacity-30 transition-colors"
-              aria-label="Previous month"
+              onClick={() => setWeekOffset((o) => o - 1)}
+              className="p-2 rounded-md text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors"
+              aria-label="Previous week"
             >
               ‹
             </button>
-            <h2 className="text-h3 text-[--color-text-primary]">
-              {currentMonth
-                ? `${MONTH_NAMES[currentMonth.month]} ${currentMonth.year}`
-                : ""}
-            </h2>
+            <div className="text-center">
+              <p className="text-sm font-semibold text-[--color-text-primary]">{weekLabel}</p>
+              {weekOffset !== 0 && (
+                <button
+                  onClick={() => setWeekOffset(0)}
+                  className="text-xs text-[--color-secondary] hover:underline"
+                >
+                  Back to this week
+                </button>
+              )}
+            </div>
             <button
-              onClick={() => setMonthIdx((i) => Math.min(months.length - 1, i + 1))}
-              disabled={monthIdx === months.length - 1}
-              className="p-2 rounded-md text-[--color-text-secondary] hover:bg-[--color-surface-overlay] disabled:opacity-30 transition-colors"
-              aria-label="Next month"
+              onClick={() => setWeekOffset((o) => o + 1)}
+              className="p-2 rounded-md text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors"
+              aria-label="Next week"
             >
               ›
             </button>
           </div>
 
-          {currentMonth && (
-            <MonthGrid
-              year={currentMonth.year}
-              month={currentMonth.month}
-              meetingsByDate={meetingsByDate}
-              todayStr={todayStr}
-            />
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
+          {/* 7-column grid */}
+          <div className="grid grid-cols-7 gap-1 sm:gap-2">
+            {/* Day headers */}
+            {weekDays.map((d, i) => (
+              <div
+                key={i}
+                className={`text-center py-1 rounded-md text-xs font-semibold ${
+                  ymd(d) === todayStr
+                    ? "text-[--color-primary]"
+                    : "text-[--color-text-secondary]"
+                }`}
+              >
+                <span className="hidden sm:inline">{DOW_FULL[d.getDay()]}</span>
+                <span className="sm:hidden">{DOW_SHORT[d.getDay()]}</span>
+              </div>
+            ))}
 
-function MonthGrid({
-  year, month, meetingsByDate, todayStr,
-}: {
-  year: number;
-  month: number;
-  meetingsByDate: Map<string, Meeting[]>;
-  todayStr: string;
-}) {
-  const [selected, setSelected] = useState<string | null>(null);
+            {/* Day cells */}
+            {weekDays.map((d) => {
+              const dateStr      = ymd(d);
+              const isToday      = dateStr === todayStr;
+              const dayMeetings  = meetingsByDate.get(dateStr) ?? [];
 
-  const firstDay = new Date(year, month, 1).getDay(); // 0=Sun
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const cells: (number | null)[] = [
-    ...Array(firstDay).fill(null),
-    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
-  ];
-  while (cells.length % 7 !== 0) cells.push(null);
+              return (
+                <div
+                  key={dateStr}
+                  className={`min-h-24 rounded-lg border p-1.5 sm:p-2 flex flex-col gap-1 ${
+                    isToday
+                      ? "border-[--color-primary] bg-[--color-primary]/5"
+                      : "border-[--color-border] bg-[--color-surface-overlay]/40"
+                  }`}
+                >
+                  {/* Date number */}
+                  <p className={`text-xs font-bold mb-0.5 ${
+                    isToday ? "text-[--color-primary]" : "text-[--color-text-secondary]"
+                  }`}>
+                    {d.getDate()}
+                  </p>
 
-  const selectedMeetings = selected ? meetingsByDate.get(selected) ?? [] : [];
+                  {/* Meetings */}
+                  {dayMeetings.map((m) => (
+                    <div
+                      key={m.id}
+                      className="rounded p-1 text-xs bg-[--color-primary]/10 border border-[--color-primary]/20 space-y-0.5"
+                    >
+                      <p className="font-semibold text-[--color-primary] leading-tight">
+                        {fmt12(m.startTime)}
+                      </p>
+                      {m.title && (
+                        <p className="text-[--color-text-primary] leading-tight truncate">{m.title}</p>
+                      )}
+                      {m.tasks.length > 0 && (
+                        <p className="text-[--color-text-secondary] leading-tight truncate">
+                          {m.tasks.map((t) => t.name).join(", ")}
+                        </p>
+                      )}
+                    </div>
+                  ))}
 
-  return (
-    <div className="space-y-3">
-      {/* Day of week headers */}
-      <div className="grid grid-cols-7 gap-px">
-        {DOW.map((d) => (
-          <div key={d} className="text-center text-xs font-semibold text-[--color-text-secondary] py-2">
-            {d}
-          </div>
-        ))}
-      </div>
-
-      {/* Calendar grid */}
-      <div className="grid grid-cols-7 gap-1">
-        {cells.map((day, i) => {
-          if (!day) return <div key={`e-${i}`} />;
-          const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-          const hasMeetings = meetingsByDate.has(dateStr);
-          const isToday = dateStr === todayStr;
-          const isSelected = selected === dateStr;
-
-          return (
-            <button
-              key={dateStr}
-              onClick={() => setSelected(isSelected ? null : dateStr)}
-              className={`relative aspect-square rounded-lg flex flex-col items-center justify-start pt-1.5 text-sm font-medium transition-all ${
-                isToday
-                  ? "ring-2 ring-[--color-primary] ring-offset-1"
-                  : ""
-              } ${
-                isSelected
-                  ? "bg-[--color-primary] text-white"
-                  : hasMeetings
-                  ? "bg-[--color-primary]/10 text-[--color-primary] hover:bg-[--color-primary]/20"
-                  : "text-[--color-text-secondary] hover:bg-[--color-surface-overlay]"
-              }`}
-            >
-              {day}
-              {hasMeetings && !isSelected && (
-                <span className="absolute bottom-1.5 w-1.5 h-1.5 rounded-full"
-                  style={{ backgroundColor: "var(--color-primary)" }} />
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Selected day meetings */}
-      {selected && (
-        <div className="rounded-lg border border-[--color-border] p-4 space-y-3">
-          <p className="text-sm font-semibold text-[--color-text-primary]">
-            {new Date(selected + "T12:00:00").toLocaleDateString("en-US", {
-              weekday: "long", month: "long", day: "numeric",
+                  {dayMeetings.length === 0 && (
+                    <span className="text-[10px] text-[--color-text-disabled] mt-auto">—</span>
+                  )}
+                </div>
+              );
             })}
-          </p>
-          {selectedMeetings.length === 0 ? (
-            <p className="text-small text-[--color-text-secondary]">No meetings on this day.</p>
-          ) : (
-            selectedMeetings.map((m) => (
-              <div key={m.id} className="space-y-1">
-                {m.title && (
-                  <p className="text-sm font-medium text-[--color-text-primary]">{m.title}</p>
-                )}
-                <p className="text-small text-[--color-text-secondary]">
-                  {fmt12(m.startTime)} – {fmt12(m.endTime)}
-                </p>
-                {m.tasks.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {m.tasks.map((t, i) => (
-                      <span key={i} className="badge badge-neutral text-xs">{t.name}</span>
+          </div>
+
+          {/* Meeting details below grid for the week */}
+          {weekDays.some((d) => (meetingsByDate.get(ymd(d)) ?? []).length > 0) && (
+            <div className="space-y-2 pt-2 border-t border-[--color-border]">
+              <p className="text-label text-[--color-text-secondary]">This week's meetings</p>
+              {weekDays.map((d) => {
+                const dateStr     = ymd(d);
+                const dayMeetings = meetingsByDate.get(dateStr) ?? [];
+                if (dayMeetings.length === 0) return null;
+                const isToday = dateStr === todayStr;
+                return (
+                  <div key={dateStr} className={`rounded-lg border px-3 py-2.5 ${
+                    isToday ? "border-[--color-primary] bg-[--color-primary]/5" : "border-[--color-border]"
+                  }`}>
+                    <p className="text-sm font-semibold text-[--color-text-primary] mb-1">
+                      {d.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
+                      {isToday && <span className="ml-2 badge badge-info text-xs">Today</span>}
+                    </p>
+                    {dayMeetings.map((m) => (
+                      <div key={m.id} className="text-sm space-y-0.5">
+                        <p className="text-[--color-text-secondary]">
+                          {fmt12(m.startTime)} – {fmt12(m.endTime)}
+                          {m.title && <span className="ml-2 text-[--color-text-primary] font-medium">{m.title}</span>}
+                        </p>
+                        {m.tasks.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {m.tasks.map((t, i) => (
+                              <span key={i} className="badge badge-neutral text-xs">{t.name}</span>
+                            ))}
+                          </div>
+                        )}
+                        {m.notes && (
+                          <p className="text-small text-[--color-text-secondary] whitespace-pre-wrap">{m.notes}</p>
+                        )}
+                      </div>
                     ))}
                   </div>
-                )}
-                {m.notes && (
-                  <p className="text-small text-[--color-text-secondary] whitespace-pre-wrap">{m.notes}</p>
-                )}
-              </div>
-            ))
+                );
+              })}
+            </div>
           )}
         </div>
       )}
