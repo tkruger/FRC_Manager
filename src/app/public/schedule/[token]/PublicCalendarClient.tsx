@@ -25,26 +25,33 @@ function fmt12(time24: string) {
   return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
 }
 
-function ymd(d: Date) { return d.toISOString().slice(0, 10); }
+// Use local date parts — avoids UTC midnight shifting across timezone boundaries
+function ymd(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+// Parse a date-only string ("YYYY-MM-DD") as local midnight so it matches ymd()
+function parseLocalDate(isoOrSlice: string): Date {
+  const slice = isoOrSlice.slice(0, 10); // "YYYY-MM-DD"
+  return new Date(`${slice}T00:00:00`);  // no "Z" → local time
+}
 
 function getWeekSunday(offset: number): Date {
   const now = new Date();
-  const d   = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay() + offset * 7);
-  return d;
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay() + offset * 7);
 }
 
 export function PublicCalendarClient({ meetings }: Props) {
   const [view,       setView]       = useState<"week" | "list">("week");
   const [weekOffset, setWeekOffset] = useState(0);
-  const [selected,   setSelected]   = useState<Meeting | null>(null);
 
   const today    = new Date();
   const todayStr = ymd(today);
 
-  // Index meetings by date string
+  // Key meetings by local date string to match weekDay grid keys
   const meetingMap: Record<string, Meeting[]> = {};
   for (const m of meetings) {
-    const key = m.date.slice(0, 10);
+    const key = m.date.slice(0, 10); // "YYYY-MM-DD" — same as ymd(parseLocalDate(m.date))
     if (!meetingMap[key]) meetingMap[key] = [];
     meetingMap[key].push(m);
   }
@@ -170,14 +177,13 @@ export function PublicCalendarClient({ meetings }: Props) {
                     {/* Meeting chips */}
                     <div className="space-y-0.5">
                       {dayMeetings.map((m) => (
-                        <button
+                        <div
                           key={m.id}
-                          onClick={() => setSelected(selected?.id === m.id ? null : m)}
-                          className="w-full text-left text-[10px] font-medium px-1.5 py-0.5 rounded-sm truncate leading-relaxed text-white hover:opacity-85 transition-opacity"
+                          className="w-full text-left text-[10px] font-medium px-1.5 py-0.5 rounded-sm truncate leading-relaxed text-white"
                           style={{ backgroundColor: "var(--color-secondary)" }}
                         >
                           {fmt12(m.startTime)} {m.title ?? "Build meeting"}
-                        </button>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -186,41 +192,59 @@ export function PublicCalendarClient({ meetings }: Props) {
             </div>
           </div>
 
-          {/* Meeting detail panel */}
-          {selected && (
-            <div
-              className="rounded-xl border border-[--color-border] p-4 space-y-2"
-              style={{ boxShadow: "var(--shadow-card)" }}
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm font-semibold text-[--color-text-primary]">
-                    {new Date(selected.date + "T12:00:00").toLocaleDateString("en-US", {
-                      weekday: "long", month: "long", day: "numeric",
-                    })}
-                  </p>
-                  <p className="text-small text-[--color-text-secondary]">
-                    {fmt12(selected.startTime)} – {fmt12(selected.endTime)}
-                    {selected.title && <span className="ml-2 font-medium text-[--color-text-primary]">{selected.title}</span>}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setSelected(null)}
-                  className="text-[--color-text-secondary] hover:text-[--color-text-primary] text-lg leading-none"
-                >×</button>
+          {/* Week meeting list — always visible */}
+          {(() => {
+            const weekMeetings = weekDays.flatMap((d) => meetingMap[ymd(d)] ?? []);
+            if (weekMeetings.length === 0) return (
+              <p className="text-center text-small text-[--color-text-secondary] py-3">
+                No meetings this week.
+              </p>
+            );
+            return (
+              <div className="space-y-2">
+                {weekDays.map((d) => {
+                  const key         = ymd(d);
+                  const dayMeetings = meetingMap[key] ?? [];
+                  if (dayMeetings.length === 0) return null;
+                  const isToday = key === todayStr;
+                  const dateLabel = parseLocalDate(key).toLocaleDateString("en-US", {
+                    weekday: "long", month: "short", day: "numeric",
+                  });
+                  return (
+                    <div
+                      key={key}
+                      className={`rounded-lg border px-4 py-3 ${isToday ? "border-[--color-primary] bg-[--color-primary]/5" : "border-[--color-border]"}`}
+                    >
+                      <p className="text-sm font-semibold text-[--color-text-primary] mb-1.5">
+                        {dateLabel}
+                        {isToday && <span className="ml-2 badge badge-info text-xs">Today</span>}
+                      </p>
+                      {dayMeetings.map((m) => (
+                        <div key={m.id} className="space-y-1 text-sm">
+                          <p className="text-[--color-text-secondary]">
+                            {fmt12(m.startTime)} – {fmt12(m.endTime)}
+                            {m.title && (
+                              <span className="ml-2 font-medium text-[--color-text-primary]">{m.title}</span>
+                            )}
+                          </p>
+                          {m.tasks.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {m.tasks.map((t, i) => (
+                                <span key={i} className="badge badge-neutral text-xs">{t.name}</span>
+                              ))}
+                            </div>
+                          )}
+                          {m.notes && (
+                            <p className="text-small text-[--color-text-secondary] whitespace-pre-wrap">{m.notes}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
               </div>
-              {selected.tasks.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {selected.tasks.map((t, i) => (
-                    <span key={i} className="badge badge-neutral text-xs">{t.name}</span>
-                  ))}
-                </div>
-              )}
-              {selected.notes && (
-                <p className="text-small text-[--color-text-secondary] whitespace-pre-wrap">{selected.notes}</p>
-              )}
-            </div>
-          )}
+            );
+          })()}
         </div>
       ) : (
         /* ── List view ── */
