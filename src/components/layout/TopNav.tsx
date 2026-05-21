@@ -16,7 +16,7 @@ const MODULE_TABS = [
   { label: "Inventory",   href: "/inventory",   icon: InventoryIcon,   exact: false },
   { label: "Procurement", href: "/procurement", icon: ProcurementIcon, exact: false },
   { label: "Budget",      href: "/budget",      icon: BudgetIcon,      exact: false },
-  { label: "Robots",      href: "/fleet",       icon: FleetIcon,       exact: false },
+  { label: "Fleet",        href: "/fleet",       icon: FleetIcon,       exact: false },
   { label: "Safety",      href: "/safety",      icon: SafetyIcon,      exact: false },
   { label: "Settings",    href: "/settings/season", icon: SettingsNavIcon, exact: false },
 ];
