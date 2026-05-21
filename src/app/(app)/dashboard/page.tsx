@@ -84,38 +84,45 @@ export default async function DashboardPage() {
               label: "Week 0",
               value: daysToWeek0 !== null && daysToWeek0 >= 0
                 ? `${daysToWeek0}d away`
-                : daysToWeek0 !== null
-                ? "Past"
-                : "—",
+                : daysToWeek0 !== null ? "Past" : "—",
               sub: formatDate(activeSeason.week0Date),
               urgent: daysToWeek0 !== null && daysToWeek0 <= 14,
+              href: "/schedule",
+              accent: "#059669",
             },
             {
               label: "Robots",
               value: activeSeason.robots.length,
               sub: activeSeason.robots.map((r) => r.displayName).join(", ") || "None yet",
               urgent: false,
+              href: "/fleet",
+              accent: "var(--color-primary)",
             },
             {
               label: "Overdue tasks",
               value: overdueCount,
               sub: overdueCount > 0 ? "Need attention" : "All on track",
               urgent: overdueCount > 0,
+              href: "/schedule/tasks?filter=overdue",
+              accent: overdueCount > 0 ? "var(--color-danger)" : "var(--color-secondary)",
             },
             {
               label: "Pending orders",
               value: pendingOrdersCount,
               sub: pendingOrdersCount > 0 ? "Awaiting approval" : "None pending",
               urgent: pendingOrdersCount > 0,
+              href: "/procurement",
+              accent: "#D97706",
             },
           ].map((s) => (
-            <div key={s.label} className="card">
-              <p className="text-small text-[--color-text-secondary]">{s.label}</p>
+            <Link key={s.label} href={s.href} className="card group no-underline block"
+              style={{ borderLeftWidth: "3px", borderLeftColor: s.accent }}>
+              <p className="text-small text-[--color-text-secondary] group-hover:text-[--color-text-primary] transition-colors">{s.label}</p>
               <p className={`text-h2 mt-1 ${s.urgent ? "text-[--color-warning]" : "text-[--color-text-primary]"}`}>
                 {s.value}
               </p>
               <p className="text-small text-[--color-text-secondary] mt-0.5 truncate">{s.sub}</p>
-            </div>
+            </Link>
           ))}
         </div>
       )}

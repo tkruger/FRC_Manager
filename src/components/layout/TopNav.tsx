@@ -7,15 +7,18 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { cn } from "@/lib/utils";
 import type { Session } from "next-auth";
+import { NotificationsDropdown } from "./NotificationsDropdown";
 
 const MODULE_TABS = [
-  { label: "Schedule",    href: "/schedule",    icon: ScheduleIcon },
-  { label: "Tools",       href: "/tools",       icon: ToolsIcon },
-  { label: "Inventory",   href: "/inventory",   icon: InventoryIcon },
-  { label: "Procurement", href: "/procurement", icon: ProcurementIcon },
-  { label: "Budget",      href: "/budget",      icon: BudgetIcon },
-  { label: "Robots",       href: "/fleet",       icon: FleetIcon },
-  { label: "Safety",      href: "/safety",      icon: SafetyIcon },
+  { label: "Home",        href: "/dashboard",   icon: HomeIcon,        exact: true },
+  { label: "Schedule",    href: "/schedule",    icon: ScheduleIcon,    exact: false },
+  { label: "Tools",       href: "/tools",       icon: ToolsIcon,       exact: false },
+  { label: "Inventory",   href: "/inventory",   icon: InventoryIcon,   exact: false },
+  { label: "Procurement", href: "/procurement", icon: ProcurementIcon, exact: false },
+  { label: "Budget",      href: "/budget",      icon: BudgetIcon,      exact: false },
+  { label: "Robots",      href: "/fleet",       icon: FleetIcon,       exact: false },
+  { label: "Safety",      href: "/safety",      icon: SafetyIcon,      exact: false },
+  { label: "Settings",    href: "/settings/season", icon: SettingsNavIcon, exact: false },
 ];
 
 // Five tabs shown on mobile bottom bar (most-used modules)
@@ -49,7 +52,9 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
   return (
     <>
       {/* ── Top navigation bar ── */}
-      <header className="fixed inset-x-0 top-0 z-40 h-14 flex items-center px-4 gap-3 transition-colors"
+      {/* CSS grid with 1fr | auto | 1fr ensures the center nav is always viewport-centred
+          regardless of how wide the left logo or right controls are */}
+      <header className="fixed inset-x-0 top-0 z-40 h-14 transition-colors"
         style={{
           backgroundColor: "color-mix(in srgb, var(--color-surface) 88%, transparent)",
           backdropFilter: "blur(20px) saturate(180%)",
@@ -57,56 +62,58 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
           borderBottom: "1px solid color-mix(in srgb, var(--color-border) 80%, transparent)",
           boxShadow: "0 1px 0 0 color-mix(in srgb, var(--color-border) 40%, transparent), 0 4px 12px -4px rgb(0 0 0 / .06)",
         }}>
+        <div className="h-full px-4 hidden lg:grid items-center" style={{ gridTemplateColumns: "1fr auto 1fr" }}>
 
-        {/* Logo + season pill */}
-        <div className="flex items-center gap-2 shrink-0">
-          <Link href="/dashboard" className="flex items-center gap-2" aria-label="FRC Manager home">
-            <div className="w-7 h-7 rounded bg-[--color-primary] flex items-center justify-center shrink-0">
-              <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-white" stroke="currentColor" strokeWidth={2.5} aria-hidden>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z" />
-              </svg>
-            </div>
-            <span className="font-bold text-sm text-[--color-text-primary] hidden sm:block">FRC Manager</span>
-          </Link>
-          {activeSeasonName && (
-            <span className="hidden md:inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[--color-surface-overlay] text-[--color-text-secondary] border border-[--color-border] max-w-[140px] truncate">
-              {activeSeasonName}
-            </span>
-          )}
-        </div>
+          {/* Left: logo + season pill */}
+          <div className="flex items-center gap-2">
+            <Link href="/dashboard" className="flex items-center gap-2" aria-label="FRC Manager home">
+              <div className="w-7 h-7 rounded bg-[--color-primary] flex items-center justify-center shrink-0">
+                <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-white" stroke="currentColor" strokeWidth={2.5} aria-hidden>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z" />
+                </svg>
+              </div>
+              <span className="font-bold text-sm text-[--color-text-primary]">FRC Manager</span>
+            </Link>
+            {activeSeasonName && (
+              <span className="hidden md:inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[--color-surface-overlay] text-[--color-text-secondary] border border-[--color-border] max-w-[140px] truncate">
+                {activeSeasonName}
+              </span>
+            )}
+          </div>
 
-        {/* Desktop module tabs (hidden on mobile — replaced by bottom bar) */}
-        <nav className="hidden lg:flex items-center gap-1 flex-1 justify-center" aria-label="Modules">
-          {MODULE_TABS.map(({ label, href }) => {
-            const active = pathname.startsWith(href);
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={cn(
-                  "relative px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
-                  active
-                    ? "text-[--color-primary]"
-                    : "text-[--color-text-secondary] hover:text-[--color-text-primary] hover:bg-[--color-surface-overlay]"
-                )}
-              >
-                {label}
-                {active && <span className="absolute bottom-0 inset-x-0 h-0.5 rounded-t-full bg-[--color-primary]" />}
-              </Link>
-            );
-          })}
-        </nav>
+          {/* Centre: module tabs — always perfectly centred */}
+          <nav className="flex items-center gap-0.5" aria-label="Modules">
+            {MODULE_TABS.map(({ label, href, exact }) => {
+              const active = exact ? pathname === href : (pathname.startsWith(href) && href !== "/dashboard");
+              const isDashboard = href === "/dashboard" && pathname === "/dashboard";
+              const isActive = isDashboard || (!exact && pathname.startsWith(href)) || (exact && pathname === href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={cn(
+                    "relative px-2.5 py-1.5 rounded-md text-sm font-medium transition-all duration-150",
+                    isActive
+                      ? "text-[--color-text-primary] bg-[--color-surface-overlay]"
+                      : "text-[--color-text-secondary] hover:text-[--color-text-primary] hover:bg-[--color-surface-overlay]/60"
+                  )}
+                >
+                  {label}
+                  {/* Active underline */}
+                  {isActive && (
+                    <span className="absolute bottom-0 inset-x-2 h-0.5 rounded-full"
+                      style={{ backgroundColor: "var(--color-primary)" }} />
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
 
-        {/* Right controls */}
-        <div className="flex items-center gap-1.5 ml-auto shrink-0">
-          {/* Robot selector — hide on very small screens */}
+          {/* Right: controls */}
+          <div className="flex items-center gap-1.5 justify-end">
           {showRobotSelector && robots.length > 0 && (
-            <div className="hidden sm:flex">
-              <RobotSelector robots={robots} activeRobotId={activeRobotId} activeRobot={activeRobot} />
-            </div>
+            <RobotSelector robots={robots} activeRobotId={activeRobotId} activeRobot={activeRobot} />
           )}
-
-          {/* Theme toggle */}
           <button
             onClick={toggle}
             className="h-9 w-9 rounded-md flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors"
@@ -115,35 +122,22 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
           >
             {resolvedTheme === "dark" ? <SunIcon /> : <MoonIcon />}
           </button>
-
-          {/* Calendar quick link */}
           <Link
             href="/schedule/calendar"
-            className="h-9 w-9 rounded-md flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors hidden sm:flex"
+            className="h-9 w-9 rounded-md flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors"
             aria-label="Meeting calendar"
           >
             <CalendarIcon className="w-4 h-4" />
           </Link>
 
-          {/* Notification bell */}
-          <Link
-            href="/notifications"
-            className="relative h-9 w-9 rounded-md flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors"
-            aria-label={`Notifications${unreadNotificationCount > 0 ? ` (${unreadNotificationCount} unread)` : ""}`}
-          >
-            <BellIcon />
-            {unreadNotificationCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full text-white text-[10px] font-bold flex items-center justify-center" style={{ backgroundColor: "var(--color-primary)" }} aria-hidden>
-                {unreadNotificationCount > 9 ? "9+" : unreadNotificationCount}
-              </span>
-            )}
-          </Link>
+          {/* Notifications dropdown */}
+          <NotificationsDropdown unreadCount={unreadNotificationCount} />
 
           {/* Settings / member approval — Head Mentor only */}
           {canManageTeam && (
             <Link
               href="/settings/members"
-              className="relative h-9 w-9 rounded-md flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors hidden sm:flex"
+              className="relative h-9 w-9 rounded-md flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors"
               aria-label={`Team members${pendingMemberCount > 0 ? ` (${pendingMemberCount} pending approvals)` : ""}`}
             >
               <UserCircleIcon />
@@ -156,6 +150,30 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
           )}
 
           {session?.user && <UserMenu user={session.user} canManageTeam={canManageTeam} />}
+        </div>
+        </div>
+
+        {/* Mobile header (flex, shown below lg breakpoint) */}
+        <div className="h-full px-4 flex lg:hidden items-center gap-3">
+          <div className="flex items-center gap-2 shrink-0">
+            <Link href="/dashboard" className="flex items-center gap-2" aria-label="FRC Manager home">
+              <div className="w-7 h-7 rounded flex items-center justify-center shrink-0"
+                style={{ backgroundColor: "var(--color-primary)" }}>
+                <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-white" stroke="currentColor" strokeWidth={2.5} aria-hidden>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z" />
+                </svg>
+              </div>
+              <span className="font-bold text-sm text-[--color-text-primary] hidden sm:block">FRC Manager</span>
+            </Link>
+          </div>
+          <div className="flex items-center gap-1.5 ml-auto">
+            {showRobotSelector && robots.length > 0 && <RobotSelector robots={robots} activeRobotId={activeRobotId} activeRobot={activeRobot} />}
+            <button onClick={toggle} className="h-9 w-9 rounded-md flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors">
+              {resolvedTheme === "dark" ? <SunIcon /> : <MoonIcon />}
+            </button>
+            <NotificationsDropdown unreadCount={unreadNotificationCount} />
+            {session?.user && <UserMenu user={session.user} canManageTeam={canManageTeam} />}
+          </div>
         </div>
       </header>
 
@@ -321,6 +339,23 @@ function UserMenu({ user, canManageTeam }: { user: { name?: string | null; email
 }
 
 // ── SVG icon components ──────────────────────────────────────────
+function HomeIcon({ className }: { className?: string }) {
+  return (
+    <svg className={cn("w-4 h-4", className)} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+    </svg>
+  );
+}
+
+function SettingsNavIcon({ className }: { className?: string }) {
+  return (
+    <svg className={cn("w-4 h-4", className)} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  );
+}
+
 function FleetIcon({ className }: { className?: string }) {
   return (
     <svg className={cn("w-4 h-4", className)} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
