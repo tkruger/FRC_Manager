@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createTaskAction } from "@/app/actions/tasks";
 import { Button } from "@/components/ui/button";
@@ -21,16 +21,24 @@ export function NewTaskForm({ robots, members, existingTasks, kickoffDate, week0
   const router = useRouter();
   const [state, action, pending] = useActionState(createTaskAction, null);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
-  const [selectedPrereqs, setSelectedPrereqs] = useState<string[]>([]);
+  const [selectedPrereqs,   setSelectedPrereqs]   = useState<string[]>([]);
+  const [assigneeSearch,    setAssigneeSearch]     = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (state?.success) router.push("/tasks");
   }, [state, router]);
 
-  const robotOptions = robots.map((r) => ({ value: r.id, label: r.displayName }));
+  const robotOptions  = robots.map((r) => ({ value: r.id, label: r.displayName }));
+  const memberMap     = Object.fromEntries(members.map((m) => [m.id, m]));
+  const searchResults = assigneeSearch.trim()
+    ? members.filter((m) => !selectedAssignees.includes(m.id) && m.name.toLowerCase().includes(assigneeSearch.toLowerCase()))
+    : [];
 
-  function toggleAssignee(id: string) {
-    setSelectedAssignees((p) => p.includes(id) ? p.filter((x) => x !== id) : [...p, id]);
+  function addAssignee(id: string) {
+    setSelectedAssignees((p) => [...p, id]);
+    setAssigneeSearch("");
+    searchRef.current?.focus();
   }
 
   function togglePrereq(id: string) {
@@ -96,29 +104,70 @@ export function NewTaskForm({ robots, members, existingTasks, kickoffDate, week0
         </label>
       </div>
 
-      {/* Assignees */}
+      {/* Assignees — same searchable chip picker as task edit */}
       {members.length > 0 && (
         <div className="card space-y-3">
           <h2 className="text-h3 text-[--color-text-primary]">Assignees</h2>
-          <div className="max-h-48 overflow-y-auto space-y-0.5">
-            {members.map((m) => {
-              const active = selectedAssignees.includes(m.id);
-              return (
-                <label key={m.id}
-                  className={`flex items-center gap-3 rounded-md px-2 py-2 cursor-pointer transition-colors ${
-                    active ? "bg-[--color-primary]/10" : "hover:bg-[--color-surface-overlay]"
-                  }`}>
-                  <input type="checkbox" name="assigneeIds" value={m.id} checked={active}
-                    onChange={() => toggleAssignee(m.id)} className="rounded flex-shrink-0" />
-                  <div style={{ backgroundColor: "var(--color-primary)" }}
-                    className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
-                    {m.name[0].toUpperCase()}
-                  </div>
-                  <span className="text-sm text-[--color-text-primary]">{m.name}</span>
-                </label>
-              );
-            })}
-          </div>
+
+          {/* Hidden inputs carry selected IDs */}
+          {selectedAssignees.map((id) => (
+            <input key={id} type="hidden" name="assigneeIds" value={id} />
+          ))}
+
+          {/* Selected chips */}
+          {selectedAssignees.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {selectedAssignees.map((id) => {
+                const m = memberMap[id];
+                if (!m) return null;
+                return (
+                  <span key={id}
+                    className="inline-flex items-center gap-1 pl-1 pr-2 py-0.5 rounded-full bg-[--color-primary]/10 border border-[--color-primary]/25 text-sm">
+                    <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
+                      style={{ backgroundColor: "var(--color-primary)" }}>
+                      {m.name[0].toUpperCase()}
+                    </span>
+                    <span className="text-[--color-text-primary]">{m.name}</span>
+                    <button type="button" onClick={() => setSelectedAssignees((p) => p.filter((i) => i !== id))}
+                      className="ml-0.5 text-[--color-text-secondary] hover:text-[--color-danger] transition-colors leading-none">
+                      ×
+                    </button>
+                  </span>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Search input */}
+          <input
+            ref={searchRef}
+            type="text"
+            value={assigneeSearch}
+            onChange={(e) => setAssigneeSearch(e.target.value)}
+            placeholder="Search team members…"
+            className="w-full rounded-md border border-[--color-border] bg-[--color-surface] text-[--color-text-primary] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary]/40 focus:border-[--color-primary]"
+          />
+
+          {/* Inline results */}
+          {assigneeSearch.trim() && (
+            <div className="rounded-md border border-[--color-border] overflow-hidden"
+              style={{ backgroundColor: "var(--color-surface)" }}>
+              {searchResults.length === 0 ? (
+                <p className="px-3 py-2 text-sm text-[--color-text-secondary]">No members found</p>
+              ) : (
+                searchResults.map((m) => (
+                  <button key={m.id} type="button" onClick={() => addAssignee(m.id)}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-[--color-surface-overlay] transition-colors text-left border-b border-[--color-table-border] last:border-0">
+                    <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
+                      style={{ backgroundColor: "var(--color-primary)" }}>
+                      {m.name[0].toUpperCase()}
+                    </span>
+                    <span className="text-[--color-text-primary]">{m.name}</span>
+                  </button>
+                ))
+              )}
+            </div>
+          )}
         </div>
       )}
 
