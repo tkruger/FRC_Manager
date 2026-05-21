@@ -72,18 +72,18 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
                   <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z" />
                 </svg>
               </div>
-              <span className="font-bold text-sm text-[--color-text-primary]">FRC Manager</span>
+              <span className="font-bold text-sm text-[--color-text-primary] hidden xl:inline">FRC Manager</span>
             </Link>
             {activeSeasonName && (
-              <span className="hidden md:inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[--color-surface-overlay] text-[--color-text-secondary] border border-[--color-border] max-w-[140px] truncate">
+              <span className="hidden 2xl:inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[--color-surface-overlay] text-[--color-text-secondary] border border-[--color-border] max-w-[140px] truncate">
                 {activeSeasonName}
               </span>
             )}
           </div>
 
           {/* Centre: module tabs — always perfectly centred */}
-          <nav className="flex items-center gap-0.5" aria-label="Modules">
-            {MODULE_TABS.map(({ label, href, exact }) => {
+          <nav className="flex items-center" aria-label="Modules">
+            {MODULE_TABS.map(({ label, href, exact, icon: Icon }) => {
               const active = exact ? pathname === href : (pathname.startsWith(href) && href !== "/dashboard");
               const isDashboard = href === "/dashboard" && pathname === "/dashboard";
               const isActive = isDashboard || (!exact && pathname.startsWith(href)) || (exact && pathname === href);
@@ -91,17 +91,19 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
                 <Link
                   key={href}
                   href={href}
+                  title={label}
                   className={cn(
-                    "relative px-2.5 py-1.5 rounded-md text-sm font-medium transition-all duration-150",
+                    "relative flex items-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-medium transition-all duration-150",
                     isActive
                       ? "text-[--color-text-primary] bg-[--color-surface-overlay]"
                       : "text-[--color-text-secondary] hover:text-[--color-text-primary] hover:bg-[--color-surface-overlay]/60"
                   )}
                 >
-                  {label}
+                  <Icon className="w-4 h-4 shrink-0" />
+                  <span className="hidden xl:inline">{label}</span>
                   {/* Active underline */}
                   {isActive && (
-                    <span className="absolute bottom-0 inset-x-2 h-0.5 rounded-full"
+                    <span className="absolute bottom-0 inset-x-1.5 h-0.5 rounded-full"
                       style={{ backgroundColor: "var(--color-primary)" }} />
                   )}
                 </Link>
@@ -110,25 +112,18 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
           </nav>
 
           {/* Right: controls */}
-          <div className="flex items-center gap-1.5 justify-end">
+          <div className="flex items-center gap-1 justify-end">
           {showRobotSelector && robots.length > 0 && (
             <RobotSelector robots={robots} activeRobotId={activeRobotId} activeRobot={activeRobot} />
           )}
           <button
             onClick={toggle}
-            className="h-9 w-9 rounded-md flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors"
+            className="h-8 w-8 rounded-md flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors"
             aria-label={resolvedTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
             title={`Mode: ${mode}`}
           >
             {resolvedTheme === "dark" ? <SunIcon /> : <MoonIcon />}
           </button>
-          <Link
-            href="/schedule/calendar"
-            className="h-9 w-9 rounded-md flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors"
-            aria-label="Meeting calendar"
-          >
-            <CalendarIcon className="w-4 h-4" />
-          </Link>
 
           {/* Notifications dropdown */}
           <NotificationsDropdown unreadCount={unreadNotificationCount} />
@@ -137,7 +132,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
           {canManageTeam && (
             <Link
               href="/settings/members"
-              className="relative h-9 w-9 rounded-md flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors"
+              className="relative h-8 w-8 rounded-md flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors"
               aria-label={`Team members${pendingMemberCount > 0 ? ` (${pendingMemberCount} pending approvals)` : ""}`}
             >
               <UserCircleIcon />
@@ -281,7 +276,7 @@ function UserMenu({ user, canManageTeam }: { user: { name?: string | null; email
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="h-9 w-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0 transition-opacity hover:opacity-90"
+        className="h-8 w-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 transition-opacity hover:opacity-90"
         style={{ backgroundColor: "var(--color-primary)" }}
         aria-label="User menu"
         aria-expanded={open}
