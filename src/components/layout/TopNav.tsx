@@ -23,20 +23,20 @@ const MODULE_TABS = [
 
 // Four priority tabs shown on mobile bottom bar
 const MOBILE_TABS = [
-  { label: "Tasks",  href: "/tasks",            icon: TasksIcon },
-  { label: "Tools",  href: "/tools",            icon: ToolsIcon },
-  { label: "Safety", href: "/safety",           icon: SafetyIcon },
-  { label: "Season", href: "/settings/season",  icon: SettingsNavIcon },
+  { label: "Tasks",    href: "/tasks",    icon: TasksIcon },
+  { label: "Tools",    href: "/tools",    icon: ToolsIcon },
+  { label: "Safety",   href: "/safety",   icon: SafetyIcon },
+  { label: "Calendar", href: "/calendar", icon: CalendarIcon },
 ];
 
 // Items shown in the mobile "More" popup
 const MOBILE_MORE = [
-  { label: "Home",       href: "/dashboard",   icon: HomeIcon },
-  { label: "Fleet",      href: "/fleet",       icon: FleetIcon },
-  { label: "Inventory",  href: "/inventory",   icon: InventoryIcon },
-  { label: "Orders",     href: "/procurement", icon: ProcurementIcon },
-  { label: "Budget",     href: "/budget",      icon: BudgetIcon },
-  { label: "Calendar",   href: "/calendar",    icon: CalendarIcon },
+  { label: "Home",       href: "/dashboard",      icon: HomeIcon },
+  { label: "Fleet",      href: "/fleet",          icon: FleetIcon },
+  { label: "Inventory",  href: "/inventory",      icon: InventoryIcon },
+  { label: "Orders",     href: "/procurement",    icon: ProcurementIcon },
+  { label: "Budget",     href: "/budget",         icon: BudgetIcon },
+  { label: "Season",     href: "/settings/season", icon: SettingsNavIcon },
 ];
 
 interface Props {
