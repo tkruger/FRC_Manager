@@ -349,7 +349,7 @@ function UserMenu({ user, canManageTeam, pendingMemberCount = 0 }: { user: { nam
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="relative h-8 w-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 transition-opacity hover:opacity-90"
+        className="relative h-8 w-8 rounded-md flex items-center justify-center text-white text-xs font-bold shrink-0 transition-opacity hover:opacity-90"
         style={{ backgroundColor: "var(--color-primary)" }}
         aria-label={`User menu${pendingMemberCount > 0 ? ` (${pendingMemberCount} pending approvals)` : ""}`}
         aria-expanded={open}
