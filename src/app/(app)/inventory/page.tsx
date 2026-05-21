@@ -17,7 +17,8 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   const session = await auth();
   if (!session?.user?.teamId) redirect("/dashboard");
 
-  const canSeeRestrictedTabs = session.user.roles.some((r) => RESTRICTED_TAB_ROLES.includes(r));
+  const canSeeRestrictedTabs  = session.user.roles.some((r) => RESTRICTED_TAB_ROLES.includes(r));
+  const canManageInventory    = session.user.roles.some((r) => ["INVENTORY_ADMIN", "HEAD_MENTOR"].includes(r));
 
   // Redirect unauthorized users away from restricted tabs
   if ((view === "low-stock" || view === "reorder") && !canSeeRestrictedTabs) {
@@ -72,9 +73,11 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
           <h1 className="text-h1 text-[--color-text-primary]">Base Inventory</h1>
           <p className="text-body text-[--color-text-secondary] mt-0.5">{items.length} items · {activeSeason.name}</p>
         </div>
-        <div className="flex gap-2">
-          <AddInventoryItemDialog />
-        </div>
+        {canManageInventory && (
+          <div className="flex gap-2">
+            <AddInventoryItemDialog />
+          </div>
+        )}
       </div>
 
       {/* View tabs */}
@@ -133,7 +136,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
              view === "reorder"   ? "No pending reorder requests." :
              "No items found."}
           </p>
-          {!view && <AddInventoryItemDialog />}
+          {!view && canManageInventory && <AddInventoryItemDialog />}
         </div>
       ) : (
         <Table>

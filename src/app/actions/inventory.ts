@@ -28,12 +28,19 @@ const BaseItemSchema = z.object({
 
 export type InventoryActionState = { success: boolean; error?: string };
 
+const INVENTORY_MANAGER_ROLES = ["INVENTORY_ADMIN", "HEAD_MENTOR"] as const;
+
+function canManageInventory(roles: string[]): boolean {
+  return roles.some((r) => (INVENTORY_MANAGER_ROLES as readonly string[]).includes(r));
+}
+
 export async function createBaseItemAction(
   _prev: InventoryActionState | null,
   formData: FormData
 ): Promise<InventoryActionState> {
   const session = await auth();
   if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
+  if (!canManageInventory(session.user.roles)) return { success: false, error: "Not authorized." };
 
   const activeSeason = await prisma.season.findFirst({
     where: { teamId: session.user.teamId, isActive: true },
@@ -221,7 +228,8 @@ export async function updateStockAction(
   delta: number
 ): Promise<InventoryActionState> {
   const session = await auth();
-  if (!session) return { success: false };
+  if (!session?.user?.teamId) return { success: false };
+  if (!canManageInventory(session.user.roles)) return { success: false, error: "Not authorized." };
 
   const item = await prisma.baseInventoryItem.findUnique({ where: { id: baseItemId } });
   if (!item) return { success: false };
@@ -236,6 +244,9 @@ export async function updateStockAction(
 }
 
 export async function dismissReorderAction(reqId: string): Promise<void> {
+  const session = await auth();
+  if (!session?.user?.teamId || !canManageInventory(session.user.roles)) return;
+
   await prisma.reorderRequest.update({
     where: { id: reqId },
     data: { status: "DISMISSED", resolvedAt: new Date() },
