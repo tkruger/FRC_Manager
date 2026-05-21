@@ -57,6 +57,17 @@
   color-scheme: dark;
 }
 
+/* ─── Color themes — override primary/secondary on <html> element ─── */
+[data-color-theme="ocean"]  { --color-primary: #0369A1; --color-secondary: #0891B2; --color-info: #0891B2; }
+[data-color-theme="forest"] { --color-primary: #15803D; --color-secondary: #D97706; --color-info: #15803D; }
+[data-color-theme="sunset"] { --color-primary: #EA580C; --color-secondary: #DB2777; --color-info: #7C3AED; }
+[data-color-theme="purple"] { --color-primary: #7C3AED; --color-secondary: #DB2777; --color-info: #7C3AED; }
+
+[data-theme="dark"][data-color-theme="ocean"]  { --color-primary: #38BDF8; --color-secondary: #22D3EE; --color-info: #22D3EE; }
+[data-theme="dark"][data-color-theme="forest"] { --color-primary: #4ADE80; --color-secondary: #FCD34D; --color-info: #4ADE80; }
+[data-theme="dark"][data-color-theme="sunset"] { --color-primary: #FB923C; --color-secondary: #F472B6; --color-info: #A78BFA; }
+[data-theme="dark"][data-color-theme="purple"] { --color-primary: #A78BFA; --color-secondary: #F472B6; --color-info: #A78BFA; }
+
 /* ─── Tailwind bridge ─── */
 @theme inline {
   --color-background:          var(--color-surface);
