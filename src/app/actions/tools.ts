@@ -48,6 +48,8 @@ export async function createToolAction(
   });
   if (!parsed.success) return { success: false, error: "Please fill in all required fields." };
 
+  const imageUrl = (formData.get("imageUrl") as string) || null;
+
   await prisma.tool.create({
     data: {
       teamId:                  session.user.teamId,
@@ -65,9 +67,27 @@ export async function createToolAction(
       maintenanceIntervalDays: parsed.data.maintenanceIntervalDays,
       replacementCost:         parsed.data.replacementCost,
       notes:                   parsed.data.notes,
+      image:                   imageUrl,
     },
   });
 
+  revalidatePath("/tools");
+  return { success: true };
+}
+
+export async function updateToolImageAction(
+  toolId: string,
+  imageUrl: string | null
+): Promise<{ success: boolean }> {
+  const session = await auth();
+  if (!session?.user?.teamId) return { success: false };
+
+  await prisma.tool.update({
+    where: { id: toolId, teamId: session.user.teamId },
+    data:  { image: imageUrl },
+  });
+
+  revalidatePath(`/tools/${toolId}`);
   revalidatePath("/tools");
   return { success: true };
 }

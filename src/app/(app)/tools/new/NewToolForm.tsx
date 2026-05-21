@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { ToolImageCapture } from "@/components/ui/ToolImageCapture";
 
 const TYPE_OPTS = [
   { value: "POWER_TOOL",          label: "Power Tool" },
@@ -80,6 +81,11 @@ export function NewToolForm({ onClose }: { onClose?: () => void } = {}) {
           <Field label="Replacement cost ($)" name="replacementCost" type="number" step="0.01" placeholder="0.00" />
         </div>
         <Textarea label="Notes" name="notes" rows={2} placeholder="Special instructions, quirks..." />
+      </div>
+
+      <div className="border-t border-[--color-border] pt-4 space-y-3">
+        <p className="text-label font-medium text-[--color-text-secondary] uppercase tracking-wide">Photo</p>
+        <ToolImageCapture name="imageUrl" />
       </div>
 
       <div className="flex gap-3 pt-2">

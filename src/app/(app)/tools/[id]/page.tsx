@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import { CheckoutForm } from "./CheckoutForm";
 import { CheckinButton } from "../CheckinButton";
+import { BarcodePanel } from "./BarcodePanel";
+import { ToolImageUploadPanel } from "./ToolImageUploadPanel";
 
 const CONDITION_BADGE: Record<string, "success"|"warning"|"danger"|"neutral"> = {
   EXCELLENT: "success", GOOD: "success", FAIR: "warning",
@@ -53,8 +55,15 @@ export default async function ToolDetailPage({ params }: { params: Promise<{ id:
         <span className="text-[--color-text-primary]">{tool.name}</span>
       </nav>
 
-      <div className="flex items-start justify-between gap-4">
-        <div>
+      {/* Photo + header row */}
+      <div className="flex gap-5 items-start">
+        {tool.image && (
+          <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-xl overflow-hidden shrink-0 border border-[--color-border] bg-[--color-surface-overlay]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={tool.image} alt={tool.name} className="w-full h-full object-cover" />
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
           <h1 className="text-h1 text-[--color-text-primary]">{tool.name}</h1>
           <div className="flex gap-2 mt-2 flex-wrap">
             <Badge variant={CONDITION_BADGE[tool.condition] ?? "neutral"}>{tool.condition.replace(/_/g, " ")}</Badge>
@@ -123,6 +132,12 @@ export default async function ToolDetailPage({ params }: { params: Promise<{ id:
           </div>
         </div>
       )}
+
+      {/* Photo management + Barcode */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <ToolImageUploadPanel toolId={tool.id} currentImageUrl={tool.image} />
+        <BarcodePanel toolId={tool.id} toolName={tool.name} assetTag={tool.assetTag} />
+      </div>
     </div>
   );
 }
