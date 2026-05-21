@@ -127,7 +127,7 @@ export default async function SchedulePage({
       {/* Page header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-h1 text-[--color-text-primary]">Schedule</h1>
+          <h1 className="text-h1 text-[--color-text-primary]">Tasks</h1>
           <p className="text-body text-[--color-text-secondary] mt-0.5">
             {activeSeason.name}
             {activeRobotId && (

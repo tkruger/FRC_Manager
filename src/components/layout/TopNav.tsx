@@ -11,7 +11,7 @@ import { NotificationsDropdown } from "./NotificationsDropdown";
 
 const MODULE_TABS = [
   { label: "Home",        href: "/dashboard",   icon: HomeIcon,        exact: true },
-  { label: "Schedule",    href: "/schedule",    icon: ScheduleIcon,    exact: false },
+  { label: "Tasks",       href: "/schedule",    icon: TasksIcon,       exact: false },
   { label: "Tools",       href: "/tools",       icon: ToolsIcon,       exact: false },
   { label: "Inventory",   href: "/inventory",   icon: InventoryIcon,   exact: false },
   { label: "Procurement", href: "/procurement", icon: ProcurementIcon, exact: false },
@@ -26,7 +26,7 @@ const MOBILE_TABS = [
   { label: "Fleet",     href: "/fleet",       icon: FleetIcon },
   { label: "Inventory", href: "/inventory",   icon: InventoryIcon },
   { label: "Orders",    href: "/procurement", icon: ProcurementIcon },
-  { label: "Schedule",  href: "/schedule",    icon: ScheduleIcon },
+  { label: "Tasks",     href: "/schedule",    icon: TasksIcon },
   { label: "More",      href: "/dashboard",   icon: MoreIcon },
 ];
 
@@ -406,10 +406,10 @@ function BudgetIcon({ className }: { className?: string }) {
   );
 }
 
-function ScheduleIcon({ className }: { className?: string }) {
+function TasksIcon({ className }: { className?: string }) {
   return (
     <svg className={cn("w-4 h-4", className)} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
     </svg>
   );
 }

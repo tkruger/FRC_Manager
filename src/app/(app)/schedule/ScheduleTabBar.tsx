@@ -11,11 +11,6 @@ const TABS = [
     match: (p: string, v: string) => p === "/schedule" && (v === "kanban" || v === ""),
   },
   {
-    label: "Calendar",
-    href: "/schedule/calendar",
-    match: (p: string) => p.startsWith("/schedule/calendar"),
-  },
-  {
     label: "Gantt",
     href: "/schedule/gantt",
     match: (p: string) => p.startsWith("/schedule/gantt"),
