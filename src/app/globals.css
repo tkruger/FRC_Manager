@@ -92,6 +92,7 @@
 /* ─── Base ─── */
 *, *::before, *::after { box-sizing: border-box; }
 a { color: inherit; text-decoration: none; }
+td a:hover { text-decoration: underline; text-underline-offset: 3px; }
 
 html {
   font-size: 16px;
