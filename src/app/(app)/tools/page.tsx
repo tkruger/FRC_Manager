@@ -115,9 +115,9 @@ export default async function ToolsPage({ searchParams }: { searchParams: Promis
               const available  = t.quantityOwned - checkedOut;
               const checkout   = activeCheckouts.find((c) => c.toolId === t.id);
               return (
-                <Tr key={t.id}>
+                <Tr key={t.id} className="group">
                   <Td>
-                    <Link href={`/tools/${t.id}`} className="font-medium text-[--color-text-primary] hover:text-[--color-primary]">{t.name}</Link>
+                    <Link href={`/tools/${t.id}`} className="font-medium text-[--color-secondary] group-hover:text-[--color-primary]">{t.name}</Link>
                     {t.assetTag && <p className="text-mono text-[--color-text-secondary]">{t.assetTag}</p>}
                   </Td>
                   <Td>{t.toolType.replace(/_/g, " ")}</Td>

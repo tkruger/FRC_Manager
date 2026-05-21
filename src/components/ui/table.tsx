@@ -47,7 +47,7 @@ export function Td({ children, className, right, mono, colSpan }: { children?: R
 
 export function Tr({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <tr className={cn("transition-colors", className)}>
+    <tr className={cn("frc-tr transition-colors", className)}>
       {children}
     </tr>
   );

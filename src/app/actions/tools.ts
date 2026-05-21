@@ -92,6 +92,61 @@ export async function updateToolImageAction(
   return { success: true };
 }
 
+const TOOL_EDIT_ROLES = ["INVENTORY_ADMIN", "BUILD_LEAD", "TEAM_LEADERSHIP", "HEAD_MENTOR"];
+
+export async function updateToolAction(
+  toolId: string,
+  _prev: { success: boolean; error?: string } | null,
+  formData: FormData
+): Promise<{ success: boolean; error?: string }> {
+  const session = await auth();
+  if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
+  if (!session.user.roles.some((r) => TOOL_EDIT_ROLES.includes(r)))
+    return { success: false, error: "Not authorized." };
+
+  const parsed = ToolSchema.safeParse({
+    name:                    formData.get("name"),
+    toolType:                formData.get("toolType") || "OTHER",
+    manufacturer:            formData.get("manufacturer") || undefined,
+    model:                   formData.get("model") || undefined,
+    assetTag:                formData.get("assetTag") || undefined,
+    quantityOwned:           formData.get("quantityOwned") || 1,
+    homeLocation:            formData.get("homeLocation") || undefined,
+    space:                   formData.get("space") || "SHOP_ONLY",
+    condition:               formData.get("condition") || "GOOD",
+    requiresCertification:   formData.get("requiresCertification") === "on",
+    certificationName:       formData.get("certificationName") || undefined,
+    maintenanceIntervalDays: formData.get("maintenanceIntervalDays") || undefined,
+    replacementCost:         formData.get("replacementCost") || undefined,
+    notes:                   formData.get("notes") || undefined,
+  });
+  if (!parsed.success) return { success: false, error: "Please fill in all required fields." };
+
+  await prisma.tool.update({
+    where: { id: toolId, teamId: session.user.teamId },
+    data: {
+      name:                    parsed.data.name,
+      toolType:                parsed.data.toolType as ToolType,
+      manufacturer:            parsed.data.manufacturer,
+      model:                   parsed.data.model,
+      assetTag:                parsed.data.assetTag,
+      quantityOwned:           parsed.data.quantityOwned,
+      homeLocation:            parsed.data.homeLocation,
+      space:                   parsed.data.space as ToolSpace,
+      condition:               parsed.data.condition as ToolCondition,
+      requiresCertification:   parsed.data.requiresCertification ?? false,
+      certificationName:       parsed.data.certificationName,
+      maintenanceIntervalDays: parsed.data.maintenanceIntervalDays,
+      replacementCost:         parsed.data.replacementCost,
+      notes:                   parsed.data.notes,
+    },
+  });
+
+  revalidatePath("/tools");
+  revalidatePath(`/tools/${toolId}`);
+  return { success: true };
+}
+
 export async function checkoutToolAction(
   toolId: string,
   formData: FormData

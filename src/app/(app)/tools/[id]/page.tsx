@@ -8,6 +8,9 @@ import { CheckoutForm } from "./CheckoutForm";
 import { CheckinButton } from "../CheckinButton";
 import { BarcodePanel } from "./BarcodePanel";
 import { ToolImageUploadPanel } from "./ToolImageUploadPanel";
+import { EditToolForm } from "./EditToolForm";
+
+const TOOL_EDIT_ROLES = ["INVENTORY_ADMIN", "BUILD_LEAD", "TEAM_LEADERSHIP", "HEAD_MENTOR"];
 
 const CONDITION_BADGE: Record<string, "success"|"warning"|"danger"|"neutral"> = {
   EXCELLENT: "success", GOOD: "success", FAIR: "warning",
@@ -35,6 +38,7 @@ export default async function ToolDetailPage({ params }: { params: Promise<{ id:
 
   if (!tool) notFound();
 
+  const canEdit = session.user.roles.some((r) => TOOL_EDIT_ROLES.includes(r));
   const checkedOutQty = activeCheckouts.reduce((s, c) => s + c.quantity, 0);
   const available = tool.quantityOwned - checkedOutQty;
 
@@ -138,6 +142,30 @@ export default async function ToolDetailPage({ params }: { params: Promise<{ id:
         <ToolImageUploadPanel toolId={tool.id} currentImageUrl={tool.image} />
         <BarcodePanel toolId={tool.id} toolName={tool.name} assetTag={tool.assetTag} />
       </div>
+
+      {/* Edit form — authorised roles only */}
+      {canEdit && (
+        <div className="card space-y-4">
+          <h2 className="text-h3 text-[--color-text-primary]">Edit tool</h2>
+          <EditToolForm tool={{
+            id:                      tool.id,
+            name:                    tool.name,
+            toolType:                tool.toolType,
+            space:                   tool.space,
+            manufacturer:            tool.manufacturer,
+            model:                   tool.model,
+            assetTag:                tool.assetTag,
+            quantityOwned:           tool.quantityOwned,
+            homeLocation:            tool.homeLocation,
+            condition:               tool.condition,
+            requiresCertification:   tool.requiresCertification,
+            certificationName:       tool.certificationName,
+            maintenanceIntervalDays: tool.maintenanceIntervalDays,
+            replacementCost:         tool.replacementCost,
+            notes:                   tool.notes,
+          }} />
+        </div>
+      )}
     </div>
   );
 }
