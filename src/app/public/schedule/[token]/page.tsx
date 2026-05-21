@@ -40,7 +40,7 @@ export default async function PublicSchedulePage({ params }: { params: Promise<{
         <div className="max-w-3xl mx-auto">
           <div className="flex items-center gap-3 mb-1">
             <div
-              className="w-8 h-8 rounded flex items-center justify-center text-white text-sm font-bold"
+              className="h-8 min-w-[2rem] px-2 rounded flex items-center justify-center text-white text-xs font-bold shrink-0"
               style={{ backgroundColor: "var(--color-primary)" }}
             >
               {season.team.teamNumber}
@@ -78,11 +78,7 @@ export default async function PublicSchedulePage({ params }: { params: Promise<{
 
       {/* Content */}
       <main className="max-w-3xl mx-auto px-4 sm:px-8 py-8">
-        <PublicCalendarClient
-          meetings={serializedMeetings}
-          kickoffDate={season.kickoffDate.toISOString()}
-          week0Date={season.week0Date.toISOString()}
-        />
+        <PublicCalendarClient meetings={serializedMeetings} />
       </main>
 
       <footer className="border-t border-[--color-border] py-4 px-4 text-center text-small text-[--color-text-disabled]">
