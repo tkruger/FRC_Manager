@@ -87,11 +87,10 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
           <h1 className="text-h1 text-[--color-text-primary]">Base Inventory</h1>
           <p className="text-body text-[--color-text-secondary] mt-0.5">{items.length} items · {activeSeason.name}</p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap justify-end">
-          <InventorySearch defaultValue={q} />
-          {canManageInventory && <AddInventoryItemDialog vendors={vendors} />}
-        </div>
+        {canManageInventory && <AddInventoryItemDialog vendors={vendors} />}
       </div>
+
+      <InventorySearch defaultValue={q} />
 
       {/* View tabs */}
       <div className="flex gap-1 border-b border-[--color-border]">
