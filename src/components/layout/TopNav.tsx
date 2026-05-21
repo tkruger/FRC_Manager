@@ -174,6 +174,13 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
             <button onClick={toggle} className="h-9 w-9 rounded-md flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors">
               {resolvedTheme === "dark" ? <SunIcon /> : <MoonIcon />}
             </button>
+            <Link
+              href="/calendar"
+              className="h-9 w-9 rounded-md flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors"
+              aria-label="Meeting calendar"
+            >
+              <CalendarIcon className="w-4 h-4" />
+            </Link>
             <NotificationsDropdown unreadCount={unreadNotificationCount} />
             {session?.user && <UserMenu user={session.user} canManageTeam={canManageTeam} />}
           </div>
