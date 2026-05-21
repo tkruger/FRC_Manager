@@ -71,10 +71,7 @@ export default async function SafetyPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Incident log */}
         <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-h2 text-[--color-text-primary]">Incident log</h2>
-            <Link href="/safety/incidents/new"><Button variant="outline" size="sm">+ File incident</Button></Link>
-          </div>
+          <h2 className="text-h2 text-[--color-text-primary] mb-3">Incident log</h2>
           <div className="card divide-y divide-[--color-border]">
             {incidents.length === 0 ? (
               <p className="py-6 text-center text-small text-[--color-success]">No incidents reported 🎉</p>

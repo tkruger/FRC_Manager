@@ -119,7 +119,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
           </nav>
 
           {/* Right: controls */}
-          <div className="flex items-center gap-1 justify-end">
+          <div className="flex items-center gap-0.5 justify-end">
           {robots.length > 0 && (
             <RobotSelector robots={robots} activeRobotId={activeRobotId} activeRobot={activeRobot} />
           )}
