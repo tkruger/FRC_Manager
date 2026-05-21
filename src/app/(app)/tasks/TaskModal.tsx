@@ -1,6 +1,7 @@
 ﻿"use client";
 
-import { useState, useTransition, useRef } from "react";
+import { useState, useTransition, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -252,9 +253,20 @@ function EditTaskForm({ task, allTasks, allMembers, allRobots, kickoffDate, week
   const [selectedAssignees, setSelectedAssignees] = useState(task.assignees.map((a) => a.id));
   const [selectedPrereqs,   setSelectedPrereqs]   = useState(task.prerequisites.map((p) => p.id));
   const [assigneeSearch,    setAssigneeSearch]     = useState("");
+  const [inputRect,         setInputRect]          = useState<{ top: number; left: number; width: number } | null>(null);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+
+  // Track input position so the portal dropdown can follow it
+  useEffect(() => {
+    if (assigneeSearch.trim() && searchRef.current) {
+      const r = searchRef.current.getBoundingClientRect();
+      setInputRect({ top: r.bottom + 4, left: r.left, width: r.width });
+    } else {
+      setInputRect(null);
+    }
+  }, [assigneeSearch]);
 
   const boundAction = updateTaskAction.bind(null, task.id);
 
@@ -364,10 +376,22 @@ function EditTaskForm({ task, allTasks, allMembers, allRobots, kickoffDate, week
               placeholder="Search team members…"
               className="w-full rounded-md border border-[--color-border] bg-[--color-surface] text-[--color-text-primary] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary]/40 focus:border-[--color-primary]"
             />
-            {searchResults.length > 0 && (
+            {/* Dropdown rendered in a portal so it escapes the dialog's backdrop-filter stacking context */}
+            {inputRect && searchResults.length > 0 && createPortal(
               <div
-                className="absolute z-50 top-full mt-1 w-full rounded-md border border-[--color-border] max-h-40 overflow-y-auto"
-                style={{ backgroundColor: "var(--color-surface)", boxShadow: "var(--shadow-lg)" }}
+                style={{
+                  position: "fixed",
+                  top: inputRect.top,
+                  left: inputRect.left,
+                  width: inputRect.width,
+                  zIndex: 9999,
+                  backgroundColor: "var(--color-surface)",
+                  border: "1px solid var(--color-border)",
+                  borderRadius: "0.375rem",
+                  boxShadow: "var(--shadow-lg)",
+                  maxHeight: "10rem",
+                  overflowY: "auto",
+                }}
               >
                 {searchResults.map((m) => (
                   <button key={m.id} type="button" onClick={() => addAssignee(m.id)}
@@ -379,15 +403,28 @@ function EditTaskForm({ task, allTasks, allMembers, allRobots, kickoffDate, week
                     <span className="text-[--color-text-primary]">{m.name}</span>
                   </button>
                 ))}
-              </div>
+              </div>,
+              document.body
             )}
-            {assigneeSearch.trim() && searchResults.length === 0 && (
+            {inputRect && assigneeSearch.trim() && searchResults.length === 0 && createPortal(
               <div
-                className="absolute z-50 top-full mt-1 w-full rounded-md border border-[--color-border] px-3 py-2 text-sm text-[--color-text-secondary]"
-                style={{ backgroundColor: "var(--color-surface)" }}
+                style={{
+                  position: "fixed",
+                  top: inputRect.top,
+                  left: inputRect.left,
+                  width: inputRect.width,
+                  zIndex: 9999,
+                  backgroundColor: "var(--color-surface)",
+                  border: "1px solid var(--color-border)",
+                  borderRadius: "0.375rem",
+                  padding: "0.5rem 0.75rem",
+                  fontSize: "0.875rem",
+                  color: "var(--color-text-secondary)",
+                }}
               >
                 No members found
-              </div>
+              </div>,
+              document.body
             )}
           </div>
         </div>
