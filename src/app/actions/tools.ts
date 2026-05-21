@@ -144,6 +144,7 @@ export async function updateToolAction(
 
   revalidatePath("/tools");
   revalidatePath(`/tools/${toolId}`);
+  revalidatePath(`/tools/${toolId}/edit`);
   return { success: true };
 }
 

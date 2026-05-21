@@ -3,40 +3,24 @@ import { prisma } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { formatDate, formatCurrency } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import { CheckoutForm } from "./CheckoutForm";
 import { CheckinButton } from "../CheckinButton";
 import { BarcodePanel } from "./BarcodePanel";
-import { ToolImageUploadPanel } from "./ToolImageUploadPanel";
-import { EditToolForm } from "./EditToolForm";
-import { ToolTabBar } from "./ToolTabBar";
-
-const TOOL_EDIT_ROLES = ["INVENTORY_ADMIN", "BUILD_LEAD", "TEAM_LEADERSHIP", "HEAD_MENTOR"];
 
 const CONDITION_BADGE: Record<string, "success"|"warning"|"danger"|"neutral"> = {
   EXCELLENT: "success", GOOD: "success", FAIR: "warning",
   NEEDS_REPAIR: "danger", OUT_OF_SERVICE: "danger", OUT_FOR_MAINTENANCE: "warning",
 };
 
-export default async function ToolDetailPage({
-  params,
-  searchParams,
-}: {
-  params:       Promise<{ id: string }>;
-  searchParams: Promise<{ tab?: string }>;
-}) {
+export default async function ToolCheckoutPage({ params }: { params: Promise<{ id: string }> }) {
   const { id }  = await params;
-  const { tab } = await searchParams;
   const session = await auth();
   if (!session?.user?.teamId) redirect("/dashboard");
 
   const [tool, activeCheckouts] = await Promise.all([
     prisma.tool.findFirst({
       where: { id, teamId: session.user.teamId },
-      include: {
-        checkouts: { where: { returnedAt: null }, include: { user: { select: { name: true } } } },
-        maintenanceLogs: { orderBy: { performedAt: "desc" }, take: 5 },
-      },
     }),
     prisma.toolCheckout.findMany({
       where: { toolId: id, returnedAt: null },
@@ -46,11 +30,9 @@ export default async function ToolDetailPage({
 
   if (!tool) notFound();
 
-  const canEdit = session.user.roles.some((r) => TOOL_EDIT_ROLES.includes(r));
   const checkedOutQty = activeCheckouts.reduce((s, c) => s + c.quantity, 0);
-  const available = tool.quantityOwned - checkedOutQty;
+  const available     = tool.quantityOwned - checkedOutQty;
 
-  // Check user's cert
   let hasCert = true;
   if (tool.requiresCertification && tool.certificationName) {
     const cert = await prisma.userCertification.findFirst({
@@ -59,130 +41,66 @@ export default async function ToolDetailPage({
     hasCert = !!cert;
   }
 
-  const isEditTab = tab === "edit" && canEdit;
-
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       <nav className="text-small text-[--color-text-secondary]">
         <Link href="/tools" className="hover:text-[--color-primary]">Tools</Link>
         <span className="mx-2">›</span>
         <span className="text-[--color-text-primary]">{tool.name}</span>
       </nav>
 
-      {/* Photo + header */}
-      <div className="flex gap-5 items-start">
-        {tool.image && (
-          <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-xl overflow-hidden shrink-0 border border-[--color-border] bg-[--color-surface-overlay]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={tool.image} alt={tool.name} className="w-full h-full object-cover" />
-          </div>
-        )}
-        <div className="flex-1 min-w-0">
+      <div className="flex items-start justify-between gap-4">
+        <div>
           <h1 className="text-h1 text-[--color-text-primary]">{tool.name}</h1>
           <div className="flex gap-2 mt-2 flex-wrap">
             <Badge variant={CONDITION_BADGE[tool.condition] ?? "neutral"}>{tool.condition.replace(/_/g, " ")}</Badge>
-            <Badge variant={available > 0 ? "success" : "danger"}>{available > 0 ? `${available} available` : "None available"}</Badge>
-            {tool.space !== "SHOP_ONLY" && <Badge variant="info">{tool.space.replace(/_/g, " ")}</Badge>}
+            <Badge variant={available > 0 ? "success" : "danger"}>
+              {available > 0 ? `${available} available` : "None available"}
+            </Badge>
           </div>
         </div>
       </div>
 
-      {/* Tab bar */}
-      <ToolTabBar toolId={tool.id} canEdit={canEdit} />
-
-      {/* ── Check out tab ── */}
-      {!isEditTab && (
-        <div className="space-y-6">
-          {/* Meta grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { label: "Type",         value: tool.toolType.replace(/_/g, " ") },
-              { label: "Qty owned",    value: tool.quantityOwned },
-              { label: "Asset tag",    value: tool.assetTag ?? "—" },
-              { label: "Location",     value: tool.homeLocation ?? "—" },
-              { label: "Replacement",  value: tool.replacementCost ? formatCurrency(tool.replacementCost) : "—" },
-              { label: "Maintenance",  value: tool.nextMaintenanceDue ? formatDate(tool.nextMaintenanceDue) : "Not scheduled" },
-              { label: "Manufacturer", value: tool.manufacturer ?? "—" },
-              { label: "Model",        value: tool.model ?? "—" },
-            ].map((m) => (
-              <div key={m.label} className="card py-2.5">
-                <p className="text-label text-[--color-text-secondary]">{m.label}</p>
-                <p className="text-sm font-medium text-[--color-text-primary] mt-0.5">{String(m.value)}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Cert warning */}
-          {tool.requiresCertification && !hasCert && (
-            <div className="rounded-md bg-[--color-warning]/10 border border-[--color-warning]/20 px-4 py-3">
-              <p className="text-sm font-medium text-[--color-warning]">
-                You need <strong>{tool.certificationName}</strong> certification to check out this tool.
-                Contact a mentor or Safety Captain.
-              </p>
-            </div>
-          )}
-
-          {/* Checkout form */}
-          {available > 0 && hasCert && (
-            <div className="card">
-              <h2 className="text-h3 text-[--color-text-primary] mb-4">Check out</h2>
-              <CheckoutForm toolId={tool.id} maxQty={available} />
-            </div>
-          )}
-
-          {/* Currently checked out */}
-          {activeCheckouts.length > 0 && (
-            <div className="card">
-              <h2 className="text-h3 text-[--color-text-primary] mb-3">Currently checked out</h2>
-              <div className="space-y-2">
-                {activeCheckouts.map((c) => {
-                  const isOver = c.expectedReturn < new Date();
-                  return (
-                    <div key={c.id} className="flex items-center justify-between py-2 border-b border-[--color-border] last:border-0">
-                      <div>
-                        <p className="text-sm font-medium text-[--color-text-primary]">{c.user.name} · {c.quantity} unit{c.quantity !== 1 ? "s" : ""}</p>
-                        <p className={`text-small ${isOver ? "text-[--color-danger] font-medium" : "text-[--color-text-secondary]"}`}>
-                          Due {formatDate(c.expectedReturn)}{isOver ? " — OVERDUE" : ""}
-                        </p>
-                      </div>
-                      <CheckinButton checkoutId={c.id} toolName={tool.name} />
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          <BarcodePanel toolId={tool.id} toolName={tool.name} assetTag={tool.assetTag} />
+      {tool.requiresCertification && !hasCert && (
+        <div className="rounded-md bg-[--color-warning]/10 border border-[--color-warning]/20 px-4 py-3">
+          <p className="text-sm font-medium text-[--color-warning]">
+            You need <strong>{tool.certificationName}</strong> certification to check out this tool.
+          </p>
         </div>
       )}
 
-      {/* ── Edit tab ── */}
-      {isEditTab && (
-        <div className="space-y-6">
-          <ToolImageUploadPanel toolId={tool.id} currentImageUrl={tool.image} />
-          <div className="card space-y-4">
-            <h2 className="text-h3 text-[--color-text-primary]">Edit tool</h2>
-            <EditToolForm key={tool.updatedAt.toISOString()} tool={{
-              id:                      tool.id,
-              name:                    tool.name,
-              toolType:                tool.toolType,
-              space:                   tool.space,
-              manufacturer:            tool.manufacturer,
-              model:                   tool.model,
-              assetTag:                tool.assetTag,
-              quantityOwned:           tool.quantityOwned,
-              homeLocation:            tool.homeLocation,
-              condition:               tool.condition,
-              requiresCertification:   tool.requiresCertification,
-              certificationName:       tool.certificationName,
-              maintenanceIntervalDays: tool.maintenanceIntervalDays,
-              replacementCost:         tool.replacementCost,
-              notes:                   tool.notes,
-            }} />
+      {available > 0 && hasCert && (
+        <div className="card">
+          <h2 className="text-h3 text-[--color-text-primary] mb-4">Check out</h2>
+          <CheckoutForm toolId={tool.id} maxQty={available} />
+        </div>
+      )}
+
+      {activeCheckouts.length > 0 && (
+        <div className="card">
+          <h2 className="text-h3 text-[--color-text-primary] mb-3">Currently checked out</h2>
+          <div className="space-y-2">
+            {activeCheckouts.map((c) => {
+              const isOver = c.expectedReturn < new Date();
+              return (
+                <div key={c.id} className="flex items-center justify-between py-2 border-b border-[--color-border] last:border-0">
+                  <div>
+                    <p className="text-sm font-medium text-[--color-text-primary]">
+                      {c.user.name} · {c.quantity} unit{c.quantity !== 1 ? "s" : ""}
+                    </p>
+                    <p className={`text-small ${isOver ? "text-[--color-danger] font-medium" : "text-[--color-text-secondary]"}`}>
+                      Due {formatDate(c.expectedReturn)}{isOver ? " — OVERDUE" : ""}
+                    </p>
+                  </div>
+                  <CheckinButton checkoutId={c.id} toolName={tool.name} />
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
+
+      <BarcodePanel toolId={tool.id} toolName={tool.name} assetTag={tool.assetTag} />
     </div>
   );
 }

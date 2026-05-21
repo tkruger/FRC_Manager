@@ -4,20 +4,20 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableHead, TableBody, Th, Td, Tr } from "@/components/ui/table";
-import { formatDate, formatCurrency } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import { CheckinButton } from "./CheckinButton";
 import { AddToolDialog } from "./AddToolDialog";
 import { Button } from "@/components/ui/button";
+import { ToolsClient } from "./ToolsClient";
 
-const CONDITION_BADGE: Record<string, "success"|"warning"|"danger"|"neutral"> = {
-  EXCELLENT: "success", GOOD: "success", FAIR: "warning",
-  NEEDS_REPAIR: "danger", OUT_OF_SERVICE: "danger", OUT_FOR_MAINTENANCE: "warning",
-};
+const TOOL_EDIT_ROLES = ["INVENTORY_ADMIN", "BUILD_LEAD", "TEAM_LEADERSHIP", "HEAD_MENTOR"];
 
 export default async function ToolsPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
   const { view } = await searchParams;
   const session = await auth();
   if (!session?.user?.teamId) redirect("/dashboard");
+
+  const canEdit = session.user.roles.some((r) => TOOL_EDIT_ROLES.includes(r));
 
   const [tools, activeCheckouts] = await Promise.all([
     prisma.tool.findMany({
@@ -38,10 +38,10 @@ export default async function ToolsPage({ searchParams }: { searchParams: Promis
   const overdue = activeCheckouts.filter((c) => c.expectedReturn < now);
 
   const views = [
-    { key: undefined,          label: "All tools" },
-    { key: "checked-out",      label: `Checked out (${activeCheckouts.length})` },
-    { key: "overdue",          label: `Overdue (${overdue.length})` },
-    { key: "needs-maintenance",label: "Needs maintenance" },
+    { key: undefined,           label: "All tools" },
+    { key: "checked-out",       label: `Checked out (${activeCheckouts.length})` },
+    { key: "overdue",           label: `Overdue (${overdue.length})` },
+    { key: "needs-maintenance", label: "Needs maintenance" },
   ];
 
   const filtered = view === "checked-out"
@@ -49,8 +49,17 @@ export default async function ToolsPage({ searchParams }: { searchParams: Promis
     : view === "overdue"
     ? tools.filter((t) => overdue.some((c) => c.toolId === t.id))
     : view === "needs-maintenance"
-    ? tools.filter((t) => ["NEEDS_REPAIR","OUT_OF_SERVICE","OUT_FOR_MAINTENANCE"].includes(t.condition))
+    ? tools.filter((t) => ["NEEDS_REPAIR", "OUT_OF_SERVICE", "OUT_FOR_MAINTENANCE"].includes(t.condition))
     : tools;
+
+  // Serialize dates for client component
+  const serializedCheckouts = activeCheckouts.map((c) => ({
+    id:             c.id,
+    toolId:         c.toolId,
+    quantity:       c.quantity,
+    expectedReturn: c.expectedReturn.toISOString(),
+    user:           c.user,
+  }));
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
@@ -102,55 +111,21 @@ export default async function ToolsPage({ searchParams }: { searchParams: Promis
           <AddToolDialog />
         </div>
       ) : (
-        <Table>
-          <TableHead>
-            <tr>
-              <Th>Tool</Th><Th>Type</Th><Th>Qty available</Th>
-              <Th>Condition</Th><Th>Location</Th><Th>Cert required</Th><Th>Action</Th>
-            </tr>
-          </TableHead>
-          <TableBody>
-            {filtered.map((t) => {
-              const checkedOut = activeCheckouts.filter((c) => c.toolId === t.id).reduce((s, c) => s + c.quantity, 0);
-              const available  = t.quantityOwned - checkedOut;
-              const checkout   = activeCheckouts.find((c) => c.toolId === t.id);
-              return (
-                <Tr key={t.id} className="group">
-                  <Td>
-                    <Link href={`/tools/${t.id}`} className="font-medium text-[--color-secondary] group-hover:text-[--color-primary]">{t.name}</Link>
-                    {t.assetTag && <p className="text-mono text-[--color-text-secondary]">{t.assetTag}</p>}
-                  </Td>
-                  <Td>{t.toolType.replace(/_/g, " ")}</Td>
-                  <Td>
-                    <span className={available === 0 ? "text-[--color-danger] font-medium" : "text-[--color-text-primary]"}>
-                      {available}/{t.quantityOwned}
-                    </span>
-                  </Td>
-                  <Td><Badge variant={CONDITION_BADGE[t.condition] ?? "neutral"}>{t.condition.replace(/_/g, " ")}</Badge></Td>
-                  <Td>{t.homeLocation ?? "—"}</Td>
-                  <Td>{t.requiresCertification ? <Badge variant="warning">{t.certificationName ?? "Required"}</Badge> : "—"}</Td>
-                  <Td>
-                    {checkout ? (
-                      <CheckinButton checkoutId={checkout.id} toolName={t.name} />
-                    ) : available > 0 ? (
-                      <Link href={`/tools/${t.id}`}><Button variant="outline" size="sm">Check out</Button></Link>
-                    ) : (
-                      <span className="text-small text-[--color-text-disabled]">Unavailable</span>
-                    )}
-                  </Td>
-                </Tr>
-              );
-            })}
-          </TableBody>
-        </Table>
+        <ToolsClient
+          tools={filtered}
+          activeCheckouts={serializedCheckouts}
+          canEdit={canEdit}
+        />
       )}
 
-      {/* Currently checked out */}
+      {/* Checked out summary */}
       {activeCheckouts.length > 0 && !view && (
         <div className="card">
           <h2 className="text-h2 text-[--color-text-primary] mb-3">Checked out</h2>
           <Table>
-            <TableHead><tr><Th>Tool</Th><Th>Who</Th><Th>Expected return</Th><Th>Status</Th><Th>Action</Th></tr></TableHead>
+            <TableHead>
+              <tr><Th>Tool</Th><Th>Who</Th><Th>Expected return</Th><Th>Status</Th><Th>Action</Th></tr>
+            </TableHead>
             <TableBody>
               {activeCheckouts.map((c) => {
                 const isOver = c.expectedReturn < now;
