@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -250,9 +250,11 @@ function EditTaskForm({ task, allTasks, allMembers, allRobots, kickoffDate, week
   onSaved: () => void;
 }) {
   const [selectedAssignees, setSelectedAssignees] = useState(task.assignees.map((a) => a.id));
-  const [selectedPrereqs, setSelectedPrereqs]     = useState(task.prerequisites.map((p) => p.id));
+  const [selectedPrereqs,   setSelectedPrereqs]   = useState(task.prerequisites.map((p) => p.id));
+  const [assigneeSearch,    setAssigneeSearch]     = useState("");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
 
   const boundAction = updateTaskAction.bind(null, task.id);
 
@@ -270,18 +272,38 @@ function EditTaskForm({ task, allTasks, allMembers, allRobots, kickoffDate, week
   const toDateVal = (d: string | null) => d ? new Date(d).toISOString().split("T")[0] : "";
   const robotOptions = allRobots.map((r) => ({ value: r.id, label: r.displayName }));
 
+  // Assignee search helpers
+  const assigneeMap = Object.fromEntries(allMembers.map((m) => [m.id, m]));
+  const searchResults = assigneeSearch.trim()
+    ? allMembers.filter(
+        (m) =>
+          !selectedAssignees.includes(m.id) &&
+          m.name.toLowerCase().includes(assigneeSearch.toLowerCase())
+      )
+    : [];
+
+  function addAssignee(id: string) {
+    setSelectedAssignees((p) => [...p, id]);
+    setAssigneeSearch("");
+    searchRef.current?.focus();
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && <div className="text-sm text-[--color-danger] bg-[--color-danger]/10 rounded px-3 py-2">{error}</div>}
       <Field label="Task name" name="name" required defaultValue={task.name} />
       <Textarea label="Description" name="description" rows={3} defaultValue={task.description ?? ""} />
+
+      <div className="grid grid-cols-2 gap-4">
+        <Select label="Status" name="status" options={STATUS_OPTIONS} defaultValue={task.status} />
+        <Select label="Priority" name="priority" options={PRIORITY_OPTIONS} defaultValue={task.priority} />
+      </div>
       <div className="grid grid-cols-2 gap-4">
         <Select label="Sub-team" name="subTeam" placeholder="Any" options={SUBTEAM_OPTIONS} defaultValue={task.subTeam ?? ""} />
-        <Select label="Priority"  name="priority" options={PRIORITY_OPTIONS} defaultValue={task.priority} />
+        {allRobots.length > 0 && (
+          <Select label="Robot" name="robotId" placeholder="Any / team-wide" options={robotOptions} defaultValue={task.robot?.id ?? ""} />
+        )}
       </div>
-      {allRobots.length > 0 && (
-        <Select label="Robot" name="robotId" placeholder="Any / team-wide" options={robotOptions} defaultValue={task.robot?.id ?? ""} />
-      )}
       <div className="grid grid-cols-2 gap-4">
         <Field label="Start date" name="startDate" type="date" min={kickoffDate} max={week0Date} defaultValue={toDateVal(task.startDate)} />
         <Field label="Due date"   name="dueDate"   type="date" min={kickoffDate} max={week0Date} defaultValue={toDateVal(task.dueDate)} />
@@ -298,21 +320,69 @@ function EditTaskForm({ task, allTasks, allMembers, allRobots, kickoffDate, week
         </label>
       </div>
 
-      {/* Assignees */}
+      {/* Assignees — searchable picker */}
       {allMembers.length > 0 && (
         <div>
           <p className="text-label font-medium text-[--color-text-primary] mb-2">Assignees</p>
-          <div className="max-h-36 overflow-y-auto space-y-0.5 rounded-md border border-[--color-border] p-2">
-            {allMembers.map((m) => (
-              <label key={m.id} className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer text-sm ${selectedAssignees.includes(m.id) ? "bg-[--color-primary]/10" : "hover:bg-[--color-surface-overlay]"}`}>
-                <input type="checkbox" name="assigneeIds" value={m.id} checked={selectedAssignees.includes(m.id)}
-                  onChange={(e) => setSelectedAssignees(p => e.target.checked ? [...p, m.id] : p.filter(id => id !== m.id))} className="rounded" />
-                <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{ backgroundColor: "var(--color-primary)" }}>
-                  {m.name[0].toUpperCase()}
-                </span>
-                <span className="text-[--color-text-primary]">{m.name}</span>
-              </label>
-            ))}
+
+          {/* Hidden inputs carry selected IDs to the form */}
+          {selectedAssignees.map((id) => (
+            <input key={id} type="hidden" name="assigneeIds" value={id} />
+          ))}
+
+          {/* Selected chips */}
+          {selectedAssignees.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {selectedAssignees.map((id) => {
+                const m = assigneeMap[id];
+                if (!m) return null;
+                return (
+                  <span key={id}
+                    className="inline-flex items-center gap-1 pl-1 pr-2 py-0.5 rounded-full bg-[--color-primary]/10 border border-[--color-primary]/25 text-sm">
+                    <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
+                      style={{ backgroundColor: "var(--color-primary)" }}>
+                      {m.name[0].toUpperCase()}
+                    </span>
+                    <span className="text-[--color-text-primary]">{m.name}</span>
+                    <button type="button" onClick={() => setSelectedAssignees((p) => p.filter((i) => i !== id))}
+                      className="ml-0.5 text-[--color-text-secondary] hover:text-[--color-danger] transition-colors leading-none">
+                      ×
+                    </button>
+                  </span>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Search input */}
+          <div className="relative">
+            <input
+              ref={searchRef}
+              type="text"
+              value={assigneeSearch}
+              onChange={(e) => setAssigneeSearch(e.target.value)}
+              placeholder="Search team members…"
+              className="w-full rounded-md border border-[--color-border] bg-[--color-surface] text-[--color-text-primary] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary]/40 focus:border-[--color-primary]"
+            />
+            {searchResults.length > 0 && (
+              <div className="absolute z-10 top-full mt-1 w-full rounded-md border border-[--color-border] bg-[--color-surface] shadow-lg max-h-40 overflow-y-auto">
+                {searchResults.map((m) => (
+                  <button key={m.id} type="button" onClick={() => addAssignee(m.id)}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-[--color-surface-overlay] transition-colors text-left">
+                    <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
+                      style={{ backgroundColor: "var(--color-primary)" }}>
+                      {m.name[0].toUpperCase()}
+                    </span>
+                    <span className="text-[--color-text-primary]">{m.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {assigneeSearch.trim() && searchResults.length === 0 && (
+              <div className="absolute z-10 top-full mt-1 w-full rounded-md border border-[--color-border] bg-[--color-surface] px-3 py-2 text-sm text-[--color-text-secondary]">
+                No members found
+              </div>
+            )}
           </div>
         </div>
       )}

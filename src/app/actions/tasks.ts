@@ -116,6 +116,8 @@ export async function updateTaskAction(
   const assigneeIds = formData.getAll("assigneeIds") as string[];
   const prerequisiteIds = formData.getAll("prerequisiteIds") as string[];
 
+  const status = (formData.get("status") as TaskStatus) || undefined;
+
   const parsed = TaskSchema.safeParse({
     name:                 formData.get("name"),
     description:          formData.get("description") || undefined,
@@ -150,6 +152,10 @@ export async function updateTaskAction(
       blockersNotes:        d.blockersNotes,
       assignees:            { set: assigneeIds.map((id) => ({ id })) },
       prerequisites:        { set: prerequisiteIds.map((id) => ({ id })) },
+      ...(status ? {
+        status,
+        completionDate: status === "COMPLETE" ? new Date() : null,
+      } : {}),
     },
   });
 
