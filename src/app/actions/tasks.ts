@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
@@ -81,7 +81,7 @@ export async function createTaskAction(
     },
   });
 
-  revalidatePath("/schedule");
+  revalidatePath("/tasks");
   return { success: true, taskId: task.id };
 }
 
@@ -100,8 +100,8 @@ export async function updateTaskStatusAction(
     },
   });
 
-  revalidatePath("/schedule");
-  revalidatePath(`/schedule/tasks/${taskId}`);
+  revalidatePath("/tasks");
+  revalidatePath(`/tasks/${taskId}`);
   return { success: true };
 }
 
@@ -159,8 +159,8 @@ export async function updateTaskAction(
     },
   });
 
-  revalidatePath("/schedule");
-  revalidatePath(`/schedule/tasks/${taskId}`);
+  revalidatePath("/tasks");
+  revalidatePath(`/tasks/${taskId}`);
   return { success: true, taskId };
 }
 
@@ -168,7 +168,7 @@ export async function deleteTaskAction(taskId: string): Promise<{ success: boole
   const session = await auth();
   if (!session) return { success: false };
   await prisma.task.delete({ where: { id: taskId } });
-  revalidatePath("/schedule");
+  revalidatePath("/tasks");
   return { success: true };
 }
 
@@ -177,6 +177,7 @@ export async function logActualHoursAction(
   hours: number
 ): Promise<{ success: boolean }> {
   await prisma.task.update({ where: { id: taskId }, data: { actualHours: hours } });
-  revalidatePath(`/schedule/tasks/${taskId}`);
+  revalidatePath(`/tasks/${taskId}`);
   return { success: true };
 }
+

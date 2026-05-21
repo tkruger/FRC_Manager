@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -11,7 +11,7 @@ import { NotificationsDropdown } from "./NotificationsDropdown";
 
 const MODULE_TABS = [
   { label: "Home",        href: "/dashboard",   icon: HomeIcon,        exact: true },
-  { label: "Tasks",       href: "/schedule",    icon: TasksIcon,       exact: false },
+  { label: "Tasks",       href: "/tasks",    icon: TasksIcon,       exact: false },
   { label: "Tools",       href: "/tools",       icon: ToolsIcon,       exact: false },
   { label: "Inventory",   href: "/inventory",   icon: InventoryIcon,   exact: false },
   { label: "Procurement", href: "/procurement", icon: ProcurementIcon, exact: false },
@@ -26,11 +26,11 @@ const MOBILE_TABS = [
   { label: "Fleet",     href: "/fleet",       icon: FleetIcon },
   { label: "Inventory", href: "/inventory",   icon: InventoryIcon },
   { label: "Orders",    href: "/procurement", icon: ProcurementIcon },
-  { label: "Tasks",     href: "/schedule",    icon: TasksIcon },
+  { label: "Tasks",     href: "/tasks",    icon: TasksIcon },
   { label: "More",      href: "/dashboard",   icon: MoreIcon },
 ];
 
-const ROBOT_CONTEXT_PATHS = ["/fleet", "/inventory", "/schedule", "/budget"];
+const ROBOT_CONTEXT_PATHS = ["/fleet", "/inventory", "/tasks", "/budget"];
 
 interface Props {
   session: Session | null;
@@ -126,7 +126,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
           </button>
 
           <Link
-            href="/schedule/calendar"
+            href="/calendar"
             className="h-8 w-8 rounded-md flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors"
             aria-label="Meeting calendar"
           >
@@ -477,3 +477,4 @@ function SignOutIcon({ className }: { className?: string }) {
     </svg>
   );
 }
+

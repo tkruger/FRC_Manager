@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+﻿import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { formatDate } from "@/lib/utils";
@@ -87,7 +87,7 @@ export default async function DashboardPage() {
                 : daysToWeek0 !== null ? "Past" : "—",
               sub: formatDate(activeSeason.week0Date),
               urgent: daysToWeek0 !== null && daysToWeek0 <= 14,
-              href: "/schedule",
+              href: "/tasks",
               accent: "#059669",
             },
             {
@@ -103,7 +103,7 @@ export default async function DashboardPage() {
               value: overdueCount,
               sub: overdueCount > 0 ? "Need attention" : "All on track",
               urgent: overdueCount > 0,
-              href: "/schedule/tasks?filter=overdue",
+              href: "/tasks?filter=overdue",
               accent: overdueCount > 0 ? "var(--color-danger)" : "var(--color-secondary)",
             },
             {
@@ -135,7 +135,7 @@ export default async function DashboardPage() {
           { title: "Inventory",     href: "/inventory",       desc: "Parts & materials",      color: "var(--color-secondary)", icon: "📦" },
           { title: "Procurement",   href: "/procurement",     desc: "Orders & requests",      color: "#059669",               icon: "🛒" },
           { title: "Budget",        href: "/budget",          desc: "Spend & BOM tracking",   color: "#D97706",               icon: "💰" },
-          { title: "Schedule",      href: "/schedule",        desc: "Build season tasks",     color: "#DC2626",               icon: "📅" },
+          { title: "Schedule",      href: "/tasks",        desc: "Build season tasks",     color: "#DC2626",               icon: "📅" },
           { title: "Safety",        href: "/safety",          desc: "Certs & checklists",     color: "#0891B2",               icon: "🛡️" },
           { title: "Season",        href: "/settings/season", desc: "Season configuration",  color: "#64748B",               icon: "⚙️" },
         ].map((mod) => (
@@ -159,3 +159,4 @@ export default async function DashboardPage() {
     </div>
   );
 }
+

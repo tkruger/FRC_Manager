@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
@@ -44,7 +44,7 @@ export async function createTemplateAction(
     },
   });
 
-  revalidatePath("/schedule/templates");
+  revalidatePath("/tasks/templates");
   return { success: true, id: template.id };
 }
 
@@ -63,14 +63,14 @@ export async function updateTemplateAction(
   });
 
   revalidatePath(`/schedule/templates/${templateId}`);
-  revalidatePath("/schedule/templates");
+  revalidatePath("/tasks/templates");
   return { success: true };
 }
 
 export async function deleteTemplateAction(templateId: string): Promise<{ success: boolean; error?: string }> {
   try { await requireMentor(); } catch (e: any) { return { success: false, error: e.message }; }
   await prisma.seasonTemplate.delete({ where: { id: templateId } });
-  revalidatePath("/schedule/templates");
+  revalidatePath("/tasks/templates");
   return { success: true };
 }
 
@@ -232,7 +232,7 @@ export async function saveSeasonAsTemplateAction(
     },
   });
 
-  revalidatePath("/schedule/templates");
+  revalidatePath("/tasks/templates");
   return { success: true, id: template.id };
 }
 
@@ -278,7 +278,7 @@ export async function applyCustomTemplateAction(
     }),
   });
 
-  revalidatePath("/schedule");
+  revalidatePath("/tasks");
   revalidatePath("/schedule/tasks");
   return { success: true, count: toCreate.length };
 }
@@ -354,7 +354,7 @@ export async function applyStandardTemplateAction(): Promise<{ success: boolean;
     }),
   });
 
-  revalidatePath("/schedule");
+  revalidatePath("/tasks");
   revalidatePath("/schedule/tasks");
   return { success: true, count: toCreate.length };
 }
@@ -369,6 +369,7 @@ export async function clearAllTasksAction(): Promise<{ success: boolean; error?:
   if (!activeSeason) return { success: false, error: "No active season." };
 
   await prisma.task.deleteMany({ where: { seasonId: activeSeason.id } });
-  revalidatePath("/schedule");
+  revalidatePath("/tasks");
   return { success: true };
 }
+
