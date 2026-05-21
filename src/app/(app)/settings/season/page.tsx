@@ -40,7 +40,7 @@ export default async function SeasonSettingsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-h1 text-[--color-text-primary]">Season Settings</h1>
+          <h1 className="text-h1 text-[--color-text-primary]">Season</h1>
           <p className="text-body text-[--color-text-secondary] mt-1">
             Configure the active build season, kickoff date, and robots.
           </p>

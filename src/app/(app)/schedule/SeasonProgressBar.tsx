@@ -43,8 +43,13 @@ export function SeasonProgressBar({
 
   return (
     <div className="card py-3 px-4">
-      {/* Always-visible summary row */}
-      <div className="flex items-center justify-between gap-4">
+      {/* Always-visible summary row — entire row is the toggle */}
+      <button
+        onClick={toggle}
+        title={collapsed ? "Expand season progress" : "Collapse season progress"}
+        aria-expanded={!collapsed}
+        className="w-full flex items-center justify-between gap-4 text-left group"
+      >
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 min-w-0">
           <p className="text-small text-[--color-text-secondary] whitespace-nowrap">
             Kickoff {shortDate(new Date(kickoffDate))} → Week 0 {shortDate(new Date(week0Date))}
@@ -57,21 +62,14 @@ export function SeasonProgressBar({
           </p>
         </div>
 
-        <button
-          onClick={toggle}
-          title={collapsed ? "Expand season progress" : "Collapse season progress"}
-          className="shrink-0 h-7 w-7 rounded-md flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] hover:text-[--color-text-primary] transition-colors"
-          aria-expanded={!collapsed}
+        <svg
+          viewBox="0 0 16 16"
+          className={`shrink-0 w-3.5 h-3.5 text-[--color-text-secondary] group-hover:text-[--color-text-primary] transition-all duration-200 ${collapsed ? "" : "rotate-180"}`}
+          fill="currentColor"
         >
-          <svg
-            viewBox="0 0 16 16"
-            className={`w-3.5 h-3.5 transition-transform duration-200 ${collapsed ? "" : "rotate-180"}`}
-            fill="currentColor"
-          >
-            <path d="M8 10.5a.75.75 0 01-.53-.22l-4-4a.75.75 0 111.06-1.06L8 8.69l3.47-3.47a.75.75 0 111.06 1.06l-4 4A.75.75 0 018 10.5z" />
-          </svg>
-        </button>
-      </div>
+          <path d="M8 10.5a.75.75 0 01-.53-.22l-4-4a.75.75 0 111.06-1.06L8 8.69l3.47-3.47a.75.75 0 111.06 1.06l-4 4A.75.75 0 018 10.5z" />
+        </svg>
+      </button>
 
       {/* Collapsible body */}
       {!collapsed && (

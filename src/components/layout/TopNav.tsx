@@ -18,7 +18,7 @@ const MODULE_TABS = [
   { label: "Budget",      href: "/budget",      icon: BudgetIcon,      exact: false },
   { label: "Fleet",        href: "/fleet",       icon: FleetIcon,       exact: false },
   { label: "Safety",      href: "/safety",      icon: SafetyIcon,      exact: false },
-  { label: "Settings",    href: "/settings/season", icon: SettingsNavIcon, exact: false },
+  { label: "Season",      href: "/settings/season", icon: SettingsNavIcon, exact: false },
 ];
 
 // Five tabs shown on mobile bottom bar (most-used modules)
