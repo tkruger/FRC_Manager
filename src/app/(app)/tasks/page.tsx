@@ -13,9 +13,10 @@ import { SeasonProgressBar } from "./SeasonProgressBar";
 export default async function SchedulePage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string }>;
+  searchParams: Promise<{ view?: string; mine?: string }>;
 }) {
-  const { view = "kanban" } = await searchParams;
+  const { view = "kanban", mine } = await searchParams;
+  const showMineOnly = mine !== "0";
   const session = await auth();
   if (!session?.user?.teamId) redirect("/dashboard");
 
@@ -58,6 +59,7 @@ export default async function SchedulePage({
     where: {
       seasonId: activeSeason.id,
       ...(activeRobotId ? { OR: [{ robotId: activeRobotId }, { robotId: null }] } : {}),
+      ...(showMineOnly ? { assignees: { some: { id: session.user.id } } } : {}),
     },
     include: {
       assignees:     { select: { id: true, name: true } },

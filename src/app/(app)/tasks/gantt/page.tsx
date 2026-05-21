@@ -9,8 +9,9 @@ import { TasksTabBar } from "../TasksTabBar";
 import { SeasonProgressBar } from "../SeasonProgressBar";
 import { daysBetween } from "@/lib/schedule-helpers";
 
-export default async function GanttPage({ searchParams }: { searchParams: Promise<{ subTeam?: string }> }) {
-  const { subTeam } = await searchParams;
+export default async function GanttPage({ searchParams }: { searchParams: Promise<{ subTeam?: string; mine?: string }> }) {
+  const { subTeam, mine } = await searchParams;
+  const showMineOnly = mine !== "0";
   const session = await auth();
   if (!session?.user?.teamId) redirect("/dashboard");
 
@@ -27,6 +28,7 @@ export default async function GanttPage({ searchParams }: { searchParams: Promis
         ...(subTeam ? { subTeam: subTeam as any } : {}),
         ...(activeRobotId ? { OR: [{ robotId: activeRobotId }, { robotId: null }] } : {}),
         NOT: { startDate: null, dueDate: null },
+        ...(showMineOnly ? { assignees: { some: { id: session.user.id } } } : {}),
       },
       include: { assignees: { select: { name: true } } },
       orderBy: [{ subTeam: "asc" }, { startDate: "asc" }],
@@ -120,6 +122,7 @@ export default async function GanttPage({ searchParams }: { searchParams: Promis
     </div>
   );
 }
+
 
 
 
