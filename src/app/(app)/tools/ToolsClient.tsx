@@ -48,6 +48,7 @@ const CONDITION_BADGE: Record<string, "success" | "warning" | "danger" | "neutra
 
 export function ToolsClient({ tools, activeCheckouts, canEdit }: Props) {
   const [selected, setSelected] = useState<Tool | null>(null);
+  const [search,   setSearch]   = useState("");
 
   function availableFor(toolId: string, owned: number) {
     const checked = activeCheckouts
@@ -58,8 +59,25 @@ export function ToolsClient({ tools, activeCheckouts, canEdit }: Props) {
 
   const selectedAvailable = selected ? availableFor(selected.id, selected.quantityOwned) : 0;
 
+  const displayed = search.trim()
+    ? tools.filter((t) =>
+        t.name.toLowerCase().includes(search.toLowerCase()) ||
+        (t.assetTag ?? "").toLowerCase().includes(search.toLowerCase()) ||
+        (t.homeLocation ?? "").toLowerCase().includes(search.toLowerCase())
+      )
+    : tools;
+
   return (
     <>
+      {/* Search */}
+      <input
+        type="search"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search tools…"
+        className="w-full sm:max-w-xs rounded-md border border-[--color-border] bg-[--color-surface] text-[--color-text-primary] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary]/40 focus:border-[--color-primary]"
+      />
+
       <Table>
         <TableHead>
           <tr>
@@ -73,7 +91,7 @@ export function ToolsClient({ tools, activeCheckouts, canEdit }: Props) {
           </tr>
         </TableHead>
         <TableBody>
-          {tools.map((t) => {
+          {displayed.map((t) => {
             const avail    = availableFor(t.id, t.quantityOwned);
             const checkout = activeCheckouts.find((c) => c.toolId === t.id);
             return (

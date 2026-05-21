@@ -8,12 +8,13 @@ import { formatCurrency } from "@/lib/utils";
 import { AcquireButton } from "./AcquireButton";
 import { ReorderButton } from "./ReorderButton";
 import { AddInventoryItemDialog } from "./AddInventoryItemDialog";
+import { InventorySearch } from "./InventorySearch";
 
 // Roles that may see Low Stock and Reorder Queue tabs
 const RESTRICTED_TAB_ROLES = ["HEAD_MENTOR", "TEAM_LEADERSHIP", "BUILD_LEAD", "INVENTORY_ADMIN"];
 
-export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ view?: string; category?: string }> }) {
-  const { view, category } = await searchParams;
+export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ view?: string; category?: string; q?: string }> }) {
+  const { view, category, q } = await searchParams;
   const session = await auth();
   if (!session?.user?.teamId) redirect("/dashboard");
 
@@ -53,9 +54,17 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   ]);
 
   const lowStock  = items.filter((i) => i.currentStock <= i.minStockThreshold && i.minStockThreshold > 0);
-  const displayed = view === "low-stock" ? lowStock
+  const qLower    = q?.trim().toLowerCase() ?? "";
+  const baseList  = view === "low-stock" ? lowStock
                   : view === "reorder"   ? items.filter((i) => reorderRequests.some((r) => r.baseItemId === i.id))
                   : items;
+  const displayed = qLower
+    ? baseList.filter((i) =>
+        i.name.toLowerCase().includes(qLower) ||
+        (i.partNumber ?? "").toLowerCase().includes(qLower) ||
+        (i.storageLocation ?? "").toLowerCase().includes(qLower)
+      )
+    : baseList;
 
   function stockVariant(item: typeof items[0]): "danger" | "warning" | "success" {
     if (item.currentStock === 0) return "danger";
@@ -73,16 +82,15 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-h1 text-[--color-text-primary]">Base Inventory</h1>
           <p className="text-body text-[--color-text-secondary] mt-0.5">{items.length} items · {activeSeason.name}</p>
         </div>
-        {canManageInventory && (
-          <div className="flex gap-2">
-            <AddInventoryItemDialog vendors={vendors} />
-          </div>
-        )}
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          <InventorySearch defaultValue={q} />
+          {canManageInventory && <AddInventoryItemDialog vendors={vendors} />}
+        </div>
       </div>
 
       {/* View tabs */}
