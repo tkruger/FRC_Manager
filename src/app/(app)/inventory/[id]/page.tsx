@@ -117,7 +117,7 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
       {canEdit && (
         <div className="card space-y-4">
           <h2 className="text-h3 text-[--color-text-primary]">Edit item</h2>
-          <EditBaseItemForm vendors={vendors} item={{
+          <EditBaseItemForm key={item.updatedAt.toISOString()} vendors={vendors} item={{
             id:                item.id,
             name:              item.name,
             partNumber:        item.partNumber,

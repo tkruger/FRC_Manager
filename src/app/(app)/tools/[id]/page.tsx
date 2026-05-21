@@ -147,7 +147,7 @@ export default async function ToolDetailPage({ params }: { params: Promise<{ id:
       {canEdit && (
         <div className="card space-y-4">
           <h2 className="text-h3 text-[--color-text-primary]">Edit tool</h2>
-          <EditToolForm tool={{
+          <EditToolForm key={tool.updatedAt.toISOString()} tool={{
             id:                      tool.id,
             name:                    tool.name,
             toolType:                tool.toolType,
