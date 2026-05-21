@@ -96,9 +96,8 @@ export default async function SafetyPage() {
           <h2 className="text-h2 text-[--color-text-primary]">Quick actions</h2>
           <div className="grid grid-cols-1 gap-3">
             {[
-              { label: "Certification matrix",   desc: "View all members × all certifications",              href: "/safety/certifications",  color: "var(--color-secondary)" },
-              { label: "Pre-competition inspection", desc: "Run the FIRST inspection checklist",             href: "/safety/inspection",       color: "var(--color-primary)"   },
-              { label: "File safety incident",   desc: "Report an injury, near-miss, or violation",          href: "/safety/incidents/new",    color: "var(--color-danger)"    },
+              { label: "Certification matrix",      desc: "View all members × all certifications", href: "/safety/certifications", color: "var(--color-secondary)" },
+              { label: "Pre-competition inspection", desc: "Run the FIRST inspection checklist",   href: "/safety/inspection",     color: "var(--color-primary)"   },
             ].map((a) => (
               <Link key={a.href} href={a.href}
                 className="card flex items-center gap-4 hover:border-[--color-primary] transition-colors"
