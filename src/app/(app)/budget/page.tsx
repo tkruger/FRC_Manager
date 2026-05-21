@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+﻿import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -74,12 +74,12 @@ export default async function BudgetDashboard() {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-h1 text-[--color-text-primary]">Budget</h1>
           <p className="text-body text-[--color-text-secondary] mt-1">{activeSeason.name}</p>
         </div>
-        <div className="flex gap-2 items-center">
+        <div className="flex flex-wrap gap-2 items-center">
           {!canEdit && (
             <span className="text-small text-[--color-text-secondary] italic">Read-only view</span>
           )}
@@ -213,3 +213,4 @@ export default async function BudgetDashboard() {
     </div>
   );
 }
+

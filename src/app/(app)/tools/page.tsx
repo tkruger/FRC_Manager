@@ -63,12 +63,12 @@ export default async function ToolsPage({ searchParams }: { searchParams: Promis
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-h1 text-[--color-text-primary]">Tools</h1>
           <p className="text-body text-[--color-text-secondary] mt-0.5">{tools.length} tools in catalog</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link href="/tools/scan">
             <Button variant="secondary" size="sm" className="flex items-center gap-1.5">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -150,3 +150,4 @@ export default async function ToolsPage({ searchParams }: { searchParams: Promis
     </div>
   );
 }
+

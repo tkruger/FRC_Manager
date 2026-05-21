@@ -40,12 +40,12 @@ export default async function SafetyPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-h1 text-[--color-text-primary]">Safety & Compliance</h1>
           <p className="text-body text-[--color-text-secondary] mt-1">Incidents, certifications, and inspection checklists</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link href="/safety/certifications"><Button variant="outline" size="sm">Cert matrix</Button></Link>
           <Link href="/safety/inspection"><Button variant="outline" size="sm">Inspection</Button></Link>
           <Link href="/safety/incidents/new"><Button size="sm">+ File incident</Button></Link>
