@@ -14,7 +14,7 @@ export default function RegisterPage() {
   const [showCode, setShowCode] = useState(false);
 
   useEffect(() => {
-    if (state?.success) {
+    if (state?.success && !state.activated) {
       router.push("/pending");
     }
   }, [state, router]);
@@ -25,8 +25,18 @@ export default function RegisterPage() {
     <div className="card">
       <h1 className="text-h2 text-[--color-text-primary] mb-1">Create account</h1>
       <p className="text-small text-[--color-text-secondary] mb-6">
-        Your account will be reviewed by a team admin before you can access team data.
+        Enter your team&apos;s access code to join instantly, or submit a request for admin approval.
       </p>
+
+      {state?.success && state.activated && (
+        <div className="mb-4 rounded-md bg-[--color-success]/10 border border-[--color-success]/20 px-4 py-3 text-sm text-[--color-success] space-y-2">
+          <p className="font-medium">Account created — you&apos;re ready to go!</p>
+          <p>Your team code was accepted and your account is active. You can sign in now.</p>
+          <Link href="/login" className="inline-block mt-1 font-medium underline">
+            Sign in →
+          </Link>
+        </div>
+      )}
 
       {state && !state.success && !state.fieldErrors && (
         <div className="mb-4 rounded-md bg-[--color-danger]/10 border border-[--color-danger]/20 px-4 py-3 text-sm text-[--color-danger]">

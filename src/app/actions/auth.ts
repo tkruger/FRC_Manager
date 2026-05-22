@@ -16,7 +16,7 @@ const RegisterSchema = z.object({
 });
 
 export type RegisterState =
-  | { success: true }
+  | { success: true; activated: boolean }
   | { success: false; error: string; fieldErrors?: Record<string, string[]> };
 
 export async function registerAction(
@@ -75,7 +75,7 @@ export async function registerAction(
     },
   });
 
-  return { success: true };
+  return { success: true, activated: !!codeMatch };
 }
 
 export type LoginState =
