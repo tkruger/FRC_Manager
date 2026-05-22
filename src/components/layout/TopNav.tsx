@@ -65,7 +65,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
       {/* ── Top navigation bar ── */}
       {/* CSS grid with 1fr | auto | 1fr ensures the center nav is always viewport-centred
           regardless of how wide the left logo or right controls are */}
-      <header className="fixed inset-x-0 top-0 z-40 h-14 transition-colors"
+      <header className="fixed inset-x-0 top-0 z-40 h-safe-nav safe-top-pad transition-colors"
         style={{
           backgroundColor: "color-mix(in srgb, var(--color-surface) 88%, transparent)",
           backdropFilter: "blur(20px) saturate(180%)",

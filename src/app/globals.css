@@ -330,6 +330,13 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--color-primary)
 /* ─── Safe area ─── */
 .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
 
+/* Top safe area — pads the fixed header below the Dynamic Island / notch */
+.safe-top-pad { padding-top: env(safe-area-inset-top, 0px); }
+/* Header height includes the safe area so page content is offset correctly */
+.h-safe-nav   { height: calc(3.5rem + env(safe-area-inset-top, 0px)); }
+/* Page content top offset to match the header */
+.pt-safe-nav  { padding-top: calc(3.5rem + env(safe-area-inset-top, 0px)); }
+
 /* ─── Hero section ─── */
 .hero-gradient {
   background: linear-gradient(

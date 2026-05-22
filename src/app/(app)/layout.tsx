@@ -62,7 +62,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           activeSeasonName={activeSeasonName}
         />
         {/* pt-14 clears the top nav; pb-14 clears the mobile bottom tab bar (hidden on lg+) */}
-        <main className="pt-14 pb-14 lg:pb-0">{children}</main>
+        <main className="pt-safe-nav pb-14 lg:pb-0">{children}</main>
       </div>
     </div>
   );
