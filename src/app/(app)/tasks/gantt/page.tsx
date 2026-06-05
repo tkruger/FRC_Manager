@@ -7,7 +7,7 @@ import { getActiveRobotId } from "@/app/actions/robot-context";
 import { GanttClient } from "./GanttClient";
 import { TasksTabBar } from "../TasksTabBar";
 import { SeasonProgressBar } from "../SeasonProgressBar";
-import { daysBetween } from "@/lib/schedule-helpers";
+import { daysBetween, SUBTEAM_OPTIONS } from "@/lib/schedule-helpers";
 
 export default async function GanttPage({ searchParams }: { searchParams: Promise<{ subTeam?: string; mine?: string }> }) {
   const { subTeam, mine } = await searchParams;
@@ -71,6 +71,9 @@ export default async function GanttPage({ searchParams }: { searchParams: Promis
   const totalTasks = allTaskStats.length;
   const completeTasks = allTaskStats.filter((t) => t.status === "COMPLETE").length;
   const subteamStats: Record<string, { total: number; done: number }> = {};
+  for (const opt of SUBTEAM_OPTIONS) {
+    subteamStats[opt.value] = { total: 0, done: 0 };
+  }
   for (const t of allTaskStats) {
     const st = t.subTeam ?? "OTHER";
     if (!subteamStats[st]) subteamStats[st] = { total: 0, done: 0 };
@@ -83,7 +86,7 @@ export default async function GanttPage({ searchParams }: { searchParams: Promis
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-h1 text-[--color-text-primary]">Schedule</h1>
+          <h1 className="text-h1 text-[--color-text-primary]">Tasks</h1>
           <p className="text-body text-[--color-text-secondary] mt-0.5">
             {activeSeason.name}
             {activeRobotId && <span className="ml-2 badge badge-info">Robot filtered</span>}

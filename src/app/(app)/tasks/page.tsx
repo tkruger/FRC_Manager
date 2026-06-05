@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { daysBetween, isOverdue } from "@/lib/schedule-helpers";
+import { daysBetween, isOverdue, SUBTEAM_OPTIONS } from "@/lib/schedule-helpers";
 import { getActiveRobotId } from "@/app/actions/robot-context";
 import { TasksTabBar } from "./TasksTabBar";
 import { KanbanView } from "./KanbanView";
@@ -32,7 +32,7 @@ export default async function SchedulePage({
   if (!activeSeason) {
     return (
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <h1 className="text-h1 text-[--color-text-primary] mb-4">Schedule</h1>
+        <h1 className="text-h1 text-[--color-text-primary] mb-4">Tasks</h1>
         <div className="card">
           <p className="text-body text-[--color-text-secondary]">
             No active season.{" "}
@@ -114,6 +114,9 @@ export default async function SchedulePage({
   const completeTasks = tasks.filter((t) => t.status === "COMPLETE").length;
 
   const subteamStats: Record<string, { total: number; done: number }> = {};
+  for (const opt of SUBTEAM_OPTIONS) {
+    subteamStats[opt.value] = { total: 0, done: 0 };
+  }
   for (const t of tasks) {
     const st = t.subTeam ?? "OTHER";
     if (!subteamStats[st]) subteamStats[st] = { total: 0, done: 0 };

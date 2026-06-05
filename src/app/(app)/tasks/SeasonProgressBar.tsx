@@ -38,11 +38,8 @@ export function SeasonProgressBar({
     localStorage.setItem(STORAGE_KEY, String(next));
   }
 
-  // Avoid layout flash before localStorage is read
-  if (!mounted) return null;
-
   return (
-    <div className="card py-3 px-4">
+    <div className={`card py-3 px-4${!mounted ? " invisible" : ""}`}>
       {/* Always-visible summary row — entire row is the toggle */}
       <button
         onClick={toggle}
