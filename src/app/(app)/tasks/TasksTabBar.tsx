@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "frc-tasks-mine";
@@ -91,7 +92,7 @@ export function TasksTabBar() {
         {TABS.map((tab) => {
           const active = tab.match(pathname, view);
           return (
-            <a
+            <Link
               key={tab.label}
               href={tabHref(tab.baseHref)}
               className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
@@ -101,7 +102,7 @@ export function TasksTabBar() {
               }`}
             >
               {tab.label}
-            </a>
+            </Link>
           );
         })}
       </div>
