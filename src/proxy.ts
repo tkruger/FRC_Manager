@@ -11,6 +11,9 @@ const PUBLIC_PATHS = [
   "/api/auth",
   "/api/calendar",    // iCal feed — must be accessible without auth for calendar apps
   "/public/schedule", // Public team schedule page
+  "/api/cron",        // Scheduled jobs — authenticated with CRON_SECRET instead
+  "/sw.js",           // Service worker (push notifications)
+  "/manifest.webmanifest",
 ];
 
 export default auth((req) => {

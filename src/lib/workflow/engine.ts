@@ -167,6 +167,8 @@ async function enterNextStep(tx: Tx, r: RequestState, def: WorkflowDef, fromInde
         teamId,
         roles: step.notify.roles,
         type:  n.type,
+        topic: "purchase.action_needed",
+        bypassQuietHours: r.priority === "EMERGENCY",
         title: `${emergency}"${r.title}" ${n.verb}`,
         body:  `${step.name} · $${(r.estimatedTotal ?? 0).toFixed(2)}`,
         linkUrl: link,
@@ -287,7 +289,7 @@ export async function performAction(
           await logEvent(tx, r.id, { step, action: "approve", actorId: actor.id, note: input.note });
           if (step.notify.requester) {
             outbox.push(() => createNotification({
-              userId: r.requestedById, type: "PURCHASE_APPROVED",
+              topic: "purchase.my_requests", userId: r.requestedById, type: "PURCHASE_APPROVED",
               title: `${step.name} approved: "${r.title}"`, linkUrl: link,
             }));
           }
@@ -307,7 +309,7 @@ export async function performAction(
           await logEvent(tx, r.id, { step, action: "deny", actorId: actor.id, note: input.note });
           if (step.notify.requester) {
             outbox.push(() => createNotification({
-              userId: r.requestedById, type: "PURCHASE_DENIED",
+              topic: "purchase.my_requests", userId: r.requestedById, type: "PURCHASE_DENIED",
               title: `Purchase request denied: "${r.title}"`, body: input.note || undefined, linkUrl: link,
             }));
           }
@@ -340,7 +342,7 @@ export async function performAction(
           }
           if (step.notify.requester) {
             outbox.push(() => createNotification({
-              userId: r.requestedById, type: "PURCHASE_APPROVED",
+              topic: "purchase.my_requests", userId: r.requestedById, type: "PURCHASE_APPROVED",
               title: `Ordered: "${r.title}"`,
               body:  input.expectedDelivery ? `Expected ${input.expectedDelivery.toLocaleDateString()}` : undefined,
               linkUrl: link,
@@ -360,7 +362,7 @@ export async function performAction(
           }
           if (step.notify.requester) {
             outbox.push(() => createNotification({
-              userId: r.requestedById, type: "ORDER_RECEIVED",
+              topic: "purchase.my_requests", userId: r.requestedById, type: "ORDER_RECEIVED",
               title: `Delivered: "${r.title}"`, linkUrl: link,
             }));
           }
@@ -374,7 +376,7 @@ export async function performAction(
           await logEvent(tx, r.id, { step, action: "cancel", actorId: actor.id, note: input.note });
           if (actor.id !== r.requestedById) {
             outbox.push(() => createNotification({
-              userId: r.requestedById, type: "PURCHASE_DENIED",
+              topic: "purchase.my_requests", userId: r.requestedById, type: "PURCHASE_DENIED",
               title: `Purchase request cancelled: "${r.title}"`, body: input.note || undefined, linkUrl: link,
             }));
           }

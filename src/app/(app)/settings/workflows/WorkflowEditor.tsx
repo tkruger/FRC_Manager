@@ -169,6 +169,21 @@ export function WorkflowEditor({ def, counts, isCustom }: Props) {
         <StepEditor key={step.key} step={step} onChange={(patch) => updateStep(step.key, patch)} />
       ))}
 
+      {/* Reminders */}
+      <EditorCard title="Reminders" badge="Until someone acts">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <FieldRow label="Routine requests — remind every (hours)">
+            <input type="number" min={1} max={168} className={inputCls} value={draft.reminders.routineHours}
+              onChange={(e) => setDraft((d) => ({ ...d, reminders: { ...d.reminders, routineHours: clampHours(e.target.value) } }))} />
+          </FieldRow>
+          <FieldRow label="Urgent & emergency — remind every (hours)">
+            <input type="number" min={1} max={168} className={inputCls} value={draft.reminders.urgentHours}
+              onChange={(e) => setDraft((d) => ({ ...d, reminders: { ...d.reminders, urgentHours: clampHours(e.target.value) } }))} />
+          </FieldRow>
+        </div>
+        <p className="text-small text-[--color-text-secondary]">Reminders go to whoever can act on the step, outside their quiet hours.</p>
+      </EditorCard>
+
       {error && (
         <p className="text-sm text-[--color-danger] bg-[--color-danger]/10 rounded px-3 py-2">{error}</p>
       )}
@@ -332,6 +347,11 @@ function ConditionEditor({ value, onChange }: { value: Condition | null; onChang
 }
 
 // ── Small building blocks ────────────────────────────────────────────────────
+
+function clampHours(v: string) {
+  const n = Math.round(Number(v));
+  return Number.isFinite(n) ? Math.min(168, Math.max(1, n)) : 24;
+}
 
 function EditorCard({
   title, badge, controls, children,

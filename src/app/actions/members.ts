@@ -35,6 +35,7 @@ export async function approveMemberAction(
     await createNotification({
       userId,
       type: "ACCOUNT_APPROVED",
+      topic: "account",
       title: "Your account has been approved! Welcome to the team.",
       linkUrl: "/dashboard",
     });

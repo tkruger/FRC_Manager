@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import * as notify from "@/lib/notify/events";
 import type { TaskStatus, TaskPriority, SubTeam, DesignReviewStatus } from "@/generated/prisma";
 
 const TaskSchema = z.object({
@@ -81,6 +82,8 @@ export async function createTaskAction(
     },
   });
 
+  if (assigneeIds.length) await notify.taskAssigned(task.id, assigneeIds, session.user.id);
+
   revalidatePath("/tasks");
   return { success: true, taskId: task.id };
 }
@@ -92,6 +95,7 @@ export async function updateTaskStatusAction(
   const session = await auth();
   if (!session) return { success: false };
 
+  const prev = await prisma.task.findUnique({ where: { id: taskId }, select: { status: true } });
   await prisma.task.update({
     where: { id: taskId },
     data: {
@@ -99,6 +103,7 @@ export async function updateTaskStatusAction(
       completionDate: status === "COMPLETE" ? new Date() : null,
     },
   });
+  if (status === "BLOCKED" && prev?.status !== "BLOCKED") await notify.taskBlocked(taskId, session.user.id);
 
   revalidatePath("/tasks");
   revalidatePath(`/tasks/${taskId}`);
@@ -135,6 +140,11 @@ export async function updateTaskAction(
   if (!parsed.success) return { success: false, error: "Invalid data." };
   const d = parsed.data;
 
+  const prev = await prisma.task.findUnique({
+    where:  { id: taskId },
+    select: { status: true, assignees: { select: { id: true } } },
+  });
+
   await prisma.task.update({
     where: { id: taskId },
     data: {
@@ -158,6 +168,11 @@ export async function updateTaskAction(
       } : {}),
     },
   });
+
+  const previousAssignees = new Set(prev?.assignees.map((a) => a.id));
+  const added = assigneeIds.filter((id) => !previousAssignees.has(id));
+  if (added.length) await notify.taskAssigned(taskId, added, session.user.id);
+  if (status === "BLOCKED" && prev?.status !== "BLOCKED") await notify.taskBlocked(taskId, session.user.id);
 
   revalidatePath("/tasks");
   revalidatePath(`/tasks/${taskId}`);

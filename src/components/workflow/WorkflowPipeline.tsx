@@ -55,6 +55,10 @@ export function WorkflowPipeline({ def, counts }: Props) {
           {def.steps.some((s) => s.effects.addStock) && " Stock levels reflect the delivery."}
           {def.steps.some((s) => s.effects.recordExpense) && " The budget shows the actual spend."}
         </Detail>
+        <Detail label="Reminders">
+          Whoever a request is waiting on is reminded every {hours(def.reminders.routineHours)} for routine requests and
+          every {hours(def.reminders.urgentHours)} for urgent or emergency ones, until someone acts. People can opt out in their notification settings.
+        </Detail>
         <Detail label="Other endings">
           Denied at an approval step, or cancelled before ordering. Either way, a linked reorder goes back into the queue.
         </Detail>
@@ -154,6 +158,10 @@ function Detail({ label, children }: { label: string; children: React.ReactNode 
       <dd className="text-small text-[--color-text-primary]">{children}</dd>
     </div>
   );
+}
+
+function hours(h: number) {
+  return h === 24 ? "day" : h % 24 === 0 ? `${h / 24} days` : h === 1 ? "hour" : `${h} hours`;
 }
 
 function capitalize(s: string) {

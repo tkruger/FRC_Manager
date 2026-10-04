@@ -1,56 +1,37 @@
 // Server-only helpers. Deliberately NOT "use server": that would expose these as
 // callable endpoints, letting any client send notifications to any user.
+//
+// Thin wrappers kept for existing callers — new code should use
+// notifyUsers / notifyRoles from "@/lib/notify/deliver" with an explicit topic.
 
-import { prisma } from "@/lib/prisma";
-import type { NotificationType } from "@/generated/prisma";
+import type { NotificationType, Role } from "@/generated/prisma";
+import { notifyUsers, notifyRoles } from "@/lib/notify/deliver";
+import type { TopicId } from "@/lib/notify/topics";
 
 export async function createNotification({
-  userId,
-  type,
-  title,
-  body,
-  linkUrl,
+  userId, type, topic, title, body, linkUrl,
 }: {
   userId: string;
   type: NotificationType;
+  topic: TopicId;
   title: string;
   body?: string;
   linkUrl?: string;
 }) {
-  return prisma.notification.create({
-    data: { userId, type, title, body, linkUrl },
-  });
+  return notifyUsers([userId], { topic, type, title, body, url: linkUrl });
 }
 
 export async function notifyTeam({
-  teamId,
-  roles,
-  type,
-  title,
-  body,
-  linkUrl,
+  teamId, roles, type, topic, title, body, linkUrl, bypassQuietHours,
 }: {
   teamId: string;
-  roles?: string[];
+  roles?: Role[];
   type: NotificationType;
+  topic: TopicId;
   title: string;
   body?: string;
   linkUrl?: string;
+  bypassQuietHours?: boolean;
 }) {
-  const users = await prisma.user.findMany({
-    where: {
-      teamId,
-      status: "ACTIVE",
-      ...(roles?.length
-        ? { roles: { some: { role: { in: roles as any[] } } } }
-        : {}),
-    },
-    select: { id: true },
-  });
-
-  if (users.length === 0) return;
-
-  await prisma.notification.createMany({
-    data: users.map((u) => ({ userId: u.id, type, title, body, linkUrl })),
-  });
+  return notifyRoles(teamId, roles?.length ? roles : "all", { topic, type, title, body, url: linkUrl, bypassQuietHours });
 }

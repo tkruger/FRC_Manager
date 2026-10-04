@@ -24,6 +24,12 @@ const TYPE_ICONS: Record<string, string> = {
   MEMBER_APPROVAL_NEEDED:  "👤",
   ACCOUNT_APPROVED:        "✅",
   ACCOUNT_DENIED:          "❌",
+  PURCHASE_REMINDER:       "⏰",
+  MEETING_REMINDER:        "📅",
+  MEETING_CHANGED:         "🗓️",
+  COMPETITION_COUNTDOWN:   "🏁",
+  TASK_ASSIGNED:           "📌",
+  TOOL_DUE:                "🔧",
 };
 
 export default async function NotificationsPage() {
@@ -53,7 +59,12 @@ export default async function NotificationsPage() {
             <p className="text-small text-[--color-text-secondary] mt-0.5">{unread.length} unread</p>
           )}
         </div>
-        {unread.length > 0 && <MarkAllReadButton />}
+        <div className="flex items-center gap-3">
+          <Link href="/settings/notifications" className="text-sm font-medium text-[--color-secondary] hover:underline">
+            Settings
+          </Link>
+          {unread.length > 0 && <MarkAllReadButton />}
+        </div>
       </div>
 
       {notifications.length === 0 ? (

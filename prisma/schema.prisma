@@ -37,6 +37,11 @@ model User {
   roles         UserRole[]
   displayMode   DisplayMode @default(AUTO_SYSTEM)
 
+  // Notifications — times are interpreted in timezone (falls back to the team's)
+  timezone        String?
+  quietHoursStart Int     @default(21) // local hour push goes quiet
+  quietHoursEnd   Int     @default(7)  // local hour push resumes
+
   // NextAuth
   accounts      Account[]
   sessions      Session[]
@@ -55,6 +60,8 @@ model User {
   notifications        Notification[]
   maintenanceLogs      ToolMaintenanceLog[]
   discordLink          DiscordLink?
+  pushSubscriptions    PushSubscription[]
+  notificationPrefs    NotificationPreference[]
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -143,6 +150,7 @@ model Team {
   vendors       Vendor[]
   tools         Tool[]
   discordConfig DiscordConfig?
+  timezone      String?   // IANA zone used for meeting times and daily reminders
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -1057,6 +1065,7 @@ model Notification {
   title     String
   body      String?
   linkUrl   String?
+  topic     String?          // notification topic (see src/lib/notify/topics.ts)
   read      Boolean          @default(false)
   createdAt DateTime         @default(now())
 }
@@ -1080,6 +1089,46 @@ enum NotificationType {
   MEMBER_APPROVAL_NEEDED
   ACCOUNT_APPROVED
   ACCOUNT_DENIED
+  PURCHASE_REMINDER
+  MEETING_REMINDER
+  MEETING_CHANGED
+  COMPETITION_COUNTDOWN
+  TASK_ASSIGNED
+  TOOL_DUE
+}
+
+/// A browser/device that has opted in to web push for a user
+model PushSubscription {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint      String    @unique
+  p256dh        String
+  auth          String
+  userAgent     String?
+  createdAt     DateTime  @default(now())
+  lastSuccessAt DateTime?
+
+  @@index([userId])
+}
+
+/// Per-user, per-topic delivery choice. Missing row = the topic's default.
+model NotificationPreference {
+  id     String  @id @default(cuid())
+  userId String
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic  String
+  inApp  Boolean
+  push   Boolean
+
+  @@unique([userId, topic])
+}
+
+/// Remembers when a scheduled reminder was last sent so the hourly job never repeats itself
+model ReminderLog {
+  key        String   @id
+  lastSentAt DateTime
+  count      Int      @default(1)
 }
 
 model ActivityLog {

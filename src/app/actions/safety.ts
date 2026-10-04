@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { safetyIncidentFiled } from "@/lib/notify/events";
 import type { IncidentSeverity, CertStatus } from "@/generated/prisma";
 
 const IncidentSchema = z.object({
@@ -46,6 +47,7 @@ export async function fileIncidentAction(
       correctiveAction:parsed.data.correctiveAction,
     },
   });
+  if (session.user.teamId) await safetyIncidentFiled(session.user.teamId, parsed.data.severity, session.user.id);
 
   revalidatePath("/safety");
   revalidatePath("/safety/incidents");

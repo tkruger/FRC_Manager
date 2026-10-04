@@ -33,6 +33,7 @@ export async function maybeQueueReorder(
       teamId,
       roles:   def.trigger.notifyRoles,
       type:    "REORDER_TRIGGERED",
+      topic:   "inventory.low_stock",
       title:   `Low stock: ${item.name}`,
       body:    `${newStock} left (minimum ${item.minStockThreshold}) — added to the reorder queue`,
       linkUrl: "/inventory?view=reorder",

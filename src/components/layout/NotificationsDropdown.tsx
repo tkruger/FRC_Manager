@@ -24,6 +24,12 @@ const TYPE_ICONS: Record<string, string> = {
   MEMBER_APPROVAL_NEEDED:  "👤",
   ACCOUNT_APPROVED:        "✅",
   ACCOUNT_DENIED:          "❌",
+  PURCHASE_REMINDER:       "⏰",
+  MEETING_REMINDER:        "📅",
+  MEETING_CHANGED:         "🗓️",
+  COMPETITION_COUNTDOWN:   "🏁",
+  TASK_ASSIGNED:           "📌",
+  TOOL_DUE:                "🔧",
 };
 
 interface Notification {

@@ -11,6 +11,10 @@ export const DEFAULT_PURCHASE_WORKFLOW: WorkflowDef = {
     autoReorder: true,
     notifyRoles: [],
   },
+  reminders: {
+    routineHours: 24, // routine requests: once a day
+    urgentHours:  3,  // urgent & emergency: every 3 hours
+  },
   steps: [
     {
       key: "budget-approval",

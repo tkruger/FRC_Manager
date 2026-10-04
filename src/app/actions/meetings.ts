@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import * as notify from "@/lib/notify/events";
 
 const LEADERSHIP = ["HEAD_MENTOR", "TEAM_LEADERSHIP", "BUILD_LEAD"] as const;
 
@@ -59,6 +60,7 @@ export async function generateMeetingsAction(
   }
 
   await prisma.meeting.createMany({ data: meetings });
+  if (meetings.length > 0) await notify.meetingsPublished(session.user.teamId!, meetings.length, session.user.id);
 
   revalidatePath("/schedule/calendar");
   revalidatePath("/schedule");
@@ -76,7 +78,10 @@ export async function updateMeetingAction(
     taskIds?: string[];
   }
 ): Promise<{ success: boolean; error?: string }> {
-  try { await requireLeadership(); } catch (e: any) { return { success: false, error: e.message }; }
+  let session;
+  try { session = await requireLeadership(); } catch (e: any) { return { success: false, error: e.message }; }
+
+  const before = await prisma.meeting.findUnique({ where: { id: meetingId }, select: { date: true, startTime: true, endTime: true } });
 
   await prisma.meeting.update({
     where: { id: meetingId },
@@ -90,6 +95,14 @@ export async function updateMeetingAction(
     },
   });
 
+  // Only time/date changes are worth a notification — not agenda edits
+  const moved = before && (
+    (data.date && new Date(data.date).getTime() !== before.date.getTime()) ||
+    (data.startTime && data.startTime !== before.startTime) ||
+    (data.endTime && data.endTime !== before.endTime)
+  );
+  if (moved) await notify.meetingChanged(meetingId, "moved", session.user.id);
+
   revalidatePath("/schedule/calendar");
   return { success: true };
 }
@@ -98,20 +111,24 @@ export async function cancelMeetingAction(
   meetingId: string,
   reason?: string
 ): Promise<{ success: boolean; error?: string }> {
-  try { await requireLeadership(); } catch (e: any) { return { success: false, error: e.message }; }
+  let session;
+  try { session = await requireLeadership(); } catch (e: any) { return { success: false, error: e.message }; }
 
   await prisma.meeting.update({
     where: { id: meetingId },
     data: { cancelled: true, cancelReason: reason ?? null },
   });
+  await notify.meetingChanged(meetingId, "cancelled", session.user.id);
 
   revalidatePath("/schedule/calendar");
   return { success: true };
 }
 
 export async function restoreMeetingAction(meetingId: string): Promise<{ success: boolean }> {
-  try { await requireLeadership(); } catch { return { success: false }; }
+  let session;
+  try { session = await requireLeadership(); } catch { return { success: false }; }
   await prisma.meeting.update({ where: { id: meetingId }, data: { cancelled: false, cancelReason: null } });
+  await notify.meetingChanged(meetingId, "restored", session.user.id);
   revalidatePath("/schedule/calendar");
   return { success: true };
 }
@@ -133,9 +150,10 @@ export async function addMeetingAction(
 
   if (!date || !startTime || !endTime) return { success: false, error: "Date and times are required." };
 
-  await prisma.meeting.create({
+  const meeting = await prisma.meeting.create({
     data: { seasonId, date: new Date(date), startTime, endTime, title },
   });
+  await notify.meetingChanged(meeting.id, "added", session.user.id);
 
   revalidatePath("/schedule/calendar");
   return { success: true };

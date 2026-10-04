@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { signIn } from "@/lib/auth";
 import { z } from "zod";
+import { memberAwaitingApproval } from "@/lib/notify/events";
 import { AuthError } from "next-auth";
 
 const RegisterSchema = z.object({
@@ -74,6 +75,8 @@ export async function registerAction(
         : undefined,
     },
   });
+
+  if (!codeMatch) await memberAwaitingApproval(team.id, name);
 
   return { success: true, activated: !!codeMatch };
 }

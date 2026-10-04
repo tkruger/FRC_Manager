@@ -80,6 +80,11 @@ export const WorkflowSchema = z
       notifyRoles: z.array(z.enum(ROLE_VALUES)),
     }),
     steps: z.array(StepSchema),
+    /** Repeat "waiting on you" reminders until someone acts (added after v1 — defaults keep older rows valid) */
+    reminders: z.object({
+      routineHours: z.number().int().min(1).max(168),
+      urgentHours:  z.number().int().min(1).max(168),
+    }).default({ routineHours: 24, urgentHours: 3 }),
   })
   .superRefine((def, ctx) => {
     const keys = new Set<string>();
@@ -98,7 +103,7 @@ export const WorkflowSchema = z
       });
     }
   });
-export type WorkflowDef = z.infer<typeof WorkflowSchema>;
+export type WorkflowDef = z.output<typeof WorkflowSchema>;
 
 export function parseWorkflow(json: unknown): WorkflowDef {
   return WorkflowSchema.parse(json);
