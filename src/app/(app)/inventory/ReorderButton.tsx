@@ -58,6 +58,7 @@ export function ReorderButton({ itemId, itemName, reorderQty, unitCost, supplier
               {/* Line item 0 — pre-filled from the inventory item */}
               <input type="hidden" name="lineItem_0_name" value={itemName} />
               <input type="hidden" name="lineItem_0_baseItemId" value={itemId} />
+              {supplier && <input type="hidden" name="lineItem_0_vendorName" value={supplier} />}
               {unitCost != null && <input type="hidden" name="lineItem_0_unitCost" value={unitCost} />}
 
               <div className="rounded-lg border border-(--color-border) bg-(--color-surface-overlay) px-4 py-3 space-y-1">

@@ -65,8 +65,8 @@ export function availableActions(
     actions.push({ action: "approve", stepKey: step.key, label: "Approve" });
     actions.push({ action: "deny",    stepKey: step.key, label: "Deny" });
   }
-  if (step.type === "order"   && canAct) actions.push({ action: "order",   stepKey: step.key, label: "Mark as ordered" });
-  if (step.type === "receive" && canAct) actions.push({ action: "receive", stepKey: step.key, label: "Mark received" });
+  // Order and receive steps complete on their own from item statuses: tracking links
+  // move items to Ordered, and marking items arrived moves them to Arrived.
 
   // Cancelling is possible until the order is placed: by the requester, anyone who
   // can act on the current step, or a Head Mentor.

@@ -6,6 +6,7 @@ const ROLE_RANK: Record<Role, number> = {
   INVENTORY_ADMIN:3,
   BUDGET_MANAGER: 3,
   SAFETY_CAPTAIN: 3,
+  TEAM_ADMIN:     5,
   TEAM_LEADERSHIP:8,
   HEAD_MENTOR:    10,
 };
@@ -31,6 +32,7 @@ export const ROLE_LABELS: Record<Role, string> = {
   INVENTORY_ADMIN:"Inventory Admin",
   BUDGET_MANAGER: "Budget Manager",
   SAFETY_CAPTAIN: "Safety Captain",
+  TEAM_ADMIN:     "Team Admin",
   TEAM_LEADERSHIP:"Team Leadership",
   HEAD_MENTOR:    "Head Mentor",
 };

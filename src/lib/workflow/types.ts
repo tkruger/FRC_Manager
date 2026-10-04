@@ -12,6 +12,7 @@ export const ROLE_VALUES = [
   "INVENTORY_ADMIN",
   "BUDGET_MANAGER",
   "SAFETY_CAPTAIN",
+  "TEAM_ADMIN",
   "TEAM_LEADERSHIP",
   "HEAD_MENTOR",
 ] as const;
@@ -117,14 +118,15 @@ export const ROLE_DISPLAY: Record<WorkflowRole, string> = {
   INVENTORY_ADMIN: "Inventory Admin",
   BUDGET_MANAGER:  "Budget Manager",
   SAFETY_CAPTAIN:  "Safety Captain",
+  TEAM_ADMIN:      "Team Admin",
   TEAM_LEADERSHIP: "Team Leadership",
   HEAD_MENTOR:     "Head Mentor",
 };
 
 export const STEP_TYPE_DISPLAY: Record<StepType, { label: string; verb: string }> = {
   approval: { label: "Approval", verb: "Approve or deny" },
-  order:    { label: "Order",    verb: "Place the order" },
-  receive:  { label: "Receive",  verb: "Confirm delivery" },
+  order:    { label: "Order",    verb: "Order items and add tracking links" },
+  receive:  { label: "Receive",  verb: "Mark items arrived" },
 };
 
 export const RULE_FIELD_DISPLAY: Record<RuleField, string> = {

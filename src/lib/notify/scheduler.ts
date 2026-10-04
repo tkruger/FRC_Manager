@@ -128,14 +128,15 @@ async function purchaseReminders(seasonId: string, awake: Member[], now: Date): 
   for (const r of open) {
     const def  = await definitionFor(r.workflowDefinitionId);
     const step = resolveCurrentStep(def, r);
-    if (!step) continue;
+    // The receive step is waiting on a delivery, not a person — no nagging
+    if (!step || step.type === "receive") continue;
 
     const urgent  = r.priority !== "ROUTINE";
     const everyMs = (urgent ? def.reminders.urgentHours : def.reminders.routineHours) * HOUR;
     const entered = r.events[0]?.stepKey === step.key ? r.events[0].createdAt : r.updatedAt;
     const ageH    = Math.floor((now.getTime() - entered.getTime()) / HOUR);
     const waited  = ageH >= 48 ? `${Math.floor(ageH / 24)} days` : `${ageH} hours`;
-    const verb    = step.type === "approval" ? "approve or deny" : step.type === "order" ? "place the order" : "confirm delivery";
+    const verb    = step.type === "approval" ? "approve or deny" : "order the items and add tracking links";
 
     for (const m of awake) {
       // Head Mentors can act on any step, but are only reminded about steps that list them

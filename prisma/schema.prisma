@@ -98,6 +98,8 @@ enum Role {
   SAFETY_CAPTAIN
   TEAM_LEADERSHIP
   HEAD_MENTOR
+  /// Places approved orders, exports them to the purchasing spreadsheet, adds tracking links
+  TEAM_ADMIN
 }
 
 model Account {
@@ -147,12 +149,15 @@ model Team {
   users         User[]
   seasons       Season[]
   workflows     WorkflowDefinition[]
+  trackings     Tracking[]
   vendors       Vendor[]
   tools         Tool[]
   discordConfig DiscordConfig?
   timezone      String?   // IANA zone used for meeting times and daily reminders
   /// Next number for auto-assigned tool asset tags (TOOL-0001, …)
   nextToolNumber Int      @default(1)
+  /// Next sequential order item ID (0001, 0002, …)
+  nextOrderItemNumber Int @default(1)
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -720,6 +725,44 @@ model PurchaseLineItem {
   goesOnRobotBom   Boolean        @default(false)
   isKopSource      Boolean        @default(false)
   qtyReceived      Float?
+
+  // ── Order item fields (a PurchaseRequest is an "order"; each line is an "item") ──
+  /// Team-wide sequential item ID, shown as 0001, 0002, … (assigned by the system)
+  orderNumber      Int?
+  vendorName       String?
+  subTeam          SubTeam?
+  importance       RequestPriority @default(ROUTINE)
+  reasoning        String?
+  notes            String?
+  status           OrderItemStatus @default(QUEUED)
+  trackingId       String?
+  tracking         Tracking?       @relation(fields: [trackingId], references: [id], onDelete: SetNull)
+  /// Last time this item was included in a Team Admin CSV export
+  exportedAt       DateTime?
+  orderedAt        DateTime?
+  arrivedAt        DateTime?
+  arrivedById      String?
+}
+
+/// Queued → To order (approved, sent to Team Admin) → Ordered (tracking added) → Arrived (stocked)
+enum OrderItemStatus {
+  QUEUED
+  TO_ORDER
+  ORDERED
+  ARRIVED
+}
+
+/// A shipment tracking link, shared by every item that ships together
+model Tracking {
+  id          String   @id @default(cuid())
+  teamId      String
+  team        Team     @relation(fields: [teamId], references: [id])
+  url         String
+  label       String?
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  items PurchaseLineItem[]
 }
 
 // ─────────────────────────────────────────────

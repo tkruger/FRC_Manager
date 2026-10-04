@@ -12,7 +12,7 @@ const SECTIONS: { id: HelpTopic; title: string }[] = [
   { id: "season",          title: "Season, robots & competitions" },
   { id: "calendar",        title: "Meeting calendar" },
   { id: "inventory",       title: "Inventory & the order queue" },
-  { id: "purchasing",      title: "Purchase requests & approvals" },
+  { id: "purchasing",      title: "Orders" },
   { id: "budget",          title: "Budget" },
   { id: "tools",           title: "Tools" },
   { id: "safety",          title: "Safety" },
@@ -158,24 +158,47 @@ export default function HelpPage() {
         <p>An item that&apos;s already on an open request can&apos;t be requested again — open the existing request from the order queue instead.</p>
       </Section>
 
-      <Section id="purchasing" title="Purchase requests & approvals">
-        <p>Every purchase follows the team&apos;s <b>purchase workflow</b>. By default:</p>
+      <Section id="purchasing" title="Orders">
+        <p>
+          An <b>order</b> is a group of <b>items</b> someone needs bought. One order can include parts for several sub-teams
+          from several vendors. Each order has a name, an order date and a total cost.
+        </p>
+        <H3>Placing an order</H3>
         <Steps>
-          <li><b>Budget approval</b> — Budget Managers or Head Mentors approve or deny. Routine requests of $50 or less skip this step automatically; emergencies always need approval.</li>
-          <li><b>Place order</b> — someone orders from the vendor and records the confirmation number, actual total and expected delivery. The total is logged as committed spend in the budget.</li>
-          <li><b>Receive &amp; stock</b> — when the delivery arrives, <b>Mark received</b> adds the quantities to inventory and records the expense.</li>
+          <li>Go to <b>Orders → + New order</b> and give it a name.</li>
+          <li>For each item, paste the product <b>link</b> — for most FRC vendors (REV, AndyMark, WCP and other Shopify stores) the vendor, name, part number and price fill in automatically. Some sites (McMaster-Carr, Amazon) block this; just type the details.</li>
+          <li>Set the quantity, sub-team, importance (Routine, Urgent or Emergency), why it&apos;s needed, and any notes for the Team Admin.</li>
+          <li>Submit. Every item gets a 4-digit ID (0001, 0002, …) assigned by the system.</li>
+        </Steps>
+        <p>You can also order straight from <b>Inventory</b> — the <b>Order</b> button on low-stock items, or <b>Order a new item</b>.</p>
+        <H3>Item statuses</H3>
+        <Table
+          head={["Status", "Meaning"]}
+          rows={[
+            ["Queued", "The order is waiting for approval."],
+            ["To order", "Approved and sent to the Team Admin to purchase."],
+            ["Ordered", "The Team Admin added a tracking link."],
+            ["Arrived", "Someone marked it arrived — it's been added to inventory."],
+          ]}
+        />
+        <H3>What happens next</H3>
+        <Steps>
+          <li><b>Approval</b> — Budget Managers or Head Mentors approve or deny the order. Routine orders of $50 or less are approved automatically; emergencies always need approval. Approved items become <b>To order</b>.</li>
+          <li><b>Team Admin orders</b> — on <b>Orders → Team Admin</b>, the Team Admin copies or downloads the to-order items as CSV for the purchasing spreadsheet (no header; columns ID, Vendor, Name, Link, Unit Cost, Quantity, Notes, Date), places the orders, then selects the items that shipped together and adds one <b>tracking link</b> — they become <b>Ordered</b>.</li>
+          <li><b>Arrival</b> — when a box shows up, anyone can tick the items and tap <b>Mark arrived</b>. Each item is added to inventory (matched by its inventory link, part number or name, or created new) and becomes <b>Arrived</b>.</li>
         </Steps>
         <ul className="list">
-          <li>Each request page shows a <b>Waiting on</b> banner and a full timeline: who did what and when, which steps were skipped and why, and what happens next.</li>
-          <li>Only people with the right role for the current step see its buttons. The requester (or anyone who can act) can <b>cancel</b> before the order is placed. A denied or cancelled request puts its items back in the order queue.</li>
-          <li>Whoever a request is waiting on gets reminders until they act — daily for routine requests, every 3 hours for urgent and emergency ones.</li>
+          <li>The order moves along by itself: it&apos;s ordered once every item is ordered, and complete once every item has arrived.</li>
+          <li>Captains (Team Leadership) and the Team Admin can set any item&apos;s status by hand. Arrived items can&apos;t be changed back, because their stock has already been added.</li>
+          <li>Each order page shows a <b>Waiting on</b> banner and a timeline of who did what and when.</li>
+          <li>Whoever an order is waiting on is reminded until they act — daily for routine orders, every 3 hours for urgent and emergency ones.</li>
         </ul>
         <H3>Changing the workflow</H3>
         <p>
           <Link href="/settings/workflows" className="link">Settings → Purchase workflow</Link> shows every step. Head Mentors can
           add approval steps (for example, a mentor sign-off above $500), choose who acts and who is notified, set when a step is
-          required, change reminder timing, and turn the stock and budget updates on or off. Each save is a new version; requests
-          already in progress keep the version they started with, and older versions can be restored.
+          required, change reminder timing, and turn the stock and budget updates on or off. Each save is a new version; orders
+          already in progress keep the version they started with.
         </p>
       </Section>
 
@@ -227,7 +250,7 @@ export default function HelpPage() {
         </Steps>
         <H3>What you can get</H3>
         <ul className="list">
-          <li><b>Purchasing</b> — requests waiting on you (with reminders until you act), updates on your own requests, low stock.</li>
+          <li><b>Purchasing</b> — orders waiting on you (with reminders until you act), updates on your own orders, low stock.</li>
           <li><b>Meetings</b> — a reminder the day before and shortly before each meeting, and any changes or cancellations.</li>
           <li><b>Tasks</b> — when you&apos;re assigned, a morning digest of overdue and upcoming tasks, and blocked tasks.</li>
           <li><b>Competitions</b> — a daily countdown each morning for the 30 days before every event.</li>
@@ -247,12 +270,13 @@ export default function HelpPage() {
         <Table
           head={["Role", "Can also…"]}
           rows={[
-            ["Team Member", "Use tasks, tools, inventory and the calendar; submit purchase requests; order items; report incidents."],
-            ["Build Lead", "Manage meetings and task templates, edit robots and tools, receive deliveries."],
-            ["Inventory Admin", "Manage inventory and tools, manage task templates, place orders, receive deliveries, award certifications."],
-            ["Budget Manager", "Manage the budget, approve purchases, place orders, receive deliveries."],
+            ["Team Member", "Use tasks, tools, inventory and the calendar; place orders and mark items arrived; report incidents."],
+            ["Build Lead", "Manage meetings and task templates, edit robots and tools."],
+            ["Inventory Admin", "Manage inventory and tools, manage task templates, award certifications."],
+            ["Budget Manager", "Manage the budget and approve orders."],
             ["Safety Captain", "Award and revoke certifications; notified of safety incidents."],
-            ["Team Leadership", "Approve members and assign roles (except Head Mentor), manage meetings, Discord and the team time zone; view the purchase workflow."],
+            ["Team Admin", "Get approved items to order, export the purchasing CSV, add tracking links and set item statuses."],
+            ["Team Leadership", "Approve members and assign roles (except Head Mentor), manage meetings, Discord and the team time zone; act as captains on orders (Team Admin page, item statuses); view the purchase workflow."],
             ["Head Mentor", "Everything: seasons, robots, applying templates, editing the purchase workflow, and acting on any purchase step. Only Head Mentors can grant or remove the Head Mentor role."],
           ]}
         />

@@ -12,13 +12,15 @@ interface Props {
   canEdit:       boolean;
   currentUserId: string;
   myCertNames:   string[];
+  /** Server time (ms) — keeps rendering pure when marking overdue checkouts */
+  now:           number;
 }
 
 function shortDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-export function ToolsClient({ tools, canEdit, currentUserId, myCertNames }: Props) {
+export function ToolsClient({ tools, canEdit, currentUserId, myCertNames, now }: Props) {
   const [search, setSearch] = useState("");
   const [open, setOpen]     = useState<{ id: string; tab: ToolTab } | null>(null);
 
@@ -43,7 +45,6 @@ export function ToolsClient({ tools, canEdit, currentUserId, myCertNames }: Prop
   }, [displayed]);
 
   const selected = open ? tools.find((t) => t.id === open.id) ?? null : null;
-  const now = Date.now();
 
   return (
     <>

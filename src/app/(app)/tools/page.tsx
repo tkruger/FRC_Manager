@@ -125,6 +125,7 @@ export default async function ToolsPage({ searchParams }: { searchParams: Promis
           canEdit={canEdit}
           currentUserId={session.user.id}
           myCertNames={myCerts.map((c) => c.certName)}
+          now={now.getTime()}
         />
       )}
     </div>

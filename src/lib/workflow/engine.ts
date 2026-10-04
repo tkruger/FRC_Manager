@@ -159,6 +159,11 @@ async function enterNextStep(tx: Tx, r: RequestState, def: WorkflowDef, fromInde
     await syncReorders(tx, r.id, status);
     await logEvent(tx, r.id, { step, action: "entered" });
 
+    // Approved: queued items move to the Team Admin's "To order" list
+    if (step.type === "order") {
+      await tx.purchaseLineItem.updateMany({ where: { requestId: r.id, status: "QUEUED" }, data: { status: "TO_ORDER" } });
+    }
+
     const link = `/procurement/requests/${r.id}`;
     if (step.notify.roles.length > 0) {
       const n = ENTER_NOTIFICATION[step.type];
@@ -251,6 +256,7 @@ export async function performAction(
   action: WorkflowAction,
   actor: Actor,
   input: ActionInput = {},
+  opts: { system?: boolean } = {},
 ): Promise<ActionResult> {
   const r = await prisma.purchaseRequest.findFirst({
     where:  { id: requestId, season: { teamId: actor.teamId } },
@@ -263,7 +269,7 @@ export async function performAction(
   if (!step || step.key !== stepKey) {
     return { success: false, error: "This request has already moved on. Refresh to see its current state." };
   }
-  if (!availableActions(def, r, actor).some((a) => a.action === action)) {
+  if (!opts.system && !availableActions(def, r, actor).some((a) => a.action === action)) {
     return { success: false, error: "You don't have permission to do that at this step." };
   }
 
@@ -401,6 +407,7 @@ export async function performCurrentStepAction(
   action: WorkflowAction,
   actor: Actor,
   input: ActionInput = {},
+  opts: { system?: boolean } = {},
 ): Promise<ActionResult & { stepName?: string }> {
   const r = await prisma.purchaseRequest.findFirst({
     where:  { id: requestId, season: { teamId: actor.teamId } },
@@ -409,7 +416,7 @@ export async function performCurrentStepAction(
   if (!r) return { success: false, error: "Request not found." };
   const step = resolveCurrentStep(await definitionFor(r.workflowDefinitionId), r);
   if (!step) return { success: false, error: "This request is already closed." };
-  const result = await performAction(requestId, step.key, action, actor, input);
+  const result = await performAction(requestId, step.key, action, actor, input, opts);
   return { ...result, stepName: step.name };
 }
 
@@ -432,9 +439,10 @@ async function flush(outbox: Outbox) {
 
 async function addStock(tx: Tx, requestId: string, step: WorkflowStep, actorId: string) {
   const lines = await tx.purchaseLineItem.findMany({
-    where:  { requestId },
+    where:  { requestId, qtyReceived: null },
     select: { id: true, name: true, quantity: true, baseItemId: true },
   });
+  if (lines.length === 0) return; // every item was stocked when it arrived
   const added: { item: string; qty: number }[] = [];
   for (const li of lines) {
     await tx.purchaseLineItem.update({ where: { id: li.id }, data: { qtyReceived: li.quantity } });

@@ -87,7 +87,7 @@ function StepStage({ step, number, count }: { step: WorkflowStep; number: number
       badge={STEP_TYPE_DISPLAY[step.type].label}
       description={step.description}
       aside={count != null && count > 0 && (
-        <Link href="/procurement/requests" className="text-small font-medium text-(--color-secondary) hover:underline whitespace-nowrap">
+        <Link href="/procurement" className="text-small font-medium text-(--color-secondary) hover:underline whitespace-nowrap">
           {count} here now
         </Link>
       )}

@@ -8,7 +8,9 @@ import {
 } from "@/lib/discord";
 import { differenceInCalendarDays } from "date-fns";
 import type { DiscordConfig, DiscordLink } from "@/generated/prisma";
-import { startWorkflow, performCurrentStepAction, describeRequestState, type Actor } from "@/lib/workflow/engine";
+import { performCurrentStepAction, describeRequestState, type Actor } from "@/lib/workflow/engine";
+import { createOrder } from "@/lib/orders/create";
+import { formatItemId } from "@/lib/orders/constants";
 
 async function actorFor(userId: string, teamId: string): Promise<Actor> {
   const user = await prisma.user.findUniqueOrThrow({
@@ -153,7 +155,7 @@ export async function handleWhoami(link: DiscordLink | null): Promise<Response> 
 
   const roleLabels: Record<string, string> = {
     TEAM_MEMBER: "Team Member", BUILD_LEAD: "Build Lead",
-    INVENTORY_ADMIN: "Inventory Admin", BUDGET_MANAGER: "Budget Manager",
+    INVENTORY_ADMIN: "Inventory Admin", BUDGET_MANAGER: "Budget Manager", TEAM_ADMIN: "Team Admin",
     SAFETY_CAPTAIN: "Safety Captain", HEAD_MENTOR: "Head Mentor",
   };
 
@@ -685,45 +687,29 @@ export async function handleOrderRequest(
 
   const preferredVendor = await prisma.vendor.findFirst({
     where: { teamId: ctx.teamId, name: { contains: vendor, mode: "insensitive" } },
-    select: { id: true, name: true },
+    select: { name: true },
   });
-
   const estimated = cost * qty;
 
-  const pr = await prisma.purchaseRequest.create({
-    data: {
-      seasonId:         season.id,
-      title:            `${itemName} × ${qty}`,
-      requestedById:    ctx.link!.userId,
-      justification:    reason,
-      estimatedTotal:   estimated,
-      preferredVendorId: preferredVendor?.id ?? null,
-      status:           "SUBMITTED",
-      lineItems: {
-        create: [{
-          name:     itemName,
-          quantity: qty,
-          unitCost: cost,
-          lineTotal: estimated,
-        }],
-      },
-    },
+  // Same path as the app: item IDs, workflow (approval if needed), notifications
+  const res = await createOrder({
+    actor:    await actorFor(ctx.link!.userId, ctx.teamId),
+    seasonId: season.id,
+    name:     `${itemName} × ${qty}`,
+    items:    [{ name: itemName, quantity: qty, unitCost: cost, vendorName: preferredVendor?.name ?? (vendor || null), reasoning: reason }],
   });
+  if (!res.success) return ephemeralReply(`❌ ${res.error}`);
 
-  // The team's workflow decides whether approval is needed
-  await startWorkflow(pr.id, await actorFor(ctx.link!.userId, ctx.teamId));
-  const state = await describeRequestState(pr.id);
-
-  const prNumber = pr.id.slice(-6).toUpperCase();
+  const itemNumber = (await prisma.purchaseLineItem.findFirst({ where: { requestId: res.requestId }, select: { orderNumber: true } }))?.orderNumber;
 
   return reply(null, [
     embed({
-      title: "📋 Purchase Request Submitted",
+      title: "📋 Order Submitted",
       description: `**${itemName} × ${qty}** — Est. $${estimated.toFixed(2)} | Vendor: ${preferredVendor?.name ?? vendor}`,
       fields: [
-        { name: "Reason", value: reason },
-        { name: "Status", value: state },
-        { name: "Ref",    value: `PR-${prNumber}`, inline: true },
+        { name: "Reason", value: reason || "—" },
+        { name: "Status", value: res.stage },
+        { name: "Item ID", value: formatItemId(itemNumber), inline: true },
       ],
       color: COLORS.info,
     }),
