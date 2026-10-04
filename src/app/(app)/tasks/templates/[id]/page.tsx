@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { findTeamTemplate } from "@/lib/template-access";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
+import { describeAnchor } from "@/lib/competition";
 import { Badge } from "@/components/ui/badge";
 import { SUBTEAM_OPTIONS, PRIORITY_OPTIONS } from "@/lib/schedule-helpers";
 import { AddTaskForm } from "./AddTaskForm";
@@ -13,11 +14,6 @@ import { TemplateCSVImport } from "@/app/(app)/tasks/templates/TemplateCSVImport
 import { Button } from "@/components/ui/button";
 
 const MENTOR_ROLES = ["HEAD_MENTOR", "BUILD_LEAD", "INVENTORY_ADMIN"];
-
-function offsetLabel(offset: number): string {
-  if (offset >= 0) return `Kickoff + ${offset}d`;
-  return `Week 0 − ${Math.abs(offset)}d`;
-}
 
 export default async function TemplateDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -99,7 +95,7 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {t.subTeam && <Badge variant="neutral">{t.subTeam.replace(/_/g, " ")}</Badge>}
-                  <span className="text-small text-[--color-text-secondary] font-mono w-28 text-right">{offsetLabel(t.startOffset)}</span>
+                  <span className="text-small text-(--color-text-secondary) w-40 sm:w-56 text-right">{describeAnchor(t.anchor, t.anchorNumber, t.startOffset)}</span>
                   <span className="text-small text-[--color-text-disabled] w-14 text-right">{t.durationBuildDays}d</span>
                   {isMentor && (
                     <div className="flex gap-1">
@@ -132,7 +128,7 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
                   <Badge variant={t.priority === "CRITICAL" ? "danger" : t.priority === "HIGH" ? "warning" : "neutral"}>
                     {t.priority}
                   </Badge>
-                  <span className="text-small text-[--color-text-secondary] font-mono w-28 text-right">{offsetLabel(t.startOffset)}</span>
+                  <span className="text-small text-(--color-text-secondary) w-40 sm:w-56 text-right">{describeAnchor(t.anchor, t.anchorNumber, t.startOffset)}</span>
                   <span className="text-small text-[--color-text-disabled] w-14 text-right">{t.durationBuildDays}d</span>
                   {isMentor && (
                     <div className="flex gap-1">

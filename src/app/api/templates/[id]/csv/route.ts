@@ -27,6 +27,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       isMilestone:          t.isMilestone,
       designReviewRequired: t.designReviewRequired,
       prerequisiteNames:    t.prerequisiteNames,
+      anchor:               t.anchor,
+      anchorNumber:         t.anchorNumber,
     }))
   );
 

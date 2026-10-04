@@ -16,7 +16,7 @@ export function NewTemplateDialog() {
   useEffect(() => {
     if (state?.success && state.id) {
       setOpen(false);
-      router.push(`/schedule/templates/${state.id}`);
+      router.push(`/tasks/templates/${state.id}`);
     }
   }, [state, router]);
 

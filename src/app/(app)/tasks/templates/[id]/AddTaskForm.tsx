@@ -1,12 +1,13 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { addTemplateTaskAction } from "@/app/actions/templates";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
 import { SUBTEAM_OPTIONS, PRIORITY_OPTIONS } from "@/lib/schedule-helpers";
+import { AnchorFields } from "./AnchorFields";
 
 export function AddTaskForm({ templateId }: { templateId: string }) {
   const router = useRouter();
@@ -14,10 +15,13 @@ export function AddTaskForm({ templateId }: { templateId: string }) {
   // bind(null, templateId) pre-fills the first arg so useActionState sees (_prev, formData)
   const boundAction = addTemplateTaskAction.bind(null, templateId);
   const [state, formAction, pending] = useActionState(boundAction, null);
+  // Bumped after each add so the (controlled) anchor fields reset with the form
+  const [anchorKey, setAnchorKey] = useState(0);
 
   useEffect(() => {
     if (state?.success) {
       formRef.current?.reset();
+      setAnchorKey((k) => k + 1); // eslint-disable-line react-hooks/set-state-in-effect
       router.refresh();
     }
   }, [state, router]);
@@ -34,16 +38,9 @@ export function AddTaskForm({ templateId }: { templateId: string }) {
         <Select label="Priority" name="priority" options={PRIORITY_OPTIONS} defaultValue="MEDIUM" />
       </div>
 
+      <AnchorFields key={anchorKey} />
+
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Field
-          label="Start offset (days)"
-          name="startOffset"
-          type="number"
-          required
-          defaultValue={0}
-          hint="Positive = from kickoff, negative = from Week 0"
-          className="sm:col-span-2"
-        />
         <Field
           label="Duration (build days)"
           name="durationBuildDays"

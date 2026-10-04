@@ -4,6 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { parseCSV } from "@/lib/template-csv";
+import { describeAnchor } from "@/lib/competition";
 import { importTemplateTasksAction } from "@/app/actions/templates";
 
 interface Props {
@@ -107,7 +108,7 @@ export function TemplateCSVImport({ templateId }: Props) {
                   <span className="text-sm text-[--color-text-primary] truncate flex-1">{t.name}</span>
                   {t.subTeam && <span className="text-xs text-[--color-text-secondary] shrink-0">{t.subTeam.replace(/_/g, " ")}</span>}
                   <span className="text-xs text-[--color-text-disabled] shrink-0">
-                    {t.startOffset >= 0 ? `+${t.startOffset}d kickoff` : `${t.startOffset}d week0`}
+                    {describeAnchor(t.anchor, t.anchorNumber, t.startOffset)}
                   </span>
                 </div>
               ))}

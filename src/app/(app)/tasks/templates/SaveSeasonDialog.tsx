@@ -24,7 +24,7 @@ export function SaveSeasonDialog() {
       const result = await saveSeasonAsTemplateAction(name, description);
       if (result.success) {
         setOpen(false);
-        if (result.id) router.push(`/schedule/templates/${result.id}`);
+        if (result.id) router.push(`/tasks/templates/${result.id}`);
         else router.refresh();
       } else {
         setError(result.error ?? "Failed.");

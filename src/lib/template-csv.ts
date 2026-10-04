@@ -1,5 +1,7 @@
 // CSV utilities for task templates
 
+import { TASK_ANCHORS, STAGE_INFO, isCompetitionAnchor, legacyAnchor, type TaskAnchor } from "@/lib/competition";
+
 export const CSV_HEADERS = [
   "name",
   "description",
@@ -11,6 +13,8 @@ export const CSV_HEADERS = [
   "isMilestone",
   "designReviewRequired",
   "prerequisiteNames",
+  "anchor",
+  "anchorNumber",
 ] as const;
 
 export type CsvRow = {
@@ -24,6 +28,8 @@ export type CsvRow = {
   isMilestone:          string;
   designReviewRequired: string;
   prerequisiteNames:    string; // pipe-separated
+  anchor:               string;
+  anchorNumber:         string;
 };
 
 function escapeCell(v: unknown): string {
@@ -45,6 +51,8 @@ export function tasksToCSV(tasks: {
   isMilestone:          boolean;
   designReviewRequired: boolean;
   prerequisiteNames:    string[];
+  anchor?:              string | null;
+  anchorNumber?:        number | null;
 }[]): string {
   const rows = tasks.map((t) => [
     t.name,
@@ -57,6 +65,8 @@ export function tasksToCSV(tasks: {
     t.isMilestone ? "true" : "false",
     t.designReviewRequired ? "true" : "false",
     (t.prerequisiteNames ?? []).join("|"),
+    t.anchor ?? legacyAnchor(t.startOffset),
+    t.anchorNumber != null ? String(t.anchorNumber) : "",
   ].map(escapeCell).join(","));
 
   return [CSV_HEADERS.join(","), ...rows].join("\n");
@@ -65,8 +75,11 @@ export function tasksToCSV(tasks: {
 export function emptyCSV(): string {
   return [
     CSV_HEADERS.join(","),
-    "Example Task,Optional description,MECHANICAL,5,3,MEDIUM,,false,false,",
-    "# startOffset: positive = days from kickoff  negative = days before Week 0",
+    "Example Task,Optional description,MECHANICAL,5,3,MEDIUM,,false,false,,KICKOFF,",
+    "Pack the robot,,OPERATIONS,-2,1,HIGH,,false,false,,WEEK,",
+    "# startOffset: days after (positive) or before (negative) the anchor",
+    "# anchor: KICKOFF SEASON_WEEK0 PRACTICE WEEK PLAYOFF WORLDS OFFSEASON",
+    "# anchorNumber: blank = every competition of that type (one task each); a number = only that one (e.g. WEEK + 1 = Week1)",
     "# subTeam: MECHANICAL ELECTRICAL PROGRAMMING DRIVE_TEAM STRATEGY DESIGN OUTREACH OPERATIONS",
     "# priority: CRITICAL HIGH MEDIUM LOW",
     "# prerequisiteNames: pipe-separated names e.g. Task One|Task Two",
@@ -86,6 +99,8 @@ export interface ParsedTask {
   isMilestone:          boolean;
   designReviewRequired: boolean;
   prerequisiteNames:    string[];
+  anchor:               TaskAnchor;
+  anchorNumber:         number | null;
 }
 
 export interface ParseResult {
@@ -154,6 +169,18 @@ export function parseCSV(content: string): ParseResult {
     const prereqRaw = get("prerequisitenames") || get("prerequisiteNames") || "";
     const prerequisiteNames = prereqRaw ? prereqRaw.split("|").map((s) => s.trim()).filter(Boolean) : [];
 
+    // Older CSVs have no anchor column: positive offsets from kickoff, negative from Week 0
+    const anchorRaw = get("anchor").toUpperCase();
+    if (anchorRaw && !(TASK_ANCHORS as readonly string[]).includes(anchorRaw)) {
+      errors.push(`Row ${i + 1}: invalid anchor '${anchorRaw}'.`); continue;
+    }
+    const anchor = (anchorRaw || legacyAnchor(startOffset)) as TaskAnchor;
+    const numRaw = get("anchornumber");
+    const anchorNumber = numRaw && isCompetitionAnchor(anchor) && STAGE_INFO[anchor].numbered ? parseInt(numRaw, 10) : null;
+    if (anchorNumber != null && (isNaN(anchorNumber) || anchorNumber < 0)) {
+      errors.push(`Row ${i + 1}: anchorNumber must be a whole number.`); continue;
+    }
+
     tasks.push({
       name,
       description:          get("description"),
@@ -165,6 +192,8 @@ export function parseCSV(content: string): ParseResult {
       isMilestone:          get("ismilestone").toLowerCase() === "true",
       designReviewRequired: get("designreviewrequired").toLowerCase() === "true",
       prerequisiteNames,
+      anchor,
+      anchorNumber,
     });
   }
 

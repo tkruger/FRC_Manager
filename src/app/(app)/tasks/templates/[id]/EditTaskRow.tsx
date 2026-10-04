@@ -9,6 +9,7 @@ import { Field } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
 import { SUBTEAM_OPTIONS, PRIORITY_OPTIONS } from "@/lib/schedule-helpers";
 import type { TemplateTask } from "@/generated/prisma";
+import { AnchorFields } from "./AnchorFields";
 
 export function EditTaskRow({ task }: { task: TemplateTask }) {
   const router = useRouter();
@@ -41,11 +42,8 @@ export function EditTaskRow({ task }: { task: TemplateTask }) {
             <Select label="Sub-team" name="subTeam" placeholder="Any" options={SUBTEAM_OPTIONS} defaultValue={task.subTeam ?? ""} />
             <Select label="Priority" name="priority" options={PRIORITY_OPTIONS} defaultValue={task.priority} />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Start offset (days)" name="startOffset" type="number" required defaultValue={task.startOffset}
-              hint="+days from kickoff or -days from Week 0" />
-            <Field label="Duration (build days)" name="durationBuildDays" type="number" min="1" required defaultValue={task.durationBuildDays} />
-          </div>
+          <AnchorFields anchor={task.anchor} anchorNumber={task.anchorNumber} startOffset={task.startOffset} />
+          <Field label="Duration (build days)" name="durationBuildDays" type="number" min="1" required defaultValue={task.durationBuildDays} />
           <div className="flex items-center gap-4">
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" name="isMilestone" defaultChecked={task.isMilestone} className="rounded" />

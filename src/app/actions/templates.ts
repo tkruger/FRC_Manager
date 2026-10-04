@@ -5,7 +5,12 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { findTeamTemplate, findTeamTemplateTask } from "@/lib/template-access";
-import type { TaskPriority, SubTeam } from "@/generated/prisma";
+import { STANDARD_TASKS } from "@/lib/standard-template";
+import {
+  TASK_ANCHORS, STAGE_INFO, isCompetitionAnchor, legacyAnchor, resolveAnchor, addDays,
+  type TaskAnchor, type SeasonDates,
+} from "@/lib/competition";
+import type { Prisma, TaskPriority, SubTeam } from "@/generated/prisma";
 
 const MENTOR_ROLES = ["HEAD_MENTOR", "BUILD_LEAD", "INVENTORY_ADMIN"] as const;
 
@@ -65,7 +70,7 @@ export async function updateTemplateAction(
     },
   });
 
-  revalidatePath(`/schedule/templates/${templateId}`);
+  revalidatePath(`/tasks/templates/${templateId}`);
   revalidatePath("/tasks/templates");
   return { success: true };
 }
@@ -84,24 +89,19 @@ export async function deleteTemplateAction(templateId: string): Promise<{ succes
 const TemplateTaskSchema = z.object({
   name:                 z.string().min(1),
   subTeam:              z.string().optional(),
-  startOffset:          z.coerce.number().int(),        // positive=from kickoff, negative=from week0
+  startOffset:          z.coerce.number().int(),        // days before (−) / after (+) the anchor
   durationBuildDays:    z.coerce.number().int().min(1).default(1),
   priority:             z.enum(["CRITICAL","HIGH","MEDIUM","LOW"]).default("MEDIUM"),
   estimatedHours:       z.coerce.number().optional(),
   isMilestone:          z.coerce.boolean().optional(),
   designReviewRequired: z.coerce.boolean().optional(),
   description:          z.string().optional(),
+  anchor:               z.enum(TASK_ANCHORS).optional(),
+  anchorNumber:         z.coerce.number().int().min(0).max(99).optional(),
 });
 
-export async function addTemplateTaskAction(
-  templateId: string,
-  _prev: { success: boolean; error?: string } | null,
-  formData: FormData
-): Promise<{ success: boolean; error?: string }> {
-  let session;
-  try { session = await requireMentor(); } catch (e: any) { return { success: false, error: e.message }; }
-  if (!await findTeamTemplate(templateId, session.user.teamId!)) return { success: false, error: "Template not found." };
-
+/** Reads a template-task form. Forms without an anchor fall back to the old sign rule. */
+function parseTemplateTaskForm(formData: FormData) {
   const parsed = TemplateTaskSchema.safeParse({
     name:                 formData.get("name"),
     subTeam:              formData.get("subTeam") || undefined,
@@ -112,25 +112,44 @@ export async function addTemplateTaskAction(
     isMilestone:          formData.get("isMilestone") === "on",
     designReviewRequired: formData.get("designReviewRequired") === "on",
     description:          formData.get("description") || undefined,
+    anchor:               formData.get("anchor") || undefined,
+    anchorNumber:         formData.get("anchorNumber") || undefined,
   });
-  if (!parsed.success) return { success: false, error: "Please fill in all required fields." };
+  if (!parsed.success) return null;
+  const d = parsed.data;
+  const anchor: TaskAnchor = d.anchor ?? legacyAnchor(d.startOffset);
+  // A number only means something for numbered competition types ("Week1"); none = each one
+  const anchorNumber = isCompetitionAnchor(anchor) && STAGE_INFO[anchor].numbered ? d.anchorNumber ?? null : null;
+  return {
+    name:                 d.name,
+    subTeam:              (d.subTeam as SubTeam) || null,
+    startOffset:          d.startOffset,
+    durationBuildDays:    d.durationBuildDays,
+    priority:             d.priority as TaskPriority,
+    estimatedHours:       d.estimatedHours,
+    isMilestone:          d.isMilestone ?? false,
+    designReviewRequired: d.designReviewRequired ?? false,
+    description:          d.description,
+    anchor,
+    anchorNumber,
+  };
+}
 
-  await prisma.templateTask.create({
-    data: {
-      templateId,
-      name:                 parsed.data.name,
-      subTeam:              (parsed.data.subTeam as SubTeam) || null,
-      startOffset:          parsed.data.startOffset,
-      durationBuildDays:    parsed.data.durationBuildDays,
-      priority:             parsed.data.priority as TaskPriority,
-      estimatedHours:       parsed.data.estimatedHours,
-      isMilestone:          parsed.data.isMilestone ?? false,
-      designReviewRequired: parsed.data.designReviewRequired ?? false,
-      description:          parsed.data.description,
-    },
-  });
+export async function addTemplateTaskAction(
+  templateId: string,
+  _prev: { success: boolean; error?: string } | null,
+  formData: FormData
+): Promise<{ success: boolean; error?: string }> {
+  let session;
+  try { session = await requireMentor(); } catch (e: any) { return { success: false, error: e.message }; }
+  if (!await findTeamTemplate(templateId, session.user.teamId!)) return { success: false, error: "Template not found." };
 
-  revalidatePath(`/schedule/templates/${templateId}`);
+  const data = parseTemplateTaskForm(formData);
+  if (!data) return { success: false, error: "Please fill in all required fields." };
+
+  await prisma.templateTask.create({ data: { templateId, ...data } });
+
+  revalidatePath(`/tasks/templates/${templateId}`);
   return { success: true };
 }
 
@@ -143,35 +162,12 @@ export async function updateTemplateTaskAction(
   const task = await findTeamTemplateTask(taskId, session.user.teamId!);
   if (!task) return { success: false, error: "Task not found." };
 
-  const parsed = TemplateTaskSchema.safeParse({
-    name:                 formData.get("name"),
-    subTeam:              formData.get("subTeam") || undefined,
-    startOffset:          formData.get("startOffset"),
-    durationBuildDays:    formData.get("durationBuildDays") || 1,
-    priority:             formData.get("priority") || "MEDIUM",
-    estimatedHours:       formData.get("estimatedHours") || undefined,
-    isMilestone:          formData.get("isMilestone") === "on",
-    designReviewRequired: formData.get("designReviewRequired") === "on",
-    description:          formData.get("description") || undefined,
-  });
-  if (!parsed.success) return { success: false, error: "Invalid data." };
+  const data = parseTemplateTaskForm(formData);
+  if (!data) return { success: false, error: "Invalid data." };
 
-  await prisma.templateTask.update({
-    where: { id: taskId },
-    data: {
-      name:                 parsed.data.name,
-      subTeam:              (parsed.data.subTeam as SubTeam) || null,
-      startOffset:          parsed.data.startOffset,
-      durationBuildDays:    parsed.data.durationBuildDays,
-      priority:             parsed.data.priority as TaskPriority,
-      estimatedHours:       parsed.data.estimatedHours,
-      isMilestone:          parsed.data.isMilestone ?? false,
-      designReviewRequired: parsed.data.designReviewRequired ?? false,
-      description:          parsed.data.description,
-    },
-  });
+  await prisma.templateTask.update({ where: { id: taskId }, data });
 
-  revalidatePath(`/schedule/templates/${task.templateId}`);
+  revalidatePath(`/tasks/templates/${task.templateId}`);
   return { success: true };
 }
 
@@ -181,7 +177,7 @@ export async function deleteTemplateTaskAction(taskId: string): Promise<{ succes
   const task = await findTeamTemplateTask(taskId, session.user.teamId!);
   if (!task) return { success: false };
   await prisma.templateTask.delete({ where: { id: taskId } });
-  revalidatePath(`/schedule/templates/${task.templateId}`);
+  revalidatePath(`/tasks/templates/${task.templateId}`);
   return { success: true };
 }
 
@@ -224,13 +220,15 @@ export async function saveSeasonAsTemplateAction(
           // Determine anchor: closer to week0 end gets negative offset
           const fromKickoff = Math.round((startMs - kickoff) / DAY);
           const fromWeek0   = Math.round((startMs - week0)   / DAY);
-          const startOffset = Math.abs(fromWeek0) < Math.abs(fromKickoff) ? fromWeek0 : fromKickoff;
+          const nearWeek0   = Math.abs(fromWeek0) < Math.abs(fromKickoff);
+          const startOffset = nearWeek0 ? fromWeek0 : fromKickoff;
           const durationBuildDays = Math.max(1, Math.round((dueMs - startMs) / DAY));
 
           return {
             name:                 t.name,
             subTeam:              t.subTeam,
             startOffset,
+            anchor:               (nearWeek0 ? "SEASON_WEEK0" : "KICKOFF") as TaskAnchor,
             durationBuildDays,
             priority:             t.priority,
             isMilestone:          t.isMilestone,
@@ -247,128 +245,97 @@ export async function saveSeasonAsTemplateAction(
   return { success: true, id: template.id };
 }
 
-// ─── Apply a custom template ─────────────────────────────────────────────────
+// ─── Applying templates ─────────────────────────────────────────────────────
 
-export async function applyCustomTemplateAction(
-  templateId: string
-): Promise<{ success: boolean; error?: string; count?: number }> {
-  let session;
-  try { session = await requireHeadMentor(); } catch (e: any) { return { success: false, error: e.message }; }
+interface ApplicableTask {
+  name:                 string;
+  description?:         string | null;
+  subTeam:              SubTeam | null;
+  startOffset:          number;
+  durationBuildDays:    number;
+  priority:             TaskPriority;
+  estimatedHours?:      number | null;
+  isMilestone:          boolean;
+  designReviewRequired: boolean;
+  anchor:               TaskAnchor;
+  anchorNumber:         number | null;
+}
 
-  const [owned, activeSeason] = await Promise.all([
-    findTeamTemplate(templateId, session.user.teamId!),
-    prisma.season.findFirst({ where: { teamId: session.user.teamId, isActive: true } }),
-  ]);
-  const template = owned && await prisma.seasonTemplate.findUnique({
-    where: { id: templateId },
-    include: { tasks: true },
+export type ApplyTemplateResult = {
+  success:  boolean;
+  error?:   string;
+  count?:   number;
+  /** Template tasks whose competition isn't in this season yet */
+  skipped?: string[];
+};
+
+/**
+ * Turns template tasks into real tasks in the active season. Competition anchors
+ * without a number create one task per matching competition ("Pack robot — Week1").
+ * Tasks whose name already exists are skipped, so re-applying after adding a
+ * competition only creates the new ones.
+ */
+async function applyToActiveSeason(teamId: string, userId: string, tasks: ApplicableTask[]): Promise<ApplyTemplateResult> {
+  const season = await prisma.season.findFirst({
+    where:   { teamId, isActive: true },
+    include: { competitionEvents: { select: { name: true, stage: true, stageNumber: true, startDate: true } } },
   });
+  if (!season) return { success: false, error: "No active season." };
 
-  if (!template) return { success: false, error: "Template not found." };
-  if (!activeSeason) return { success: false, error: "No active season." };
-
+  const dates: SeasonDates = {
+    kickoffDate:  season.kickoffDate,
+    week0Date:    season.week0Date,
+    competitions: season.competitionEvents,
+  };
   const existing = new Set(
-    (await prisma.task.findMany({ where: { seasonId: activeSeason.id }, select: { name: true } })).map((t) => t.name)
+    (await prisma.task.findMany({ where: { seasonId: season.id }, select: { name: true } })).map((t) => t.name)
   );
 
-  const toCreate = template.tasks.filter((t) => !existing.has(t.name));
-  if (toCreate.length === 0) return { success: true, count: 0 };
-
-  await prisma.task.createMany({
-    data: toCreate.map((t) => {
-      const startDate = resolveDate(t.startOffset, activeSeason.kickoffDate, activeSeason.week0Date);
-      const dueDate   = new Date(startDate);
-      dueDate.setDate(dueDate.getDate() + t.durationBuildDays);
-      return {
-        seasonId: activeSeason.id, createdById: session.user.id,
-        name: t.name, subTeam: t.subTeam, description: t.description,
-        startDate, dueDate, priority: t.priority,
-        isMilestone: t.isMilestone, estimatedHours: t.estimatedHours,
+  const rows: Prisma.TaskCreateManyInput[] = [];
+  const skipped: string[] = [];
+  for (const t of tasks) {
+    const targets = resolveAnchor(t.anchor, t.anchorNumber, dates);
+    if (targets.length === 0) { skipped.push(t.name); continue; }
+    for (const target of targets) {
+      const name = target.suffix ? `${t.name} — ${target.suffix}` : t.name;
+      if (existing.has(name)) continue;
+      existing.add(name);
+      const startDate = addDays(target.date, t.startOffset);
+      rows.push({
+        seasonId: season.id, createdById: userId,
+        name, subTeam: t.subTeam, description: t.description ?? null,
+        startDate, dueDate: addDays(startDate, t.durationBuildDays),
+        priority: t.priority, isMilestone: t.isMilestone, estimatedHours: t.estimatedHours ?? null,
         designReviewRequired: t.designReviewRequired,
         designReviewStatus: t.designReviewRequired ? "PENDING" : "NOT_REQUIRED",
-      };
-    }),
-  });
+      });
+    }
+  }
 
+  if (rows.length) await prisma.task.createMany({ data: rows });
   revalidatePath("/tasks");
-  revalidatePath("/tasks");
-  return { success: true, count: toCreate.length };
+  return { success: true, count: rows.length, skipped };
 }
 
-// Standard FRC build season milestones from the PRD
-const STANDARD_MILESTONES = [
-  { name: "Game Analysis Complete",                startOffset: 0,   durationBuildDays: 2,  isMilestone: true,  priority: "HIGH"     as TaskPriority, subTeam: "STRATEGY"    as SubTeam },
-  { name: "Robot Strategy & Design Brief",         startOffset: 2,   durationBuildDays: 3,  isMilestone: true,  priority: "HIGH"     as TaskPriority, subTeam: "DESIGN"      as SubTeam },
-  { name: "Subsystem Design Reviews Complete",     startOffset: 5,   durationBuildDays: 5,  isMilestone: true,  priority: "CRITICAL" as TaskPriority, subTeam: "MECHANICAL"  as SubTeam },
-  { name: "Prototyping Complete",                  startOffset: 10,  durationBuildDays: 4,  isMilestone: true,  priority: "HIGH"     as TaskPriority, subTeam: "MECHANICAL"  as SubTeam },
-  { name: "Full Robot CAD Complete",               startOffset: 14,  durationBuildDays: 4,  isMilestone: true,  priority: "HIGH"     as TaskPriority, subTeam: "DESIGN"      as SubTeam },
-  { name: "Drivetrain Assembled & Driving",        startOffset: -21, durationBuildDays: 3,  isMilestone: true,  priority: "CRITICAL" as TaskPriority, subTeam: "MECHANICAL"  as SubTeam },
-  { name: "All Subsystems Integrated",             startOffset: -14, durationBuildDays: 3,  isMilestone: true,  priority: "CRITICAL" as TaskPriority, subTeam: "MECHANICAL"  as SubTeam },
-  { name: "Robot Driving with Full Functionality", startOffset: -10, durationBuildDays: 3,  isMilestone: true,  priority: "CRITICAL" as TaskPriority, subTeam: "PROGRAMMING" as SubTeam },
-  { name: "Driver Practice Begins",               startOffset: -7,  durationBuildDays: 2,  isMilestone: true,  priority: "HIGH"     as TaskPriority, subTeam: "DRIVE_TEAM"  as SubTeam },
-  { name: "Robot Weight Confirmed Under Limit",   startOffset: -5,  durationBuildDays: 1,  isMilestone: true,  priority: "HIGH"     as TaskPriority, subTeam: "MECHANICAL"  as SubTeam },
-  { name: "BOM Complete & Reviewed",              startOffset: -3,  durationBuildDays: 1,  isMilestone: true,  priority: "HIGH"     as TaskPriority, subTeam: "OPERATIONS"  as SubTeam },
-  { name: "Robot Documentation Package Complete", startOffset: -2,  durationBuildDays: 1,  isMilestone: true,  priority: "MEDIUM"   as TaskPriority, subTeam: "OPERATIONS"  as SubTeam },
-  { name: "Week 0 — Robot Done",                  startOffset: 0,   durationBuildDays: 1,  isMilestone: true,  priority: "CRITICAL" as TaskPriority, subTeam: null },
-  // Supporting tasks
-  { name: "Kickoff Game Manual Review",            startOffset: 0,   durationBuildDays: 1,  isMilestone: false, priority: "CRITICAL" as TaskPriority, subTeam: "STRATEGY"    as SubTeam },
-  { name: "Field Element Research",               startOffset: 0,   durationBuildDays: 2,  isMilestone: false, priority: "HIGH"     as TaskPriority, subTeam: "STRATEGY"    as SubTeam },
-  { name: "Subsystem Assignments Finalized",      startOffset: 3,   durationBuildDays: 2,  isMilestone: false, priority: "HIGH"     as TaskPriority, subTeam: "OPERATIONS"  as SubTeam },
-  { name: "Electrical System Design",             startOffset: 5,   durationBuildDays: 5,  isMilestone: false, priority: "HIGH"     as TaskPriority, subTeam: "ELECTRICAL"  as SubTeam },
-  { name: "Robot Code Base Setup",                startOffset: 2,   durationBuildDays: 3,  isMilestone: false, priority: "HIGH"     as TaskPriority, subTeam: "PROGRAMMING" as SubTeam },
-  { name: "Autonomous Routines Programmed",       startOffset: -14, durationBuildDays: 7,  isMilestone: false, priority: "CRITICAL" as TaskPriority, subTeam: "PROGRAMMING" as SubTeam },
-  { name: "Competition Packing List Prepared",    startOffset: -5,  durationBuildDays: 2,  isMilestone: false, priority: "HIGH"     as TaskPriority, subTeam: "OPERATIONS"  as SubTeam },
-  { name: "Bumper Construction",                  startOffset: -10, durationBuildDays: 3,  isMilestone: false, priority: "HIGH"     as TaskPriority, subTeam: "MECHANICAL"  as SubTeam },
-];
-
-/** Resolves a relative offset (positive = from kickoff, negative = from week0) to an absolute Date */
-function resolveDate(offset: number, kickoff: Date, week0: Date): Date {
-  const base = offset >= 0 ? new Date(kickoff) : new Date(week0);
-  base.setDate(base.getDate() + offset);
-  return base;
-}
-
-export async function applyStandardTemplateAction(): Promise<{ success: boolean; error?: string; count?: number }> {
+export async function applyCustomTemplateAction(templateId: string): Promise<ApplyTemplateResult> {
   let session;
   try { session = await requireHeadMentor(); } catch (e: any) { return { success: false, error: e.message }; }
 
-  const activeSeason = await prisma.season.findFirst({
-    where: { teamId: session.user.teamId, isActive: true },
-  });
-  if (!activeSeason) return { success: false, error: "No active season." };
+  if (!await findTeamTemplate(templateId, session.user.teamId!)) return { success: false, error: "Template not found." };
+  const tasks = await prisma.templateTask.findMany({ where: { templateId } });
+  return applyToActiveSeason(session.user.teamId!, session.user.id, tasks);
+}
 
-  // Get existing task names to avoid duplicates
-  const existing = await prisma.task.findMany({
-    where: { seasonId: activeSeason.id },
-    select: { name: true },
-  });
-  const existingNames = new Set(existing.map((t) => t.name));
+export async function applyStandardTemplateAction(): Promise<ApplyTemplateResult> {
+  let session;
+  try { session = await requireHeadMentor(); } catch (e: any) { return { success: false, error: e.message }; }
 
-  const toCreate = STANDARD_MILESTONES.filter((m) => !existingNames.has(m.name));
-  if (toCreate.length === 0) return { success: true, count: 0 };
-
-  await prisma.task.createMany({
-    data: toCreate.map((m) => {
-      const startDate = resolveDate(m.startOffset, activeSeason.kickoffDate, activeSeason.week0Date);
-      const dueDate   = new Date(startDate);
-      dueDate.setDate(dueDate.getDate() + m.durationBuildDays);
-
-      return {
-        seasonId:    activeSeason.id,
-        createdById: session.user.id,
-        name:        m.name,
-        subTeam:     m.subTeam,
-        startDate,
-        dueDate,
-        isMilestone: m.isMilestone,
-        priority:    m.priority,
-      };
-    }),
-  });
-
-  revalidatePath("/tasks");
-  revalidatePath("/tasks");
-  return { success: true, count: toCreate.length };
+  return applyToActiveSeason(session.user.teamId!, session.user.id, STANDARD_TASKS.map((t) => ({
+    ...t,
+    subTeam:      t.subTeam as SubTeam | null,
+    priority:     t.priority as TaskPriority,
+    anchorNumber: t.anchorNumber ?? null,
+  })));
 }
 
 export async function importTemplateTasksAction(
@@ -384,6 +351,8 @@ export async function importTemplateTasksAction(
     isMilestone: boolean;
     designReviewRequired: boolean;
     prerequisiteNames: string[];
+    anchor?: TaskAnchor | null;
+    anchorNumber?: number | null;
   }[]
 ): Promise<{ success: boolean; error?: string; count?: number }> {
   let session;
@@ -407,6 +376,8 @@ export async function importTemplateTasksAction(
       isMilestone:          t.isMilestone,
       designReviewRequired: t.designReviewRequired,
       prerequisiteNames:    t.prerequisiteNames,
+      anchor:               t.anchor && (TASK_ANCHORS as readonly string[]).includes(t.anchor) ? t.anchor : legacyAnchor(t.startOffset),
+      anchorNumber:         t.anchorNumber ?? null,
     })),
   });
 

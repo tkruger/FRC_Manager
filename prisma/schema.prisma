@@ -194,8 +194,20 @@ model CompetitionEvent {
   startDate DateTime
   endDate   DateTime
   eventType EventType @default(REGIONAL)
+  /// Where it sits in the season — drives the designation (PracticeMatch1, Week2, Playoff0, Worlds, Offseason1)
+  stage       CompetitionStage @default(WEEK)
+  /// Practice match / week / playoff / offseason number; null for Worlds
+  stageNumber Int?
 
   createdAt DateTime @default(now())
+}
+
+enum CompetitionStage {
+  PRACTICE
+  WEEK
+  PLAYOFF
+  WORLDS
+  OFFSEASON
 }
 
 enum EventType {
@@ -972,6 +984,19 @@ model TemplateTask {
   isMilestone          Boolean        @default(false)
   designReviewRequired Boolean        @default(false)
   prerequisiteNames    String[]
+  /// What startOffset counts from. Competition anchors with no anchorNumber create one task per matching competition.
+  anchor               TaskAnchor     @default(KICKOFF)
+  anchorNumber         Int?
+}
+
+enum TaskAnchor {
+  KICKOFF
+  SEASON_WEEK0
+  PRACTICE
+  WEEK
+  PLAYOFF
+  WORLDS
+  OFFSEASON
 }
 
 // ─────────────────────────────────────────────

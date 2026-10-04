@@ -14,6 +14,7 @@ export default async function PastSeasonPage({ params }: { params: Promise<{ id:
     where:   { id, teamId: session.user.teamId },
     include: {
       robots: { where: { archived: false }, orderBy: { createdAt: "asc" } },
+      competitionEvents: { orderBy: { startDate: "asc" } },
       _count: { select: { meetings: true, competitionEvents: true } },
     },
   });
@@ -65,6 +66,10 @@ export default async function PastSeasonPage({ params }: { params: Promise<{ id:
         season={{
           ...season,
           meetingDayTimes: season.meetingDayTimes as Record<string, { start: string; end: string }> | null,
+          competitions: season.competitionEvents.map((c) => ({
+            id: c.id, name: c.name, location: c.location, stage: c.stage, stageNumber: c.stageNumber,
+            startDate: c.startDate.toISOString(), endDate: c.endDate.toISOString(),
+          })),
         }}
       />
 

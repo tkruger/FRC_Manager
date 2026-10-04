@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
 import { EditSeasonForm } from "./EditSeasonForm";
 import { RobotForm } from "./RobotForm";
+import { CompetitionsSection, type Competition } from "./CompetitionsSection";
 import { EditRobotDialog } from "@/components/fleet/EditRobotDialog";
 
 interface Robot {
@@ -31,6 +32,7 @@ interface Season {
   meetingDayTimes: Record<string, { start: string; end: string }> | null;
   expectedAttendance: number;
   robots: Robot[];
+  competitions: Competition[];
 }
 
 /** Full season card. Also used for past seasons (isActive=false) on /settings/season/[id]. */
@@ -90,6 +92,8 @@ export function ActiveSeasonCard({
             )}
             {canEdit && <RobotForm seasonId={season.id} />}
           </div>
+
+          <CompetitionsSection seasonId={season.id} competitions={season.competitions} canEdit={canEdit} />
         </>
       ) : (
         <>

@@ -15,7 +15,7 @@ export function ApplyCustomTemplateButton({ templateId, disabled }: { templateId
     startTransition(async () => {
       const res = await applyCustomTemplateAction(templateId);
       if (res.success) {
-        setResult(res.count === 0 ? "Already up to date" : `Added ${res.count} tasks`);
+        setResult((res.count === 0 ? "Already up to date." : `Added ${res.count} tasks.`) + (res.skipped?.length ? ` ${res.skipped.length} skipped — add the matching competitions in Season settings first (${res.skipped.slice(0, 3).join(", ")}${res.skipped.length > 3 ? ", …" : ""}).` : ""));
         router.refresh();
       } else {
         setResult(res.error ?? "Failed");

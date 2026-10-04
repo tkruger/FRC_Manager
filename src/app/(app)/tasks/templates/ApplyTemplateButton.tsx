@@ -26,7 +26,7 @@ export function ApplyTemplateButton({ disabled, existingTaskCount }: Props) {
     startTransition(async () => {
       const res = await applyStandardTemplateAction();
       if (res.success) {
-        setResult(res.count === 0 ? "All template tasks already exist." : `Added ${res.count} tasks.`);
+        setResult((res.count === 0 ? "All template tasks already exist." : `Added ${res.count} tasks.`) + (res.skipped?.length ? ` ${res.skipped.length} skipped — add the matching competitions in Season settings first (${res.skipped.slice(0, 3).join(", ")}${res.skipped.length > 3 ? ", …" : ""}).` : ""));
         router.refresh();
       } else {
         setResult(res.error ?? "Failed.");

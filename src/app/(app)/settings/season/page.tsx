@@ -15,6 +15,7 @@ export default async function SeasonSettingsPage() {
     where: { teamId: session.user.teamId },
     include: {
       robots: { where: { archived: false }, orderBy: { createdAt: "asc" } },
+      competitionEvents: { orderBy: { startDate: "asc" } },
       _count: { select: { tasks: true, meetings: true } },
     },
     orderBy: { year: "desc" },
@@ -66,6 +67,10 @@ export default async function SeasonSettingsPage() {
           season={{
             ...activeSeason,
             meetingDayTimes: activeSeason.meetingDayTimes as Record<string, { start: string; end: string }> | null,
+            competitions: activeSeason.competitionEvents.map((c) => ({
+              id: c.id, name: c.name, location: c.location, stage: c.stage, stageNumber: c.stageNumber,
+              startDate: c.startDate.toISOString(), endDate: c.endDate.toISOString(),
+            })),
           }}
           canEdit={isHeadMentor}
         />

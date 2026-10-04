@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
+import { STAGE_INFO, designation } from "@/lib/competition";
 
 async function requireHeadMentor() {
   const session = await auth();
@@ -250,5 +251,91 @@ export async function createRobotAction(
 
   revalidatePath("/settings/season");
   revalidatePath("/fleet");
+  return { success: true };
+}
+
+// ─── Competitions ────────────────────────────────────────────────────────────
+
+const CompetitionSchema = z.object({
+  stage:       z.enum(["PRACTICE", "WEEK", "PLAYOFF", "WORLDS", "OFFSEASON"]),
+  stageNumber: z.coerce.number().int().min(0).max(99).optional(),
+  name:        z.string().trim().min(1, "Enter the event name.").max(120),
+  location:    z.string().trim().max(160).optional(),
+  startDate:   z.string().min(1, "Choose a start date."),
+  endDate:     z.string().optional(),
+});
+
+type CompetitionResult = { success: boolean; error?: string };
+
+async function saveCompetition(
+  seasonId: string,
+  competitionId: string | null,
+  formData: FormData,
+): Promise<CompetitionResult> {
+  let session;
+  try { session = await requireHeadMentor(); } catch (e: any) { return { success: false, error: e.message }; }
+
+  const season = await prisma.season.findFirst({ where: { id: seasonId, teamId: session.user.teamId }, select: { id: true } });
+  if (!season) return { success: false, error: "Season not found." };
+
+  const parsed = CompetitionSchema.safeParse({
+    stage:       formData.get("stage"),
+    stageNumber: formData.get("stageNumber") || undefined,
+    name:        formData.get("name"),
+    location:    formData.get("location") || undefined,
+    startDate:   formData.get("startDate"),
+    endDate:     formData.get("endDate") || undefined,
+  });
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Please check the form." };
+  const d = parsed.data;
+
+  const info = STAGE_INFO[d.stage];
+  const stageNumber = info.numbered ? d.stageNumber ?? null : null;
+  if (info.numbered && stageNumber == null) return { success: false, error: `Enter the ${info.label.toLowerCase()} number.` };
+
+  const start = new Date(d.startDate);
+  const end   = d.endDate ? new Date(d.endDate) : start;
+  if (end < start) return { success: false, error: "End date can't be before the start date." };
+
+  // Designations must be unique within a season (templates refer to them)
+  const clash = await prisma.competitionEvent.findFirst({
+    where: { seasonId, stage: d.stage, stageNumber, ...(competitionId ? { id: { not: competitionId } } : {}) },
+    select: { name: true },
+  });
+  if (clash) return { success: false, error: `${designation(d.stage, stageNumber)} is already "${clash.name}".` };
+
+  const data = {
+    name: d.name, location: d.location || null, startDate: start, endDate: end,
+    stage: d.stage, stageNumber,
+    eventType: d.stage === "WEEK" && stageNumber === 0 ? "WEEK_0" as const : info.eventType,
+  };
+
+  if (competitionId) {
+    const updated = await prisma.competitionEvent.updateMany({ where: { id: competitionId, seasonId }, data });
+    if (updated.count === 0) return { success: false, error: "Competition not found." };
+  } else {
+    await prisma.competitionEvent.create({ data: { ...data, seasonId } });
+  }
+
+  revalidatePath("/", "layout");
+  return { success: true };
+}
+
+export async function addCompetitionAction(seasonId: string, formData: FormData): Promise<CompetitionResult> {
+  return saveCompetition(seasonId, null, formData);
+}
+
+export async function updateCompetitionAction(seasonId: string, competitionId: string, formData: FormData): Promise<CompetitionResult> {
+  return saveCompetition(seasonId, competitionId, formData);
+}
+
+export async function deleteCompetitionAction(competitionId: string): Promise<CompetitionResult> {
+  let session;
+  try { session = await requireHeadMentor(); } catch (e: any) { return { success: false, error: e.message }; }
+  const deleted = await prisma.competitionEvent.deleteMany({
+    where: { id: competitionId, season: { teamId: session.user.teamId } },
+  });
+  if (deleted.count === 0) return { success: false, error: "Competition not found." };
+  revalidatePath("/", "layout");
   return { success: true };
 }
