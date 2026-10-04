@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { SUBTEAM_COLORS } from "@/lib/schedule-helpers";
+import { toast } from "@/components/ui/toast";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -130,14 +131,16 @@ export function CalendarClient({ season, meetings, allTasks, isLeadership }: Pro
 
   function handleCancel(meetingId: string, reason?: string) {
     startTransition(async () => {
-      await cancelMeetingAction(meetingId, reason);
+      const res = await cancelMeetingAction(meetingId, reason);
+      if (res.success) toast.success("Meeting cancelled"); else toast.error(res.error ?? "Couldn't cancel.");
       setSelected(null);
       router.refresh();
     });
   }
   function handleRestore(meetingId: string) {
     startTransition(async () => {
-      await restoreMeetingAction(meetingId);
+      const res = await restoreMeetingAction(meetingId);
+      if (res.success) toast.success("Meeting reinstated"); else toast.error("Couldn't reinstate the meeting.");
       setSelected(null);
       router.refresh();
     });
@@ -324,7 +327,8 @@ export function CalendarClient({ season, meetings, allTasks, isLeadership }: Pro
           onClose={() => setSelected(null)}
           onSave={(id, data) => {
             startTransition(async () => {
-              await updateMeetingAction(id, data);
+              const res = await updateMeetingAction(id, data);
+              if (res.success) toast.success("Meeting saved"); else toast.error(res.error ?? "Couldn't save.");
               setSelected(null);
               router.refresh();
             });
@@ -339,7 +343,8 @@ export function CalendarClient({ season, meetings, allTasks, isLeadership }: Pro
           onClose={() => setShowAdd(false)}
           onSave={(fd) => {
             startTransition(async () => {
-              await addMeetingAction(season.id, fd);
+              const res = await addMeetingAction(season.id, fd);
+              if (res.success) toast.success("Meeting added"); else toast.error(res.error ?? "Couldn't add the meeting.");
               setShowAdd(false);
               router.refresh();
             });

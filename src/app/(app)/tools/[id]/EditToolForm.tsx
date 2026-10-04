@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/components/ui/toast";
 
 const TYPE_OPTS = [
   { value: "POWER_TOOL",          label: "Power Tool" },
@@ -57,7 +58,7 @@ export function EditToolForm({ tool }: { tool: Tool }) {
   const [state, action, pending] = useActionState(boundAction, null);
 
   useEffect(() => {
-    if (state?.success) router.refresh();
+    if (state?.success) { toast.success("Tool saved"); router.refresh(); }
   }, [state, router]);
 
   return (

@@ -6,6 +6,7 @@ import { saveDiscordConfigAction, disconnectDiscordAction } from "@/app/actions/
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import type { DiscordConfig } from "@/generated/prisma";
+import { toast } from "@/components/ui/toast";
 
 const CHANNEL_FIELDS = [
   { name: "channelBuildAlerts", label: "Build alerts channel ID",  hint: "#build-alerts — task overdue, critical issues, weight warnings" },
@@ -23,7 +24,7 @@ export function DiscordConfigForm({ config }: { config: DiscordConfig | null }) 
   const [disconnecting, startDisconnect] = useTransition();
 
   useEffect(() => {
-    if (state?.success) router.refresh();
+    if (state?.success) { toast.success("Discord settings saved"); router.refresh(); }
   }, [state, router]);
 
   function handleDisconnect() {

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { saveDeliverySettingsAction, setTeamTimezoneAction } from "@/app/actions/notification-settings";
+import { toast } from "@/components/ui/toast";
 
 interface Props {
   quietHoursStart:    number;
@@ -45,7 +46,8 @@ export function DeliverySettings(p: Props) {
     setMsg(null);
     run(async () => {
       const res = await saveDeliverySettingsAction({ quietHoursStart: start, quietHoursEnd: end, timezone: tz || null });
-      setMsg(res.success ? { ok: true, text: "Saved." } : { ok: false, text: res.error });
+      setMsg(res.success ? null : { ok: false, text: res.error });
+      if (res.success) toast.success("Notification settings saved");
       router.refresh();
     });
   }
@@ -54,7 +56,8 @@ export function DeliverySettings(p: Props) {
     setMsg(null);
     run(async () => {
       const res = await setTeamTimezoneAction(teamTz);
-      setMsg(res.success ? { ok: true, text: "Team time zone saved." } : { ok: false, text: res.error });
+      setMsg(res.success ? null : { ok: false, text: res.error });
+      if (res.success) toast.success("Team time zone saved");
       router.refresh();
     });
   }

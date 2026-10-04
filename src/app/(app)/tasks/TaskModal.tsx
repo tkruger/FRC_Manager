@@ -12,6 +12,7 @@ import { updateTaskAction, updateTaskStatusAction, deleteTaskAction } from "@/ap
 import { STATUS_CONFIG, PRIORITY_CONFIG, SUBTEAM_COLORS, SUBTEAM_OPTIONS, PRIORITY_OPTIONS, STATUS_OPTIONS, shortDate, isOverdue } from "@/lib/schedule-helpers";
 import { formatDate } from "@/lib/utils";
 import type { TaskStatus, TaskPriority, SubTeam } from "@/generated/prisma";
+import { toast } from "@/components/ui/toast";
 
 export interface TaskModalData {
   id: string;
@@ -65,7 +66,8 @@ export function TaskModal({ task, allTasks = [], allMembers = [], allRobots = []
     if (!task) return;
     setLocalStatus(newStatus);
     startTransition(async () => {
-      await updateTaskStatusAction(task.id, newStatus as TaskStatus);
+      const res = await updateTaskStatusAction(task.id, newStatus as TaskStatus);
+      if (res.success) toast.success("Status updated"); else toast.error("Couldn't update the status.");
       onUpdated?.();
       router.refresh();
     });
@@ -264,7 +266,7 @@ function EditTaskForm({ task, allTasks, allMembers, allRobots, kickoffDate, week
     const fd = new FormData(e.currentTarget);
     startTransition(async () => {
       const result = await boundAction(null, fd);
-      if (result.success) onSaved();
+      if (result.success) { toast.success("Task saved"); onSaved(); }
       else setError(result.error ?? "Save failed.");
     });
   }

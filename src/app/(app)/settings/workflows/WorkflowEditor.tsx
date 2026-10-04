@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { WorkflowPipeline } from "@/components/workflow/WorkflowPipeline";
 import { saveWorkflowAction, resetWorkflowAction } from "@/app/actions/workflows";
+import { toast } from "@/components/ui/toast";
 import {
   ROLE_VALUES,
   ROLE_DISPLAY,
@@ -52,6 +53,7 @@ export function WorkflowEditor({ def, counts, isCustom }: Props) {
     start(async () => {
       const res = await saveWorkflowAction(draft);
       if (!res.success) { setError(res.error); return; }
+      toast.success(`Workflow saved as version ${res.version}`);
       setEditing(false);
       router.refresh();
     });
@@ -62,6 +64,7 @@ export function WorkflowEditor({ def, counts, isCustom }: Props) {
     start(async () => {
       const res = await resetWorkflowAction();
       if (!res.success) { setError(res.error); return; }
+      toast.success("Workflow reset to the default");
       setEditing(false);
       router.refresh();
     });

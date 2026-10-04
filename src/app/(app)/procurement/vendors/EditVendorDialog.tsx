@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogTrigger, DialogClose } from "@/components/
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/components/ui/toast";
 
 interface Vendor {
   id: string;
@@ -32,7 +33,7 @@ export function EditVendorDialog({ vendor }: { vendor: Vendor }) {
     const fd = new FormData(e.currentTarget);
     startTransition(async () => {
       const result = await updateVendorAction(vendor.id, fd);
-      if (result.success) { setOpen(false); router.refresh(); }
+      if (result.success) { toast.success("Vendor saved"); setOpen(false); router.refresh(); }
       else setError(result.error ?? "Failed to update vendor.");
     });
   }

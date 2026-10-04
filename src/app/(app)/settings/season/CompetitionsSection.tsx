@@ -8,6 +8,7 @@ import { Select } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
 import { addCompetitionAction, updateCompetitionAction, deleteCompetitionAction } from "@/app/actions/season";
 import { COMPETITION_STAGES, STAGE_INFO, designation, type CompetitionStage } from "@/lib/competition";
+import { toast } from "@/components/ui/toast";
 
 export interface Competition {
   id:          string;
@@ -100,6 +101,7 @@ function CompetitionDialog({
         ? await updateCompetitionAction(seasonId, competition.id, fd)
         : await addCompetitionAction(seasonId, fd);
       if (!res.success) { setError(res.error ?? "Couldn't save."); return; }
+      toast.success(competition ? "Competition saved" : "Competition added");
       setOpen(false);
       router.refresh();
     });
@@ -179,7 +181,7 @@ function DeleteCompetition({ competition }: { competition: Competition }) {
         if (!confirm(`Delete ${designation(competition.stage, competition.stageNumber)} (${competition.name})? Tasks already created from templates are kept.`)) return;
         start(async () => {
           const res = await deleteCompetitionAction(competition.id);
-          if (!res.success) alert(res.error);
+          if (res.success) toast.success("Competition deleted"); else toast.error(res.error ?? "Couldn't delete.");
           router.refresh();
         });
       }}

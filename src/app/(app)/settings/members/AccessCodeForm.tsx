@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { updateTeamAccessCodeAction } from "@/app/actions/members";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
+import { toast } from "@/components/ui/toast";
 
 export function AccessCodeForm({ currentCode }: { currentCode: string }) {
   const router = useRouter();
@@ -15,7 +16,9 @@ export function AccessCodeForm({ currentCode }: { currentCode: string }) {
   function handleSave(e: React.FormEvent) {
     e.preventDefault();
     startTransition(async () => {
-      await updateTeamAccessCodeAction(code);
+      const res = await updateTeamAccessCodeAction(code);
+      if (!res.success) { toast.error(res.error ?? "Couldn't save."); return; }
+      toast.success("Access code saved");
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
       router.refresh();

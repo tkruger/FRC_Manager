@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { updateSeasonAction } from "@/app/actions/season";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
+import { toast } from "@/components/ui/toast";
 
 const DAYS = [
   { value: "MON", label: "Monday" },
@@ -39,7 +40,7 @@ export function EditSeasonForm({ season, onClose }: { season: Season; onClose: (
   const [selectedDays, setSelectedDays] = useState<string[]>(season.meetingDays);
 
   useEffect(() => {
-    if (state?.success) { router.refresh(); onClose(); }
+    if (state?.success) { toast.success("Season saved"); router.refresh(); onClose(); }
   }, [state, router, onClose]);
 
   function toDateInputValue(d: Date) {

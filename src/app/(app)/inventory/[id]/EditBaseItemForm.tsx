@@ -8,6 +8,7 @@ import { Field } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { VendorSupplierPicker } from "@/components/ui/VendorSupplierPicker";
+import { toast } from "@/components/ui/toast";
 
 const CATEGORY_OPTS = [
   { value: "MECHANICAL",  label: "Mechanical" },  { value: "ELECTRICAL", label: "Electrical" },
@@ -64,7 +65,7 @@ export function EditBaseItemForm({
   const [state, action, pending] = useActionState(boundAction, null);
 
   useEffect(() => {
-    if (state?.success) router.refresh();
+    if (state?.success) { toast.success("Item saved"); router.refresh(); }
   }, [state, router]);
 
   return (

@@ -10,6 +10,7 @@ import { Select } from "@/components/ui/select";
 import { SUBTEAM_OPTIONS, PRIORITY_OPTIONS } from "@/lib/schedule-helpers";
 import type { TemplateTask } from "@/generated/prisma";
 import { AnchorFields } from "./AnchorFields";
+import { toast } from "@/components/ui/toast";
 
 export function EditTaskRow({ task }: { task: TemplateTask }) {
   const router = useRouter();
@@ -23,7 +24,7 @@ export function EditTaskRow({ task }: { task: TemplateTask }) {
     const fd = new FormData(e.currentTarget);
     startTransition(async () => {
       const result = await updateTemplateTaskAction(task.id, fd);
-      if (result.success) { setOpen(false); router.refresh(); }
+      if (result.success) { toast.success("Task saved"); setOpen(false); router.refresh(); }
       else setError(result.error ?? "Failed.");
     });
   }

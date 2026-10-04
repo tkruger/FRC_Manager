@@ -8,6 +8,7 @@ import { Field } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
+import { toast } from "@/components/ui/toast";
 
 const ROLE_OPTIONS = [
   { value: "COMPETITION", label: "Competition Bot" },
@@ -51,6 +52,7 @@ export function EditRobotDialog({ robot }: Props) {
     startTransition(async () => {
       const result = await updateRobotAction(robot.id, formData);
       if (result.success) {
+        toast.success("Robot saved");
         setOpen(false);
         router.refresh();
       } else {

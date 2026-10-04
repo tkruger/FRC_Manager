@@ -6,6 +6,7 @@ import { updateTemplateAction } from "@/app/actions/templates";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/components/ui/toast";
 
 interface Props { templateId: string; currentName: string; currentDescription: string | null; }
 
@@ -18,7 +19,9 @@ export function RenameTemplateForm({ templateId, currentName, currentDescription
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     startTransition(async () => {
-      await updateTemplateAction(templateId, fd);
+      const res = await updateTemplateAction(templateId, fd);
+      if (!res.success) { toast.error(res.error ?? "Couldn't save."); return; }
+      toast.success("Template saved");
       setEditing(false);
       router.refresh();
     });

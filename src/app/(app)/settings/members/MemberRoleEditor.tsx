@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogTrigger, DialogClose } from "@/components/
 import { Button } from "@/components/ui/button";
 import { ROLE_LABELS } from "@/lib/rbac";
 import type { Role } from "@/generated/prisma";
+import { toast } from "@/components/ui/toast";
 
 const ALL_ROLES: Role[] = ["TEAM_MEMBER", "BUILD_LEAD", "INVENTORY_ADMIN", "BUDGET_MANAGER", "SAFETY_CAPTAIN", "TEAM_ADMIN", "TEAM_LEADERSHIP", "HEAD_MENTOR"];
 
@@ -25,7 +26,7 @@ export function MemberRoleEditor({ userId, currentRoles }: { userId: string; cur
     setError(null);
     startTransition(async () => {
       const result = await updateMemberRolesAction(userId, selected);
-      if (result.success) { setOpen(false); router.refresh(); }
+      if (result.success) { toast.success("Roles saved"); setOpen(false); router.refresh(); }
       else setError(result.error ?? "Failed.");
     });
   }
@@ -33,7 +34,9 @@ export function MemberRoleEditor({ userId, currentRoles }: { userId: string; cur
   function handleSuspend() {
     if (!confirm("Suspend this member? They won't be able to log in.")) return;
     startTransition(async () => {
-      await suspendMemberAction(userId);
+      const res = await suspendMemberAction(userId);
+      if (!res.success) { toast.error(res.error ?? "Couldn't suspend."); return; }
+      toast.success("Member suspended");
       setOpen(false);
       router.refresh();
     });
