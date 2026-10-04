@@ -175,7 +175,7 @@ export async function updateSeasonAction(
 
   const { dayTimes, globalStart, globalEnd } = extractDayTimes(formData, d.meetingDays);
 
-  await prisma.season.updateMany({
+  const updated = await prisma.season.updateMany({
     where: { id: seasonId, teamId: session.user.teamId },
     data: {
       name:               d.name,
@@ -189,7 +189,19 @@ export async function updateSeasonAction(
       expectedAttendance: d.expectedAttendance,
     },
   });
+  if (updated.count === 0) return { success: false, error: "Season not found." };
 
+  // Robots copy the season year into their display name ("2026 Ironclad") —
+  // keep them in step when the season's year changes.
+  const robots = await prisma.robot.findMany({
+    where:  { seasonId, year: { not: d.year } },
+    select: { id: true, name: true },
+  });
+  for (const r of robots) {
+    await prisma.robot.update({ where: { id: r.id }, data: { year: d.year, displayName: `${d.year} ${r.name}` } });
+  }
+
+  revalidatePath("/", "layout");
   revalidatePath("/settings/season");
   revalidatePath("/dashboard");
   revalidatePath("/schedule");
