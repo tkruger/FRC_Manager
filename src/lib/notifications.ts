@@ -1,4 +1,5 @@
-"use server";
+// Server-only helpers. Deliberately NOT "use server": that would expose these as
+// callable endpoints, letting any client send notifications to any user.
 
 import { prisma } from "@/lib/prisma";
 import type { NotificationType } from "@/generated/prisma";

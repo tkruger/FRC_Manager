@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import type { ItemCategory, ItemType, UnitOfMeasure } from "@/generated/prisma";
+import { maybeQueueReorder } from "@/lib/workflow/reorder";
 
 const BaseItemSchema = z.object({
   name:               z.string().min(1),
@@ -212,12 +213,8 @@ export async function acquireItemAction(
     },
   });
 
-  // Auto-trigger reorder if at/below threshold
-  if (newStock <= item.minStockThreshold && item.minStockThreshold > 0) {
-    await prisma.reorderRequest.create({
-      data: { baseItemId, requestedQty: item.reorderQuantity },
-    });
-  }
+  // Auto-trigger reorder if at/below threshold (per the team's purchase workflow)
+  await maybeQueueReorder(item, Math.max(0, newStock), session.user.teamId);
 
   revalidatePath("/inventory");
   return { success: true };
@@ -234,10 +231,12 @@ export async function updateStockAction(
   const item = await prisma.baseInventoryItem.findUnique({ where: { id: baseItemId } });
   if (!item) return { success: false };
 
+  const newStock = Math.max(0, item.currentStock + delta);
   await prisma.baseInventoryItem.update({
     where: { id: baseItemId },
-    data: { currentStock: Math.max(0, item.currentStock + delta) },
+    data: { currentStock: newStock },
   });
+  if (delta < 0) await maybeQueueReorder(item, newStock, session.user.teamId);
 
   revalidatePath("/inventory");
   return { success: true };

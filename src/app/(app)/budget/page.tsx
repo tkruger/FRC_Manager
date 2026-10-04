@@ -202,7 +202,10 @@ export default async function BudgetDashboard() {
               <div key={e.id} className="flex items-center justify-between py-2 border-b border-[--color-border] last:border-0">
                 <div>
                   <p className="text-sm font-medium text-[--color-text-primary]">{e.description}</p>
-                  <p className="text-small text-[--color-text-secondary]">{e.vendor ? `${e.vendor} · ` : ""}{formatDate(e.date)}</p>
+                  <p className="text-small text-[--color-text-secondary]">
+                    {e.vendor ? `${e.vendor} · ` : ""}{formatDate(e.date)}
+                    {e.isCommitment && <span className="ml-1.5 badge badge-info">Committed — on order</span>}
+                  </p>
                 </div>
                 <p className="text-sm font-medium text-[--color-text-primary] shrink-0 ml-4">{formatCurrency(e.amount)}</p>
               </div>

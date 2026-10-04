@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableHead, TableBody, Th, Td, Tr } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
+import { statusBadgeVariant, statusLabel } from "@/lib/procurement-helpers";
 import { ReorderButton } from "./ReorderButton";
 import { AddInventoryItemDialog } from "./AddInventoryItemDialog";
 import { InventoryTableClient } from "./InventoryTableClient";
@@ -41,8 +42,12 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
     }),
     canSeeRestrictedTabs
       ? prisma.reorderRequest.findMany({
-          where: { baseItem: { seasonId: activeSeason.id }, status: "PENDING" },
-          include: { baseItem: { select: { name: true, preferredSupplier: true, unitCost: true } } },
+          where: { baseItem: { seasonId: activeSeason.id }, status: { in: ["PENDING", "APPROVED", "ORDERED"] } },
+          include: {
+            baseItem: { select: { name: true, preferredSupplier: true, unitCost: true } },
+            purchaseRequest: { select: { id: true, status: true } },
+          },
+          orderBy: { createdAt: "asc" },
         })
       : Promise.resolve([]),
     prisma.vendor.findMany({
@@ -112,7 +117,12 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
       {/* Reorder queue summary card */}
       {view === "reorder" && reorderRequests.length > 0 && (
         <div className="card space-y-2">
-          <h2 className="text-h3 text-[--color-text-primary] mb-3">Pending reorders</h2>
+          <div className="mb-3">
+            <h2 className="text-h3 text-[--color-text-primary]">Reorder queue</h2>
+            <p className="text-small text-[--color-text-secondary]">
+              Items are added automatically when stock falls to their minimum. Each stays here until its purchase is received.
+            </p>
+          </div>
           {reorderRequests.map((r) => (
             <div key={r.id} className="flex items-center justify-between py-2 border-b border-[--color-border] last:border-0">
               <div>
@@ -123,7 +133,14 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
                 </p>
               </div>
               <div className="flex items-center gap-3">
-                <Badge variant="warning">Pending</Badge>
+                {r.purchaseRequest ? (
+                  <Link href={`/procurement/requests/${r.purchaseRequest.id}`} className="flex items-center gap-2 hover:underline">
+                    <Badge variant={statusBadgeVariant(r.purchaseRequest.status)}>{statusLabel(r.purchaseRequest.status)}</Badge>
+                    <span className="text-small text-[--color-secondary]">View request</span>
+                  </Link>
+                ) : (
+                  <Badge variant="warning">Needs a request</Badge>
+                )}
               </div>
             </div>
           ))}
@@ -145,7 +162,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
         displayed.length === 0 ? (
           <div className="card text-center py-12">
             <p className="text-body text-[--color-text-secondary]">
-              {view === "low-stock" ? "No items are below their minimum threshold." : "No pending reorder requests."}
+              {view === "low-stock" ? "No items are below their minimum threshold." : "The reorder queue is empty."}
             </p>
           </div>
         ) : (
@@ -178,14 +195,21 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
                     <Td>{item.storageLocation ?? "—"}</Td>
                     <Td right>{formatCurrency(item.unitCost)}</Td>
                     <Td>
-                      <ReorderButton
-                        itemId={item.id}
-                        itemName={item.name}
-                        reorderQty={item.reorderQuantity ?? 1}
-                        unitCost={item.unitCost}
-                        supplier={item.preferredSupplier}
-                        reorderRequestId={pendingReorder?.id}
-                      />
+                      {pendingReorder?.purchaseRequest ? (
+                        <Link href={`/procurement/requests/${pendingReorder.purchaseRequest.id}`}
+                          className="text-sm font-medium text-[--color-secondary] hover:underline whitespace-nowrap">
+                          On request &rarr;
+                        </Link>
+                      ) : (
+                        <ReorderButton
+                          itemId={item.id}
+                          itemName={item.name}
+                          reorderQty={pendingReorder?.requestedQty ?? item.reorderQuantity ?? 1}
+                          unitCost={item.unitCost}
+                          supplier={item.preferredSupplier}
+                          reorderRequestId={pendingReorder?.id}
+                        />
+                      )}
                     </Td>
                   </Tr>
                 );

@@ -46,6 +46,8 @@ model User {
   userCertifications   UserCertification[]
   purchaseRequests     PurchaseRequest[]   @relation("Requester")
   purchaseApprovals    PurchaseRequest[]   @relation("Approver")
+  purchaseEvents       PurchaseRequestEvent[]
+  workflowVersions     WorkflowDefinition[]
   assignedTasks        Task[]              @relation("TaskAssignees")
   createdTasks         Task[]              @relation("TaskCreator")
   incidentReports      SafetyIncident[]
@@ -137,6 +139,7 @@ model Team {
 
   users         User[]
   seasons       Season[]
+  workflows     WorkflowDefinition[]
   vendors       Vendor[]
   tools         Tool[]
   discordConfig DiscordConfig?
@@ -523,6 +526,10 @@ model ReorderRequest {
   notes        String?
   createdAt    DateTime      @default(now())
   resolvedAt   DateTime?
+
+  // Purchase request raised to fulfil this reorder (status mirrors its progress)
+  purchaseRequestId String?
+  purchaseRequest   PurchaseRequest? @relation(fields: [purchaseRequestId], references: [id], onDelete: SetNull)
 }
 
 enum ReorderStatus {
@@ -597,7 +604,55 @@ model PurchaseRequest {
   actualTotal       Float?
   updatedAt         DateTime        @updatedAt
 
-  lineItems PurchaseLineItem[]
+  // Workflow — the definition version is pinned when the request is created so
+  // editing the workflow never changes the rules for requests already in flight.
+  // A null definition means the built-in default workflow.
+  workflowDefinitionId String?
+  workflowDefinition   WorkflowDefinition? @relation(fields: [workflowDefinitionId], references: [id])
+  currentStepKey       String?
+
+  lineItems       PurchaseLineItem[]
+  events          PurchaseRequestEvent[]
+  reorderRequests ReorderRequest[]
+}
+
+/// Audit trail of everything that happened to a purchase request
+model PurchaseRequestEvent {
+  id        String          @id @default(cuid())
+  requestId String
+  request   PurchaseRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  stepKey   String?
+  stepName  String?
+  action    String          // created | entered | skipped | approve | deny | order | receive | cancel | effect
+  actorId   String?
+  actor     User?           @relation(fields: [actorId], references: [id])
+  note      String?
+  data      Json?
+  createdAt DateTime        @default(now())
+
+  @@index([requestId, createdAt])
+}
+
+/// Versioned, team-configurable workflow. Rows are immutable; saving creates a new version.
+model WorkflowDefinition {
+  id          String       @id @default(cuid())
+  teamId      String
+  team        Team         @relation(fields: [teamId], references: [id])
+  kind        WorkflowKind
+  version     Int
+  definition  Json
+  isActive    Boolean      @default(false)
+  createdById String?
+  createdBy   User?        @relation(fields: [createdById], references: [id])
+  createdAt   DateTime     @default(now())
+
+  purchaseRequests PurchaseRequest[]
+
+  @@unique([teamId, kind, version])
+}
+
+enum WorkflowKind {
+  PURCHASE
 }
 
 enum RequestPriority {

@@ -8,6 +8,15 @@ import {
 } from "@/lib/discord";
 import { differenceInCalendarDays } from "date-fns";
 import type { DiscordConfig, DiscordLink } from "@/generated/prisma";
+import { startWorkflow, performCurrentStepAction, describeRequestState, type Actor } from "@/lib/workflow/engine";
+
+async function actorFor(userId: string, teamId: string): Promise<Actor> {
+  const user = await prisma.user.findUniqueOrThrow({
+    where:  { id: userId },
+    select: { name: true, roles: { select: { role: true } } },
+  });
+  return { id: userId, name: user.name, roles: user.roles.map((r) => r.role), teamId };
+}
 
 // ─── Context resolution ────────────────────────────────────────────────────
 
@@ -688,7 +697,6 @@ export async function handleOrderRequest(
   });
 
   const estimated = cost * qty;
-  const AUTO_APPROVE = 50;
 
   const pr = await prisma.purchaseRequest.create({
     data: {
@@ -698,7 +706,7 @@ export async function handleOrderRequest(
       justification:    reason,
       estimatedTotal:   estimated,
       preferredVendorId: preferredVendor?.id ?? null,
-      status:           estimated <= AUTO_APPROVE ? "APPROVED" : "SUBMITTED",
+      status:           "SUBMITTED",
       lineItems: {
         create: [{
           name:     itemName,
@@ -710,19 +718,22 @@ export async function handleOrderRequest(
     },
   });
 
+  // The team's workflow decides whether approval is needed
+  await startWorkflow(pr.id, await actorFor(ctx.link!.userId, ctx.teamId));
+  const state = await describeRequestState(pr.id);
+
   const prNumber = pr.id.slice(-6).toUpperCase();
-  const autoApproved = estimated <= AUTO_APPROVE;
 
   return reply(null, [
     embed({
-      title: `📋 Purchase Request ${autoApproved ? "Auto-Approved" : "Submitted"}`,
+      title: "📋 Purchase Request Submitted",
       description: `**${itemName} × ${qty}** — Est. $${estimated.toFixed(2)} | Vendor: ${preferredVendor?.name ?? vendor}`,
       fields: [
         { name: "Reason", value: reason },
-        { name: "Status", value: autoApproved ? "✅ Auto-approved (under $50)" : "⏳ Pending approval from Budget Manager" },
+        { name: "Status", value: state },
         { name: "Ref",    value: `PR-${prNumber}`, inline: true },
       ],
-      color: autoApproved ? COLORS.success : COLORS.warning,
+      color: COLORS.info,
     }),
   ]);
 }
@@ -769,9 +780,6 @@ export async function handleOrderApprove(
   const err = requireLink(ctx.link);
   if (err) return err;
 
-  const canApprove = await hasRole(ctx.link!.userId, ["BUDGET_MANAGER", "HEAD_MENTOR"]);
-  if (!canApprove) return ephemeralReply("❌ Only Budget Managers and Head Mentors can approve/deny requests.");
-
   const idNum = getIntOption(options, "id");
   if (!idNum) return ephemeralReply("❌ Please provide the request number.");
 
@@ -791,27 +799,16 @@ export async function handleOrderApprove(
 
   const notes  = getStringOption(options, "notes");
   const reason = getStringOption(options, "reason");
-  const approver = await prisma.user.findUnique({ where: { id: ctx.link!.userId }, select: { name: true } });
-
-  await prisma.purchaseRequest.update({
-    where: { id: request.id },
-    data: {
-      status:       deny ? "DENIED" : "APPROVED",
-      approverId:   ctx.link!.userId,
-      approvalNotes: deny ? reason : (notes ?? null),
-    },
+  // The workflow engine checks the caller is allowed to act on the request's current
+  // approval step and handles notifications (including the requester's DM).
+  const actor  = await actorFor(ctx.link!.userId, ctx.teamId);
+  const result = await performCurrentStepAction(request.id, deny ? "deny" : "approve", actor, {
+    note: (deny ? reason : notes) ?? undefined,
   });
-
-  // Notify requester via DM if linked
-  const requesterDiscordId = (request.requestedBy as any).discordLink?.discordUserId;
-  if (requesterDiscordId) {
-    const msg = deny
-      ? `❌ Your purchase request **${request.title}** was denied by **${approver?.name}**.${reason ? `\nReason: ${reason}` : ""}`
-      : `✅ Your purchase request **${request.title}** was approved by **${approver?.name}**.${notes ? `\nNotes: ${notes}` : ""}`;
-    sendDM(requesterDiscordId, msg).catch(() => {});
-  }
+  if (!result.success) return ephemeralReply(`❌ ${result.error}`);
 
   const emoji = deny ? "❌" : "✅";
   const verb  = deny ? "denied" : "approved";
-  return reply(`${emoji} Request **${request.title}** ${verb} by **${approver?.name}**.`);
+  const next  = deny ? "" : `\n${await describeRequestState(request.id)}`;
+  return reply(`${emoji} **${result.stepName}** for **${request.title}** ${verb} by **${actor.name}**.${next}`);
 }

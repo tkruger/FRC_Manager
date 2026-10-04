@@ -417,6 +417,16 @@ function UserMenu({ user, canManageTeam, canManageSeason, canManageDiscord, canM
               Season settings
             </Link>
           )}
+          {/* Same audience as Discord: Head Mentor + Team Leadership (view); editing is Head Mentor only */}
+          {canManageDiscord && (
+            <Link href="/settings/workflows" role="menuitem" onClick={() => setOpen(false)}
+              className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-[--color-text-primary] hover:bg-[--color-surface-overlay] transition-colors">
+              <svg className="w-4 h-4 text-[--color-text-secondary]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6h4.5v4.5h-4.5V6zm12 0h4.5v4.5h-4.5V6zm-6 7.5h4.5V18h-4.5v-4.5zM8.25 8.25h7.5M6 10.5v3.75h3.75M18 10.5v3.75h-3.75" />
+              </svg>
+              Purchase workflow
+            </Link>
+          )}
           {canManageDiscord && (
             <Link href="/settings/discord" role="menuitem" onClick={() => setOpen(false)}
               className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-[--color-text-primary] hover:bg-[--color-surface-overlay] transition-colors">

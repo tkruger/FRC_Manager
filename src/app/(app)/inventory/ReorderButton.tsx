@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState, useTransition } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
@@ -8,7 +8,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
 import { createPurchaseRequestAction } from "@/app/actions/procurement";
-import { dismissReorderAction } from "@/app/actions/inventory";
 
 interface Props {
   itemId:           string;
@@ -16,7 +15,7 @@ interface Props {
   reorderQty:       number;
   unitCost:         number | null;
   supplier:         string | null;
-  /** If set, this reorder request is dismissed after a purchase request is created */
+  /** If set, the purchase request is linked to this reorder-queue entry and tracks it to delivery */
   reorderRequestId?: string;
 }
 
@@ -27,26 +26,17 @@ const PRIORITY_OPTS = [
 ];
 
 export function ReorderButton({
-  itemName, reorderQty, unitCost, supplier, reorderRequestId,
+  itemId, itemName, reorderQty, unitCost, supplier, reorderRequestId,
 }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [dismissing, startDismiss] = useTransition();
   const [state, action, isPending] = useActionState(createPurchaseRequestAction, null);
 
   useEffect(() => {
     if (!state?.success) return;
-    // After purchase request created, resolve the reorder queue entry
-    if (reorderRequestId) {
-      startDismiss(async () => {
-        await dismissReorderAction(reorderRequestId);
-        router.refresh();
-      });
-    } else {
-      router.refresh();
-    }
+    router.refresh();
     setOpen(false);
-  }, [state, reorderRequestId, router]);
+  }, [state, router]);
 
   return (
     <>
@@ -68,6 +58,8 @@ export function ReorderButton({
 
             {/* Line item 0 — pre-filled from inventory item */}
             <input type="hidden" name="lineItem_0_name"     value={itemName} />
+            <input type="hidden" name="lineItem_0_baseItemId" value={itemId} />
+            {reorderRequestId && <input type="hidden" name="reorderRequestId" value={reorderRequestId} />}
             {unitCost != null && <input type="hidden" name="lineItem_0_unitCost" value={unitCost} />}
 
             <div className="rounded-lg border border-[--color-border] bg-[--color-surface-overlay] px-4 py-3 space-y-1">
@@ -106,7 +98,7 @@ export function ReorderButton({
             <div className="flex gap-2 pt-1">
               <Button
                 type="submit"
-                isLoading={isPending || dismissing}
+                isLoading={isPending}
               >
                 Submit purchase request
               </Button>

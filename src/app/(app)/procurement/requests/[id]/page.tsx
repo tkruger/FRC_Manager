@@ -5,7 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableHead, TableBody, Th, Td, Tr } from "@/components/ui/table";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { statusBadgeVariant, statusLabel, priorityBadgeVariant } from "@/lib/procurement-helpers";
+import { definitionFor, resolveCurrentStep, availableActions } from "@/lib/workflow/engine";
+import { describeCondition, describeRoles, evaluateCondition } from "@/lib/workflow/types";
 import { RequestActions } from "./RequestActions";
+import { RequestTimeline, type TimelineEntry } from "./RequestTimeline";
 import Link from "next/link";
 
 export default async function RequestDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -19,15 +22,45 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
       requestedBy: { select: { name: true, email: true } },
       approver: { select: { name: true } },
       preferredVendor: { select: { name: true, website: true } },
-      lineItems: { orderBy: { id: "asc" } },
+      lineItems: { orderBy: { id: "asc" }, include: { baseItem: { select: { id: true, name: true } } } },
+      events: { orderBy: { createdAt: "asc" }, include: { actor: { select: { name: true } } } },
     },
   });
 
   if (!request) notFound();
 
+  const def         = await definitionFor(request.workflowDefinitionId);
+  const currentStep = resolveCurrentStep(def, request);
+  const actions     = availableActions(def, request, { id: session.user.id, roles: session.user.roles });
+  const linkedStock = request.lineItems.filter((li) => li.baseItem).length;
+
+  // Steps still ahead of the current one, with whether they'll apply to this request
+  const currentIndex = currentStep ? def.steps.findIndex((s) => s.key === currentStep.key) : -1;
+  const subject = {
+    total: request.estimatedTotal ?? 0, priority: request.priority,
+    subTeam: request.subTeam, budgetCategory: request.budgetCategory,
+  };
+  const upcoming = currentStep
+    ? def.steps.slice(currentIndex + 1).map((s) => ({
+        name:      s.name,
+        who:       describeRoles(s.roles),
+        willSkip:  !evaluateCondition(s.when, subject),
+        condition: describeCondition(s.when),
+      }))
+    : [];
+
+  // Requests from before workflows were tracked have no events — show what we know
+  const timeline: TimelineEntry[] = request.events.length > 0
+    ? request.events.map((e) => ({
+        id: e.id, action: e.action, stepName: e.stepName, actor: e.actor?.name ?? null,
+        note: e.note, data: e.data as Record<string, unknown> | null, at: e.createdAt.toISOString(),
+      }))
+    : [{
+        id: "legacy", action: "created", stepName: null, actor: request.requestedBy.name,
+        note: "Submitted before step-by-step history was recorded.", data: null, at: request.submittedAt.toISOString(),
+      }];
+
   const lineTotal = request.lineItems.reduce((s, l) => s + (l.lineTotal ?? 0), 0);
-  const userRoles = session.user.roles ?? [];
-  const canApprove = userRoles.some((r) => ["BUDGET_MANAGER", "HEAD_MENTOR"].includes(r));
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
@@ -39,7 +72,7 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
       </nav>
 
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <h1 className="text-h1 text-[--color-text-primary]">{request.title}</h1>
           <div className="flex items-center gap-2 mt-2 flex-wrap">
@@ -48,8 +81,26 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
             {request.subTeam && <Badge variant="neutral">{request.subTeam.replace("_", " ")}</Badge>}
           </div>
         </div>
-        <RequestActions request={request} canApprove={canApprove} />
+        <RequestActions
+          requestId={request.id}
+          actions={actions}
+          estimatedTotal={request.estimatedTotal}
+          linkedStockLines={linkedStock}
+        />
       </div>
+
+      {/* Where it is now */}
+      {currentStep && (
+        <div className="card py-3 px-4 border-l-4" style={{ borderLeftColor: "var(--color-warning)" }}>
+          <p className="text-sm text-[--color-text-primary]">
+            <span className="font-semibold">Waiting on: {currentStep.name}</span>
+            <span className="text-[--color-text-secondary]"> — {describeRoles(currentStep.roles)}</span>
+          </p>
+          {actions.length === 0 && (
+            <p className="text-small text-[--color-text-secondary] mt-0.5">Nothing for you to do here right now.</p>
+          )}
+        </div>
+      )}
 
       {/* Meta grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -80,6 +131,12 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
         </div>
       )}
 
+      {/* Progress */}
+      <div>
+        <h2 className="text-h2 text-[--color-text-primary] mb-3">Progress</h2>
+        <RequestTimeline entries={timeline} upcoming={upcoming} />
+      </div>
+
       {/* Line items */}
       <div>
         <h2 className="text-h2 text-[--color-text-primary] mb-3">Line items</h2>
@@ -100,6 +157,11 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
                 <Td>
                   <div>
                     <p className="font-medium">{li.name}</p>
+                    {li.baseItem && (
+                      <Link href={`/inventory/${li.baseItem.id}`} className="text-small text-[--color-secondary] hover:underline block">
+                        Restocks inventory item
+                      </Link>
+                    )}
                     {li.vendorProductUrl && (
                       <a href={li.vendorProductUrl} target="_blank" rel="noopener noreferrer"
                         className="text-small text-[--color-secondary] hover:underline truncate block max-w-xs">
@@ -123,16 +185,6 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
           </TableBody>
         </Table>
       </div>
-
-      {/* Approval notes */}
-      {request.approvalNotes && (
-        <div className={`card border-l-4 ${request.status === "DENIED" ? "border-l-[--color-danger]" : "border-l-[--color-success]"}`}>
-          <p className="text-label text-[--color-text-secondary] mb-1">
-            {request.status === "DENIED" ? "Denial reason" : "Approval notes"} — {request.approver?.name}
-          </p>
-          <p className="text-body text-[--color-text-primary]">{request.approvalNotes}</p>
-        </div>
-      )}
     </div>
   );
 }

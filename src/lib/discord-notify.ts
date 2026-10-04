@@ -70,6 +70,12 @@ export async function notifyPurchaseDenied(teamId: string, requestedById: string
   } catch { /* best-effort */ }
 }
 
+export async function notifyPurchaseProgress(teamId: string, title: string, detail: string) {
+  await postToChannel(teamId, "channelOrders", [
+    embed({ title: "📦 Purchase Update", description: `**${title}** — ${detail}`, color: COLORS.info }),
+  ]);
+}
+
 // ── Tasks ─────────────────────────────────────────────────────────────────
 
 export async function notifyTaskAssigned(teamId: string, assigneeId: string, taskName: string, dueDate?: Date | null) {
