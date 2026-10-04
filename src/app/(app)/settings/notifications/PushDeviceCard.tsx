@@ -3,11 +3,8 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import {
-  savePushSubscriptionAction,
-  removePushSubscriptionAction,
-  sendTestNotificationAction,
-} from "@/app/actions/notification-settings";
+import { removePushSubscriptionAction, sendTestNotificationAction } from "@/app/actions/notification-settings";
+import { pushSupport, hasSubscription, enablePush } from "@/lib/push-client";
 
 type State =
   | "loading"
@@ -17,22 +14,6 @@ type State =
   | "off"
   | "on";
 
-function urlBase64ToUint8Array(base64: string) {
-  const padding = "=".repeat((4 - (base64.length % 4)) % 4);
-  const raw = atob((base64 + padding).replace(/-/g, "+").replace(/_/g, "/"));
-  return Uint8Array.from(raw, (c) => c.charCodeAt(0));
-}
-
-function isIos() {
-  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-}
-
-function isStandalone() {
-  return window.matchMedia("(display-mode: standalone)").matches ||
-    (navigator as Navigator & { standalone?: boolean }).standalone === true;
-}
-
 export function PushDeviceCard({ vapidPublicKey, deviceCount }: { vapidPublicKey: string | null; deviceCount: number }) {
   const router = useRouter();
   const [state, setState]   = useState<State>("loading");
@@ -41,15 +22,10 @@ export function PushDeviceCard({ vapidPublicKey, deviceCount }: { vapidPublicKey
 
   useEffect(() => {
     (async () => {
-      const supported = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
-      if (!supported) {
-        setState(isIos() && !isStandalone() ? "needs-install" : "unsupported");
-        return;
-      }
+      const support = pushSupport();
+      if (support !== "supported") { setState(support); return; }
       if (Notification.permission === "denied") { setState("denied"); return; }
-      const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/", updateViaCache: "none" });
-      const sub = await reg.pushManager.getSubscription();
-      setState(sub ? "on" : "off");
+      setState(await hasSubscription() ? "on" : "off");
     })().catch(() => setState("unsupported"));
   }, []);
 
@@ -58,20 +34,8 @@ export function PushDeviceCard({ vapidPublicKey, deviceCount }: { vapidPublicKey
     start(async () => {
       try {
         if (!vapidPublicKey) throw new Error("Push isn't configured on the server yet.");
-        const permission = await Notification.requestPermission();
-        if (permission !== "granted") { setState(permission === "denied" ? "denied" : "off"); return; }
-
-        const reg = await navigator.serviceWorker.ready;
-        const sub = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
-        });
-        const res = await savePushSubscriptionAction(
-          JSON.parse(JSON.stringify(sub)),
-          Intl.DateTimeFormat().resolvedOptions().timeZone,
-          navigator.userAgent,
-        );
-        if (!res.success) throw new Error(res.error);
+        const result = await enablePush(vapidPublicKey);
+        if (result !== "enabled") { setState(result === "denied" ? "denied" : "off"); return; }
         setState("on");
         setMessage({ kind: "ok", text: "Push notifications are on for this device." });
         router.refresh();

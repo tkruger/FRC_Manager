@@ -216,6 +216,7 @@ export default function HelpPage() {
           type can show <b>in the app</b>, as a <b>push notification</b>, or both.
         </p>
         <H3>Turning on push notifications</H3>
+        <p>The first time you open the app on a device, it asks whether to turn on notifications. If you choose <b>Not now</b>, it won&apos;t ask again on that device — you can turn them on any time here:</p>
         <Steps>
           <li>On iPhone/iPad, first add the app to your home screen (see <a href="#getting-started" className="link">Getting started</a>) and open it from there — iOS only allows push for installed apps.</li>
           <li>Go to <b>Settings → Notifications</b> and tap <b>Turn on push</b>, then allow notifications when asked.</li>

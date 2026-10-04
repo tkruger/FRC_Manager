@@ -4,6 +4,7 @@ import { TopNav } from "@/components/layout/TopNav";
 import { prisma } from "@/lib/prisma";
 import { getActiveRobotId } from "@/app/actions/robot-context";
 import { AnimatedBackground } from "@/components/providers/AnimatedBackground";
+import { PushPrompt } from "@/components/notifications/PushPrompt";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -63,6 +64,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         />
         {/* pt-14 clears the top nav; pb-14 clears the mobile bottom tab bar (hidden on lg+) */}
         <main className="pt-safe-nav pb-14 lg:pb-0">{children}</main>
+        {/* First visit on a device: offer push notifications (once) */}
+        <PushPrompt vapidPublicKey={process.env.VAPID_PUBLIC_KEY ?? null} />
       </div>
     </div>
   );
