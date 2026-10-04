@@ -110,15 +110,20 @@ export default async function SchedulePage({
     id: t.id, name: t.name, status: t.status,
   }));
 
-  // Progress stats
-  const totalTasks = tasks.length;
-  const completeTasks = tasks.filter((t) => t.status === "COMPLETE").length;
+  // Progress stats — always the whole season (ignores My tasks / robot filters) so the
+  // header card is identical on the Kanban, List and Gantt views
+  const allTaskStats = await prisma.task.findMany({
+    where:  { seasonId: activeSeason.id },
+    select: { status: true, subTeam: true },
+  });
+  const totalTasks = allTaskStats.length;
+  const completeTasks = allTaskStats.filter((t) => t.status === "COMPLETE").length;
 
   const subteamStats: Record<string, { total: number; done: number }> = {};
   for (const opt of SUBTEAM_OPTIONS) {
     subteamStats[opt.value] = { total: 0, done: 0 };
   }
-  for (const t of tasks) {
+  for (const t of allTaskStats) {
     const st = t.subTeam ?? "OTHER";
     if (!subteamStats[st]) subteamStats[st] = { total: 0, done: 0 };
     subteamStats[st].total++;
