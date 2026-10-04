@@ -14,16 +14,21 @@ export function verifyDiscordSignature(
   body: string
 ): boolean {
   try {
-    return crypto.verify(
-      "ed25519",
-      Buffer.from(timestamp + body),
-      Buffer.from(publicKey, "hex"),
-      Buffer.from(signature, "hex")
-    );
+    // Discord gives a raw 32-byte Ed25519 key as hex; Node needs it wrapped as a key
+    // object (SPKI DER = fixed 12-byte Ed25519 prefix + the raw key). Passing the raw
+    // bytes directly throws, which used to make every signature look invalid.
+    const key = crypto.createPublicKey({
+      key:    Buffer.concat([ED25519_SPKI_PREFIX, Buffer.from(publicKey.trim(), "hex")]),
+      format: "der",
+      type:   "spki",
+    });
+    return crypto.verify(null, Buffer.from(timestamp + body), key, Buffer.from(signature, "hex"));
   } catch {
     return false;
   }
 }
+
+const ED25519_SPKI_PREFIX = Buffer.from("302a300506032b6570032100", "hex");
 
 // ─── REST helpers ──────────────────────────────────────────────────────────
 

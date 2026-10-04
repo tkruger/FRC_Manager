@@ -12,6 +12,7 @@ const PUBLIC_PATHS = [
   "/api/calendar",    // iCal feed — must be accessible without auth for calendar apps
   "/public/schedule", // Public team schedule page
   "/api/cron",        // Scheduled jobs — authenticated with CRON_SECRET instead
+  "/api/discord/interactions", // Called by Discord — authenticated by its Ed25519 signature instead
   "/sw.js",           // Service worker (push notifications)
   "/manifest.webmanifest",
   "/terms", "/privacy", // Legal pages — linked from Discord and the sign-in screens
