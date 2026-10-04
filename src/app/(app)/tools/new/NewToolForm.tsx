@@ -46,7 +46,7 @@ export function NewToolForm({ onClose }: { onClose?: () => void } = {}) {
   return (
     <form action={action} className="space-y-5">
       {state && !state.success && (
-        <div className="rounded-md bg-[--color-danger]/10 border border-[--color-danger]/20 px-4 py-3 text-sm text-[--color-danger]">{state.error}</div>
+        <div className="rounded-md bg-(--color-danger)/10 border border-(--color-danger)/20 px-4 py-3 text-sm text-(--color-danger)">{state.error}</div>
       )}
 
       <Field label="Tool name" name="name" required placeholder='e.g. Cordless Drill — DeWalt 20V #3' />
@@ -59,23 +59,25 @@ export function NewToolForm({ onClose }: { onClose?: () => void } = {}) {
         <Field label="Model" name="model" placeholder="DCD791D2" />
       </div>
       <div className="grid grid-cols-2 gap-4">
-        <Field label="Asset tag / serial" name="assetTag" placeholder="TOOL-001" />
-        <Field label="Quantity owned" name="quantityOwned" type="number" min="1" defaultValue={1} />
+        <Field label="How many to add" name="count" type="number" min="1" max="50" defaultValue={1}
+          hint="Each becomes its own tool with its own tag" />
+        <Field label="Asset tag" name="assetTag" placeholder="Auto: TOOL-0001"
+          hint="Blank = next number. With several, -1, -2… is added" />
       </div>
       <Field label="Home location" name="homeLocation" placeholder='e.g. Red Toolbox — Top Drawer' />
       <Select label="Condition" name="condition" options={CONDITION_OPTS} defaultValue="GOOD" />
 
-      <div className="border-t border-[--color-border] pt-4 space-y-3">
-        <p className="text-label font-medium text-[--color-text-secondary] uppercase tracking-wide">Certification</p>
+      <div className="border-t border-(--color-border) pt-4 space-y-3">
+        <p className="text-label font-medium text-(--color-text-secondary) uppercase tracking-wide">Certification</p>
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" name="requiresCertification" className="rounded" />
-          <span className="text-sm text-[--color-text-primary]">Requires safety certification to check out</span>
+          <span className="text-sm text-(--color-text-primary)">Requires safety certification to check out</span>
         </label>
         <Field label="Certification name" name="certificationName" placeholder='e.g. Drill Press Safety' />
       </div>
 
-      <div className="border-t border-[--color-border] pt-4 space-y-3">
-        <p className="text-label font-medium text-[--color-text-secondary] uppercase tracking-wide">Maintenance</p>
+      <div className="border-t border-(--color-border) pt-4 space-y-3">
+        <p className="text-label font-medium text-(--color-text-secondary) uppercase tracking-wide">Maintenance</p>
         <div className="grid grid-cols-2 gap-4">
           <Field label="Interval (days)" name="maintenanceIntervalDays" type="number" placeholder="90" />
           <Field label="Replacement cost ($)" name="replacementCost" type="number" step="0.01" placeholder="0.00" />
@@ -83,8 +85,8 @@ export function NewToolForm({ onClose }: { onClose?: () => void } = {}) {
         <Textarea label="Notes" name="notes" rows={2} placeholder="Special instructions, quirks..." />
       </div>
 
-      <div className="border-t border-[--color-border] pt-4 space-y-3">
-        <p className="text-label font-medium text-[--color-text-secondary] uppercase tracking-wide">Photo</p>
+      <div className="border-t border-(--color-border) pt-4 space-y-3">
+        <p className="text-label font-medium text-(--color-text-secondary) uppercase tracking-wide">Photo</p>
         <ToolImageCapture name="imageUrl" />
       </div>
 

@@ -26,10 +26,9 @@ export async function GET(req: NextRequest) {
       name: true,
       assetTag: true,
       condition: true,
-      quantityOwned: true,
       checkouts: {
         where: { returnedAt: null },
-        select: { id: true, quantity: true, user: { select: { name: true } } },
+        select: { id: true, user: { select: { name: true } } },
       },
     },
   });
@@ -38,14 +37,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: `No tool found with code "${code}"` }, { status: 404 });
   }
 
-  const checkedOut = tool.checkouts.reduce((s, c) => s + c.quantity, 0);
+  // Each tool record is one physical tool
   return NextResponse.json({
     id: tool.id,
     name: tool.name,
     assetTag: tool.assetTag,
     condition: tool.condition,
-    available: tool.quantityOwned - checkedOut,
-    quantityOwned: tool.quantityOwned,
+    available: tool.checkouts.length === 0 && !["OUT_OF_SERVICE", "OUT_FOR_MAINTENANCE"].includes(tool.condition),
     checkouts: tool.checkouts,
   });
 }

@@ -14,9 +14,9 @@ interface ScannedTool {
   name: string;
   assetTag: string | null;
   condition: string;
-  available: number;
-  quantityOwned: number;
-  checkouts: { id: string; quantity: number; user: { name: string } }[];
+  /** One physical tool: free to check out or not */
+  available: boolean;
+  checkouts: { id: string; user: { name: string } }[];
 }
 
 const CONDITION_OPTIONS = [
@@ -86,7 +86,7 @@ export function ScanClient() {
     return (
       <div className="card text-center space-y-4">
         <div className="text-4xl">✅</div>
-        <p className="text-body font-medium text-[--color-text-primary]">{actionDone}</p>
+        <p className="text-body font-medium text-(--color-text-primary)">{actionDone}</p>
         <div className="flex gap-3 justify-center">
           <Button onClick={reset}>Scan another</Button>
           <Button variant="outline" onClick={() => router.push("/tools")}>Done</Button>
@@ -100,10 +100,10 @@ export function ScanClient() {
     return (
       <div className="space-y-4">
         <BarcodeScanner onScan={handleScan} onClose={() => router.push("/tools")} />
-        <p className="text-center text-small text-[--color-text-secondary]">
+        <p className="text-center text-small text-(--color-text-secondary)">
           QR codes should contain the tool&apos;s asset tag or ID.
           <br />
-          <a href="/tools" className="text-[--color-secondary] hover:underline">Browse all tools instead →</a>
+          <a href="/tools" className="text-(--color-secondary) hover:underline">Browse all tools instead →</a>
         </p>
       </div>
     );
@@ -113,7 +113,7 @@ export function ScanClient() {
   if (lookupError) {
     return (
       <div className="card space-y-4">
-        <div className="rounded-md bg-[--color-danger]/10 border border-[--color-danger]/20 px-4 py-3 text-sm text-[--color-danger]">
+        <div className="rounded-md bg-(--color-danger)/10 border border-(--color-danger)/20 px-4 py-3 text-sm text-(--color-danger)">
           {lookupError}
         </div>
         <Button onClick={reset} className="w-full">Try again</Button>
@@ -129,27 +129,26 @@ export function ScanClient() {
         <div className="card space-y-2">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-h3 text-[--color-text-primary]">{tool.name}</p>
-              {tool.assetTag && <p className="text-mono text-[--color-text-secondary]">{tool.assetTag}</p>}
+              <p className="text-h3 text-(--color-text-primary)">{tool.name}</p>
+              {tool.assetTag && <p className="text-mono text-(--color-text-secondary)">{tool.assetTag}</p>}
             </div>
-            <Badge variant={tool.available > 0 ? "success" : "danger"}>
-              {tool.available > 0 ? `${tool.available} available` : "All checked out"}
+            <Badge variant={tool.available ? "success" : "danger"}>
+              {tool.available ? "Available" : tool.checkouts.length ? "Checked out" : "Unavailable"}
             </Badge>
           </div>
         </div>
 
         {actionError && (
-          <div className="rounded-md bg-[--color-danger]/10 border border-[--color-danger]/20 px-4 py-3 text-sm text-[--color-danger]">
+          <div className="rounded-md bg-(--color-danger)/10 border border-(--color-danger)/20 px-4 py-3 text-sm text-(--color-danger)">
             {actionError}
           </div>
         )}
 
         {/* Check out */}
-        {tool.available > 0 && !checkinId && (
+        {tool.available && !checkinId && (
           <div className="card space-y-3">
-            <p className="text-h3 text-[--color-text-primary]">Check out</p>
+            <p className="text-h3 text-(--color-text-primary)">Check out</p>
             <form onSubmit={handleCheckout} className="space-y-3">
-              <input type="hidden" name="quantity" value="1" />
               <Field
                 label="Return by"
                 name="expectedReturn"
@@ -168,7 +167,7 @@ export function ScanClient() {
         {/* Check in — show each active checkout */}
         {tool.checkouts.length > 0 && (
           <div className="card space-y-3">
-            <p className="text-h3 text-[--color-text-primary]">Check in</p>
+            <p className="text-h3 text-(--color-text-primary)">Check in</p>
             <div className="space-y-2">
               {tool.checkouts.map((c) => (
                 <button
@@ -176,22 +175,20 @@ export function ScanClient() {
                   onClick={() => setCheckinId(c.id)}
                   className={`w-full text-left rounded-md border px-4 py-3 transition-colors ${
                     checkinId === c.id
-                      ? "border-[--color-primary] bg-[--color-primary]/8"
-                      : "border-[--color-border] hover:border-[--color-primary]/50"
+                      ? "border-(--color-primary) bg-(--color-primary)/8"
+                      : "border-(--color-border) hover:border-(--color-primary)/50"
                   }`}
                 >
-                  <p className="text-sm font-medium text-[--color-text-primary]">
+                  <p className="text-sm font-medium text-(--color-text-primary)">
                     Checked out by {c.user.name}
                   </p>
-                  <p className="text-small text-[--color-text-secondary]">
-                    {c.quantity} unit{c.quantity !== 1 ? "s" : ""}
-                  </p>
+                  <p className="text-small text-(--color-text-secondary)">Tap to return it</p>
                 </button>
               ))}
             </div>
 
             {checkinId && (
-              <div className="space-y-3 pt-2 border-t border-[--color-border]">
+              <div className="space-y-3 pt-2 border-t border-(--color-border)">
                 <Select
                   label="Return condition"
                   options={CONDITION_OPTIONS}

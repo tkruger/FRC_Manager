@@ -42,7 +42,6 @@ interface Tool {
   manufacturer: string | null;
   model: string | null;
   assetTag: string | null;
-  quantityOwned: number;
   homeLocation: string | null;
   condition: string;
   requiresCertification: boolean;
@@ -64,12 +63,12 @@ export function EditToolForm({ tool }: { tool: Tool }) {
   return (
     <form action={action} className="space-y-5">
       {state && !state.success && (
-        <div className="rounded-md bg-[--color-danger]/10 border border-[--color-danger]/20 px-4 py-3 text-sm text-[--color-danger]">
+        <div className="rounded-md bg-(--color-danger)/10 border border-(--color-danger)/20 px-4 py-3 text-sm text-(--color-danger)">
           {state.error}
         </div>
       )}
       {state?.success && (
-        <div className="rounded-md bg-[--color-success]/10 border border-[--color-success]/20 px-4 py-3 text-sm text-[--color-success]">
+        <div className="rounded-md bg-(--color-success)/10 border border-(--color-success)/20 px-4 py-3 text-sm text-(--color-success)">
           Saved successfully.
         </div>
       )}
@@ -83,24 +82,22 @@ export function EditToolForm({ tool }: { tool: Tool }) {
         <Field label="Manufacturer" name="manufacturer" defaultValue={tool.manufacturer ?? ""} />
         <Field label="Model"        name="model"        defaultValue={tool.model ?? ""} />
       </div>
-      <div className="grid grid-cols-2 gap-4">
-        <Field label="Asset tag / serial" name="assetTag"      defaultValue={tool.assetTag ?? ""} />
-        <Field label="Quantity owned"     name="quantityOwned" type="number" min="1" defaultValue={tool.quantityOwned} />
-      </div>
+      <Field label="Asset tag" name="assetTag" defaultValue={tool.assetTag ?? ""}
+        hint="Unique to this tool. Leave blank to get the next TOOL-#### number." />
       <Field label="Home location" name="homeLocation" defaultValue={tool.homeLocation ?? ""} />
       <Select label="Condition" name="condition" options={CONDITION_OPTS} defaultValue={tool.condition} />
 
-      <div className="border-t border-[--color-border] pt-4 space-y-3">
-        <p className="text-label font-medium text-[--color-text-secondary] uppercase tracking-wide">Certification</p>
+      <div className="border-t border-(--color-border) pt-4 space-y-3">
+        <p className="text-label font-medium text-(--color-text-secondary) uppercase tracking-wide">Certification</p>
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" name="requiresCertification" defaultChecked={tool.requiresCertification} className="rounded" />
-          <span className="text-sm text-[--color-text-primary]">Requires safety certification to check out</span>
+          <span className="text-sm text-(--color-text-primary)">Requires safety certification to check out</span>
         </label>
         <Field label="Certification name" name="certificationName" defaultValue={tool.certificationName ?? ""} />
       </div>
 
-      <div className="border-t border-[--color-border] pt-4 space-y-3">
-        <p className="text-label font-medium text-[--color-text-secondary] uppercase tracking-wide">Maintenance</p>
+      <div className="border-t border-(--color-border) pt-4 space-y-3">
+        <p className="text-label font-medium text-(--color-text-secondary) uppercase tracking-wide">Maintenance</p>
         <div className="grid grid-cols-2 gap-4">
           <Field label="Interval (days)"     name="maintenanceIntervalDays" type="number" defaultValue={tool.maintenanceIntervalDays ?? ""} />
           <Field label="Replacement cost ($)" name="replacementCost"        type="number" step="0.01" defaultValue={tool.replacementCost ?? ""} />

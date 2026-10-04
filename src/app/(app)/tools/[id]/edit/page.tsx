@@ -44,7 +44,6 @@ export default async function ToolEditPage({ params }: { params: Promise<{ id: s
           manufacturer:            tool.manufacturer,
           model:                   tool.model,
           assetTag:                tool.assetTag,
-          quantityOwned:           tool.quantityOwned,
           homeLocation:            tool.homeLocation,
           condition:               tool.condition,
           requiresCertification:   tool.requiresCertification,

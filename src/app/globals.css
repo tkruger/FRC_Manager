@@ -315,6 +315,9 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--color-primary)
   button, [role="button"], input[type="checkbox"], input[type="radio"], select, a {
     min-height: 44px; min-width: 44px;
   }
+  /* A fixed min-width replaces flex's default min-width:auto, which let tab links
+     shrink below their text and overlap. Links are wide enough already. */
+  a { min-width: auto; }
   p a, .text-small a, .badge, nav a { min-height: unset; min-width: unset; }
 }
 

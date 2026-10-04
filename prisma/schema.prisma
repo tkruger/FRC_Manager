@@ -151,6 +151,8 @@ model Team {
   tools         Tool[]
   discordConfig DiscordConfig?
   timezone      String?   // IANA zone used for meeting times and daily reminders
+  /// Next number for auto-assigned tool asset tags (TOOL-0001, …)
+  nextToolNumber Int      @default(1)
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -284,9 +286,9 @@ model Tool {
   toolType                ToolType      @default(OTHER)
   manufacturer            String?
   model                   String?
+  /// Unique per tool — identical tools (two drills) each get their own tag and barcode
   assetTag                String?
   serialNumber            String?
-  quantityOwned           Int           @default(1)
   homeLocation            String?
   space                   ToolSpace     @default(SHOP_ONLY)
   condition               ToolCondition @default(GOOD)
@@ -338,7 +340,6 @@ model ToolCheckout {
   tool            Tool           @relation(fields: [toolId], references: [id])
   userId          String
   user            User           @relation(fields: [userId], references: [id])
-  quantity        Int            @default(1)
   intendedUse     String?
   checkedOutAt    DateTime       @default(now())
   expectedReturn  DateTime

@@ -21,15 +21,15 @@ export function ToolTabBar({ toolId, canEdit }: Props) {
   ];
 
   return (
-    <div className="flex gap-0 border-b border-[--color-table-border]">
+    <div className="flex gap-0 border-b border-(--color-table-border)">
       {tabs.map((t) => (
         <Link
           key={t.key}
           href={t.href}
           className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
             tab === t.key
-              ? "border-[--color-primary] text-[--color-primary]"
-              : "border-transparent text-[--color-text-secondary] hover:text-[--color-text-primary]"
+              ? "border-(--color-primary) text-(--color-primary)"
+              : "border-transparent text-(--color-text-secondary) hover:text-(--color-text-primary)"
           }`}
         >
           {t.label}

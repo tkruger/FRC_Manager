@@ -25,9 +25,9 @@ interface Props {
 function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg border border-[--color-border] px-3 py-2 text-xs"
+    <div className="rounded-lg border border-(--color-border) px-3 py-2 text-xs"
       style={{ backgroundColor: "var(--color-surface)", boxShadow: "var(--shadow-md)" }}>
-      <p className="font-medium text-[--color-text-primary] mb-1">{label}</p>
+      <p className="font-medium text-(--color-text-primary) mb-1">{label}</p>
       {payload.map((p: any) => (
         <p key={p.name} style={{ color: p.color }}>
           {p.name}: {formatCurrency(p.value)}
@@ -161,17 +161,17 @@ export function BudgetBurndownCard({ totalAllocated, totalSpent, kickoffDate, we
     <>
       {/* Compact card */}
       <div
-        className="card cursor-pointer hover:border-[--color-primary]/40 transition-colors group"
+        className="card cursor-pointer hover:border-(--color-primary)/40 transition-colors group"
         onClick={() => setOpen(true)}
         title="Click to expand"
       >
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <h2 className="text-h3 text-[--color-text-primary]">Budget overview</h2>
+            <h2 className="text-h3 text-(--color-text-primary)">Budget overview</h2>
             {/* Mini KPIs */}
-            <div className="hidden sm:flex items-center gap-4 text-small text-[--color-text-secondary]">
-              <span><strong className="text-[--color-text-primary]">{formatCurrency(totalSpent)}</strong> spent</span>
-              <span><strong className="text-[--color-text-primary]">{pct}%</strong> of budget</span>
+            <div className="hidden sm:flex items-center gap-4 text-small text-(--color-text-secondary)">
+              <span><strong className="text-(--color-text-primary)">{formatCurrency(totalSpent)}</strong> spent</span>
+              <span><strong className="text-(--color-text-primary)">{pct}%</strong> of budget</span>
               <span style={{ color: totalAllocated - totalSpent < 0 ? "var(--color-danger)" : "var(--color-success)" }}>
                 <strong>{formatCurrency(Math.abs(totalAllocated - totalSpent))}</strong>
                 {totalAllocated - totalSpent < 0 ? " over" : " remaining"}
@@ -180,16 +180,16 @@ export function BudgetBurndownCard({ totalAllocated, totalSpent, kickoffDate, we
           </div>
           {/* Tab switcher (compact) */}
           <div className="flex items-center gap-2">
-            <div className="flex rounded border border-[--color-border] text-xs overflow-hidden">
+            <div className="flex rounded border border-(--color-border) text-xs overflow-hidden">
               {(["burndown", "categories"] as const).map((t) => (
                 <button key={t} onClick={(e) => { e.stopPropagation(); setTab(t); }}
-                  className={`px-2.5 py-1 transition-colors ${tab === t ? "text-white" : "text-[--color-text-secondary] hover:text-[--color-text-primary] bg-[--color-surface]"}`}
+                  className={`px-2.5 py-1 transition-colors ${tab === t ? "text-white" : "text-(--color-text-secondary) hover:text-(--color-text-primary) bg-(--color-surface)"}`}
                   style={tab === t ? { backgroundColor: "var(--color-primary)" } : undefined}>
                   {t === "burndown" ? "Burndown" : "By category"}
                 </button>
               ))}
             </div>
-            <svg className="w-4 h-4 text-[--color-text-secondary] group-hover:text-[--color-primary] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="w-4 h-4 text-(--color-text-secondary) group-hover:text-(--color-primary) transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
             </svg>
           </div>
@@ -199,7 +199,7 @@ export function BudgetBurndownCard({ totalAllocated, totalSpent, kickoffDate, we
           ? <BurndownLine data={burndownData} totalAllocated={totalAllocated} compact />
           : <CategoryBars data={categoryData} compact />}
 
-        <p className="text-small text-[--color-text-disabled] text-right mt-1">Click to expand</p>
+        <p className="text-small text-(--color-text-disabled) text-right mt-1">Click to expand</p>
       </div>
 
       {/* Expanded modal */}
@@ -213,21 +213,21 @@ export function BudgetBurndownCard({ totalAllocated, totalSpent, kickoffDate, we
                 { label: "Total spent",     value: formatCurrency(totalSpent),     color: C_SPENT },
                 { label: "Remaining",       value: formatCurrency(Math.max(0, totalAllocated - totalSpent)), color: C_REMAINING },
               ].map((s) => (
-                <div key={s.label} className="rounded-md bg-[--color-surface-overlay] px-3 py-2.5 text-center">
+                <div key={s.label} className="rounded-md bg-(--color-surface-overlay) px-3 py-2.5 text-center">
                   <p className="text-h2 font-bold" style={{ color: s.color }}>{s.value}</p>
-                  <p className="text-label text-[--color-text-secondary]">{s.label}</p>
+                  <p className="text-label text-(--color-text-secondary)">{s.label}</p>
                 </div>
               ))}
             </div>
 
             {/* Tabs */}
-            <div className="flex border-b border-[--color-border] gap-4">
+            <div className="flex border-b border-(--color-border) gap-4">
               {(["burndown", "categories"] as const).map((t) => (
                 <button key={t} onClick={() => setTab(t)}
                   className={`pb-2 text-sm font-medium border-b-2 transition-colors ${
                     tab === t
-                      ? "border-[--color-primary] text-[--color-primary]"
-                      : "border-transparent text-[--color-text-secondary] hover:text-[--color-text-primary]"
+                      ? "border-(--color-primary) text-(--color-primary)"
+                      : "border-transparent text-(--color-text-secondary) hover:text-(--color-text-primary)"
                   }`}>
                   {t === "burndown" ? "Cumulative burndown" : "By category"}
                 </button>
@@ -236,7 +236,7 @@ export function BudgetBurndownCard({ totalAllocated, totalSpent, kickoffDate, we
 
             {tab === "burndown" && (
               <div>
-                <p className="text-small text-[--color-text-secondary] mb-3">
+                <p className="text-small text-(--color-text-secondary) mb-3">
                   Cumulative spend (red) vs. remaining budget (green) over the build season.
                 </p>
                 <BurndownLine data={burndownData} totalAllocated={totalAllocated} />
@@ -245,7 +245,7 @@ export function BudgetBurndownCard({ totalAllocated, totalSpent, kickoffDate, we
 
             {tab === "categories" && (
               <div>
-                <p className="text-small text-[--color-text-secondary] mb-3">
+                <p className="text-small text-(--color-text-secondary) mb-3">
                   Allocated (blue) vs. spent (red) per budget category.
                 </p>
                 <CategoryBars data={categoryData} />

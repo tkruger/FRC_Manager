@@ -86,7 +86,7 @@ export function TasksTabBar() {
   }
 
   return (
-    <div className="flex items-center justify-between border-b border-[--color-border]">
+    <div className="flex items-center justify-between border-b border-(--color-border)">
       {/* View tabs */}
       <div className="flex gap-0.5">
         {TABS.map((tab) => {
@@ -97,8 +97,8 @@ export function TasksTabBar() {
               href={tabHref(tab.baseHref)}
               className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
                 active
-                  ? "text-[--color-primary] border-[--color-primary] bg-[--color-surface-overlay]"
-                  : "text-[--color-text-secondary] border-transparent hover:text-[--color-text-primary] hover:bg-[--color-surface-overlay]"
+                  ? "text-(--color-primary) border-(--color-primary) bg-(--color-surface-overlay)"
+                  : "text-(--color-text-secondary) border-transparent hover:text-(--color-text-primary) hover:bg-(--color-surface-overlay)"
               }`}
             >
               {tab.label}
@@ -115,8 +115,8 @@ export function TasksTabBar() {
           className={cn(
             "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold transition-all border",
             showMineOnly
-              ? "border-[--color-primary] text-[--color-primary] bg-[--color-primary]/10"
-              : "border-[--color-border] text-[--color-text-secondary] hover:border-[--color-border-strong] hover:text-[--color-text-primary]"
+              ? "border-(--color-primary) text-(--color-primary) bg-(--color-primary)/10"
+              : "border-(--color-border) text-(--color-text-secondary) hover:border-(--color-border-strong) hover:text-(--color-text-primary)"
           )}
         >
           {showMineOnly

@@ -458,7 +458,8 @@ export async function handleToolStatus(
   if (err) return err;
 
   const name = getStringOption(options, "name") ?? "";
-  const tool = await prisma.tool.findFirst({
+  // Each physical tool is its own record — show every copy that matches
+  const tools = await prisma.tool.findMany({
     where: {
       teamId: ctx.teamId,
       retired: false,
@@ -473,39 +474,28 @@ export async function handleToolStatus(
         include: { user: { select: { name: true } } },
       },
     },
+    orderBy: [{ name: "asc" }, { assetTag: "asc" }],
+    take: 15,
   });
 
-  if (!tool) return ephemeralReply(`❌ No tool found matching "**${name}**".`);
+  if (tools.length === 0) return ephemeralReply(`❌ No tool found matching "**${name}**".`);
 
-  const checkedOut = tool.checkouts.reduce((s, c) => s + c.quantity, 0);
-  const available  = tool.quantityOwned - checkedOut;
-
-  const fields = [
-    { name: "Condition", value: tool.condition.replace(/_/g, " "), inline: true },
-    { name: "Available", value: `${available} / ${tool.quantityOwned}`, inline: true },
-    { name: "Location",  value: tool.homeLocation ?? "—", inline: true },
-  ];
-
-  if (tool.checkouts.length > 0) {
-    fields.push({
-      name: "Checked out by",
-      value: tool.checkouts.map((c) => {
-        const overdue = c.expectedReturn < new Date();
-        return `${c.user.name} (due ${c.expectedReturn.toLocaleDateString("en-US", { month: "short", day: "numeric" })}${overdue ? " ⚠️ OVERDUE" : ""})`;
-      }).join("\n"),
-      inline: false,
-    });
-  }
-
-  if (tool.requiresCertification && tool.certificationName) {
-    fields.push({ name: "⚠️ Certification required", value: tool.certificationName, inline: false });
-  }
+  const free = tools.filter((t) => t.checkouts.length === 0 && !["OUT_OF_SERVICE", "OUT_FOR_MAINTENANCE"].includes(t.condition));
+  const lines = tools.map((t) => {
+    const c = t.checkouts[0];
+    const state = c
+      ? `out — ${c.user.name}, due ${c.expectedReturn.toLocaleDateString("en-US", { month: "short", day: "numeric" })}${c.expectedReturn < new Date() ? " ⚠️ OVERDUE" : ""}`
+      : free.includes(t) ? "✅ available" : "⛔ unavailable";
+    return `**${t.name}** \`${t.assetTag ?? "no tag"}\` · ${t.condition.replace(/_/g, " ").toLowerCase()} · ${state}`;
+  });
+  const cert = tools.find((t) => t.requiresCertification && t.certificationName);
 
   return reply(null, [
     embed({
-      title: `🔧 ${tool.name}`,
-      fields,
-      color: available > 0 ? COLORS.success : COLORS.danger,
+      title: `🔧 ${tools.length === 1 ? tools[0].name : `${free.length} of ${tools.length} available`}`,
+      description: lines.join("\n"),
+      fields: cert ? [{ name: "⚠️ Certification required", value: cert.certificationName!, inline: false }] : [],
+      color: free.length > 0 ? COLORS.success : COLORS.danger,
     }),
   ]);
 }
@@ -522,13 +512,20 @@ export async function handleToolCheckout(
   const name    = getStringOption(options, "name") ?? "";
   const purpose = getStringOption(options, "purpose");
 
-  const tool = await prisma.tool.findFirst({
+  // Prefer an exact asset tag; otherwise any free copy with that name
+  const candidates = await prisma.tool.findMany({
     where: { teamId: ctx.teamId, retired: false, OR: [
       { name: { contains: name, mode: "insensitive" } },
       { assetTag: { equals: name, mode: "insensitive" } },
     ]},
+    include: { checkouts: { where: { returnedAt: null }, select: { id: true } } },
+    orderBy: [{ name: "asc" }, { assetTag: "asc" }],
   });
-  if (!tool) return ephemeralReply(`❌ No tool found matching "**${name}**".`);
+  if (candidates.length === 0) return ephemeralReply(`❌ No tool found matching "**${name}**".`);
+
+  const usable = candidates.filter((t) => t.checkouts.length === 0 && !["OUT_OF_SERVICE", "OUT_FOR_MAINTENANCE"].includes(t.condition));
+  const tool = usable.find((t) => t.assetTag?.toLowerCase() === name.toLowerCase()) ?? usable[0];
+  if (!tool) return ephemeralReply(`❌ Every **${candidates[0].name}** is checked out or out of service. Try again when one is returned.`);
 
   // Check certification
   if (tool.requiresCertification && tool.certificationName) {
@@ -538,14 +535,6 @@ export async function handleToolCheckout(
     if (!cert) return ephemeralReply(`❌ **${tool.name}** requires **${tool.certificationName}** certification. Contact a mentor.`);
   }
 
-  // Check availability
-  const checkedOut = await prisma.toolCheckout.aggregate({
-    where: { toolId: tool.id, returnedAt: null },
-    _sum: { quantity: true },
-  });
-  const used = checkedOut._sum.quantity ?? 0;
-  if (used >= tool.quantityOwned) return ephemeralReply(`❌ **${tool.name}** is fully checked out. Try again when it's returned.`);
-
   const expectedReturn = new Date();
   expectedReturn.setHours(20, 0, 0, 0); // end of build day
   if (expectedReturn < new Date()) expectedReturn.setDate(expectedReturn.getDate() + 1);
@@ -554,7 +543,6 @@ export async function handleToolCheckout(
     data: {
       toolId:         tool.id,
       userId:         ctx.link!.userId,
-      quantity:       1,
       intendedUse:    purpose ?? null,
       expectedReturn,
     },
@@ -564,7 +552,7 @@ export async function handleToolCheckout(
   return reply(null, [
     embed({
       title: `✅ Checked Out`,
-      description: `**${tool.name}** → **${user?.name}** until ${expectedReturn.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })} today.\nRun \`/tool checkin ${tool.name}\` when done.`,
+      description: `**${tool.name}** \`${tool.assetTag ?? ""}\` → **${user?.name}** until ${expectedReturn.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })} today.\nRun \`/tool checkin ${tool.assetTag ?? tool.name}\` when done.`,
       fields: [
         { name: "Condition", value: tool.condition.replace(/_/g, " "), inline: true },
         { name: "Location",  value: tool.homeLocation ?? "—", inline: true },
@@ -584,25 +572,27 @@ export async function handleToolCheckin(
   if (err) return err;
 
   const name = getStringOption(options, "name") ?? "";
-  const tool = await prisma.tool.findFirst({
-    where: { teamId: ctx.teamId, retired: false, OR: [
-      { name: { contains: name, mode: "insensitive" } },
-      { assetTag: { equals: name, mode: "insensitive" } },
-    ]},
-  });
-  if (!tool) return ephemeralReply(`❌ No tool found matching "**${name}**".`);
-
   const checkout = await prisma.toolCheckout.findFirst({
-    where: { toolId: tool.id, userId: ctx.link!.userId, returnedAt: null },
+    where: {
+      userId: ctx.link!.userId,
+      returnedAt: null,
+      tool: { teamId: ctx.teamId, OR: [
+        { name: { contains: name, mode: "insensitive" } },
+        { assetTag: { equals: name, mode: "insensitive" } },
+      ]},
+    },
+    include: { tool: { select: { name: true, assetTag: true } } },
+    orderBy: { checkedOutAt: "asc" },
   });
-  if (!checkout) return ephemeralReply(`❌ You don't have **${tool.name}** checked out.`);
+  if (!checkout) return ephemeralReply(`❌ You don't have a tool matching **${name}** checked out.`);
+  const tool = checkout.tool;
 
   await prisma.toolCheckout.update({
     where: { id: checkout.id },
     data: { returnedAt: new Date(), returnCondition: "GOOD" },
   });
 
-  return reply(`✅ **${tool.name}** returned. Thanks!`);
+  return reply(`✅ **${tool.name}** \`${tool.assetTag ?? ""}\` returned. Thanks!`);
 }
 
 // ─── /tool overdue ─────────────────────────────────────────────────────────

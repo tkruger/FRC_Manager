@@ -6,7 +6,7 @@ import { checkoutToolAction } from "@/app/actions/tools";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 
-export function CheckoutForm({ toolId, maxQty }: { toolId: string; maxQty: number }) {
+export function CheckoutForm({ toolId, onDone }: { toolId: string; onDone?: () => void }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -17,7 +17,7 @@ export function CheckoutForm({ toolId, maxQty }: { toolId: string; maxQty: numbe
     const fd = new FormData(e.currentTarget);
     startTransition(async () => {
       const result = await checkoutToolAction(toolId, fd);
-      if (result.success) router.refresh();
+      if (result.success) { onDone?.(); router.refresh(); }
       else setError(result.error ?? "Failed.");
     });
   }
@@ -27,11 +27,8 @@ export function CheckoutForm({ toolId, maxQty }: { toolId: string; maxQty: numbe
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {error && <div className="text-sm text-[--color-danger] bg-[--color-danger]/10 rounded px-3 py-2">{error}</div>}
-      <div className="grid grid-cols-2 gap-4">
-        <Field label="Quantity" name="quantity" type="number" min="1" max={maxQty} defaultValue={1} required />
-        <Field label="Expected return" name="expectedReturn" type="date" defaultValue={defaultReturn} required />
-      </div>
+      {error && <div className="text-sm text-(--color-danger) bg-(--color-danger)/10 rounded px-3 py-2">{error}</div>}
+      <Field label="Expected return" name="expectedReturn" type="date" defaultValue={defaultReturn} required />
       <Field label="Intended use" name="intendedUse" placeholder="What will you use it for?" />
       <Button type="submit" isLoading={isPending}>Check out</Button>
     </form>
