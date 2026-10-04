@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[--color-surface] px-4 py-12">
@@ -17,6 +19,11 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           </p>
         </div>
         {children}
+        <p className="mt-8 text-center text-small text-(--color-text-secondary)">
+          <Link href="/terms" className="hover:text-(--color-primary)">Terms of Service</Link>
+          <span className="mx-2">·</span>
+          <Link href="/privacy" className="hover:text-(--color-primary)">Privacy Policy</Link>
+        </p>
       </div>
     </div>
   );

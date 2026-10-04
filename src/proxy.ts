@@ -14,6 +14,7 @@ const PUBLIC_PATHS = [
   "/api/cron",        // Scheduled jobs — authenticated with CRON_SECRET instead
   "/sw.js",           // Service worker (push notifications)
   "/manifest.webmanifest",
+  "/terms", "/privacy", // Legal pages — linked from Discord and the sign-in screens
 ];
 
 export default auth((req) => {
