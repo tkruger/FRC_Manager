@@ -188,7 +188,7 @@ async function enterNextStep(tx: Tx, r: RequestState, def: WorkflowDef, fromInde
   await logEvent(tx, r.id, { action: "completed" });
 }
 
-/** Keep reorder-queue entries linked to this request in step with it. */
+/** Keep order-queue entries linked to this request in step with it. */
 async function syncReorders(tx: Tx, requestId: string, status: PurchaseStatus) {
   if (status === "DENIED" || status === "CANCELLED") {
     // Request didn't go ahead — the item still needs restocking, so return it to the queue.

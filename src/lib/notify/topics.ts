@@ -40,7 +40,7 @@ export const TOPICS = [
   {
     id: "inventory.low_stock", group: "Purchasing",
     label: "Low stock",
-    description: "An item falls to its minimum and is added to the reorder queue.",
+    description: "An item falls to its minimum and is added to the order queue.",
     audience: "Roles chosen in the purchase workflow trigger",
     defaultInApp: true, defaultPush: false,
   },

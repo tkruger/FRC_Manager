@@ -127,7 +127,7 @@ export function WorkflowEditor({ def, counts, isCustom }: Props) {
       {/* Trigger */}
       <EditorCard title="Request is raised" badge="Trigger">
         <Check
-          label="Automatically add items to the reorder queue when stock falls to or below their minimum"
+          label="Automatically add items to the order queue when stock falls to or below their minimum"
           checked={draft.trigger.autoReorder}
           onChange={(v) => setDraft((d) => ({ ...d, trigger: { ...d.trigger, autoReorder: v } }))}
         />

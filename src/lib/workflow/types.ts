@@ -74,9 +74,9 @@ export const WorkflowSchema = z
   .object({
     schemaVersion: z.literal(SCHEMA_VERSION),
     trigger: z.object({
-      /** Add an item to the reorder queue when stock falls to/below its minimum */
+      /** Add an item to the order queue when stock falls to/below its minimum */
       autoReorder: z.boolean(),
-      /** Who is told when an item lands in the reorder queue */
+      /** Who is told when an item lands in the order queue */
       notifyRoles: z.array(z.enum(ROLE_VALUES)),
     }),
     steps: z.array(StepSchema),

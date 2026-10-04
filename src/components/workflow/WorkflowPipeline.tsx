@@ -34,9 +34,9 @@ export function WorkflowPipeline({ def, counts }: Props) {
       >
         <Detail label="How">
           {def.trigger.autoReorder
-            ? "Automatically: when an item's stock falls to or below its minimum, it is added to the inventory reorder queue. Someone then turns it into a purchase request with one click."
-            : "Automatic reorders are off — low stock does not add items to the reorder queue."}
-          {" "}Anyone on the team can also submit a purchase request directly.
+            ? "Automatically: when an item's stock falls to or below its minimum, it is added to the inventory order queue. Someone then turns it into a purchase request with one click."
+            : "Automatic reorders are off — low stock does not add items to the order queue."}
+          {" "}Anyone on the team can also order an item from inventory (including one that isn&apos;t tracked yet, which adds it with 0 in stock) or submit a purchase request directly.
         </Detail>
         {def.trigger.autoReorder && (
           <Detail label="Notifies">

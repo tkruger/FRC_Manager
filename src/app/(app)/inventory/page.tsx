@@ -7,10 +7,11 @@ import { Table, TableHead, TableBody, Th, Td, Tr } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
 import { statusBadgeVariant, statusLabel } from "@/lib/procurement-helpers";
 import { ReorderButton } from "./ReorderButton";
+import { OrderNewItemDialog } from "./OrderNewItemDialog";
 import { AddInventoryItemDialog } from "./AddInventoryItemDialog";
 import { InventoryTableClient } from "./InventoryTableClient";
 
-// Roles that may see Low Stock and Reorder Queue tabs
+// Roles that may see the Low stock and Order queue tabs
 const RESTRICTED_TAB_ROLES = ["HEAD_MENTOR", "TEAM_LEADERSHIP", "BUILD_LEAD", "INVENTORY_ADMIN"];
 
 export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ view?: string; category?: string }> }) {
@@ -83,7 +84,10 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
           <h1 className="text-h1 text-[--color-text-primary]">Base Inventory</h1>
           <p className="text-body text-[--color-text-secondary] mt-0.5">{items.length} items · {activeSeason.name}</p>
         </div>
-        {canManageInventory && <AddInventoryItemDialog vendors={vendors} />}
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <OrderNewItemDialog />
+          {canManageInventory && <AddInventoryItemDialog vendors={vendors} />}
+        </div>
       </div>
 
       {/* View tabs */}
@@ -108,21 +112,28 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
               className={`px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
                 view === "reorder" ? "border-[--color-primary] text-[--color-primary]" : "border-transparent text-[--color-text-secondary] hover:text-[--color-text-primary]"
               }`}>
-              Reorder queue ({reorderRequests.length})
+              Order queue ({reorderRequests.length})
             </Link>
           </>
         )}
       </div>
 
-      {/* Reorder queue summary card */}
-      {view === "reorder" && reorderRequests.length > 0 && (
+      {/* Order queue summary card */}
+      {view === "reorder" && (
         <div className="card space-y-2">
-          <div className="mb-3">
-            <h2 className="text-h3 text-[--color-text-primary]">Reorder queue</h2>
-            <p className="text-small text-[--color-text-secondary]">
-              Items are added automatically when stock falls to their minimum. Each stays here until its purchase is received.
-            </p>
+          <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-h3 text-(--color-text-primary)">Order queue</h2>
+              <p className="text-small text-(--color-text-secondary)">
+                Everything that needs ordering or is on its way. Items land here when stock falls to their minimum
+                or when someone orders them, and stay until the delivery is received.
+              </p>
+            </div>
+            <OrderNewItemDialog variant="primary" />
           </div>
+          {reorderRequests.length === 0 && (
+            <p className="text-small text-(--color-text-secondary)">Nothing is waiting to be ordered.</p>
+          )}
           {reorderRequests.map((r) => (
             <div key={r.id} className="flex items-center justify-between py-2 border-b border-[--color-border] last:border-0">
               <div>
@@ -157,12 +168,12 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
         />
       )}
 
-      {/* Restricted tabs (Low stock / Reorder queue) — server-rendered, no search */}
+      {/* Restricted tabs (Low stock / Order queue) — server-rendered, no search */}
       {view && (
         displayed.length === 0 ? (
           <div className="card text-center py-12">
             <p className="text-body text-[--color-text-secondary]">
-              {view === "low-stock" ? "No items are below their minimum threshold." : "The reorder queue is empty."}
+              {view === "low-stock" ? "No items are below their minimum threshold." : "The order queue is empty."}
             </p>
           </div>
         ) : (
@@ -207,7 +218,6 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
                           reorderQty={pendingReorder?.requestedQty ?? item.reorderQuantity ?? 1}
                           unitCost={item.unitCost}
                           supplier={item.preferredSupplier}
-                          reorderRequestId={pendingReorder?.id}
                         />
                       )}
                     </Td>

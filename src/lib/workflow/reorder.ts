@@ -35,7 +35,7 @@ export async function maybeQueueReorder(
       type:    "REORDER_TRIGGERED",
       topic:   "inventory.low_stock",
       title:   `Low stock: ${item.name}`,
-      body:    `${newStock} left (minimum ${item.minStockThreshold}) — added to the reorder queue`,
+      body:    `${newStock} left (minimum ${item.minStockThreshold}) — added to the order queue`,
       linkUrl: "/inventory?view=reorder",
     }).catch(() => {});
   }
