@@ -75,25 +75,12 @@ export default async function SeasonSettingsPage() {
       {pastSeasons.length > 0 && (
         <PastSeasonsCard
           seasons={pastSeasons.map((s) => ({
-            id:                s.id,
-            name:              s.name,
-            year:              s.year,
-            kickoffDate:       s.kickoffDate.toISOString(),
-            week0Date:         s.week0Date.toISOString(),
-            meetingDays:       s.meetingDays,
-            meetingStartTime:  s.meetingStartTime,
-            meetingEndTime:    s.meetingEndTime,
-            meetingDayTimes:   s.meetingDayTimes as Record<string, { start: string; end: string }> | null,
-            expectedAttendance:s.expectedAttendance,
-            robots: s.robots.map((r) => ({
-              id:          r.id,
-              displayName: r.displayName,
-              role:        r.role,
-              status:      r.status,
-            })),
-            taskCount:     statsById[s.id]?.total  ?? 0,
-            taskComplete:  statsById[s.id]?.complete ?? 0,
-            meetingCount:  s._count.meetings,
+            id:           s.id,
+            name:         s.name,
+            year:         s.year,
+            robotCount:   s.robots.length,
+            taskCount:    statsById[s.id]?.total  ?? 0,
+            taskComplete: statsById[s.id]?.complete ?? 0,
           }))}
         />
       )}

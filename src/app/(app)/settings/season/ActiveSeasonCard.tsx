@@ -33,18 +33,21 @@ interface Season {
   robots: Robot[];
 }
 
-export function ActiveSeasonCard({ season, canEdit = false }: { season: Season; canEdit?: boolean }) {
+/** Full season card. Also used for past seasons (isActive=false) on /settings/season/[id]. */
+export function ActiveSeasonCard({
+  season, canEdit = false, isActive = true,
+}: { season: Season; canEdit?: boolean; isActive?: boolean }) {
   const [editing, setEditing] = useState(false);
 
   return (
-    <div className="card border-l-4 border-l-[--color-success]">
+    <div className={`card border-l-4 ${isActive ? "border-l-(--color-success)" : "border-l-(--color-border-strong)"}`}>
       {!editing ? (
         <>
           <div className="flex items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <h2 className="text-h3 text-[--color-text-primary]">{season.name}</h2>
-                <Badge variant="success">Active</Badge>
+                {isActive ? <Badge variant="success">Active</Badge> : <Badge variant="neutral">Past season</Badge>}
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-1 text-small text-[--color-text-secondary] mt-2">
                 <span>Kickoff: <strong className="text-[--color-text-primary]">{formatDate(season.kickoffDate)}</strong></span>
@@ -64,7 +67,7 @@ export function ActiveSeasonCard({ season, canEdit = false }: { season: Season; 
 
           {/* Robots */}
           <div className="mt-5 pt-4 border-t border-[--color-border]">
-            <h3 className="text-h3 text-[--color-text-primary] mb-3">Robots this season</h3>
+            <h3 className="text-h3 text-[--color-text-primary] mb-3">{isActive ? "Robots this season" : "Robots"}</h3>
             {season.robots.length === 0 ? (
               <p className="text-small text-[--color-text-secondary]">No robots added yet.</p>
             ) : (
@@ -92,7 +95,7 @@ export function ActiveSeasonCard({ season, canEdit = false }: { season: Season; 
         <>
           <div className="flex items-center gap-2 mb-4">
             <h2 className="text-h3 text-[--color-text-primary]">Edit season</h2>
-            <Badge variant="success">Active</Badge>
+            {isActive ? <Badge variant="success">Active</Badge> : <Badge variant="neutral">Past season</Badge>}
           </div>
           <EditSeasonForm season={season} onClose={() => setEditing(false)} />
         </>
