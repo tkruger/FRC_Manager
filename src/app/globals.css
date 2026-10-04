@@ -112,6 +112,7 @@ td a:hover { text-decoration: underline; text-underline-offset: 3px; }
 
 html {
   font-size: 16px;
+  overflow-x: clip; /* nothing wider than the screen can make iOS pan or zoom the page */
   -webkit-font-smoothing: antialiased;
   -webkit-overflow-scrolling: touch;
 }
@@ -122,6 +123,9 @@ body {
   font-family: var(--font-sans);
   line-height: 1.6;
   overflow-x: hidden;
+  /* clip (not hidden) stops sideways panning on iOS without turning body into a
+     scroll container, which would stop the fixed header staying put */
+  overflow-x: clip;
   transition: background-color 300ms ease, color 300ms ease;
   position: relative;
 }

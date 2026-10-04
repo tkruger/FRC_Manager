@@ -167,14 +167,16 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
               <span className="font-bold text-sm text-[--color-text-primary] hidden sm:block">FRC Manager</span>
             </Link>
           </div>
-          <div className="flex items-center gap-1.5 ml-auto">
+          {/* min-w-0 + flex-1 let the robot picker shrink so the row never exceeds the screen */}
+          <div className="flex min-w-0 flex-1 items-center justify-end gap-1">
             {robots.length > 0 && <RobotSelector robots={robots} activeRobotId={activeRobotId} activeRobot={activeRobot} />}
-            <button onClick={toggle} className="h-9 w-9 rounded-md flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors">
+            {/* Phones: theme lives in Profile & appearance, calendar in the bottom bar */}
+            <button onClick={toggle} aria-label="Toggle light/dark mode" className="hidden sm:flex h-9 w-9 shrink-0 rounded-md items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors">
               {resolvedTheme === "dark" ? <SunIcon /> : <MoonIcon />}
             </button>
             <Link
               href="/calendar"
-              className="h-9 w-9 rounded-md flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors"
+              className="hidden sm:flex h-9 w-9 shrink-0 rounded-md items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors"
               aria-label="Meeting calendar"
             >
               <CalendarIcon className="w-4 h-4" />
@@ -311,10 +313,10 @@ function RobotSelector({
   }
 
   return (
-    <div className="flex items-center gap-1.5 rounded-md border border-[--color-border] bg-[--color-surface-raised] px-3 h-9 text-sm">
+    <div className="flex min-w-0 items-center gap-1.5 rounded-md border border-[--color-border] bg-[--color-surface-raised] px-3 h-9 text-sm">
       <span className="hidden sm:inline text-[--color-text-secondary] text-xs">Robot:</span>
       <select
-        className={cn("bg-transparent text-[--color-text-primary] text-sm font-medium focus:outline-none cursor-pointer max-w-[140px]", isPending && "opacity-50")}
+        className={cn("min-w-0 w-full max-w-[140px] truncate bg-transparent text-[--color-text-primary] text-sm font-medium focus:outline-none cursor-pointer", isPending && "opacity-50")}
         value={activeRobotId ?? ""}
         onChange={handleChange}
         disabled={isPending}
