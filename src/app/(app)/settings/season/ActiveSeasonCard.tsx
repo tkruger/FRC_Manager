@@ -6,12 +6,17 @@ import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
 import { EditSeasonForm } from "./EditSeasonForm";
 import { RobotForm } from "./RobotForm";
+import { EditRobotDialog } from "@/components/fleet/EditRobotDialog";
 
 interface Robot {
   id: string;
+  year: number;
+  name: string;
   displayName: string;
   role: string;
   status: string;
+  description: string | null;
+  weightTarget: number | null;
 }
 
 interface Season {
@@ -70,9 +75,12 @@ export function ActiveSeasonCard({ season, canEdit = false }: { season: Season; 
                       <p className="text-sm font-medium text-[--color-text-primary]">{r.displayName}</p>
                       <p className="text-small text-[--color-text-secondary]">{r.role.replace(/_/g, " ")}</p>
                     </div>
-                    <Badge variant={r.status === "ACTIVE_BUILD" ? "info" : r.status === "ACTIVE_COMPETITION_READY" ? "success" : "neutral"}>
-                      {r.status.replace(/_/g, " ")}
-                    </Badge>
+                    <div className="flex flex-col items-end gap-2">
+                      <Badge variant={r.status === "ACTIVE_BUILD" ? "info" : r.status === "ACTIVE_COMPETITION_READY" ? "success" : "neutral"}>
+                        {r.status.replace(/_/g, " ")}
+                      </Badge>
+                      {canEdit && <EditRobotDialog robot={r} />}
+                    </div>
                   </div>
                 ))}
               </div>

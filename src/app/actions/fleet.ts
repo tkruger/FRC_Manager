@@ -5,13 +5,14 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import type { RobotRole, RobotStatus } from "@/generated/prisma";
+import { ROBOT_EDIT_ROLES } from "@/lib/rbac";
 
 const RobotSchema = z.object({
-  name:         z.string().min(1),
+  name:         z.string().trim().min(1, "Enter a robot name.").max(60),
   role:         z.enum(["COMPETITION","PRACTICE","DEMO","RETIRED","OTHER"]),
   status:       z.enum(["ACTIVE_BUILD","ACTIVE_COMPETITION_READY","RETIRED_DISPLAY","RETIRED_STORAGE","DECOMMISSIONED"]).optional(),
-  description:  z.string().optional(),
-  weightTarget: z.coerce.number().min(0).optional(),
+  description:  z.string().trim().max(1000).optional(),
+  weightTarget: z.coerce.number().positive("Weight target must be more than 0.").max(500).optional(),
 });
 
 export async function updateRobotAction(
@@ -20,6 +21,9 @@ export async function updateRobotAction(
 ): Promise<{ success: boolean; error?: string }> {
   const session = await auth();
   if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
+  if (!session.user.roles.some((r) => ROBOT_EDIT_ROLES.includes(r))) {
+    return { success: false, error: "Only Head Mentors, Team Leadership and Build Leads can edit robots." };
+  }
 
   const parsed = RobotSchema.safeParse({
     name:         formData.get("name"),
@@ -28,7 +32,7 @@ export async function updateRobotAction(
     description:  formData.get("description") || undefined,
     weightTarget: formData.get("weightTarget") || undefined,
   });
-  if (!parsed.success) return { success: false, error: "Invalid data." };
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid data." };
 
   const robot = await prisma.robot.findFirst({
     where: { id: robotId, season: { teamId: session.user.teamId } },
@@ -43,13 +47,14 @@ export async function updateRobotAction(
       displayName:  `${robot.year} ${parsed.data.name}`,
       role:         parsed.data.role as RobotRole,
       status:       parsed.data.status as RobotStatus | undefined,
-      description:  parsed.data.description,
-      weightTarget: parsed.data.weightTarget,
+      // Blank fields clear the value (blank weight target = default 115 lb limit)
+      description:  parsed.data.description || null,
+      weightTarget: parsed.data.weightTarget ?? null,
     },
   });
 
-  revalidatePath("/fleet");
-  revalidatePath(`/fleet/${robotId}`);
+  // displayName shows in the nav robot picker, settings and task filters too
+  revalidatePath("/", "layout");
   return { success: true };
 }
 

@@ -37,3 +37,6 @@ export const ROLE_LABELS: Record<Role, string> = {
 
 // Roles that can manage team members and Discord
 export const LEADERSHIP_ROLES: Role[] = ["HEAD_MENTOR", "TEAM_LEADERSHIP"];
+
+// Who can edit robot details (creating robots stays Head Mentor only)
+export const ROBOT_EDIT_ROLES: Role[] = ["HEAD_MENTOR", "TEAM_LEADERSHIP", "BUILD_LEAD"];

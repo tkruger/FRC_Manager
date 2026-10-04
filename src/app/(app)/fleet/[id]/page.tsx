@@ -8,6 +8,8 @@ import { ProgressBar } from "@/components/ui/progress";
 import { Table, TableHead, TableBody, Th, Td, Tr } from "@/components/ui/table";
 import { formatWeight, formatCurrency, formatDate } from "@/lib/utils";
 import { WeightLogger } from "./WeightLogger";
+import { EditRobotDialog } from "@/components/fleet/EditRobotDialog";
+import { ROBOT_EDIT_ROLES } from "@/lib/rbac";
 
 const ROBOT_WEIGHT_LIMIT = 115;
 
@@ -37,6 +39,8 @@ export default async function RobotDetailPage({ params }: { params: Promise<{ id
   });
 
   if (!robot) notFound();
+
+  const canEdit = session.user.roles.some((r) => ROBOT_EDIT_ROLES.includes(r));
 
   // Weight by subsystem
   const latestWeight = robot.weightSnaps[0]?.weight;
@@ -72,7 +76,13 @@ export default async function RobotDetailPage({ params }: { params: Promise<{ id
           </p>
           {robot.description && <p className="text-small text-[--color-text-secondary] mt-1">{robot.description}</p>}
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap justify-end gap-2">
+          {canEdit && (
+            <EditRobotDialog robot={{
+              id: robot.id, year: robot.year, name: robot.name, role: robot.role, status: robot.status,
+              description: robot.description, weightTarget: robot.weightTarget,
+            }} />
+          )}
           <Link href={`/budget/bom?robotId=${robot.id}`}>
             <Button variant="outline" size="sm">BOM</Button>
           </Link>
