@@ -16,6 +16,14 @@ async function requireLeadership() {
   return session;
 }
 
+/** Meetings are reached through their season — only allow the caller's own team. */
+async function findTeamMeeting(meetingId: string, teamId: string) {
+  return prisma.meeting.findFirst({
+    where:  { id: meetingId, season: { teamId } },
+    select: { id: true, seasonId: true, date: true, startTime: true, endTime: true },
+  });
+}
+
 const DAY_MAP: Record<string, number> = {
   SUN: 0, MON: 1, TUE: 2, WED: 3, THU: 4, FRI: 5, SAT: 6,
 };
@@ -81,7 +89,16 @@ export async function updateMeetingAction(
   let session;
   try { session = await requireLeadership(); } catch (e: any) { return { success: false, error: e.message }; }
 
-  const before = await prisma.meeting.findUnique({ where: { id: meetingId }, select: { date: true, startTime: true, endTime: true } });
+  const before = await findTeamMeeting(meetingId, session.user.teamId!);
+  if (!before) return { success: false, error: "Meeting not found." };
+
+  // Only link tasks from the same season
+  const taskIds = data.taskIds
+    ? (await prisma.task.findMany({
+        where:  { id: { in: data.taskIds }, seasonId: before.seasonId },
+        select: { id: true },
+      })).map((t) => t.id)
+    : undefined;
 
   await prisma.meeting.update({
     where: { id: meetingId },
@@ -91,12 +108,12 @@ export async function updateMeetingAction(
       ...(data.endTime   ? { endTime:   data.endTime }     : {}),
       ...(data.title !== undefined ? { title: data.title } : {}),
       ...(data.notes !== undefined ? { notes: data.notes } : {}),
-      ...(data.taskIds   ? { tasks: { set: data.taskIds.map((id) => ({ id })) } } : {}),
+      ...(taskIds        ? { tasks: { set: taskIds.map((id) => ({ id })) } } : {}),
     },
   });
 
   // Only time/date changes are worth a notification — not agenda edits
-  const moved = before && (
+  const moved = (
     (data.date && new Date(data.date).getTime() !== before.date.getTime()) ||
     (data.startTime && data.startTime !== before.startTime) ||
     (data.endTime && data.endTime !== before.endTime)
@@ -113,6 +130,7 @@ export async function cancelMeetingAction(
 ): Promise<{ success: boolean; error?: string }> {
   let session;
   try { session = await requireLeadership(); } catch (e: any) { return { success: false, error: e.message }; }
+  if (!await findTeamMeeting(meetingId, session.user.teamId!)) return { success: false, error: "Meeting not found." };
 
   await prisma.meeting.update({
     where: { id: meetingId },
@@ -127,6 +145,7 @@ export async function cancelMeetingAction(
 export async function restoreMeetingAction(meetingId: string): Promise<{ success: boolean }> {
   let session;
   try { session = await requireLeadership(); } catch { return { success: false }; }
+  if (!await findTeamMeeting(meetingId, session.user.teamId!)) return { success: false };
   await prisma.meeting.update({ where: { id: meetingId }, data: { cancelled: false, cancelReason: null } });
   await notify.meetingChanged(meetingId, "restored", session.user.id);
   revalidatePath("/schedule/calendar");
@@ -163,8 +182,9 @@ export async function addMeetingAction(
 export async function generateCalendarTokenAction(
   seasonId: string
 ): Promise<{ success: boolean; token?: string; error?: string }> {
-  const session = await auth();
-  if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
+  // Regenerating the token breaks everyone's existing calendar subscriptions
+  let session;
+  try { session = await requireLeadership(); } catch (e: any) { return { success: false, error: e.message }; }
 
   const crypto = await import("crypto");
   const token  = crypto.randomBytes(16).toString("hex");

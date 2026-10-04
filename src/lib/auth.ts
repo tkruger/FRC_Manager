@@ -11,6 +11,25 @@ import type { Role } from "@/generated/prisma";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
+  callbacks: {
+    ...authConfig.callbacks,
+    // Roles, team and status used to be frozen into the JWT at sign-in, so a suspended
+    // member (or one whose roles were removed) kept access until the token expired.
+    // Re-read them on every server-side session check. (The Edge proxy keeps using
+    // auth.config.ts, which only checks that a session exists.)
+    async jwt(params) {
+      const token = await authConfig.callbacks.jwt(params);
+      if (!token?.id) return token;
+      const user = await prisma.user.findUnique({
+        where:  { id: token.id as string },
+        select: { status: true, teamId: true, roles: { select: { role: true } } },
+      });
+      if (!user || user.status === "SUSPENDED" || user.status === "DENIED") return null;
+      token.teamId = user.teamId ?? undefined;
+      token.roles  = user.status === "ACTIVE" ? user.roles.map((r) => r.role) : [];
+      return token;
+    },
+  },
   adapter: PrismaAdapter(prisma),
   providers: [
     // Only include Google if both credentials are present — avoids the

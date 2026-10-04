@@ -54,6 +54,12 @@ export async function fileIncidentAction(
   return { success: true };
 }
 
+// Matches who sees Award/Revoke on the certifications page
+const CERT_MANAGER_ROLES = ["HEAD_MENTOR", "SAFETY_CAPTAIN", "INVENTORY_ADMIN"];
+function canManageCerts(roles: string[]) {
+  return roles.some((r) => CERT_MANAGER_ROLES.includes(r));
+}
+
 const CertSchema = z.object({
   userId:       z.string().min(1),
   certName:     z.string().min(1),
@@ -67,7 +73,9 @@ export async function awardCertificationAction(
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
   const session = await auth();
-  if (!session) return { success: false, error: "Not authenticated." };
+  if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
+  // Certifications gate tool checkouts, so only certifiers may grant them
+  if (!canManageCerts(session.user.roles)) return { success: false, error: "Not authorized." };
 
   const parsed = CertSchema.safeParse({
     userId:        formData.get("userId"),
@@ -78,6 +86,9 @@ export async function awardCertificationAction(
     notes:         formData.get("notes") || undefined,
   });
   if (!parsed.success) return { success: false, error: "Please fill in all required fields." };
+
+  const member = await prisma.user.findFirst({ where: { id: parsed.data.userId, teamId: session.user.teamId }, select: { id: true } });
+  if (!member) return { success: false, error: "Member not found." };
 
   await prisma.userCertification.upsert({
     where: { userId_certName: { userId: parsed.data.userId, certName: parsed.data.certName } },
@@ -108,10 +119,10 @@ export async function revokeCertificationAction(
   certName: string
 ): Promise<{ success: boolean }> {
   const session = await auth();
-  if (!session) return { success: false };
+  if (!session?.user?.teamId || !canManageCerts(session.user.roles)) return { success: false };
 
   await prisma.userCertification.updateMany({
-    where: { userId, certName },
+    where: { userId, certName, user: { teamId: session.user.teamId } },
     data: { status: "REVOKED" },
   });
 
@@ -125,7 +136,10 @@ export async function createInspectionChecklistAction(
   eventName: string
 ): Promise<{ success: boolean; checklistId?: string }> {
   const session = await auth();
-  if (!session) return { success: false };
+  if (!session?.user?.teamId) return { success: false };
+
+  const robot = await prisma.robot.findFirst({ where: { id: robotId, season: { teamId: session.user.teamId } }, select: { id: true } });
+  if (!robot) return { success: false };
 
   const INSPECTION_ITEMS = [
     { category: "Weight",       description: "Robot body ≤ 115 lbs" },
@@ -165,8 +179,19 @@ export async function updateCheckItemAction(
   itemId: string,
   status: "PASS" | "FAIL" | "NOT_CHECKED"
 ): Promise<void> {
-  await prisma.inspectionCheckItem.update({
-    where: { id: itemId },
+  // Previously had no auth check at all
+  const session = await auth();
+  if (!session?.user?.teamId) return;
+  if (!["PASS", "FAIL", "NOT_CHECKED"].includes(status)) return;
+
+  // InspectionChecklist.robotId has no relation, so scope through the team's robot ids
+  const robotIds = (await prisma.robot.findMany({
+    where:  { season: { teamId: session.user.teamId } },
+    select: { id: true },
+  })).map((r) => r.id);
+
+  await prisma.inspectionCheckItem.updateMany({
+    where: { id: itemId, checklist: { robotId: { in: robotIds } } },
     data: { status, checkedAt: status !== "NOT_CHECKED" ? new Date() : null },
   });
   revalidatePath("/safety/inspection");

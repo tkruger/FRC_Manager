@@ -16,6 +16,10 @@ async function requireBudgetRole() {
   return session;
 }
 
+async function isTeamBudget(budgetId: string, teamId: string) {
+  return !!await prisma.budget.findFirst({ where: { id: budgetId, season: { teamId } }, select: { id: true } });
+}
+
 const DEFAULT_CATEGORIES: { type: BudgetCategoryType; label: string }[] = [
   { type: "REGISTRATION_FEES",  label: "Registration & Competition Fees" },
   { type: "ROBOT_MECHANICAL",   label: "Robot Parts — Mechanical" },
@@ -106,7 +110,9 @@ export async function addFundingSourceAction(
   budgetId: string,
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
-  try { await requireBudgetRole(); } catch (e: any) { return { success: false, error: e.message }; }
+  let session;
+  try { session = await requireBudgetRole(); } catch (e: any) { return { success: false, error: e.message }; }
+  if (!await isTeamBudget(budgetId, session.user.teamId!)) return { success: false, error: "Budget not found." };
 
   const parsed = FundingSchema.safeParse({
     name: formData.get("name"),
@@ -145,7 +151,9 @@ export async function logExpenseAction(
   budgetId: string,
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
-  try { await requireBudgetRole(); } catch (e: any) { return { success: false, error: e.message }; }
+  let session;
+  try { session = await requireBudgetRole(); } catch (e: any) { return { success: false, error: e.message }; }
+  if (!await isTeamBudget(budgetId, session.user.teamId!)) return { success: false, error: "Budget not found." };
 
   const parsed = ExpenseSchema.safeParse({
     date: formData.get("date"),
@@ -156,6 +164,11 @@ export async function logExpenseAction(
     categoryId: formData.get("categoryId") || undefined,
   });
   if (!parsed.success) return { success: false, error: "Please fill in all required fields." };
+
+  if (parsed.data.categoryId) {
+    const category = await prisma.budgetCategory.findFirst({ where: { id: parsed.data.categoryId, budgetId }, select: { id: true } });
+    if (!category) return { success: false, error: "Category not found." };
+  }
 
   await prisma.expense.create({
     data: {

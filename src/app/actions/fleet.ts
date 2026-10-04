@@ -59,7 +59,11 @@ export async function logWeightSnapshotAction(
   notes?: string
 ): Promise<{ success: boolean; error?: string }> {
   const session = await auth();
-  if (!session) return { success: false, error: "Not authenticated." };
+  if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
+  if (!Number.isFinite(weight) || weight <= 0) return { success: false, error: "Enter a valid weight." };
+
+  const robot = await prisma.robot.findFirst({ where: { id: robotId, season: { teamId: session.user.teamId } }, select: { id: true } });
+  if (!robot) return { success: false, error: "Robot not found." };
 
   await prisma.weightSnapshot.create({
     data: { robotId, weight, notes: notes ?? null },
@@ -70,9 +74,14 @@ export async function logWeightSnapshotAction(
 }
 
 export async function archiveRobotAction(robotId: string): Promise<{ success: boolean }> {
+  // Same rule as creating robots (Season settings): Head Mentors only
   const session = await auth();
-  if (!session) return { success: false };
-  await prisma.robot.update({ where: { id: robotId }, data: { archived: true } });
+  if (!session?.user?.teamId || !session.user.roles.includes("HEAD_MENTOR")) return { success: false };
+  const archived = await prisma.robot.updateMany({
+    where: { id: robotId, season: { teamId: session.user.teamId } },
+    data:  { archived: true },
+  });
+  if (archived.count === 0) return { success: false };
   revalidatePath("/fleet");
   return { success: true };
 }

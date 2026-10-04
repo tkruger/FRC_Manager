@@ -80,6 +80,10 @@ export async function createPurchaseRequestAction(
     })).map((b) => b.id)
   );
 
+  const vendor = parsed.data.preferredVendorId
+    ? await prisma.vendor.findFirst({ where: { id: parsed.data.preferredVendorId, teamId: session.user.teamId }, select: { id: true } })
+    : null;
+
   const reorder = parsed.data.reorderRequestId
     ? await prisma.reorderRequest.findFirst({
         where: {
@@ -104,7 +108,7 @@ export async function createPurchaseRequestAction(
       subTeam: (parsed.data.subTeam as any) || null,
       priority: parsed.data.priority,
       justification: parsed.data.justification,
-      preferredVendorId: parsed.data.preferredVendorId || null,
+      preferredVendorId: vendor?.id ?? null,
       budgetCategory: (parsed.data.budgetCategory as any) || null,
       estimatedTotal,
       status: "SUBMITTED",

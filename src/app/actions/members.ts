@@ -15,13 +15,51 @@ async function requireAdmin() {
   return session;
 }
 
+const ROLE_VALUES: Role[] = [
+  "TEAM_MEMBER", "BUILD_LEAD", "INVENTORY_ADMIN", "BUDGET_MANAGER", "SAFETY_CAPTAIN", "TEAM_LEADERSHIP", "HEAD_MENTOR",
+];
+
+/**
+ * Shared checks for any role assignment: the target must be on the caller's team,
+ * roles must be real, only Head Mentors can grant or remove Head Mentor, and the
+ * team can never be left without an active Head Mentor.
+ */
+async function checkRoleChange(
+  actor: { id: string; teamId: string; roles: Role[] },
+  userId: string,
+  roles: Role[],
+): Promise<string | null> {
+  if (roles.length === 0) return "Assign at least one role.";
+  if (roles.some((r) => !ROLE_VALUES.includes(r))) return "Unknown role.";
+
+  const target = await prisma.user.findFirst({
+    where:  { id: userId, teamId: actor.teamId },
+    select: { roles: { select: { role: true } } },
+  });
+  if (!target) return "Member not found.";
+
+  const wasHead = target.roles.some((r) => r.role === "HEAD_MENTOR");
+  const isHead  = roles.includes("HEAD_MENTOR");
+  if (wasHead !== isHead && !actor.roles.includes("HEAD_MENTOR")) {
+    return "Only a Head Mentor can grant or remove the Head Mentor role.";
+  }
+  if (wasHead && !isHead) {
+    const others = await prisma.user.count({
+      where: { teamId: actor.teamId, status: "ACTIVE", id: { not: userId }, roles: { some: { role: "HEAD_MENTOR" } } },
+    });
+    if (others === 0) return "The team needs at least one active Head Mentor.";
+  }
+  return null;
+}
+
 export async function approveMemberAction(
   userId: string,
   roles: Role[]
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const session = await requireAdmin();
-    if (roles.length === 0) return { success: false, error: "Assign at least one role." };
+    const invalid = await checkRoleChange({ id: session.user.id, teamId: session.user.teamId!, roles: session.user.roles }, userId, roles);
+    if (invalid) return { success: false, error: invalid };
 
     await prisma.$transaction([
       prisma.user.update({
@@ -54,10 +92,12 @@ export async function denyMemberAction(
   try {
     const session = await requireAdmin();
 
-    await prisma.user.update({
-      where: { id: userId, teamId: session.user.teamId },
+    // Deny is for pending registrations only — active members are suspended instead
+    const denied = await prisma.user.updateMany({
+      where: { id: userId, teamId: session.user.teamId, status: "PENDING" },
       data: { status: "DENIED", deniedAt: new Date(), deniedReason: reason ?? null },
     });
+    if (denied.count === 0) return { success: false, error: "No pending registration found." };
 
     revalidatePath("/settings/members");
     return { success: true };
@@ -72,7 +112,9 @@ export async function updateMemberRolesAction(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const session = await requireAdmin();
-    if (roles.length === 0) return { success: false, error: "Assign at least one role." };
+    // Previously had no team check: leadership on any team could change anyone's roles
+    const invalid = await checkRoleChange({ id: session.user.id, teamId: session.user.teamId!, roles: session.user.roles }, userId, roles);
+    if (invalid) return { success: false, error: invalid };
 
     await prisma.$transaction([
       prisma.userRole.deleteMany({ where: { userId } }),
@@ -89,6 +131,19 @@ export async function updateMemberRolesAction(
 export async function suspendMemberAction(userId: string): Promise<{ success: boolean; error?: string }> {
   try {
     const session = await requireAdmin();
+    if (userId === session.user.id) return { success: false, error: "You can't suspend yourself." };
+    // Suspending a Head Mentor is a Head Mentor decision (and never the last one)
+    const target = await prisma.user.findFirst({
+      where:  { id: userId, teamId: session.user.teamId },
+      select: { roles: { select: { role: true } } },
+    });
+    if (!target) return { success: false, error: "Member not found." };
+    if (target.roles.some((r) => r.role === "HEAD_MENTOR")) {
+      const invalid = await checkRoleChange(
+        { id: session.user.id, teamId: session.user.teamId!, roles: session.user.roles }, userId, ["TEAM_MEMBER"],
+      );
+      if (invalid) return { success: false, error: invalid.replace("grant or remove the Head Mentor role", "suspend a Head Mentor") };
+    }
     await prisma.user.update({
       where: { id: userId, teamId: session.user.teamId },
       data: { status: "SUSPENDED" },

@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { findTeamTemplate } from "@/lib/template-access";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +27,7 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
   const isMentor = session.user.roles.some((r) => MENTOR_ROLES.includes(r));
 
   const [template, tasks] = await Promise.all([
-    prisma.seasonTemplate.findUnique({ where: { id } }),
+    findTeamTemplate(id, session.user.teamId),
     prisma.templateTask.findMany({ where: { templateId: id }, orderBy: { startOffset: "asc" } }),
   ]);
 

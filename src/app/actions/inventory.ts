@@ -130,6 +130,9 @@ export async function updateBaseItemAction(
   });
   if (!parsed.success) return { success: false, error: "Please fill in all required fields." };
 
+  const owned = await prisma.baseInventoryItem.findFirst({ where: { id: itemId, season: { teamId: session.user.teamId } }, select: { id: true } });
+  if (!owned) return { success: false, error: "Item not found." };
+
   const d = parsed.data;
   await prisma.baseInventoryItem.update({
     where: { id: itemId },
@@ -228,7 +231,8 @@ export async function updateStockAction(
   if (!session?.user?.teamId) return { success: false };
   if (!canManageInventory(session.user.roles)) return { success: false, error: "Not authorized." };
 
-  const item = await prisma.baseInventoryItem.findUnique({ where: { id: baseItemId } });
+  if (!Number.isFinite(delta)) return { success: false, error: "Invalid quantity." };
+  const item = await prisma.baseInventoryItem.findFirst({ where: { id: baseItemId, season: { teamId: session.user.teamId } } });
   if (!item) return { success: false };
 
   const newStock = Math.max(0, item.currentStock + delta);
@@ -246,8 +250,8 @@ export async function dismissReorderAction(reqId: string): Promise<void> {
   const session = await auth();
   if (!session?.user?.teamId || !canManageInventory(session.user.roles)) return;
 
-  await prisma.reorderRequest.update({
-    where: { id: reqId },
+  await prisma.reorderRequest.updateMany({
+    where: { id: reqId, baseItem: { season: { teamId: session.user.teamId } } },
     data: { status: "DISMISSED", resolvedAt: new Date() },
   });
   revalidatePath("/inventory");

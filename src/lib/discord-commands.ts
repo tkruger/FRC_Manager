@@ -37,8 +37,10 @@ export async function resolveContext(
   });
   if (!config) return null;
 
+  // Only count the link if its member is active and on the team that owns this server —
+  // otherwise suspended members, or members of another team, could act through Discord
   const link = await prisma.discordLink.findFirst({
-    where: { discordUserId, revokedAt: null },
+    where: { discordUserId, revokedAt: null, user: { status: "ACTIVE", teamId: config.teamId } },
   });
 
   return { guildId, discordUserId, config, link, teamId: config.teamId };

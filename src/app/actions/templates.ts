@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { findTeamTemplate, findTeamTemplateTask } from "@/lib/template-access";
 import type { TaskPriority, SubTeam } from "@/generated/prisma";
 
 const MENTOR_ROLES = ["HEAD_MENTOR", "BUILD_LEAD", "INVENTORY_ADMIN"] as const;
@@ -52,7 +53,9 @@ export async function updateTemplateAction(
   templateId: string,
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
-  try { await requireMentor(); } catch (e: any) { return { success: false, error: e.message }; }
+  let session;
+  try { session = await requireMentor(); } catch (e: any) { return { success: false, error: e.message }; }
+  if (!await findTeamTemplate(templateId, session.user.teamId!)) return { success: false, error: "Template not found." };
 
   await prisma.seasonTemplate.update({
     where: { id: templateId },
@@ -68,7 +71,9 @@ export async function updateTemplateAction(
 }
 
 export async function deleteTemplateAction(templateId: string): Promise<{ success: boolean; error?: string }> {
-  try { await requireMentor(); } catch (e: any) { return { success: false, error: e.message }; }
+  let session;
+  try { session = await requireMentor(); } catch (e: any) { return { success: false, error: e.message }; }
+  if (!await findTeamTemplate(templateId, session.user.teamId!)) return { success: false, error: "Template not found." };
   await prisma.seasonTemplate.delete({ where: { id: templateId } });
   revalidatePath("/tasks/templates");
   return { success: true };
@@ -93,7 +98,9 @@ export async function addTemplateTaskAction(
   _prev: { success: boolean; error?: string } | null,
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
-  try { await requireMentor(); } catch (e: any) { return { success: false, error: e.message }; }
+  let session;
+  try { session = await requireMentor(); } catch (e: any) { return { success: false, error: e.message }; }
+  if (!await findTeamTemplate(templateId, session.user.teamId!)) return { success: false, error: "Template not found." };
 
   const parsed = TemplateTaskSchema.safeParse({
     name:                 formData.get("name"),
@@ -131,7 +138,10 @@ export async function updateTemplateTaskAction(
   taskId: string,
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
-  try { await requireMentor(); } catch (e: any) { return { success: false, error: e.message }; }
+  let session;
+  try { session = await requireMentor(); } catch (e: any) { return { success: false, error: e.message }; }
+  const task = await findTeamTemplateTask(taskId, session.user.teamId!);
+  if (!task) return { success: false, error: "Task not found." };
 
   const parsed = TemplateTaskSchema.safeParse({
     name:                 formData.get("name"),
@@ -146,7 +156,6 @@ export async function updateTemplateTaskAction(
   });
   if (!parsed.success) return { success: false, error: "Invalid data." };
 
-  const task = await prisma.templateTask.findUnique({ where: { id: taskId }, select: { templateId: true } });
   await prisma.templateTask.update({
     where: { id: taskId },
     data: {
@@ -162,15 +171,17 @@ export async function updateTemplateTaskAction(
     },
   });
 
-  if (task) revalidatePath(`/schedule/templates/${task.templateId}`);
+  revalidatePath(`/schedule/templates/${task.templateId}`);
   return { success: true };
 }
 
 export async function deleteTemplateTaskAction(taskId: string): Promise<{ success: boolean }> {
-  try { await requireMentor(); } catch { return { success: false }; }
-  const task = await prisma.templateTask.findUnique({ where: { id: taskId }, select: { templateId: true } });
+  let session;
+  try { session = await requireMentor(); } catch { return { success: false }; }
+  const task = await findTeamTemplateTask(taskId, session.user.teamId!);
+  if (!task) return { success: false };
   await prisma.templateTask.delete({ where: { id: taskId } });
-  if (task) revalidatePath(`/schedule/templates/${task.templateId}`);
+  revalidatePath(`/schedule/templates/${task.templateId}`);
   return { success: true };
 }
 
@@ -244,13 +255,14 @@ export async function applyCustomTemplateAction(
   let session;
   try { session = await requireHeadMentor(); } catch (e: any) { return { success: false, error: e.message }; }
 
-  const [template, activeSeason] = await Promise.all([
-    prisma.seasonTemplate.findUnique({
-      where: { id: templateId },
-      include: { tasks: true },
-    }),
+  const [owned, activeSeason] = await Promise.all([
+    findTeamTemplate(templateId, session.user.teamId!),
     prisma.season.findFirst({ where: { teamId: session.user.teamId, isActive: true } }),
   ]);
+  const template = owned && await prisma.seasonTemplate.findUnique({
+    where: { id: templateId },
+    include: { tasks: true },
+  });
 
   if (!template) return { success: false, error: "Template not found." };
   if (!activeSeason) return { success: false, error: "No active season." };
@@ -374,11 +386,12 @@ export async function importTemplateTasksAction(
     prerequisiteNames: string[];
   }[]
 ): Promise<{ success: boolean; error?: string; count?: number }> {
-  try { await requireMentor(); } catch (e: any) { return { success: false, error: e.message }; }
+  let session;
+  try { session = await requireMentor(); } catch (e: any) { return { success: false, error: e.message }; }
 
   if (!tasks.length) return { success: false, error: "No tasks to import." };
 
-  const template = await prisma.seasonTemplate.findUnique({ where: { id: templateId } });
+  const template = await findTeamTemplate(templateId, session.user.teamId!);
   if (!template) return { success: false, error: "Template not found." };
 
   await prisma.templateTask.createMany({
@@ -403,8 +416,9 @@ export async function importTemplateTasksAction(
 }
 
 export async function clearAllTasksAction(): Promise<{ success: boolean; error?: string }> {
-  const session = await auth();
-  if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
+  // Deletes every task in the season — previously open to any team member
+  let session;
+  try { session = await requireHeadMentor(); } catch (e: any) { return { success: false, error: e.message }; }
 
   const activeSeason = await prisma.season.findFirst({
     where: { teamId: session.user.teamId, isActive: true },

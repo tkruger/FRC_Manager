@@ -93,6 +93,7 @@ export async function updateToolImageAction(
 }
 
 const TOOL_EDIT_ROLES = ["INVENTORY_ADMIN", "BUILD_LEAD", "TEAM_LEADERSHIP", "HEAD_MENTOR"];
+const TOOL_CONDITIONS = ["EXCELLENT", "GOOD", "FAIR", "NEEDS_REPAIR", "OUT_OF_SERVICE", "OUT_FOR_MAINTENANCE"] as const;
 
 export async function updateToolAction(
   toolId: string,
@@ -153,9 +154,9 @@ export async function checkoutToolAction(
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
   const session = await auth();
-  if (!session) return { success: false, error: "Not authenticated." };
+  if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
 
-  const tool = await prisma.tool.findUnique({ where: { id: toolId } });
+  const tool = await prisma.tool.findFirst({ where: { id: toolId, teamId: session.user.teamId, retired: false } });
   if (!tool) return { success: false, error: "Tool not found." };
 
   // Check availability
@@ -196,7 +197,17 @@ export async function checkinToolAction(
   condition: string
 ): Promise<{ success: boolean }> {
   const session = await auth();
-  if (!session) return { success: false };
+  if (!session?.user?.teamId) return { success: false };
+  if (!(TOOL_CONDITIONS as readonly string[]).includes(condition)) return { success: false };
+
+  // Borrowers return their own checkouts; tool managers can return anyone's
+  const checkout = await prisma.toolCheckout.findFirst({
+    where:  { id: checkoutId, returnedAt: null, tool: { teamId: session.user.teamId } },
+    select: { toolId: true, userId: true },
+  });
+  if (!checkout) return { success: false };
+  const canManage = session.user.roles.some((r) => TOOL_EDIT_ROLES.includes(r));
+  if (checkout.userId !== session.user.id && !canManage) return { success: false };
 
   await prisma.toolCheckout.update({
     where: { id: checkoutId },
@@ -204,8 +215,7 @@ export async function checkinToolAction(
   });
 
   // Update tool condition if worsened
-  const checkout = await prisma.toolCheckout.findUnique({ where: { id: checkoutId }, select: { toolId: true } });
-  if (checkout && ["NEEDS_REPAIR", "OUT_OF_SERVICE"].includes(condition)) {
+  if (["NEEDS_REPAIR", "OUT_OF_SERVICE"].includes(condition)) {
     await prisma.tool.update({
       where: { id: checkout.toolId },
       data: { condition: condition as ToolCondition },
@@ -218,8 +228,9 @@ export async function checkinToolAction(
 
 export async function retireToolAction(toolId: string): Promise<{ success: boolean }> {
   const session = await auth();
-  if (!session) return { success: false };
-  await prisma.tool.update({ where: { id: toolId }, data: { retired: true } });
+  if (!session?.user?.teamId || !session.user.roles.some((r) => TOOL_EDIT_ROLES.includes(r))) return { success: false };
+  const retired = await prisma.tool.updateMany({ where: { id: toolId, teamId: session.user.teamId }, data: { retired: true } });
+  if (retired.count === 0) return { success: false };
   revalidatePath("/tools");
   return { success: true };
 }

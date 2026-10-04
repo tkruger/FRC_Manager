@@ -24,8 +24,12 @@ export default async function InspectionPage({ searchParams }: { searchParams: P
 
   // Load checklist if specified
   const checklist = checklistId
-    ? await prisma.inspectionChecklist.findUnique({
-        where: { id: checklistId },
+    ? await prisma.inspectionChecklist.findFirst({
+        // Only the team's own robots (any season) — checklists have no team column
+        where: {
+          id: checklistId,
+          robotId: { in: (await prisma.robot.findMany({ where: { season: { teamId: session.user.teamId } }, select: { id: true } })).map((r) => r.id) },
+        },
         include: { items: { orderBy: [{ category: "asc" }, { id: "asc" }] } },
       })
     : null;

@@ -78,8 +78,13 @@ export async function disconnectDiscordAction(): Promise<{ success: boolean }> {
 }
 
 export async function revokeDiscordLinkAction(linkId: string): Promise<{ success: boolean }> {
-  try { await requireAdmin(); } catch { return { success: false }; }
-  await prisma.discordLink.update({ where: { id: linkId }, data: { revokedAt: new Date() } });
+  let session;
+  try { session = await requireAdmin(); } catch { return { success: false }; }
+  const revoked = await prisma.discordLink.updateMany({
+    where: { id: linkId, user: { teamId: session.user.teamId } },
+    data:  { revokedAt: new Date() },
+  });
+  if (revoked.count === 0) return { success: false };
   revalidatePath("/settings/discord");
   return { success: true };
 }

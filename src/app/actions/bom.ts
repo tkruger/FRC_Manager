@@ -35,6 +35,9 @@ export async function addBomItemAction(
   if (!parsed.success) return { success: false, error: "Please fill in all required fields." };
   const d = parsed.data;
 
+  const robot = await prisma.robot.findFirst({ where: { id: robotId, season: { teamId: session.user.teamId } }, select: { id: true } });
+  if (!robot) return { success: false, error: "Robot not found." };
+
   const totalFmv = d.unitFmv != null ? d.unitFmv * d.quantity : null;
 
   await prisma.bomItem.create({
@@ -57,8 +60,11 @@ export async function addBomItemAction(
 
 export async function deleteBomItemAction(itemId: string): Promise<{ success: boolean }> {
   const session = await auth();
-  if (!session) return { success: false };
-  await prisma.bomItem.delete({ where: { id: itemId } });
+  if (!session?.user?.teamId) return { success: false };
+  const deleted = await prisma.bomItem.deleteMany({
+    where: { id: itemId, robot: { season: { teamId: session.user.teamId } } },
+  });
+  if (deleted.count === 0) return { success: false };
   revalidatePath("/budget/bom");
   return { success: true };
 }

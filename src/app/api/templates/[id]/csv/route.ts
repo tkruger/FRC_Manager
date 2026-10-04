@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { findTeamTemplate } from "@/lib/template-access";
 import { tasksToCSV } from "@/lib/template-csv";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -7,6 +8,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   if (!session?.user?.teamId) return new Response("Unauthorized", { status: 401 });
 
   const { id } = await params;
+  if (!await findTeamTemplate(id, session.user.teamId)) return new Response("Not found", { status: 404 });
   const template = await prisma.seasonTemplate.findFirst({
     where: { id },
     include: { tasks: { orderBy: { startOffset: "asc" } } },

@@ -23,6 +23,37 @@ const TaskSchema = z.object({
   prerequisiteIds:      z.array(z.string()).optional(),
 });
 
+/** The task if it belongs to the caller's team. */
+async function findTeamTask(taskId: string, teamId: string) {
+  return prisma.task.findFirst({ where: { id: taskId, season: { teamId } }, select: { id: true, seasonId: true } });
+}
+
+/** Drop any assignee, prerequisite or robot id that isn't from this team / season. */
+async function scopeTaskRefs(
+  teamId: string,
+  seasonId: string,
+  refs: { assigneeIds: string[]; prerequisiteIds: string[]; robotId?: string | null; selfId?: string },
+) {
+  const [members, prereqs, robot] = await Promise.all([
+    refs.assigneeIds.length
+      ? prisma.user.findMany({ where: { id: { in: refs.assigneeIds }, teamId, status: "ACTIVE" }, select: { id: true } })
+      : [],
+    refs.prerequisiteIds.length
+      ? prisma.task.findMany({ where: { id: { in: refs.prerequisiteIds, not: refs.selfId }, seasonId }, select: { id: true } })
+      : [],
+    refs.robotId
+      ? prisma.robot.findFirst({ where: { id: refs.robotId, season: { teamId } }, select: { id: true } })
+      : null,
+  ]);
+  return {
+    assigneeIds:     members.map((m) => m.id),
+    prerequisiteIds: prereqs.map((p) => p.id),
+    robotId:         robot?.id ?? null,
+  };
+}
+
+const TASK_STATUSES: TaskStatus[] = ["NOT_STARTED", "IN_PROGRESS", "BLOCKED", "IN_REVIEW", "COMPLETE"];
+
 export type TaskActionState =
   | { success: true; taskId: string }
   | { success: false; error: string };
@@ -60,6 +91,7 @@ export async function createTaskAction(
 
   if (!parsed.success) return { success: false, error: "Please fill in all required fields." };
   const d = parsed.data;
+  const refs = await scopeTaskRefs(session.user.teamId, activeSeason.id, { assigneeIds, prerequisiteIds, robotId: d.robotId });
 
   const task = await prisma.task.create({
     data: {
@@ -68,7 +100,7 @@ export async function createTaskAction(
       name:                 d.name,
       description:          d.description,
       subTeam:              (d.subTeam as SubTeam) || null,
-      robotId:              d.robotId || null,
+      robotId:              refs.robotId,
       startDate:            d.startDate ? new Date(d.startDate) : null,
       dueDate:              d.dueDate ? new Date(d.dueDate) : null,
       estimatedHours:       d.estimatedHours,
@@ -77,12 +109,12 @@ export async function createTaskAction(
       designReviewRequired: d.designReviewRequired ?? false,
       designReviewStatus:   d.designReviewRequired ? "PENDING" : "NOT_REQUIRED",
       blockersNotes:        d.blockersNotes,
-      assignees:            assigneeIds.length ? { connect: assigneeIds.map((id) => ({ id })) } : undefined,
-      prerequisites:        prerequisiteIds.length ? { connect: prerequisiteIds.map((id) => ({ id })) } : undefined,
+      assignees:            refs.assigneeIds.length ? { connect: refs.assigneeIds.map((id) => ({ id })) } : undefined,
+      prerequisites:        refs.prerequisiteIds.length ? { connect: refs.prerequisiteIds.map((id) => ({ id })) } : undefined,
     },
   });
 
-  if (assigneeIds.length) await notify.taskAssigned(task.id, assigneeIds, session.user.id);
+  if (refs.assigneeIds.length) await notify.taskAssigned(task.id, refs.assigneeIds, session.user.id);
 
   revalidatePath("/tasks");
   return { success: true, taskId: task.id };
@@ -93,9 +125,11 @@ export async function updateTaskStatusAction(
   status: TaskStatus
 ): Promise<{ success: boolean }> {
   const session = await auth();
-  if (!session) return { success: false };
+  if (!session?.user?.teamId) return { success: false };
+  if (!TASK_STATUSES.includes(status)) return { success: false };
 
-  const prev = await prisma.task.findUnique({ where: { id: taskId }, select: { status: true } });
+  const prev = await prisma.task.findFirst({ where: { id: taskId, season: { teamId: session.user.teamId } }, select: { status: true } });
+  if (!prev) return { success: false };
   await prisma.task.update({
     where: { id: taskId },
     data: {
@@ -116,12 +150,17 @@ export async function updateTaskAction(
   formData: FormData
 ): Promise<TaskActionState> {
   const session = await auth();
-  if (!session) return { success: false, error: "Not authenticated." };
+  if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
+
+  const owned = await findTeamTask(taskId, session.user.teamId);
+  if (!owned) return { success: false, error: "Task not found." };
 
   const assigneeIds = formData.getAll("assigneeIds") as string[];
   const prerequisiteIds = formData.getAll("prerequisiteIds") as string[];
 
-  const status = (formData.get("status") as TaskStatus) || undefined;
+  const rawStatus = formData.get("status") as TaskStatus | null;
+  if (rawStatus && !TASK_STATUSES.includes(rawStatus)) return { success: false, error: "Invalid status." };
+  const status = rawStatus || undefined;
 
   const parsed = TaskSchema.safeParse({
     name:                 formData.get("name"),
@@ -139,6 +178,7 @@ export async function updateTaskAction(
 
   if (!parsed.success) return { success: false, error: "Invalid data." };
   const d = parsed.data;
+  const refs = await scopeTaskRefs(session.user.teamId, owned.seasonId, { assigneeIds, prerequisiteIds, robotId: d.robotId, selfId: taskId });
 
   const prev = await prisma.task.findUnique({
     where:  { id: taskId },
@@ -151,7 +191,7 @@ export async function updateTaskAction(
       name:                 d.name,
       description:          d.description,
       subTeam:              (d.subTeam as SubTeam) || null,
-      robotId:              d.robotId || null,
+      robotId:              refs.robotId,
       startDate:            d.startDate ? new Date(d.startDate) : null,
       dueDate:              d.dueDate ? new Date(d.dueDate) : null,
       estimatedHours:       d.estimatedHours,
@@ -160,8 +200,8 @@ export async function updateTaskAction(
       designReviewRequired: d.designReviewRequired ?? false,
       designReviewStatus:   d.designReviewRequired ? "PENDING" : "NOT_REQUIRED",
       blockersNotes:        d.blockersNotes,
-      assignees:            { set: assigneeIds.map((id) => ({ id })) },
-      prerequisites:        { set: prerequisiteIds.map((id) => ({ id })) },
+      assignees:            { set: refs.assigneeIds.map((id) => ({ id })) },
+      prerequisites:        { set: refs.prerequisiteIds.map((id) => ({ id })) },
       ...(status ? {
         status,
         completionDate: status === "COMPLETE" ? new Date() : null,
@@ -170,7 +210,7 @@ export async function updateTaskAction(
   });
 
   const previousAssignees = new Set(prev?.assignees.map((a) => a.id));
-  const added = assigneeIds.filter((id) => !previousAssignees.has(id));
+  const added = refs.assigneeIds.filter((id) => !previousAssignees.has(id));
   if (added.length) await notify.taskAssigned(taskId, added, session.user.id);
   if (status === "BLOCKED" && prev?.status !== "BLOCKED") await notify.taskBlocked(taskId, session.user.id);
 
@@ -181,8 +221,9 @@ export async function updateTaskAction(
 
 export async function deleteTaskAction(taskId: string): Promise<{ success: boolean }> {
   const session = await auth();
-  if (!session) return { success: false };
-  await prisma.task.delete({ where: { id: taskId } });
+  if (!session?.user?.teamId) return { success: false };
+  const deleted = await prisma.task.deleteMany({ where: { id: taskId, season: { teamId: session.user.teamId } } });
+  if (deleted.count === 0) return { success: false };
   revalidatePath("/tasks");
   return { success: true };
 }
@@ -191,7 +232,15 @@ export async function logActualHoursAction(
   taskId: string,
   hours: number
 ): Promise<{ success: boolean }> {
-  await prisma.task.update({ where: { id: taskId }, data: { actualHours: hours } });
+  // Previously had no auth check at all
+  const session = await auth();
+  if (!session?.user?.teamId) return { success: false };
+  if (!Number.isFinite(hours) || hours < 0) return { success: false };
+  const updated = await prisma.task.updateMany({
+    where: { id: taskId, season: { teamId: session.user.teamId } },
+    data:  { actualHours: hours },
+  });
+  if (updated.count === 0) return { success: false };
   revalidatePath(`/tasks/${taskId}`);
   return { success: true };
 }
