@@ -109,8 +109,8 @@ export function PushDeviceCard({ vapidPublicKey, deviceCount }: { vapidPublicKey
     <section className="card space-y-3">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-h3 text-[--color-text-primary]">Push notifications on this device</h2>
-          <p className="text-small text-[--color-text-secondary] mt-0.5">
+          <h2 className="text-h3 text-(--color-text-primary)">Push notifications on this device</h2>
+          <p className="text-small text-(--color-text-secondary) mt-0.5">
             {deviceCount === 0
               ? "No devices are set up for push yet."
               : `Push is on for ${deviceCount} of your device${deviceCount === 1 ? "" : "s"}.`}
@@ -130,23 +130,23 @@ export function PushDeviceCard({ vapidPublicKey, deviceCount }: { vapidPublicKey
       </div>
 
       {state === "needs-install" && (
-        <p className="text-small text-[--color-text-primary] rounded-md bg-[--color-surface-overlay] px-3 py-2">
+        <p className="text-small text-(--color-text-primary) rounded-md bg-(--color-surface-overlay) px-3 py-2">
           On iPhone and iPad, push notifications only work from the installed app. Tap the Share button, choose
           <b> Add to Home Screen</b>, then open FRC Manager from your home screen and come back here.
         </p>
       )}
       {state === "denied" && (
-        <p className="text-small text-[--color-text-primary] rounded-md bg-[--color-surface-overlay] px-3 py-2">
+        <p className="text-small text-(--color-text-primary) rounded-md bg-(--color-surface-overlay) px-3 py-2">
           Notifications are blocked for this site. Allow them in your browser or system settings, then reload this page.
         </p>
       )}
       {state === "unsupported" && (
-        <p className="text-small text-[--color-text-secondary]">
+        <p className="text-small text-(--color-text-secondary)">
           This browser doesn&apos;t support push notifications. You&apos;ll still see notifications in the app.
         </p>
       )}
       {message && (
-        <p className={`text-sm ${message.kind === "ok" ? "text-[--color-success]" : "text-[--color-danger]"}`}>{message.text}</p>
+        <p className={`text-sm ${message.kind === "ok" ? "text-(--color-success)" : "text-(--color-danger)"}`}>{message.text}</p>
       )}
     </section>
   );

@@ -87,7 +87,7 @@ function StepStage({ step, number, count }: { step: WorkflowStep; number: number
       badge={STEP_TYPE_DISPLAY[step.type].label}
       description={step.description}
       aside={count != null && count > 0 && (
-        <Link href="/procurement/requests" className="text-small font-medium text-[--color-secondary] hover:underline whitespace-nowrap">
+        <Link href="/procurement/requests" className="text-small font-medium text-(--color-secondary) hover:underline whitespace-nowrap">
           {count} here now
         </Link>
       )}
@@ -122,7 +122,7 @@ function Stage({
     <li className="relative pl-11">
       {/* Connector line to the next stage */}
       {!isLast && (
-        <span aria-hidden className="absolute left-[15px] top-9 -bottom-3 w-0.5 bg-[--color-border]" />
+        <span aria-hidden className="absolute left-[15px] top-9 -bottom-3 w-0.5 bg-(--color-border)" />
       )}
       <span
         aria-hidden
@@ -134,7 +134,7 @@ function Stage({
       <div className="card py-3 px-4 space-y-2" style={{ borderLeft: `3px solid ${accent}` }}>
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2 min-w-0">
-            <h3 className="text-sm font-semibold text-[--color-text-primary]">{title}</h3>
+            <h3 className="text-sm font-semibold text-(--color-text-primary)">{title}</h3>
             <span
               className="rounded px-1.5 py-0.5 text-xs font-medium"
               style={{ color: accent, backgroundColor: `color-mix(in srgb, ${accent} 12%, transparent)` }}
@@ -144,7 +144,7 @@ function Stage({
           </div>
           {aside}
         </div>
-        {description && <p className="text-small text-[--color-text-secondary]">{description}</p>}
+        {description && <p className="text-small text-(--color-text-secondary)">{description}</p>}
         <dl className="space-y-1.5">{children}</dl>
       </div>
     </li>
@@ -154,8 +154,8 @@ function Stage({
 function Detail({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className={cn("grid gap-x-3 gap-y-0.5 sm:grid-cols-[110px_1fr]")}>
-      <dt className="text-small font-medium text-[--color-text-secondary]">{label}</dt>
-      <dd className="text-small text-[--color-text-primary]">{children}</dd>
+      <dt className="text-small font-medium text-(--color-text-secondary)">{label}</dt>
+      <dd className="text-small text-(--color-text-primary)">{children}</dd>
     </div>
   );
 }

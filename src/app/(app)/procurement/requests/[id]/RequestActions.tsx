@@ -107,7 +107,7 @@ export function RequestActions({ requestId, actions, estimatedTotal, linkedStock
             run(() => markOrderedAction(requestId, order.stepKey, fd));
           }}
         >
-          <p className="text-h3 text-[--color-text-primary]">Order details</p>
+          <p className="text-h3 text-(--color-text-primary)">Order details</p>
           <Field label="Confirmation #" name="orderConfirmation" placeholder="Order / invoice number" />
           <Field label="Actual total ($)" name="actualTotal" type="number" step="0.01" min="0"
             placeholder={estimatedTotal != null ? estimatedTotal.toFixed(2) : "0.00"} />
@@ -119,7 +119,7 @@ export function RequestActions({ requestId, actions, estimatedTotal, linkedStock
         </form>
       )}
 
-      {error && <p className="text-sm text-[--color-danger] max-w-xs">{error}</p>}
+      {error && <p className="text-sm text-(--color-danger) max-w-xs">{error}</p>}
     </div>
   );
 }

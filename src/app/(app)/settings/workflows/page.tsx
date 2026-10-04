@@ -49,15 +49,15 @@ export default async function WorkflowSettingsPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       <div>
-        <nav className="text-small text-[--color-text-secondary] mb-1">
-          <Link href="/settings/members" className="hover:text-[--color-primary]">Settings</Link>
+        <nav className="text-small text-(--color-text-secondary) mb-1">
+          <Link href="/settings/members" className="hover:text-(--color-primary)">Settings</Link>
           <span className="mx-2">›</span>Purchase workflow
         </nav>
-        <h1 className="text-h1 text-[--color-text-primary]">Purchase workflow</h1>
-        <p className="text-body text-[--color-text-secondary] mt-1">
+        <h1 className="text-h1 text-(--color-text-primary)">Purchase workflow</h1>
+        <p className="text-body text-(--color-text-secondary) mt-1">
           Every step a stock item or purchase goes through, from running low to arriving on the shelf.
         </p>
-        <p className="text-small text-[--color-text-secondary] mt-2">
+        <p className="text-small text-(--color-text-secondary) mt-2">
           {active.id
             ? <>Version {active.version} · saved {formatDate(active.createdAt)}{active.createdBy && ` by ${active.createdBy}`}</>
             : "Using the default workflow"}

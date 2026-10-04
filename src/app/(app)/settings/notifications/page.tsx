@@ -34,8 +34,8 @@ export default async function NotificationSettingsPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       <div>
-        <h1 className="text-h1 text-[--color-text-primary]">Notifications</h1>
-        <p className="text-body text-[--color-text-secondary] mt-1">
+        <h1 className="text-h1 text-(--color-text-primary)">Notifications</h1>
+        <p className="text-body text-(--color-text-secondary) mt-1">
           Choose what you hear about, and whether it shows up in the app, as a push notification, or both.
         </p>
       </div>

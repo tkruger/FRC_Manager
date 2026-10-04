@@ -65,16 +65,16 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       {/* Breadcrumb */}
-      <nav className="text-small text-[--color-text-secondary]">
-        <Link href="/procurement" className="hover:text-[--color-primary]">Procurement</Link>
+      <nav className="text-small text-(--color-text-secondary)">
+        <Link href="/procurement" className="hover:text-(--color-primary)">Procurement</Link>
         <span className="mx-2">›</span>
-        <span className="text-[--color-text-primary]">{request.title}</span>
+        <span className="text-(--color-text-primary)">{request.title}</span>
       </nav>
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h1 className="text-h1 text-[--color-text-primary]">{request.title}</h1>
+          <h1 className="text-h1 text-(--color-text-primary)">{request.title}</h1>
           <div className="flex items-center gap-2 mt-2 flex-wrap">
             <Badge variant={statusBadgeVariant(request.status)}>{statusLabel(request.status)}</Badge>
             <Badge variant={priorityBadgeVariant(request.priority)}>{request.priority}</Badge>
@@ -92,12 +92,12 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
       {/* Where it is now */}
       {currentStep && (
         <div className="card py-3 px-4 border-l-4" style={{ borderLeftColor: "var(--color-warning)" }}>
-          <p className="text-sm text-[--color-text-primary]">
+          <p className="text-sm text-(--color-text-primary)">
             <span className="font-semibold">Waiting on: {currentStep.name}</span>
-            <span className="text-[--color-text-secondary]"> — {describeRoles(currentStep.roles)}</span>
+            <span className="text-(--color-text-secondary)"> — {describeRoles(currentStep.roles)}</span>
           </p>
           {actions.length === 0 && (
-            <p className="text-small text-[--color-text-secondary] mt-0.5">Nothing for you to do here right now.</p>
+            <p className="text-small text-(--color-text-secondary) mt-0.5">Nothing for you to do here right now.</p>
           )}
         </div>
       )}
@@ -117,8 +117,8 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
           ] : []),
         ].map((m) => (
           <div key={m.label} className="card py-3">
-            <p className="text-label text-[--color-text-secondary]">{m.label}</p>
-            <p className="text-sm font-medium text-[--color-text-primary] mt-0.5">{m.value}</p>
+            <p className="text-label text-(--color-text-secondary)">{m.label}</p>
+            <p className="text-sm font-medium text-(--color-text-primary) mt-0.5">{m.value}</p>
           </div>
         ))}
       </div>
@@ -126,20 +126,20 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
       {/* Justification */}
       {request.justification && (
         <div className="card">
-          <p className="text-label text-[--color-text-secondary] mb-1">Justification</p>
-          <p className="text-body text-[--color-text-primary]">{request.justification}</p>
+          <p className="text-label text-(--color-text-secondary) mb-1">Justification</p>
+          <p className="text-body text-(--color-text-primary)">{request.justification}</p>
         </div>
       )}
 
       {/* Progress */}
       <div>
-        <h2 className="text-h2 text-[--color-text-primary] mb-3">Progress</h2>
+        <h2 className="text-h2 text-(--color-text-primary) mb-3">Progress</h2>
         <RequestTimeline entries={timeline} upcoming={upcoming} />
       </div>
 
       {/* Line items */}
       <div>
-        <h2 className="text-h2 text-[--color-text-primary] mb-3">Line items</h2>
+        <h2 className="text-h2 text-(--color-text-primary) mb-3">Line items</h2>
         <Table>
           <TableHead>
             <tr>
@@ -158,13 +158,13 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
                   <div>
                     <p className="font-medium">{li.name}</p>
                     {li.baseItem && (
-                      <Link href={`/inventory/${li.baseItem.id}`} className="text-small text-[--color-secondary] hover:underline block">
+                      <Link href={`/inventory/${li.baseItem.id}`} className="text-small text-(--color-secondary) hover:underline block">
                         Restocks inventory item
                       </Link>
                     )}
                     {li.vendorProductUrl && (
                       <a href={li.vendorProductUrl} target="_blank" rel="noopener noreferrer"
-                        className="text-small text-[--color-secondary] hover:underline truncate block max-w-xs">
+                        className="text-small text-(--color-secondary) hover:underline truncate block max-w-xs">
                         Product link
                       </a>
                     )}
@@ -178,8 +178,8 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
               </Tr>
             ))}
             <Tr>
-              <Td colSpan={4} className="text-right font-medium text-[--color-text-secondary]">Total</Td>
-              <Td right className="font-bold text-[--color-text-primary]">{formatCurrency(lineTotal)}</Td>
+              <Td colSpan={4} className="text-right font-medium text-(--color-text-secondary)">Total</Td>
+              <Td right className="font-bold text-(--color-text-primary)">{formatCurrency(lineTotal)}</Td>
               <Td />
             </Tr>
           </TableBody>

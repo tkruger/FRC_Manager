@@ -38,24 +38,24 @@ export function TopicPreferences({ topics: initial }: { topics: Topic[] }) {
   return (
     <section className="card space-y-4">
       <div className="flex items-end justify-between gap-3">
-        <h2 className="text-h3 text-[--color-text-primary]">What to notify me about</h2>
-        <div className="hidden sm:flex gap-6 pr-1 text-xs font-semibold uppercase tracking-wide text-[--color-text-secondary]">
+        <h2 className="text-h3 text-(--color-text-primary)">What to notify me about</h2>
+        <div className="hidden sm:flex gap-6 pr-1 text-xs font-semibold uppercase tracking-wide text-(--color-text-secondary)">
           <span className="w-12 text-center">In app</span>
           <span className="w-12 text-center">Push</span>
         </div>
       </div>
-      {error && <p className="text-sm text-[--color-danger]">{error}</p>}
+      {error && <p className="text-sm text-(--color-danger)">{error}</p>}
 
       {groups.map((group) => (
         <div key={group} className="space-y-1">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-[--color-text-secondary] pt-2">{group}</h3>
-          <ul className="divide-y divide-[--color-border]">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-(--color-text-secondary) pt-2">{group}</h3>
+          <ul className="divide-y divide-(--color-border)">
             {topics.filter((t) => t.group === group).map((t) => (
               <li key={t.id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3">
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-[--color-text-primary]">{t.label}</p>
-                  <p className="text-small text-[--color-text-secondary]">{t.description}</p>
-                  <p className="text-xs text-[--color-text-disabled] mt-0.5">Sent to: {t.audience}</p>
+                  <p className="text-sm font-medium text-(--color-text-primary)">{t.label}</p>
+                  <p className="text-small text-(--color-text-secondary)">{t.description}</p>
+                  <p className="text-xs text-(--color-text-disabled) mt-0.5">Sent to: {t.audience}</p>
                 </div>
                 <div className="flex gap-6 shrink-0">
                   <Toggle label="In app" checked={t.inApp} disabled={t.required} onChange={() => toggle(t.id, "inApp")} />
@@ -73,7 +73,7 @@ export function TopicPreferences({ topics: initial }: { topics: Topic[] }) {
 function Toggle({ label, checked, disabled, onChange }: { label: string; checked: boolean; disabled?: boolean; onChange: () => void }) {
   return (
     <label className={cn("flex sm:w-12 sm:justify-center items-center gap-2", disabled ? "opacity-50" : "cursor-pointer")}>
-      <span className="sm:sr-only text-small text-[--color-text-secondary]">{label}</span>
+      <span className="sm:sr-only text-small text-(--color-text-secondary)">{label}</span>
       <button
         type="button"
         role="switch"
@@ -83,7 +83,7 @@ function Toggle({ label, checked, disabled, onChange }: { label: string; checked
         onClick={onChange}
         className={cn(
           "relative h-6 w-10 rounded-full transition-colors",
-          checked ? "bg-[--color-primary]" : "bg-[--color-border-strong]"
+          checked ? "bg-(--color-primary)" : "bg-(--color-border-strong)"
         )}
       >
         <span className={cn(

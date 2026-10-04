@@ -34,19 +34,19 @@ export function VersionHistory({ versions, canEdit }: { versions: Version[]; can
   return (
     <section className="card space-y-3">
       <div>
-        <h2 className="text-h3 text-[--color-text-primary]">Version history</h2>
-        <p className="text-small text-[--color-text-secondary]">
+        <h2 className="text-h3 text-(--color-text-primary)">Version history</h2>
+        <p className="text-small text-(--color-text-secondary)">
           Saving creates a new version. Requests keep following the version they started on.
         </p>
       </div>
-      {error && <p className="text-sm text-[--color-danger]">{error}</p>}
-      <ul className="divide-y divide-[--color-border]">
+      {error && <p className="text-sm text-(--color-danger)">{error}</p>}
+      <ul className="divide-y divide-(--color-border)">
         {versions.map((v) => (
           <li key={v.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
             <div className="flex items-center gap-2 min-w-0">
-              <span className="text-sm font-medium text-[--color-text-primary]">Version {v.version}</span>
+              <span className="text-sm font-medium text-(--color-text-primary)">Version {v.version}</span>
               {v.isActive && <Badge variant="success">Active</Badge>}
-              <span className="text-small text-[--color-text-secondary] truncate">
+              <span className="text-small text-(--color-text-secondary) truncate">
                 {formatDate(new Date(v.createdAt))}{v.createdBy && ` · ${v.createdBy}`} · {v.requests} request{v.requests === 1 ? "" : "s"}
               </span>
             </div>

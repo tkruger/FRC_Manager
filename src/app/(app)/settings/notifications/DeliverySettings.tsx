@@ -15,7 +15,7 @@ interface Props {
 }
 
 const selectCls =
-  "rounded-md border border-[--color-border] bg-[--color-surface] text-[--color-text-primary] px-2.5 py-2 text-sm";
+  "rounded-md border border-(--color-border) bg-(--color-surface) text-(--color-text-primary) px-2.5 py-2 text-sm";
 
 function hourLabel(h: number) {
   const suffix = h < 12 ? "AM" : "PM";
@@ -62,8 +62,8 @@ export function DeliverySettings(p: Props) {
   return (
     <section className="card space-y-4">
       <div>
-        <h2 className="text-h3 text-[--color-text-primary]">Quiet hours &amp; time zone</h2>
-        <p className="text-small text-[--color-text-secondary] mt-0.5">
+        <h2 className="text-h3 text-(--color-text-primary)">Quiet hours &amp; time zone</h2>
+        <p className="text-small text-(--color-text-secondary) mt-0.5">
           No push notifications during quiet hours; reminders wait until they end. Emergency purchase
           requests and serious safety incidents still come through. Daily digests arrive around 8 AM.
         </p>
@@ -71,19 +71,19 @@ export function DeliverySettings(p: Props) {
 
       <div className="flex flex-wrap items-end gap-3">
         <label className="space-y-1.5">
-          <span className="block text-sm font-medium text-[--color-text-primary]">Quiet from</span>
+          <span className="block text-sm font-medium text-(--color-text-primary)">Quiet from</span>
           <select className={selectCls} value={start} onChange={(e) => setStart(Number(e.target.value))}>
             {Array.from({ length: 24 }, (_, h) => <option key={h} value={h}>{hourLabel(h)}</option>)}
           </select>
         </label>
         <label className="space-y-1.5">
-          <span className="block text-sm font-medium text-[--color-text-primary]">until</span>
+          <span className="block text-sm font-medium text-(--color-text-primary)">until</span>
           <select className={selectCls} value={end} onChange={(e) => setEnd(Number(e.target.value))}>
             {Array.from({ length: 24 }, (_, h) => <option key={h} value={h}>{hourLabel(h)}</option>)}
           </select>
         </label>
         <label className="space-y-1.5 min-w-0 flex-1">
-          <span className="block text-sm font-medium text-[--color-text-primary]">My time zone</span>
+          <span className="block text-sm font-medium text-(--color-text-primary)">My time zone</span>
           <select className={`${selectCls} w-full`} value={tz} onChange={(e) => setTz(e.target.value)}>
             <option value="">Same as team ({effectiveTeam})</option>
             {allZones.map((z) => <option key={z} value={z}>{z}</option>)}
@@ -91,12 +91,12 @@ export function DeliverySettings(p: Props) {
         </label>
         <Button onClick={save} isLoading={pending}>Save</Button>
       </div>
-      {start === end && <p className="text-small text-[--color-text-secondary]">Quiet hours are off.</p>}
+      {start === end && <p className="text-small text-(--color-text-secondary)">Quiet hours are off.</p>}
 
       {p.canSetTeamTimezone && (
-        <div className="pt-3 border-t border-[--color-border] space-y-2">
-          <p className="text-sm font-medium text-[--color-text-primary]">Team time zone</p>
-          <p className="text-small text-[--color-text-secondary]">
+        <div className="pt-3 border-t border-(--color-border) space-y-2">
+          <p className="text-sm font-medium text-(--color-text-primary)">Team time zone</p>
+          <p className="text-small text-(--color-text-secondary)">
             Meeting times are in this zone, and it&apos;s the default for anyone who hasn&apos;t set their own.
           </p>
           <div className="flex flex-wrap gap-2">
@@ -111,7 +111,7 @@ export function DeliverySettings(p: Props) {
         </div>
       )}
 
-      {msg && <p className={`text-sm ${msg.ok ? "text-[--color-success]" : "text-[--color-danger]"}`}>{msg.text}</p>}
+      {msg && <p className={`text-sm ${msg.ok ? "text-(--color-success)" : "text-(--color-danger)"}`}>{msg.text}</p>}
     </section>
   );
 }

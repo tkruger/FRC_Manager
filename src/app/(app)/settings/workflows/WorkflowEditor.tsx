@@ -30,9 +30,9 @@ interface Props {
 }
 
 const inputCls =
-  "w-full rounded-md border border-[--color-border] bg-[--color-surface] text-[--color-text-primary] px-2.5 py-1.5 text-sm focus:border-[--color-primary] focus:outline-none";
+  "w-full rounded-md border border-(--color-border) bg-(--color-surface) text-(--color-text-primary) px-2.5 py-1.5 text-sm focus:border-(--color-primary) focus:outline-none";
 const selectCls =
-  "rounded-md border border-[--color-border] bg-[--color-surface] text-[--color-text-primary] px-2 py-1.5 text-sm";
+  "rounded-md border border-(--color-border) bg-(--color-surface) text-(--color-text-primary) px-2 py-1.5 text-sm";
 
 export function WorkflowEditor({ def, counts, isCustom }: Props) {
   const router = useRouter();
@@ -76,7 +76,7 @@ export function WorkflowEditor({ def, counts, isCustom }: Props) {
           )}
           <Button size="sm" onClick={beginEdit}>Edit workflow</Button>
         </div>
-        {error && <p className="text-sm text-[--color-danger]">{error}</p>}
+        {error && <p className="text-sm text-(--color-danger)">{error}</p>}
         <WorkflowPipeline def={def} counts={counts} />
       </div>
     );
@@ -119,7 +119,7 @@ export function WorkflowEditor({ def, counts, isCustom }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="card py-3 px-4 text-small text-[--color-text-secondary]">
+      <div className="card py-3 px-4 text-small text-(--color-text-secondary)">
         A workflow is: any number of <b>approval</b> steps (each can apply only in certain cases), then <b>Place order</b>,
         then <b>Receive</b>. Changes apply to new requests only.
       </div>
@@ -159,7 +159,7 @@ export function WorkflowEditor({ def, counts, isCustom }: Props) {
       <button
         type="button"
         onClick={addApproval}
-        className="w-full rounded-lg border-2 border-dashed border-[--color-border] py-3 text-sm font-medium text-[--color-text-secondary] hover:border-[--color-primary] hover:text-[--color-primary] transition-colors"
+        className="w-full rounded-lg border-2 border-dashed border-(--color-border) py-3 text-sm font-medium text-(--color-text-secondary) hover:border-(--color-primary) hover:text-(--color-primary) transition-colors"
       >
         + Add approval step
       </button>
@@ -181,13 +181,13 @@ export function WorkflowEditor({ def, counts, isCustom }: Props) {
               onChange={(e) => setDraft((d) => ({ ...d, reminders: { ...d.reminders, urgentHours: clampHours(e.target.value) } }))} />
           </FieldRow>
         </div>
-        <p className="text-small text-[--color-text-secondary]">Reminders go to whoever can act on the step, outside their quiet hours.</p>
+        <p className="text-small text-(--color-text-secondary)">Reminders go to whoever can act on the step, outside their quiet hours.</p>
       </EditorCard>
 
       {error && (
-        <p className="text-sm text-[--color-danger] bg-[--color-danger]/10 rounded px-3 py-2">{error}</p>
+        <p className="text-sm text-(--color-danger) bg-(--color-danger)/10 rounded px-3 py-2">{error}</p>
       )}
-      <div className="sticky bottom-16 lg:bottom-4 z-10 flex justify-end gap-2 rounded-lg bg-[--color-surface] border border-[--color-border] p-3 shadow-lg">
+      <div className="sticky bottom-16 lg:bottom-4 z-10 flex justify-end gap-2 rounded-lg bg-(--color-surface) border border-(--color-border) p-3 shadow-lg">
         <Button variant="outline" onClick={() => setEditing(false)} disabled={pending}>Cancel</Button>
         <Button onClick={save} isLoading={pending}>Save as new version</Button>
       </div>
@@ -300,8 +300,8 @@ function ConditionEditor({ value, onChange }: { value: Condition | null; onChang
         onChange={(v) => onChange(v ? { match: "any", rules: [{ field: "total", op: "gt", value: 50 }] } : null)}
       />
       {enabled && value && (
-        <div className="ml-6 space-y-2 rounded-md bg-[--color-surface-overlay] p-3">
-          <div className="flex items-center gap-2 text-small text-[--color-text-secondary]">
+        <div className="ml-6 space-y-2 rounded-md bg-(--color-surface-overlay) p-3">
+          <div className="flex items-center gap-2 text-small text-(--color-text-secondary)">
             Required when
             <select className={selectCls} value={value.match}
               onChange={(e) => onChange({ ...value, match: e.target.value as Condition["match"] })}>
@@ -336,7 +336,7 @@ function ConditionEditor({ value, onChange }: { value: Condition | null; onChang
               </div>
             );
           })}
-          <button type="button" className="text-small font-medium text-[--color-secondary] hover:underline"
+          <button type="button" className="text-small font-medium text-(--color-secondary) hover:underline"
             onClick={() => onChange({ ...value, rules: [...value.rules, { field: "priority", op: "eq", value: "EMERGENCY" }] })}>
             + Add condition
           </button>
@@ -360,7 +360,7 @@ function EditorCard({
     <section className="card space-y-3">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <h3 className="text-sm font-semibold text-[--color-text-primary] truncate">{title}</h3>
+          <h3 className="text-sm font-semibold text-(--color-text-primary) truncate">{title}</h3>
           <span className="badge badge-neutral">{badge}</span>
         </div>
         {controls}
@@ -373,9 +373,9 @@ function EditorCard({
 function FieldRow({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <p className="text-sm font-medium text-[--color-text-primary]">
+      <p className="text-sm font-medium text-(--color-text-primary)">
         {label}
-        {hint && <span className="ml-2 font-normal text-small text-[--color-text-secondary]">{hint}</span>}
+        {hint && <span className="ml-2 font-normal text-small text-(--color-text-secondary)">{hint}</span>}
       </p>
       {children}
     </div>
@@ -394,12 +394,13 @@ function RoleChips({ value, onChange }: { value: WorkflowRole[]; onChange: (role
             aria-pressed={on}
             onClick={() => onChange(on ? value.filter((r) => r !== role) : [...value, role])}
             className={cn(
-              "rounded-md border px-2.5 py-1 text-xs font-medium transition-colors",
+              "inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors",
               on
-                ? "border-[--color-primary] bg-[--color-primary]/10 text-[--color-primary]"
-                : "border-[--color-border] text-[--color-text-secondary] hover:text-[--color-text-primary]"
+                ? "border-(--color-primary) bg-(--color-primary) text-white"
+                : "border-dashed border-(--color-border-strong) text-(--color-text-secondary) opacity-70 hover:opacity-100 hover:text-(--color-text-primary)"
             )}
           >
+            {on && <span aria-hidden>✓</span>}
             {ROLE_DISPLAY[role]}
           </button>
         );
@@ -410,8 +411,8 @@ function RoleChips({ value, onChange }: { value: WorkflowRole[]; onChange: (role
 
 function Check({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
-    <label className="flex items-start gap-2 text-sm text-[--color-text-primary] cursor-pointer">
-      <input type="checkbox" className="mt-0.5 accent-[--color-primary]" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+    <label className="flex items-start gap-2 text-sm text-(--color-text-primary) cursor-pointer">
+      <input type="checkbox" className="mt-0.5 accent-(--color-primary)" checked={checked} onChange={(e) => onChange(e.target.checked)} />
       {label}
     </label>
   );
@@ -428,8 +429,8 @@ function IconBtn({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "h-7 w-7 rounded-md border border-[--color-border] text-sm transition-colors disabled:opacity-30",
-        danger ? "text-[--color-danger] hover:bg-[--color-danger]/10" : "text-[--color-text-secondary] hover:text-[--color-text-primary]"
+        "h-7 w-7 rounded-md border border-(--color-border) text-sm transition-colors disabled:opacity-30",
+        danger ? "text-(--color-danger) hover:bg-(--color-danger)/10" : "text-(--color-text-secondary) hover:text-(--color-text-primary)"
       )}
     >
       {children}
