@@ -9,6 +9,7 @@ import { TasksTabBar } from "./TasksTabBar";
 import { KanbanView } from "./KanbanView";
 import { ListView } from "./ListView";
 import { SeasonProgressBar } from "./SeasonProgressBar";
+import { HelpLink } from "@/components/HelpLink";
 
 export default async function SchedulePage({
   searchParams,
@@ -133,7 +134,7 @@ export default async function SchedulePage({
       {/* Page header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-h1 text-[--color-text-primary]">Tasks</h1>
+          <h1 className="text-h1 text-[--color-text-primary] flex items-center gap-2">Tasks <HelpLink topic="tasks" /></h1>
           <p className="text-body text-[--color-text-secondary] mt-0.5">
             {activeSeason.name}
             {activeRobotId && (

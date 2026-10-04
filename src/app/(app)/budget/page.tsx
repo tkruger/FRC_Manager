@@ -10,6 +10,7 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { AddFundingDialog } from "./AddFundingDialog";
 import { LogExpenseDialog } from "./LogExpenseDialog";
 import { BudgetBurndownCard } from "./BudgetBurndownCard";
+import { HelpLink } from "@/components/HelpLink";
 
 const BUDGET_ROLES = ["HEAD_MENTOR", "BUDGET_MANAGER"];
 
@@ -48,7 +49,7 @@ export default async function BudgetDashboard() {
   if (!budget) {
     return (
       <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
-        <h1 className="text-h1 text-[--color-text-primary]">Budget</h1>
+        <h1 className="text-h1 text-[--color-text-primary] flex items-center gap-2">Budget <HelpLink topic="budget" /></h1>
         <div className="card text-center py-12">
           <p className="text-body text-[--color-text-secondary] mb-4">No budget configured for {activeSeason.name}.</p>
           {canEdit
@@ -76,7 +77,7 @@ export default async function BudgetDashboard() {
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-h1 text-[--color-text-primary]">Budget</h1>
+          <h1 className="text-h1 text-[--color-text-primary] flex items-center gap-2">Budget <HelpLink topic="budget" /></h1>
           <p className="text-body text-[--color-text-secondary] mt-1">{activeSeason.name}</p>
         </div>
         <div className="flex flex-wrap gap-2 items-center">

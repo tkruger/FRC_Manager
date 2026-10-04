@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
+import { HelpLink } from "@/components/HelpLink";
 
 const SEVERITY_BADGE: Record<string, "danger"|"warning"|"info"> = {
   SIGNIFICANT_INJURY: "danger",
@@ -42,7 +43,7 @@ export default async function SafetyPage() {
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-h1 text-[--color-text-primary]">Safety & Compliance</h1>
+          <h1 className="text-h1 text-[--color-text-primary] flex items-center gap-2">Safety & Compliance <HelpLink topic="safety" /></h1>
           <p className="text-body text-[--color-text-secondary] mt-1">Incidents, certifications, and inspection checklists</p>
         </div>
         <div className="flex flex-wrap gap-2">

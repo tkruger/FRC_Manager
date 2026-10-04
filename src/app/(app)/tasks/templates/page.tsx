@@ -10,6 +10,7 @@ import { SaveSeasonDialog } from "./SaveSeasonDialog";
 import { DeleteTemplateButton } from "./DeleteTemplateButton";
 import { ApplyCustomTemplateButton } from "./ApplyCustomTemplateButton";
 import { shortDate } from "@/lib/schedule-helpers";
+import { HelpLink } from "@/components/HelpLink";
 
 const MENTOR_ROLES = ["HEAD_MENTOR", "BUILD_LEAD", "INVENTORY_ADMIN"];
 
@@ -63,7 +64,7 @@ export default async function TemplatesPage() {
             <Link href="/tasks" className="hover:text-[--color-primary]">Schedule</Link>
             <span className="mx-2">›</span>Templates
           </nav>
-          <h1 className="text-h1 text-[--color-text-primary]">Season templates</h1>
+          <h1 className="text-h1 text-[--color-text-primary] flex items-center gap-2">Season templates <HelpLink topic="templates" /></h1>
           <p className="text-body text-[--color-text-secondary] mt-1">
             Apply a task template to instantly populate your build season schedule.
           </p>

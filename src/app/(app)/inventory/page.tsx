@@ -10,6 +10,7 @@ import { ReorderButton } from "./ReorderButton";
 import { OrderNewItemDialog } from "./OrderNewItemDialog";
 import { AddInventoryItemDialog } from "./AddInventoryItemDialog";
 import { InventoryTableClient } from "./InventoryTableClient";
+import { HelpLink } from "@/components/HelpLink";
 
 // Roles that may see the Low stock and Order queue tabs
 const RESTRICTED_TAB_ROLES = ["HEAD_MENTOR", "TEAM_LEADERSHIP", "BUILD_LEAD", "INVENTORY_ADMIN"];
@@ -81,7 +82,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-h1 text-[--color-text-primary]">Base Inventory</h1>
+          <h1 className="text-h1 text-[--color-text-primary] flex items-center gap-2">Base Inventory <HelpLink topic="inventory" /></h1>
           <p className="text-body text-[--color-text-secondary] mt-0.5">{items.length} items · {activeSeason.name}</p>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">

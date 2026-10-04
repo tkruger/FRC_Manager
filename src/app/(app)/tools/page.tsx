@@ -9,6 +9,7 @@ import { CheckinButton } from "./CheckinButton";
 import { AddToolDialog } from "./AddToolDialog";
 import { Button } from "@/components/ui/button";
 import { ToolsClient } from "./ToolsClient";
+import { HelpLink } from "@/components/HelpLink";
 
 const TOOL_EDIT_ROLES = ["INVENTORY_ADMIN", "BUILD_LEAD", "TEAM_LEADERSHIP", "HEAD_MENTOR"];
 
@@ -65,7 +66,7 @@ export default async function ToolsPage({ searchParams }: { searchParams: Promis
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-h1 text-[--color-text-primary]">Tools</h1>
+          <h1 className="text-h1 text-[--color-text-primary] flex items-center gap-2">Tools <HelpLink topic="tools" /></h1>
           <p className="text-body text-[--color-text-secondary] mt-0.5">{tools.length} tools in catalog</p>
         </div>
         <div className="flex flex-wrap gap-2">

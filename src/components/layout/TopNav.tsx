@@ -73,6 +73,9 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
           borderBottom: "1px solid color-mix(in srgb, var(--color-border) 80%, transparent)",
           boxShadow: "0 1px 0 0 color-mix(in srgb, var(--color-border) 40%, transparent), 0 4px 12px -4px rgb(0 0 0 / .06)",
         }}>
+        {/* Solid strip behind the iPhone status bar / Dynamic Island. The header is frosted
+            glass; without this, content scrolling under the clock shows through blurred. */}
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-safe-top" style={{ backgroundColor: "var(--color-surface)" }} />
         <div className="h-full px-4 hidden lg:grid items-center" style={{ gridTemplateColumns: "1fr auto 1fr" }}>
 
           {/* Left: logo + season pill */}
@@ -400,6 +403,13 @@ function UserMenu({ user, canManageTeam, canManageSeason, canManageDiscord, canM
               <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
             </svg>
             Notification settings
+          </Link>
+          <Link href="/help" role="menuitem" onClick={() => setOpen(false)}
+            className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-[--color-text-primary] hover:bg-[--color-surface-overlay] transition-colors">
+            <svg className="w-4 h-4 text-[--color-text-secondary]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+            </svg>
+            Help &amp; guide
           </Link>
           {canManageTeam && (
             <Link href="/settings/members" role="menuitem" onClick={() => setOpen(false)}

@@ -4,6 +4,7 @@ import { findTeamTemplate } from "@/lib/template-access";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { describeAnchor } from "@/lib/competition";
+import { HelpLink } from "@/components/HelpLink";
 import { Badge } from "@/components/ui/badge";
 import { SUBTEAM_OPTIONS, PRIORITY_OPTIONS } from "@/lib/schedule-helpers";
 import { AddTaskForm } from "./AddTaskForm";
@@ -55,6 +56,9 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
             <Button variant="outline" size="sm">Download CSV</Button>
           </a>
           {isMentor && <TemplateCSVImport templateId={id} />}
+          <span className="ml-auto inline-flex items-center gap-1.5 text-small text-(--color-text-secondary)">
+            How templates work <HelpLink topic="templates" label="How templates work" />
+          </span>
         </div>
 
         {isMentor

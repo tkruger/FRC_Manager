@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { CalendarClient } from "./CalendarClient";
 import { SubscribeCalendarButton } from "@/components/calendar/SubscribeCalendarButton";
 import { GenerateShareLinkButton } from "./GenerateShareLinkButton";
+import { HelpLink } from "@/components/HelpLink";
 
 export default async function CalendarPage() {
   const session = await auth();
@@ -48,7 +49,7 @@ export default async function CalendarPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-h1 text-[--color-text-primary]">Meeting Calendar</h1>
+          <h1 className="text-h1 text-[--color-text-primary] flex items-center gap-2">Meeting Calendar <HelpLink topic="calendar" /></h1>
           <p className="text-body text-[--color-text-secondary] mt-0.5">{activeSeason.name}</p>
         </div>
         <div className="flex gap-2 flex-wrap justify-end">

@@ -10,6 +10,7 @@ import { parseWorkflow, type WorkflowDef } from "@/lib/workflow/types";
 import { WorkflowPipeline } from "@/components/workflow/WorkflowPipeline";
 import { WorkflowEditor } from "./WorkflowEditor";
 import { VersionHistory } from "./VersionHistory";
+import { HelpLink } from "@/components/HelpLink";
 
 export default async function WorkflowSettingsPage() {
   const session = await auth();
@@ -53,7 +54,7 @@ export default async function WorkflowSettingsPage() {
           <Link href="/settings/members" className="hover:text-(--color-primary)">Settings</Link>
           <span className="mx-2">›</span>Purchase workflow
         </nav>
-        <h1 className="text-h1 text-(--color-text-primary)">Purchase workflow</h1>
+        <h1 className="text-h1 text-(--color-text-primary) flex items-center gap-2">Purchase workflow <HelpLink topic="purchasing" /></h1>
         <p className="text-body text-(--color-text-secondary) mt-1">
           Every step a stock item or purchase goes through, from running low to arriving on the shelf.
         </p>

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { ActiveSeasonCard } from "./ActiveSeasonCard";
 import { NewSeasonButton } from "./NewSeasonButton";
 import { PastSeasonsCard } from "./PastSeasonsCard";
+import { HelpLink } from "@/components/HelpLink";
 
 export default async function SeasonSettingsPage() {
   const session = await auth();
@@ -41,7 +42,7 @@ export default async function SeasonSettingsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-h1 text-[--color-text-primary]">Season</h1>
+          <h1 className="text-h1 text-[--color-text-primary] flex items-center gap-2">Season <HelpLink topic="season" /></h1>
           <p className="text-body text-[--color-text-secondary] mt-1">
             Configure the active build season, kickoff date, and robots.
           </p>

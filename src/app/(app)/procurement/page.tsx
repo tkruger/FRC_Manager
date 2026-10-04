@@ -8,6 +8,7 @@ import { Table, TableHead, TableBody, Th, Td, Tr } from "@/components/ui/table";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { statusBadgeVariant, statusLabel, priorityBadgeVariant } from "@/lib/procurement-helpers";
 import { differenceInDays } from "date-fns";
+import { HelpLink } from "@/components/HelpLink";
 
 export default async function ProcurementDashboard() {
   const session = await auth();
@@ -59,7 +60,7 @@ export default async function ProcurementDashboard() {
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-h1 text-[--color-text-primary]">Procurement</h1>
+          <h1 className="text-h1 text-[--color-text-primary] flex items-center gap-2">Procurement <HelpLink topic="purchasing" /></h1>
           <p className="text-body text-[--color-text-secondary] mt-1">{activeSeason.name}</p>
         </div>
         <div className="flex flex-wrap gap-2">

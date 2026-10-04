@@ -8,6 +8,7 @@ import { GanttClient } from "./GanttClient";
 import { TasksTabBar } from "../TasksTabBar";
 import { SeasonProgressBar } from "../SeasonProgressBar";
 import { daysBetween, SUBTEAM_OPTIONS } from "@/lib/schedule-helpers";
+import { HelpLink } from "@/components/HelpLink";
 
 export default async function GanttPage({ searchParams }: { searchParams: Promise<{ subTeam?: string; mine?: string }> }) {
   const { subTeam, mine } = await searchParams;
@@ -86,7 +87,7 @@ export default async function GanttPage({ searchParams }: { searchParams: Promis
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-h1 text-[--color-text-primary]">Tasks</h1>
+          <h1 className="text-h1 text-[--color-text-primary] flex items-center gap-2">Tasks <HelpLink topic="tasks" /></h1>
           <p className="text-body text-[--color-text-secondary] mt-0.5">
             {activeSeason.name}
             {activeRobotId && <span className="ml-2 badge badge-info">Robot filtered</span>}
