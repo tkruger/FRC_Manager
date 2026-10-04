@@ -55,7 +55,7 @@ export function TopicPreferences({ topics: initial }: { topics: Topic[] }) {
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-(--color-text-primary)">{t.label}</p>
                   <p className="text-small text-(--color-text-secondary)">{t.description}</p>
-                  <p className="text-xs text-(--color-text-disabled) mt-0.5">Sent to: {t.audience}</p>
+                  <p className="text-xs text-(--color-text-secondary) opacity-80 mt-0.5">Sent to: {t.audience}</p>
                 </div>
                 <div className="flex gap-6 shrink-0">
                   <Toggle label="In app" checked={t.inApp} disabled={t.required} onChange={() => toggle(t.id, "inApp")} />
@@ -81,15 +81,18 @@ function Toggle({ label, checked, disabled, onChange }: { label: string; checked
         aria-label={label}
         disabled={disabled}
         onClick={onChange}
-        className={cn(
-          "relative h-6 w-10 rounded-full transition-colors",
-          checked ? "bg-(--color-primary)" : "bg-(--color-border-strong)"
-        )}
+        // The button is the (44px on phones) tap target; the visible switch is the inner track
+        className="flex items-center justify-center rounded-full"
       >
         <span className={cn(
-          "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform",
-          checked ? "translate-x-[18px]" : "translate-x-0.5"
-        )} />
+          "relative block h-6 w-10 rounded-full transition-colors",
+          checked ? "bg-(--color-primary)" : "bg-(--color-border-strong)"
+        )}>
+          <span className={cn(
+            "absolute left-0 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform",
+            checked ? "translate-x-[18px]" : "translate-x-0.5"
+          )} />
+        </span>
       </button>
     </label>
   );

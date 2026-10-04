@@ -67,15 +67,11 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
           regardless of how wide the left logo or right controls are */}
       <header className="fixed inset-x-0 top-0 z-40 h-safe-nav safe-top-pad transition-colors"
         style={{
-          backgroundColor: "color-mix(in srgb, var(--color-surface) 88%, transparent)",
-          backdropFilter: "blur(20px) saturate(180%)",
-          WebkitBackdropFilter: "blur(20px) saturate(180%)",
-          borderBottom: "1px solid color-mix(in srgb, var(--color-border) 80%, transparent)",
-          boxShadow: "0 1px 0 0 color-mix(in srgb, var(--color-border) 40%, transparent), 0 4px 12px -4px rgb(0 0 0 / .06)",
+          // Fully opaque: a translucent/blurred header showed scrolling content as a
+          // faded band at the top on iOS
+          backgroundColor: "var(--color-surface)",
+          borderBottom: "1px solid var(--color-border)",
         }}>
-        {/* Solid strip behind the iPhone status bar / Dynamic Island. The header is frosted
-            glass; without this, content scrolling under the clock shows through blurred. */}
-        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-safe-top" style={{ backgroundColor: "var(--color-surface)" }} />
         <div className="h-full px-4 hidden lg:grid items-center" style={{ gridTemplateColumns: "1fr auto 1fr" }}>
 
           {/* Left: logo + season pill */}

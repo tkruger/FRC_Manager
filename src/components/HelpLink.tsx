@@ -12,9 +12,12 @@ export function HelpLink({ topic, label }: { topic: HelpTopic; label?: string })
       href={`/help#${topic}`}
       title={label ?? "How this page works"}
       aria-label={label ?? "Help for this page"}
-      className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-(--color-border-strong) text-xs font-bold text-(--color-text-secondary) align-middle transition-colors hover:border-(--color-primary) hover:text-(--color-primary)"
+      // The link is the tap target (44px on phones); the visible "?" stays small
+      className="group inline-flex shrink-0 items-center justify-center align-middle"
     >
-      ?
+      <span className="flex h-6 w-6 items-center justify-center rounded-full border border-(--color-border-strong) text-xs font-bold text-(--color-text-secondary) transition-colors group-hover:border-(--color-primary) group-hover:text-(--color-primary)">
+        ?
+      </span>
     </Link>
   );
 }
