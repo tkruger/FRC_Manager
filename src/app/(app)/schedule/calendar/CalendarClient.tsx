@@ -62,9 +62,9 @@ export function CalendarClient({ season, meetings, allTasks, isLeadership }: Pro
   const week0   = new Date(season.week0Date);
   const today   = new Date();
 
-  // Start on the month containing today, falling back to kickoff month
-  const defaultYear  = today >= kickoff && today <= week0 ? today.getFullYear() : kickoff.getFullYear();
-  const defaultMonth = today >= kickoff && today <= week0 ? today.getMonth()     : kickoff.getMonth();
+  // Always open on the current month
+  const defaultYear  = today.getFullYear();
+  const defaultMonth = today.getMonth();
 
   const [viewYear,    setViewYear]    = useState(defaultYear);
   const [viewMonth,   setViewMonth]   = useState(defaultMonth);
