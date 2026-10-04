@@ -41,7 +41,7 @@ export default async function NotificationSettingsPage() {
       </div>
 
       <PushDeviceCard
-        vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null}
+        vapidPublicKey={process.env.VAPID_PUBLIC_KEY ?? null}
         deviceCount={deviceCount}
       />
 
