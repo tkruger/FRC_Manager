@@ -4,7 +4,8 @@
 import { prisma } from "@/lib/prisma";
 import type { ItemCategory, OrderItemStatus, Prisma } from "@/generated/prisma";
 import { definitionFor, resolveCurrentStep, performCurrentStepAction, type Actor } from "@/lib/workflow/engine";
-import { formatItemId } from "./constants";
+import { itemRef } from "./constants";
+import { assignItemNumbers } from "./numbers";
 
 type Tx = Prisma.TransactionClient;
 
@@ -55,7 +56,7 @@ export async function addTracking(teamId: string, actor: Actor, itemIds: string[
     });
     for (const [requestId, group] of groupBy(items, (i) => i.requestId)) {
       await logItemEvent(tx, requestId, actor.id,
-        `Ordered — tracking added for ${group.map((i) => formatItemId(i.orderNumber)).join(", ")}.`);
+        `Ordered — tracking added for ${group.map((i) => itemRef(i)).join(", ")}.`);
     }
   });
 
@@ -80,14 +81,24 @@ export async function setItemStatus(teamId: string, actor: Actor, itemIds: strin
       where: { id: { in: items.map((i) => i.id) } },
       data:  { status, ...(status === "ORDERED" ? { orderedAt: new Date() } : {}) },
     });
+    // Moved past Queued by hand: drafts get their item IDs now
+    if (status !== "QUEUED") await numberDrafts(tx, teamId, items);
     for (const [requestId, group] of groupBy(items, (i) => i.requestId)) {
       await logItemEvent(tx, requestId, actor.id,
-        `Status set to ${status.replace("_", " ").toLowerCase()} for ${group.map((i) => formatItemId(i.orderNumber)).join(", ")}.`);
+        `Status set to ${status.replace("_", " ").toLowerCase()} for ${group.map((i) => itemRef(i)).join(", ")}.`);
     }
   });
 
   await syncOrders(items.map((i) => i.requestId), actor);
   return { success: true as const, count: items.length };
+}
+
+/** Give draft items their item IDs, and update the loaded rows to match. */
+async function numberDrafts(tx: Tx, teamId: string, items: { id: string; orderNumber: number | null }[]) {
+  const drafts = items.filter((i) => i.orderNumber == null);
+  if (drafts.length === 0) return;
+  const numbers = await assignItemNumbers(tx, teamId, { itemIds: drafts.map((i) => i.id) });
+  for (const i of drafts) i.orderNumber = numbers.get(i.id) ?? null;
 }
 
 /** Mark items arrived: each is added to inventory and set to Arrived. */
@@ -100,6 +111,7 @@ export async function markArrived(teamId: string, actor: Actor, itemIds: string[
 
   const now = new Date();
   await prisma.$transaction(async (tx) => {
+    await numberDrafts(tx, teamId, items);
     for (const item of items) {
       const stocked = await stockItem(tx, item);
       await tx.purchaseLineItem.update({
@@ -107,7 +119,7 @@ export async function markArrived(teamId: string, actor: Actor, itemIds: string[
         data:  { status: "ARRIVED", arrivedAt: now, arrivedById: actor.id, qtyReceived: item.quantity, baseItemId: stocked.id },
       });
       await logItemEvent(tx, item.requestId, actor.id,
-        `${formatItemId(item.orderNumber)} ${item.name} arrived — ${item.quantity} ${stocked.created ? "added to inventory as a new item" : "added to inventory stock"}.`);
+        `${itemRef(item)} ${item.name} arrived — ${item.quantity} ${stocked.created ? "added to inventory as a new item" : "added to inventory stock"}.`);
     }
   }, { timeout: 20_000 });
 
@@ -148,7 +160,7 @@ async function stockItem(tx: Tx, item: Awaited<ReturnType<typeof teamItems>>[num
       currentStock:      item.quantity,
       unitCost:          item.unitCost,
       preferredSupplier: item.vendorName,
-      notes:             `Added when order item ${formatItemId(item.orderNumber)} arrived ("${item.request.title}").`,
+      notes:             `Added when order item ${itemRef(item)} arrived ("${item.request.title}").`,
     },
     select: { id: true },
   });
@@ -201,13 +213,14 @@ export const CSV_ITEM_SELECT = {
 type CsvItem = Prisma.PurchaseLineItemGetPayload<{ select: typeof CSV_ITEM_SELECT }>;
 
 /**
- * The purchasing spreadsheet's format — no header row, one item per line:
+ * The purchasing spreadsheet's format — no header row, one item per line, grouped by vendor:
  * #XXXX (item ID), Vendor, Part Name, Link, Unit Price, Qty, Order Notes, Order Date.
+ * Items on orders that aren't approved yet have a draft ID (DRAFT-7K2Q) instead.
  * Used by the Team Admin export and the order exports, so they always match.
  */
 export function itemsToCsv(items: CsvItem[]): string {
-  return items.map((i) => [
-    `#${formatItemId(i.orderNumber)}`,
+  return [...items].sort(byVendor).map((i) => [
+    i.orderNumber != null ? `#${itemRef(i)}` : itemRef(i),
     i.vendorName ?? "",
     i.name,
     i.vendorProductUrl ?? "",
@@ -216,6 +229,15 @@ export function itemsToCsv(items: CsvItem[]): string {
     i.notes ?? "",
     i.request.submittedAt.toISOString().slice(0, 10),
   ].map(csvCell).join(",")).join("\n");
+}
+
+/** Vendor A→Z (no vendor last), then item ID, drafts after numbered items */
+function byVendor(a: CsvItem, b: CsvItem): number {
+  const va = a.vendorName?.trim() ?? "", vb = b.vendorName?.trim() ?? "";
+  if (!va !== !vb) return va ? -1 : 1;
+  return va.localeCompare(vb, undefined, { sensitivity: "base" })
+    || (a.orderNumber ?? Infinity) - (b.orderNumber ?? Infinity)
+    || a.id.localeCompare(b.id);
 }
 
 /** "To order" items for the Team Admin, in the spreadsheet format above. */

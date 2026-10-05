@@ -25,16 +25,6 @@ export type CreateOrderResult =
   | { success: true; requestId: string; stage: string }
   | { success: false; error: string };
 
-/** Reserve `count` sequential item IDs for the team (0001, 0002, …). Returns the first. */
-async function reserveItemNumbers(teamId: string, count: number): Promise<number> {
-  const { nextOrderItemNumber } = await prisma.team.update({
-    where:  { id: teamId },
-    data:   { nextOrderItemNumber: { increment: count } },
-    select: { nextOrderItemNumber: true },
-  });
-  return nextOrderItemNumber - count;
-}
-
 export async function createOrder(input: {
   actor:    Actor;
   seasonId: string;
@@ -74,7 +64,6 @@ export async function createOrder(input: {
   const importance = items.map((i) => i.importance ?? "ROUTINE");
   const subTeams   = [...new Set(items.map((i) => i.subTeam ?? null))];
   const total      = items.reduce((sum, i) => sum + (i.unitCost ?? 0) * i.quantity, 0);
-  const firstNumber = await reserveItemNumbers(actor.teamId, items.length);
 
   const request = await prisma.purchaseRequest.create({
     data: {
@@ -88,8 +77,8 @@ export async function createOrder(input: {
       estimatedTotal: total,
       status:         "SUBMITTED",
       lineItems: {
-        create: items.map((i, idx) => ({
-          orderNumber:      firstNumber + idx,
+        // No item IDs yet — they're drafts until the order is approved (see numbers.ts)
+        create: items.map((i) => ({
           name:             i.name.trim(),
           vendorName:       i.vendorName?.trim() || null,
           partNumber:       i.partNumber?.trim() || null,

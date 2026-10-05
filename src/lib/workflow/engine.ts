@@ -5,6 +5,7 @@
 import { prisma } from "@/lib/prisma";
 import type { Prisma, PurchaseStatus, Role, NotificationType } from "@/generated/prisma";
 import { notifyTeam, createNotification } from "@/lib/notifications";
+import { assignItemNumbers } from "@/lib/orders/numbers";
 import {
   notifyPurchaseSubmitted,
   notifyPurchaseApproved,
@@ -162,6 +163,8 @@ async function enterNextStep(tx: Tx, r: RequestState, def: WorkflowDef, fromInde
     // Approved: queued items move to the Team Admin's "To order" list
     if (step.type === "order") {
       await tx.purchaseLineItem.updateMany({ where: { requestId: r.id, status: "QUEUED" }, data: { status: "TO_ORDER" } });
+      // The order is final now: its draft items get their item IDs
+      await assignItemNumbers(tx, teamId, { requestId: r.id });
     }
 
     const link = `/procurement/requests/${r.id}`;

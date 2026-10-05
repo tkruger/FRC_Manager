@@ -10,7 +10,7 @@ import { differenceInCalendarDays } from "date-fns";
 import type { DiscordConfig, DiscordLink } from "@/generated/prisma";
 import { performCurrentStepAction, describeRequestState, type Actor } from "@/lib/workflow/engine";
 import { createOrder } from "@/lib/orders/create";
-import { formatItemId } from "@/lib/orders/constants";
+import { itemRef } from "@/lib/orders/constants";
 
 async function actorFor(userId: string, teamId: string): Promise<Actor> {
   const user = await prisma.user.findUniqueOrThrow({
@@ -700,7 +700,7 @@ export async function handleOrderRequest(
   });
   if (!res.success) return ephemeralReply(`❌ ${res.error}`);
 
-  const itemNumber = (await prisma.purchaseLineItem.findFirst({ where: { requestId: res.requestId }, select: { orderNumber: true } }))?.orderNumber;
+  const item = await prisma.purchaseLineItem.findFirst({ where: { requestId: res.requestId }, select: { id: true, orderNumber: true } });
 
   return reply(null, [
     embed({
@@ -709,7 +709,7 @@ export async function handleOrderRequest(
       fields: [
         { name: "Reason", value: reason || "—" },
         { name: "Status", value: res.stage },
-        { name: "Item ID", value: formatItemId(itemNumber), inline: true },
+        { name: "Item ID", value: item ? itemRef(item) : "—", inline: true },
       ],
       color: COLORS.info,
     }),

@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn, formatCurrency } from "@/lib/utils";
 import { addTrackingAction, markArrivedAction, setItemStatusAction } from "@/app/actions/orders";
-import { ITEM_STATUSES, ITEM_STATUS_INFO, formatItemId, type ItemStatus } from "@/lib/orders/constants";
+import { ITEM_STATUSES, ITEM_STATUS_INFO, itemRef, type ItemStatus } from "@/lib/orders/constants";
 
 export interface OrderItemRow {
   id:          string;
@@ -157,7 +157,7 @@ export function ItemsTable({ items, canTrack, canOverride, showOrder, emptyText 
             <li key={i.id} className={cn("flex gap-3 px-3 py-3 sm:px-4", selected.has(i.id) && "bg-(--color-primary)/5")}>
               <input
                 type="checkbox"
-                aria-label={`Select item ${formatItemId(i.orderNumber)}`}
+                aria-label={`Select item ${itemRef(i)}`}
                 className="mt-1 accent-(--color-primary)"
                 checked={selected.has(i.id)}
                 onChange={() => toggle(i.id)}
@@ -165,7 +165,7 @@ export function ItemsTable({ items, canTrack, canOverride, showOrder, emptyText 
               <div className="min-w-0 flex-1 space-y-1">
                 <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                   <p className="min-w-0 text-sm text-(--color-text-primary)">
-                    <span className="font-mono text-xs font-semibold text-(--color-text-secondary) mr-2">{formatItemId(i.orderNumber)}</span>
+                    <span className="font-mono text-xs font-semibold text-(--color-text-secondary) mr-2">{itemRef(i)}</span>
                     {i.link ? (
                       <a href={i.link} target="_blank" rel="noopener noreferrer" className="font-medium text-(--color-secondary) hover:underline">
                         {i.name} ↗

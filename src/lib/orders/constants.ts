@@ -29,6 +29,14 @@ export function formatItemId(n: number | null | undefined): string {
   return n == null ? "—" : String(n).padStart(4, "0");
 }
 
+/**
+ * How an item is referred to: its item ID once the order is finalized, otherwise a
+ * draft ID (DRAFT-7K2Q) — numbers are only handed out when the order is approved.
+ */
+export function itemRef(i: { id: string; orderNumber: number | null | undefined }): string {
+  return i.orderNumber != null ? formatItemId(i.orderNumber) : `DRAFT-${i.id.slice(-4).toUpperCase()}`;
+}
+
 /** Team Admin page: export the to-order CSV and add tracking links */
 export const ORDER_ADMIN_ROLES = ["TEAM_ADMIN", "TEAM_LEADERSHIP", "HEAD_MENTOR"];
 /** Can set an item to any status by hand ("captains" = Team Leadership) */

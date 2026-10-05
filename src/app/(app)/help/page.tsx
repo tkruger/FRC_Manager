@@ -169,7 +169,7 @@ export default function HelpPage() {
           <li>Go to <b>Orders → + New order</b> and give it a name.</li>
           <li>For each item, paste the product <b>link</b> — for most FRC vendors (REV, AndyMark, WCP and other Shopify stores) the vendor, name, part number and price fill in automatically. Some sites (McMaster-Carr, Amazon) block this; just type the details.</li>
           <li>Set the quantity, sub-team, importance (Routine, Urgent or Emergency), why it&apos;s needed, and any notes for the Team Admin.</li>
-          <li>Submit. Every item gets a 4-digit ID (0001, 0002, …) assigned by the system.</li>
+          <li>Submit. Items show a draft ID (like DRAFT-7K2Q) until the order is approved; then each gets its permanent 4-digit item ID (0415, 0416, …). Denied or cancelled orders never use up item IDs.</li>
         </Steps>
         <p>You can also order straight from <b>Inventory</b> — the <b>Order</b> button on low-stock items, or <b>Order a new item</b>.</p>
         <H3>Item statuses</H3>
@@ -185,7 +185,7 @@ export default function HelpPage() {
         <H3>What happens next</H3>
         <Steps>
           <li><b>Approval</b> — Budget Managers or Head Mentors approve or deny the order. Routine orders of $50 or less are approved automatically; emergencies always need approval. Approved items become <b>To order</b>.</li>
-          <li><b>Team Admin orders</b> — on <b>Orders → Team Admin</b>, the Team Admin copies or downloads the to-order items as CSV for the purchasing spreadsheet (no header; columns #XXXX item ID, Vendor, Part Name, Link, Unit Price, Qty, Order Notes, Order Date), places the orders, then selects the items that shipped together and adds one <b>tracking link</b> — they become <b>Ordered</b>.</li>
+          <li><b>Team Admin orders</b> — on <b>Orders → Team Admin</b>, the Team Admin copies or downloads the to-order items as CSV for the purchasing spreadsheet (no header; grouped by vendor; columns #XXXX item ID, Vendor, Part Name, Link, Unit Price, Qty, Order Notes, Order Date), places the orders, then selects the items that shipped together and adds one <b>tracking link</b> — they become <b>Ordered</b>.</li>
           <li><b>Arrival</b> — when a box shows up, anyone can tick the items and tap <b>Mark arrived</b>. Each item is added to inventory (matched by its inventory link, part number or name, or created new) and becomes <b>Arrived</b>.</li>
         </Steps>
         <ul className="list">
