@@ -3,11 +3,11 @@ import { verifyDiscordSignature, pong, ephemeralReply, deferredReply } from "@/l
 import {
   resolveContext,
   handleLink, handleUnlink, handleWhoami, handleTeamStatus,
-  handleTasksMine, handleTasksToday, handleTaskUpdate,
+  handleTasksMine, handleTasksToday, handleTasksOverdue, handleTaskUpdate,
   handleMilestone,
   handleToolStatus, handleToolCheckout, handleToolCheckin, handleToolOverdue,
-  handleStockCheck,
-  handleOrderRequest, handleOrderStatus, handleOrderApprove,
+  handleStockCheck, handleStockList,
+  handleOrderRequest, handleOrderStatus, handleOrderPending, handleOrderApprove,
 } from "@/lib/discord-commands";
 import { prisma } from "@/lib/prisma";
 
@@ -150,7 +150,7 @@ async function dispatch(body: any): Promise<Response> {
       const subOpts = options[0]?.options ?? [];
       if (sub === "mine")    return handleTasksMine(ctx, subOpts);
       if (sub === "today")   return handleTasksToday(ctx);
-      if (sub === "overdue") return handleTasksToday(ctx); // shares same shape
+      if (sub === "overdue") return handleTasksOverdue(ctx);
       break;
     }
 
@@ -183,6 +183,7 @@ async function dispatch(body: any): Promise<Response> {
       const sub     = options[0]?.name;
       const subOpts = options[0]?.options ?? [];
       if (sub === "check") return handleStockCheck(ctx, subOpts);
+      if (sub === "list")  return handleStockList(ctx, subOpts);
       break;
     }
 
@@ -191,6 +192,7 @@ async function dispatch(body: any): Promise<Response> {
       const subOpts = options[0]?.options ?? [];
       if (sub === "request") return handleOrderRequest(ctx, subOpts);
       if (sub === "status")  return handleOrderStatus(ctx);
+      if (sub === "pending") return handleOrderPending(ctx);
       if (sub === "approve") return handleOrderApprove(ctx, subOpts, false);
       if (sub === "deny")    return handleOrderApprove(ctx, subOpts, true);
       break;
@@ -201,10 +203,10 @@ async function dispatch(body: any): Promise<Response> {
         title: "📖 FRC Manager Bot — Commands",
         description: [
           "**General:** `/link` `/unlink` `/whoami` `/team status`",
-          "**Tasks:** `/tasks mine` `/tasks today` `/task done|start|block` `/milestone next|list`",
+          "**Tasks:** `/tasks mine` `/tasks today` `/tasks overdue` `/task done|start|block` `/milestone next|list`",
           "**Tools:** `/tool status` `/tool checkout` `/tool checkin` `/tool overdue`",
-          "**Inventory:** `/stock check`",
-          "**Orders:** `/order request` `/order status` `/order approve` `/order deny`",
+          "**Inventory:** `/stock check` `/stock list`",
+          "**Orders:** `/order request` `/order status` `/order pending` `/order approve` `/order deny`",
           "",
           "Write actions require a linked account — run `/link` first.",
         ].join("\n"),

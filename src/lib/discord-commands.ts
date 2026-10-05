@@ -777,3 +777,121 @@ export async function handleOrderApprove(
   const next  = deny ? "" : `\n${await describeRequestState(request.id)}`;
   return reply(`${emoji} **${result.stepName}** for **${request.title}** ${verb} by **${actor.name}**.${next}`);
 }
+
+// ─── /tasks overdue ────────────────────────────────────────────────────────
+
+export async function handleTasksOverdue(ctx: InteractionContext): Promise<Response> {
+  const err = requireLink(ctx.link);
+  if (err) return err;
+
+  const season = await getActiveSeason(ctx.teamId);
+  if (!season) return ephemeralReply("❌ No active season configured.");
+
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const tasks = await prisma.task.findMany({
+    where:   { seasonId: season.id, dueDate: { lt: today }, status: { notIn: ["COMPLETE"] } },
+    include: { assignees: { select: { name: true } } },
+    orderBy: { dueDate: "asc" },
+  });
+
+  if (tasks.length === 0) return reply("✅ Nothing overdue.");
+
+  const lines = tasks.map((t) => {
+    const days = differenceInCalendarDays(today, t.dueDate!);
+    const assignees = t.assignees.map((a) => a.name).join(", ") || "Unassigned";
+    return `• **${t.name}** — ${days} day${days === 1 ? "" : "s"} late · ${assignees}`;
+  });
+
+  return reply(null, [
+    embed({
+      title: `⚠️ Overdue Tasks (${tasks.length})`,
+      description: lines.slice(0, 20).join("\n") + (tasks.length > 20 ? `\n…and ${tasks.length - 20} more` : ""),
+      color: COLORS.danger,
+    }),
+  ]);
+}
+
+// ─── /stock list ───────────────────────────────────────────────────────────
+
+export async function handleStockList(ctx: InteractionContext, options: any[]): Promise<Response> {
+  const err = requireLink(ctx.link);
+  if (err) return err;
+
+  const lowOnly = options.find((o: any) => o.name === "low_only")?.value === true;
+  const season  = await getActiveSeason(ctx.teamId);
+  if (!season) return ephemeralReply("❌ No active season configured.");
+
+  const all = await prisma.baseInventoryItem.findMany({
+    where:   { seasonId: season.id, archived: false },
+    select:  { name: true, currentStock: true, minStockThreshold: true, unitOfMeasure: true },
+    orderBy: { name: "asc" },
+  });
+  const level = (i: (typeof all)[number]) =>
+    i.currentStock === 0 ? "🔴" : i.minStockThreshold > 0 && i.currentStock <= i.minStockThreshold ? "🟡" : "🟢";
+  const items = lowOnly ? all.filter((i) => level(i) !== "🟢") : all;
+
+  if (items.length === 0) {
+    return reply(lowOnly ? "✅ Nothing is low or out of stock." : "📦 No inventory items yet.");
+  }
+
+  const MAX = 40;
+  const lines = items.slice(0, MAX).map((i) =>
+    `${level(i)} **${i.name}** — ${i.currentStock} ${i.unitOfMeasure.toLowerCase()}` +
+    (i.minStockThreshold > 0 ? ` (min ${i.minStockThreshold})` : ""));
+
+  return reply(null, [
+    embed({
+      title: lowOnly ? `📦 Low Stock (${items.length})` : `📦 Inventory (${items.length})`,
+      description: lines.join("\n") + (items.length > MAX ? `\n…and ${items.length - MAX} more — see the app` : ""),
+      color: lowOnly ? COLORS.warning : COLORS.info,
+    }),
+  ]);
+}
+
+// ─── /order pending ────────────────────────────────────────────────────────
+
+/** Orders waiting on approval (numbered for /order approve|deny) and items waiting to be bought. */
+export async function handleOrderPending(ctx: InteractionContext): Promise<Response> {
+  const err = requireLink(ctx.link);
+  if (err) return err;
+
+  const season = await getActiveSeason(ctx.teamId);
+  if (!season) return ephemeralReply("❌ No active season configured.");
+
+  const [awaiting, toOrder] = await Promise.all([
+    // Same list and order /order approve uses to resolve its number
+    prisma.purchaseRequest.findMany({
+      where:   { seasonId: season.id, status: "SUBMITTED" },
+      select:  { title: true, estimatedTotal: true, requestedBy: { select: { name: true } } },
+      orderBy: { submittedAt: "asc" },
+    }),
+    prisma.purchaseLineItem.findMany({
+      where:   { status: "TO_ORDER", request: { seasonId: season.id } },
+      select:  { id: true, orderNumber: true, name: true, vendorName: true, quantity: true },
+      orderBy: [{ vendorName: "asc" }, { orderNumber: "asc" }],
+    }),
+  ]);
+
+  if (awaiting.length === 0 && toOrder.length === 0) return reply("✅ Nothing waiting — no orders to approve or buy.");
+
+  const embeds: DiscordEmbed[] = [];
+  if (awaiting.length > 0) {
+    embeds.push(embed({
+      title: `⏳ Awaiting Approval (${awaiting.length})`,
+      description: awaiting.slice(0, 20).map((r, i) =>
+        `**${i + 1}.** ${r.title} — $${(r.estimatedTotal ?? 0).toFixed(2)} · ${r.requestedBy.name}`).join("\n") +
+        "\n\nApprove with `/order approve id:<number>` or deny with `/order deny`.",
+      color: COLORS.warning,
+    }));
+  }
+  if (toOrder.length > 0) {
+    embeds.push(embed({
+      title: `🛒 To Order (${toOrder.length})`,
+      description: toOrder.slice(0, 30).map((i) =>
+        `\`#${itemRef(i)}\` **${i.name}** × ${i.quantity}${i.vendorName ? ` — ${i.vendorName}` : ""}`).join("\n") +
+        (toOrder.length > 30 ? `\n…and ${toOrder.length - 30} more` : ""),
+      color: COLORS.info,
+    }));
+  }
+  return reply(null, embeds);
+}

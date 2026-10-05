@@ -267,15 +267,15 @@ export const SLASH_COMMANDS = [
           { name: "reason", description: "Why is this needed?", type: 3, required: true },
         ]},
       { name: "status",  description: "Check status of your requests", type: 1 },
-      { name: "pending", description: "List approved requests waiting to be ordered", type: 1 },
+      { name: "pending", description: "Orders awaiting approval (with their numbers) and items waiting to be ordered", type: 1 },
       { name: "approve", description: "Approve a purchase request", type: 1,
         options: [
-          { name: "id",    description: "Request number (e.g. 47)", type: 4, required: true },
+          { name: "id",    description: "Number from /order pending", type: 4, required: true },
           { name: "notes", description: "Optional approval notes", type: 3, required: false },
         ]},
       { name: "deny", description: "Deny a purchase request", type: 1,
         options: [
-          { name: "id",     description: "Request number", type: 4, required: true },
+          { name: "id",     description: "Number from /order pending", type: 4, required: true },
           { name: "reason", description: "Reason for denial", type: 3, required: true },
         ]},
     ]
