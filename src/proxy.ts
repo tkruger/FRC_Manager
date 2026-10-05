@@ -15,6 +15,8 @@ const PUBLIC_PATHS = [
   "/api/discord/interactions", // Called by Discord — authenticated by its Ed25519 signature instead
   "/sw.js",           // Service worker (push notifications)
   "/manifest.webmanifest",
+  "/api/manifest",      // Web app manifest (chosen home-screen icon)
+  "/app-icons",
   "/terms", "/privacy", // Legal pages — linked from Discord and the sign-in screens
 ];
 

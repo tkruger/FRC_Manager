@@ -4,6 +4,8 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { SessionProvider } from "next-auth/react";
 import { auth } from "@/lib/auth";
+import { cookies } from "next/headers";
+import { APP_ICON_COOKIE, appIconPath, resolveAppIcon } from "@/lib/app-icons";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -11,24 +13,27 @@ const inter = Inter({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title:       "FRC Manager — Team Management Suite",
-  description: "Robot fleet, tools, inventory, procurement, budget, and schedule — all in one place.",
-  manifest:    "/manifest.webmanifest",
-  appleWebApp: {
-    capable:          true,
-    // Not "black-translucent": drawing under the status bar makes iOS lay its own
-    // blurred fade over the top of the app. A normal status bar takes its colour
-    // from theme-color (kept in sync with light/dark mode below).
-    statusBarStyle:   "default",
-    title:            "FRC Manager",
-    startupImage:     "/apple-touch-icon.png",
-  },
-  icons: {
-    icon:  [{ url: "/favicon.ico" }],
-    apple: [{ url: "/apple-touch-icon.png", sizes: "512x512" }],
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  // Home-screen icon chosen on this device (Settings → Profile & appearance)
+  const icon = resolveAppIcon((await cookies()).get(APP_ICON_COOKIE)?.value);
+  return {
+    title:       "FRC Manager — Team Management Suite",
+    description: "Robot fleet, tools, inventory, orders, budget, and schedule — all in one place.",
+    manifest:    `/api/manifest?icon=${icon}`,
+    appleWebApp: {
+      capable:          true,
+      // Not "black-translucent": drawing under the status bar makes iOS lay its own
+      // blurred fade over the top of the app. A normal status bar takes its colour
+      // from theme-color (kept in sync with light/dark mode below).
+      statusBarStyle:   "default",
+      title:            "FRC Manager",
+    },
+    icons: {
+      icon:  [{ url: "/favicon.ico" }],
+      apple: [{ url: appIconPath(icon, "apple-touch-icon.png"), sizes: "180x180" }],
+    },
+  };
+}
 
 export const viewport: Viewport = {
   // Matches --color-surface; ThemeProvider updates it when the app theme differs from the system
@@ -72,7 +77,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="FRC Manager" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body className="min-h-full">
         <SessionProvider session={session}>

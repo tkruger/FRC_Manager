@@ -49,6 +49,7 @@ export default function HelpPage() {
           <li><b>iPhone / iPad:</b> open the site in Safari, tap <b>Share</b>, then <b>Add to Home Screen</b>. Open it from the home-screen icon — it runs full screen, like an app, and can send push notifications.</li>
           <li><b>Android:</b> open the site in Chrome, tap the <b>⋮</b> menu, then <b>Install app</b> (or <b>Add to Home screen</b>).</li>
         </Steps>
+        <p>Want a different icon? Pick one under <b>Settings → Profile &amp; appearance → App icon</b> first, then add (or remove and re-add) the app — phones only read the icon when it&apos;s added.</p>
         <H3>Finding your way around</H3>
         <ul className="list">
           <li>On a computer, the main sections are along the top. On a phone they&apos;re in the bar at the bottom — <b>More</b> has the rest.</li>
