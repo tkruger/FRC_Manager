@@ -7,6 +7,12 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 
+/** Where to go after signing in: the page that sent them here (same-site paths only), else the dashboard */
+function returnTo(): string {
+  const v = new URLSearchParams(window.location.search).get("callbackUrl");
+  return v && v.startsWith("/") && !v.startsWith("//") && !v.startsWith("/\\") ? v : "/dashboard";
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +34,7 @@ export default function LoginPage() {
     if (result?.error) {
       setError("Invalid email or password.");
     } else {
-      router.push("/dashboard");
+      router.push(returnTo());
       router.refresh();
     }
   }
@@ -78,7 +84,7 @@ export default function LoginPage() {
         type="button"
         variant="outline"
         className="w-full"
-        onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+        onClick={() => signIn("google", { callbackUrl: returnTo() })}
       >
         <svg className="w-4 h-4" viewBox="0 0 24 24">
           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>

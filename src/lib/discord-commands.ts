@@ -4,7 +4,7 @@
 import { prisma } from "@/lib/prisma";
 import {
   embed, ephemeralReply, reply, COLORS, getStringOption, getIntOption,
-  type DiscordEmbed, sendDM, followUpInteraction,
+  type DiscordEmbed, followUpInteraction,
 } from "@/lib/discord";
 import { differenceInCalendarDays } from "date-fns";
 import type { DiscordConfig, DiscordLink } from "@/generated/prisma";
@@ -86,46 +86,33 @@ export async function handleLink(
     );
   }
 
-  // We need a platform user to link — the user must be in the team
-  // For the linking flow we generate a token and DM it
-  // The token is associated with a team (not yet a user — user picks their account on the web)
+  // The token carries who's linking; they pick their platform account on the web.
+  // userId holds the Discord details as JSON until the web page resolves it.
   const token = await prisma.discordLinkToken.create({
     data: {
-      userId: "PENDING",  // resolved when user clicks the link
-      token:  crypto.randomUUID(),
+      userId:    JSON.stringify({ discordUserId, discordUsername, teamId: config.teamId }),
+      token:     crypto.randomUUID(),
       expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 min
     },
-  });
-
-  // Store the discord user info in the token so the web callback can use it
-  // We repurpose userId field to encode discord info as JSON
-  await prisma.discordLinkToken.update({
-    where: { id: token.id },
-    data: { userId: JSON.stringify({ discordUserId, discordUsername, teamId: config.teamId }) },
   });
 
   const baseUrl = process.env.NEXTAUTH_URL ?? "https://frc-manager.vercel.app";
   const linkUrl = `${baseUrl}/settings/discord/link?token=${token.token}`;
 
-  try {
-    await sendDM(discordUserId, null, [
-      embed({
-        title: "🔗 Link Your FRC Manager Account",
-        description:
-          `Click the link below to connect your Discord account to your team platform account.\n\n` +
-          `**[Click here to link your account](${linkUrl})**\n\n` +
-          `⏰ This link expires in **10 minutes**.\n` +
-          `If you didn't request this, ignore this message.`,
-        color: COLORS.info,
-        footer: { text: `Team ${config.teamId}` },
-      }),
-    ]);
-    return ephemeralReply("📬 Check your DMs — I've sent you a link to complete account linking.");
-  } catch {
-    return ephemeralReply(
-      `❌ Couldn't send you a DM. Make sure your privacy settings allow DMs from server members, then try again.\n\nAlternatively, visit: ${linkUrl}`
-    );
-  }
+  // A private reply only this person can see — no DM needed (DMs are often blocked and slower)
+  return ephemeralReply(null, [
+    embed({
+      title: "🔗 Link your FRC Manager account",
+      description:
+        `**[Click here to link your account](${linkUrl})**
+
+` +
+        `Sign in to FRC Manager if asked, and your Discord account will be connected.
+` +
+        `⏰ This link expires in **10 minutes**.`,
+      color: COLORS.info,
+    }),
+  ]);
 }
 
 // ─── /unlink ───────────────────────────────────────────────────────────────
