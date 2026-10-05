@@ -359,3 +359,40 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--color-primary)
 
 /* iOS: no grey flash when tapping non-interactive areas (e.g. the header behind the status bar) */
 html { -webkit-tap-highlight-color: transparent; }
+
+/* ── Kanban sticky notes (Settings → Appearance → Task cards) ─────────────── */
+/* The wrapper casts the shadow: drop-shadow follows the note's folded-corner shape */
+.sticky-note-wrap {
+  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.12)) drop-shadow(0 6px 8px rgb(0 0 0 / 0.28));
+  transition: transform 160ms ease, filter 160ms ease;
+}
+.sticky-note-wrap:hover {
+  transform: translateY(-2px) rotate(0deg) !important;
+  filter: drop-shadow(0 2px 2px rgb(0 0 0 / 0.14)) drop-shadow(0 12px 14px rgb(0 0 0 / 0.3));
+}
+.sticky-note {
+  --fold: 18px;
+  position: relative;
+  background:
+    linear-gradient(to bottom, rgb(255 255 255 / 0.35), transparent 40%),
+    var(--note);
+  /* Bottom-right corner cut off… */
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--fold)), calc(100% - var(--fold)) 100%, 0 100%);
+  /* Dark ink on paper in light and dark mode alike */
+  --color-text-primary:   #1F2430;
+  --color-text-secondary: #4A5160;
+  --color-text-disabled:  #6B7280;
+  --color-danger:         #B42318;
+  color: var(--color-text-primary);
+}
+/* …and folded over: the flap is a darker triangle in that corner */
+.sticky-note::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: var(--fold);
+  height: var(--fold);
+  background: linear-gradient(to top left, transparent 50%, color-mix(in srgb, var(--note) 72%, #000) 50%);
+  box-shadow: -1px -1px 2px rgb(0 0 0 / 0.12);
+}

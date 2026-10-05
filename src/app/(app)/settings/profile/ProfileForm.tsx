@@ -6,6 +6,7 @@ import { Field } from "@/components/ui/field";
 import { updateProfileAction } from "@/app/actions/profile";
 import { useTheme, COLOR_THEMES } from "@/components/providers/ThemeProvider";
 import type { ColorTheme, BgMode } from "@/components/providers/ThemeProvider";
+import { useKanbanStyle, STICKY_COLORS, type KanbanCardStyle } from "@/lib/kanban-style";
 
 interface Props {
   initialName: string;
@@ -184,6 +185,9 @@ export function ProfileForm({ initialName, initialEmail }: Props) {
           )}
         </div>
 
+        {/* Kanban task cards */}
+        <TaskCardStyle mounted={mounted} />
+
         {/* Color theme */}
         <div>
           <p className="text-sm font-medium text-[--color-text-primary] mb-3">Color theme</p>
@@ -214,5 +218,87 @@ export function ProfileForm({ initialName, initialEmail }: Props) {
         </div>
       </div>
     </div>
+  );
+}
+
+const CARD_STYLES: { id: KanbanCardStyle; label: string; desc: string }[] = [
+  { id: "plain",   label: "Plain cards",            desc: "Clean cards with a sub-team stripe" },
+  { id: "rainbow", label: "Sticky notes — rainbow", desc: "Each task on its own colour of note" },
+  { id: "single",  label: "Sticky notes — one colour", desc: "Every note the same colour you pick" },
+];
+
+/** Kanban board card look — saved on this device. */
+function TaskCardStyle({ mounted }: { mounted: boolean }) {
+  const { style, color, setStyle, setColor } = useKanbanStyle();
+
+  return (
+    <div>
+      <p className="text-sm font-medium text-(--color-text-primary) mb-3">Task cards on the Kanban board</p>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {CARD_STYLES.map((opt) => {
+          const on = mounted && style === opt.id;
+          return (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => setStyle(opt.id)}
+              aria-pressed={on}
+              className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${on ? "border-(--color-primary) shadow-sm" : "border-(--color-border) hover:border-(--color-border-strong)"}`}
+              style={on ? { backgroundColor: "color-mix(in srgb, var(--color-primary) 12%, var(--color-surface))" } : undefined}
+            >
+              <CardPreview kind={opt.id} color={STICKY_COLORS.find((c) => c.id === color)!.hex} />
+              <span className="min-w-0">
+                <span className="block text-sm font-medium text-(--color-text-primary)">{opt.label}</span>
+                <span className="block text-xs text-(--color-text-secondary) mt-0.5">{opt.desc}</span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {mounted && style === "single" && (
+        <div className="mt-3 flex flex-wrap items-center gap-2" role="radiogroup" aria-label="Sticky note colour">
+          <span className="text-sm text-(--color-text-secondary) mr-1">Note colour</span>
+          {STICKY_COLORS.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              role="radio"
+              aria-checked={color === c.id}
+              aria-label={c.label}
+              title={c.label}
+              onClick={() => setColor(c.id)}
+              className="flex h-11 w-11 items-center justify-center"
+            >
+              <span
+                className={`block h-7 w-7 rounded-sm shadow-sm transition-transform ${color === c.id ? "ring-2 ring-(--color-primary) ring-offset-2 ring-offset-(--color-surface) scale-110" : ""}`}
+                style={{ backgroundColor: c.hex }}
+              />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Tiny picture of the card style */
+function CardPreview({ kind, color }: { kind: KanbanCardStyle; color: string }) {
+  if (kind === "plain") {
+    return (
+      <span aria-hidden className="block h-10 w-10 shrink-0 rounded-md border border-(--color-border) bg-(--color-surface-raised)"
+        style={{ borderLeftWidth: 3, borderLeftColor: "var(--color-primary)" }} />
+    );
+  }
+  const notes = kind === "rainbow" ? [STICKY_COLORS[1].hex, STICKY_COLORS[2].hex, STICKY_COLORS[0].hex] : [color, color, color];
+  return (
+    <span aria-hidden className="relative block h-10 w-10 shrink-0">
+      {notes.map((hex, i) => (
+        <span key={i} className="sticky-note-wrap absolute h-7 w-7"
+          style={{ left: i * 6, top: i * 5, transform: `rotate(${[-6, 3, -2][i]}deg)` }}>
+          <span className="sticky-note block h-full w-full" style={{ "--note": hex, "--fold": "7px" } as React.CSSProperties} />
+        </span>
+      ))}
+    </span>
   );
 }

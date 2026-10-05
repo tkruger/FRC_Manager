@@ -12,6 +12,7 @@ import {
   shortDate,
   isOverdue,
 } from "@/lib/schedule-helpers";
+import { useKanbanStyle, stickyNoteLook } from "@/lib/kanban-style";
 import { TaskModal } from "./TaskModal";
 import type { TaskModalData } from "./TaskModal";
 import type { TaskStatus } from "@/generated/prisma";
@@ -309,62 +310,96 @@ function KanbanCard({
     status:  task.status as TaskStatus,
   });
 
+  const { style, color } = useKanbanStyle();
+
+  const dragProps = {
+    draggable: true,
+    onDragStart: (e: React.DragEvent) => {
+      // Set data so the browser knows what's being dragged
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", task.id);
+      // Small delay so the ghost image renders before we dim the card
+      setTimeout(onDragStart, 0);
+    },
+    onDragEnd,
+    onClick,
+    role: "button" as const,
+    tabIndex: 0,
+    onKeyDown: (e: React.KeyboardEvent) => e.key === "Enter" && onClick(),
+  };
+
+  const body = (
+    <>
+        <p className="text-sm font-medium text-(--color-text-primary) leading-snug group-hover:text-(--color-primary) transition-colors">
+          {task.isMilestone && <span className="text-(--color-primary) mr-1">◆</span>}
+          {task.name}
+        </p>
+
+        {task.dueDate && (
+          <p className={`text-xs ${overdue ? "text-(--color-danger) font-medium" : "text-(--color-text-secondary)"}`}>
+            {overdue ? "Overdue · " : "Due "}{shortDate(task.dueDate)}
+          </p>
+        )}
+
+        <div className="flex items-center justify-between gap-1">
+          <Badge variant={priorityCfg?.variant ?? "neutral"} className="text-xs">
+            {priorityCfg?.label ?? task.priority}
+          </Badge>
+
+          {task.assignees.length > 0 && (
+            <div className="flex -space-x-1.5">
+              {task.assignees.slice(0, 3).map((a) => (
+                <div key={a.id} title={a.name}
+                  className="w-5 h-5 rounded-full border border-(--color-surface) flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                  style={{ backgroundColor: "var(--color-primary)" }}>
+                  {a.name[0].toUpperCase()}
+                </div>
+              ))}
+              {task.assignees.length > 3 && (
+                <div className="w-5 h-5 rounded-full border border-(--color-surface) bg-(--color-surface-overlay) flex items-center justify-center text-xs text-(--color-text-secondary)">
+                  +{task.assignees.length - 3}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+    </>
+  );
+
+  if (style !== "plain") {
+    // Sticky note: paper colour, a slight tilt, folded corner and shadow; the pin shows the sub-team
+    const look = stickyNoteLook(task.id, style, color);
+    return (
+      <div
+        {...dragProps}
+        className={[
+          "sticky-note-wrap cursor-grab active:cursor-grabbing outline-none focus-visible:ring-2 focus-visible:ring-(--color-primary) rounded-sm",
+          isDragging ? "opacity-40" : "opacity-100",
+        ].join(" ")}
+        style={{ transform: `rotate(${look.tilt}deg)` }}
+      >
+        <div className="sticky-note px-3 pb-4 pt-4 space-y-2" style={{ "--note": look.hex } as React.CSSProperties}>
+          <span aria-hidden title={task.subTeam ?? undefined}
+            className="absolute left-1/2 top-1 h-2.5 w-2.5 -translate-x-1/2 rounded-full shadow-[0_1px_1px_rgb(0_0_0/0.35)]"
+            style={{ backgroundColor: stColor }} />
+          {body}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
-      draggable
-      onDragStart={(e) => {
-        // Set data so the browser knows what's being dragged
-        e.dataTransfer.effectAllowed = "move";
-        e.dataTransfer.setData("text/plain", task.id);
-        // Small delay so the ghost image renders before we dim the card
-        setTimeout(onDragStart, 0);
-      }}
-      onDragEnd={onDragEnd}
-      onClick={onClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => e.key === "Enter" && onClick()}
+      {...dragProps}
       className={[
-        "w-full text-left rounded-md bg-[--color-surface-raised] border p-3 space-y-2 group",
+        "w-full text-left rounded-md bg-(--color-surface-raised) border p-3 space-y-2 group",
         "cursor-grab active:cursor-grabbing",
-        "hover:border-[--color-primary] hover:shadow-md transition-all",
+        "hover:border-(--color-primary) hover:shadow-md transition-all",
         isDragging ? "opacity-40 scale-95" : "opacity-100",
       ].join(" ")}
       style={{ borderLeftColor: stColor, borderLeftWidth: "3px" }}
     >
-      <p className="text-sm font-medium text-[--color-text-primary] leading-snug group-hover:text-[--color-primary] transition-colors">
-        {task.isMilestone && <span className="text-[--color-primary] mr-1">◆</span>}
-        {task.name}
-      </p>
-
-      {task.dueDate && (
-        <p className={`text-xs ${overdue ? "text-[--color-danger] font-medium" : "text-[--color-text-secondary]"}`}>
-          {overdue ? "Overdue · " : "Due "}{shortDate(task.dueDate)}
-        </p>
-      )}
-
-      <div className="flex items-center justify-between gap-1">
-        <Badge variant={priorityCfg?.variant ?? "neutral"} className="text-xs">
-          {priorityCfg?.label ?? task.priority}
-        </Badge>
-
-        {task.assignees.length > 0 && (
-          <div className="flex -space-x-1.5">
-            {task.assignees.slice(0, 3).map((a) => (
-              <div key={a.id} title={a.name}
-                className="w-5 h-5 rounded-full border border-[--color-surface] flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                style={{ backgroundColor: "var(--color-primary)" }}>
-                {a.name[0].toUpperCase()}
-              </div>
-            ))}
-            {task.assignees.length > 3 && (
-              <div className="w-5 h-5 rounded-full border border-[--color-surface] bg-[--color-surface-overlay] flex items-center justify-center text-xs text-[--color-text-secondary]">
-                +{task.assignees.length - 3}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+      {body}
     </div>
   );
 }
