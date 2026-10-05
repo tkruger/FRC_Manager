@@ -44,7 +44,7 @@ export function CsvExport({ newCount, totalCount }: { newCount: number; totalCou
       <div>
         <h2 className="text-h3 text-(--color-text-primary)">Export for the purchasing spreadsheet</h2>
         <p className="text-small text-(--color-text-secondary)">
-          CSV with no header row, columns: ID, Vendor, Name, Link, Unit Cost, Quantity, Notes, Date.
+          CSV with no header row, columns: #XXXX (item ID), Vendor, Part Name, Link, Unit Price, Qty, Order Notes, Order Date.
           Items are marked “in spreadsheet” once exported, so next time you only get new ones.
         </p>
       </div>

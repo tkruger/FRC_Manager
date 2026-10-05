@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { statusBadgeVariant, statusLabel } from "@/lib/procurement-helpers";
 import { definitionFor, resolveCurrentStep, availableActions } from "@/lib/workflow/engine";
@@ -100,7 +101,12 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       </div>
 
       <section className="space-y-3">
-        <h2 className="text-h2 text-(--color-text-primary)">Items</h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-h2 text-(--color-text-primary)">Items</h2>
+          <a href={`/api/orders/csv?order=${order.id}`} download>
+            <Button size="sm" variant="outline">Export CSV</Button>
+          </a>
+        </div>
         {closed && (
           <p className="text-small text-(--color-text-secondary)">This order was {order.status.toLowerCase()}; its items won&apos;t be ordered.</p>
         )}

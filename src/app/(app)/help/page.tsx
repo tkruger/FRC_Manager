@@ -184,10 +184,11 @@ export default function HelpPage() {
         <H3>What happens next</H3>
         <Steps>
           <li><b>Approval</b> — Budget Managers or Head Mentors approve or deny the order. Routine orders of $50 or less are approved automatically; emergencies always need approval. Approved items become <b>To order</b>.</li>
-          <li><b>Team Admin orders</b> — on <b>Orders → Team Admin</b>, the Team Admin copies or downloads the to-order items as CSV for the purchasing spreadsheet (no header; columns ID, Vendor, Name, Link, Unit Cost, Quantity, Notes, Date), places the orders, then selects the items that shipped together and adds one <b>tracking link</b> — they become <b>Ordered</b>.</li>
+          <li><b>Team Admin orders</b> — on <b>Orders → Team Admin</b>, the Team Admin copies or downloads the to-order items as CSV for the purchasing spreadsheet (no header; columns #XXXX item ID, Vendor, Part Name, Link, Unit Price, Qty, Order Notes, Order Date), places the orders, then selects the items that shipped together and adds one <b>tracking link</b> — they become <b>Ordered</b>.</li>
           <li><b>Arrival</b> — when a box shows up, anyone can tick the items and tap <b>Mark arrived</b>. Each item is added to inventory (matched by its inventory link, part number or name, or created new) and becomes <b>Arrived</b>.</li>
         </Steps>
         <ul className="list">
+          <li><b>Export CSV</b> on an order, or on the Orders list (for every order on the tab you&apos;re viewing), downloads the items in the same spreadsheet format.</li>
           <li>The order moves along by itself: it&apos;s ordered once every item is ordered, and complete once every item has arrived.</li>
           <li>Captains (Team Leadership) and the Team Admin can set any item&apos;s status by hand. Arrived items can&apos;t be changed back, because their stock has already been added.</li>
           <li>Each order page shows a <b>Waiting on</b> banner and a timeline of who did what and when.</li>

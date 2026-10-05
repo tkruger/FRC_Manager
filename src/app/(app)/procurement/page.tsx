@@ -85,6 +85,9 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         </div>
         <div className="flex flex-wrap gap-2">
           {isAdmin && <Link href="/procurement/admin"><Button variant="secondary" size="sm">Team Admin</Button></Link>}
+          <a href={`/api/orders/csv?view=${view}`} download title="Every order on this tab, one item per line">
+            <Button variant="outline" size="sm">Export CSV</Button>
+          </a>
           <Link href="/procurement/vendors"><Button variant="outline" size="sm">Vendors</Button></Link>
           <Link href="/procurement/requests/new"><Button size="sm">+ New order</Button></Link>
         </div>

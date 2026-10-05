@@ -192,27 +192,22 @@ function csvCell(v: unknown): string {
   return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
-/**
- * "To order" items as CSV with no header row, in the purchasing spreadsheet's
- * column order: ID, Vendor, Name, Link, Unit Cost, Quantity, Notes, Date.
- */
-export async function toOrderCsv(teamId: string, opts: { itemIds?: string[]; onlyNew?: boolean; markExported?: boolean }) {
-  const items = await prisma.purchaseLineItem.findMany({
-    where: {
-      status:  "TO_ORDER",
-      request: { season: { teamId } },
-      ...(opts.itemIds?.length ? { id: { in: opts.itemIds } } : {}),
-      ...(opts.onlyNew ? { exportedAt: null } : {}),
-    },
-    select: {
-      id: true, orderNumber: true, vendorName: true, name: true, vendorProductUrl: true,
-      unitCost: true, quantity: true, notes: true, request: { select: { submittedAt: true } },
-    },
-    orderBy: { orderNumber: "asc" },
-  });
+/** Fields needed for one CSV row */
+export const CSV_ITEM_SELECT = {
+  id: true, orderNumber: true, vendorName: true, name: true, vendorProductUrl: true,
+  unitCost: true, quantity: true, notes: true, request: { select: { submittedAt: true } },
+} satisfies Prisma.PurchaseLineItemSelect;
 
-  const csv = items.map((i) => [
-    formatItemId(i.orderNumber),
+type CsvItem = Prisma.PurchaseLineItemGetPayload<{ select: typeof CSV_ITEM_SELECT }>;
+
+/**
+ * The purchasing spreadsheet's format — no header row, one item per line:
+ * #XXXX (item ID), Vendor, Part Name, Link, Unit Price, Qty, Order Notes, Order Date.
+ * Used by the Team Admin export and the order exports, so they always match.
+ */
+export function itemsToCsv(items: CsvItem[]): string {
+  return items.map((i) => [
+    `#${formatItemId(i.orderNumber)}`,
     i.vendorName ?? "",
     i.name,
     i.vendorProductUrl ?? "",
@@ -221,6 +216,22 @@ export async function toOrderCsv(teamId: string, opts: { itemIds?: string[]; onl
     i.notes ?? "",
     i.request.submittedAt.toISOString().slice(0, 10),
   ].map(csvCell).join(",")).join("\n");
+}
+
+/** "To order" items for the Team Admin, in the spreadsheet format above. */
+export async function toOrderCsv(teamId: string, opts: { itemIds?: string[]; onlyNew?: boolean; markExported?: boolean }) {
+  const items = await prisma.purchaseLineItem.findMany({
+    where: {
+      status:  "TO_ORDER",
+      request: { season: { teamId } },
+      ...(opts.itemIds?.length ? { id: { in: opts.itemIds } } : {}),
+      ...(opts.onlyNew ? { exportedAt: null } : {}),
+    },
+    select:  CSV_ITEM_SELECT,
+    orderBy: { orderNumber: "asc" },
+  });
+
+  const csv = itemsToCsv(items);
 
   if (opts.markExported && items.length) {
     await prisma.purchaseLineItem.updateMany({ where: { id: { in: items.map((i) => i.id) } }, data: { exportedAt: new Date() } });
