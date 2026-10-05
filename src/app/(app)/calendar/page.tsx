@@ -47,12 +47,14 @@ export default async function CalendarPage() {
   return (
     <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-h1 text-[--color-text-primary] flex items-center gap-2">Meeting Calendar <HelpLink topic="calendar" /></h1>
-          <p className="text-body text-[--color-text-secondary] mt-0.5">{activeSeason.name}</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-h1 text-(--color-text-primary) flex flex-wrap items-center gap-x-3 gap-y-1">Calendar <HelpLink topic="calendar" /></h1>
+          <p className="text-body text-(--color-text-secondary) mt-0.5">
+            {activeSeason.name} · {activeSeason.meetings.filter((m) => !m.cancelled).length} meetings
+          </p>
         </div>
-        <div className="flex gap-2 flex-wrap justify-end">
+        <div className="flex gap-2 flex-wrap sm:justify-end">
           {calendarUrl
             ? <SubscribeCalendarButton icsUrl={calendarUrl} />
             : <GenerateShareLinkButton seasonId={activeSeason.id} />}

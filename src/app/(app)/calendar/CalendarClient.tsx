@@ -155,58 +155,54 @@ export function CalendarClient({ season, meetings, allTasks, isLeadership }: Pro
 
   return (
     <>
-      {/* ── Toolbar ── */}
-      <div className="px-4 sm:px-6 lg:px-8 flex items-center gap-3 flex-wrap">
-        {/* Month navigation */}
-        <div className="flex items-center gap-1">
-          <button onClick={prevMonth}
-            className="h-8 w-8 rounded flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors">
-            ‹
-          </button>
-          <h2 className="text-h3 text-[--color-text-primary] min-w-[168px] text-center">
-            {MONTH_NAMES[viewMonth]} {viewYear}
-          </h2>
-          <button onClick={nextMonth}
-            className="h-8 w-8 rounded flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors">
-            ›
-          </button>
+      {/* ── Toolbar: month on one row, view switch + add on the next (one row on desktop) ── */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="flex items-center gap-2">
+          <div className={`flex flex-1 items-center justify-between gap-1 sm:flex-none ${fullSeason ? "opacity-40 pointer-events-none" : ""}`}>
+            <button onClick={prevMonth} aria-label="Previous month"
+              className="h-9 w-9 rounded-md flex items-center justify-center text-lg text-(--color-text-secondary) hover:bg-(--color-surface-overlay) transition-colors">
+              ‹
+            </button>
+            <h2 className="text-h3 text-(--color-text-primary) text-center sm:min-w-[168px]">
+              {fullSeason ? "Whole season" : `${MONTH_NAMES[viewMonth]} ${viewYear}`}
+            </h2>
+            <button onClick={nextMonth} aria-label="Next month"
+              className="h-9 w-9 rounded-md flex items-center justify-center text-lg text-(--color-text-secondary) hover:bg-(--color-surface-overlay) transition-colors">
+              ›
+            </button>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => { setFullSeason(false); goToday(); }}>Today</Button>
         </div>
 
-        <Button variant="outline" size="sm" onClick={goToday} className={fullSeason ? "opacity-50" : ""}>Today</Button>
-        <Button
-          variant="outline" size="sm"
-          onClick={() => setFullSeason(f => !f)}
-          style={fullSeason ? { backgroundColor: "var(--color-primary)", color: "#fff", borderColor: "var(--color-primary)" } : undefined}
-        >
-          {fullSeason ? "Month view" : "Full season"}
-        </Button>
-
-        {isLeadership && (
-          <>
-            <Button variant="outline" size="sm" onClick={handleGenerate} isLoading={isPending}>
-              {meetings.length > 0 ? "Regenerate" : "Generate from config"}
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => { setAddDate(""); setShowAdd(true); }}>
+        <div className="flex items-center gap-2 sm:ml-auto">
+          <div role="group" aria-label="Calendar view" className="inline-flex rounded-lg border border-(--color-border) p-0.5">
+            {[{ v: false, label: "Month" }, { v: true, label: "Season" }].map((o) => (
+              <button key={o.label} onClick={() => setFullSeason(o.v)} aria-pressed={fullSeason === o.v}
+                className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
+                  fullSeason === o.v ? "bg-(--color-primary) text-white" : "text-(--color-text-secondary) hover:text-(--color-text-primary)"
+                }`}>
+                {o.label}
+              </button>
+            ))}
+          </div>
+          {isLeadership && (
+            <Button size="sm" className="ml-auto sm:ml-0" onClick={() => { setAddDate(""); setShowAdd(true); }}>
               + Add meeting
             </Button>
-          </>
-        )}
-
-        <span className="ml-auto text-small text-[--color-text-secondary]">
-          {meetings.filter(m => !m.cancelled).length} meetings scheduled
-        </span>
+          )}
+        </div>
       </div>
 
       {/* ── Calendar grid ── */}
-      <div className="px-4 sm:px-6 lg:px-8">
-        <div className="rounded-xl border border-[--color-border]/60 overflow-hidden"
+      <div>
+        <div className="rounded-xl border border-(--color-border)/60 overflow-hidden"
           style={{ boxShadow: "var(--shadow-card)" }}>
 
           {/* Shared DOW header — shown once */}
           <div className="grid grid-cols-7"
             style={{ background: "linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 20%, var(--color-surface-raised)) 0%, color-mix(in srgb, var(--color-secondary) 14%, var(--color-surface-raised)) 100%)" }}>
             {DOW_LABELS.map((d) => (
-              <div key={d} className="py-2.5 text-center text-label font-semibold text-[--color-text-primary] tracking-wide">{d}</div>
+              <div key={d} className="py-2.5 text-center text-label font-semibold text-(--color-text-primary) tracking-wide">{d}</div>
             ))}
           </div>
 
@@ -217,13 +213,13 @@ export function CalendarClient({ season, meetings, allTasks, isLeadership }: Pro
               <div key={`${year}-${month}`}>
                 {/* Month label — only in full-season mode */}
                 {fullSeason && (
-                  <div className="px-3 py-1 text-small font-semibold text-[--color-text-secondary] border-t border-[--color-border]/30"
+                  <div className="px-3 py-1 text-small font-semibold text-(--color-text-secondary) border-t border-(--color-border)/30"
                     style={{ backgroundColor: "color-mix(in srgb, var(--color-surface-overlay) 60%, transparent)" }}>
                     {MONTH_NAMES[month]} {year}
                   </div>
                 )}
 
-                <div className="grid grid-cols-7 bg-[--color-surface]"
+                <div className="grid grid-cols-7 bg-(--color-surface)"
                   style={{ borderTop: fullSeason && mi === 0 ? undefined : "1px solid color-mix(in srgb, var(--color-border) 30%, transparent)" }}>
                   {mCells.map(({ date, isCurrentMonth }, idx) => {
                     const key         = ymd(date);
@@ -238,35 +234,49 @@ export function CalendarClient({ season, meetings, allTasks, isLeadership }: Pro
                       <div
                         key={idx}
                         className={[
-                          "relative min-h-[110px] p-1.5 border-b border-r border-[--color-border]/20 transition-colors",
-                          !isToday && !isCurrentMonth && "bg-[--color-surface-overlay]/30",
-                          !isToday && isWeekend && isCurrentMonth && "bg-[--color-surface-raised]/40",
+                          "relative min-h-14 sm:min-h-[110px] p-1 sm:p-1.5 border-b border-r border-(--color-border)/20 transition-colors",
+                          !isToday && !isCurrentMonth && "bg-(--color-surface-overlay)/30",
+                          !isToday && isWeekend && isCurrentMonth && "bg-(--color-surface-raised)/40",
                           isLeadership && "cursor-pointer group",
                         ].filter(Boolean).join(" ")}
                         style={isToday ? { backgroundColor: "color-mix(in srgb, var(--color-primary) 10%, transparent)" } : undefined}
                         onClick={() => {
-                          if (isLeadership && dayMeetings.length === 0) { setAddDate(key); setShowAdd(true); }
+                          if (dayMeetings.length > 0) setSelected(dayMeetings[0]); // phones: tap a day to open it
+                          else if (isLeadership) { setAddDate(key); setShowAdd(true); }
                         }}
                       >
                         <div className="flex items-center gap-1 mb-1">
                           <span className={[
                             "text-xs font-semibold w-6 h-6 flex items-center justify-center rounded-full",
-                            isToday ? "text-white" : isCurrentMonth ? "text-[--color-text-primary]" : "text-[--color-text-disabled]",
+                            isToday ? "text-white"
+                              : isKickoff ? "text-(--color-success) ring-1 ring-(--color-success)"
+                              : isWeek0 ? "text-(--color-primary) ring-1 ring-(--color-primary)"
+                              : isCurrentMonth ? "text-(--color-text-primary)" : "text-(--color-text-disabled)",
                           ].join(" ")}
                             style={isToday ? { backgroundColor: "var(--color-primary)" } : undefined}>
                             {date.getDate()}
                           </span>
-                          {isKickoff && <span className="text-[9px] font-bold text-[--color-success] leading-none">KICKOFF</span>}
-                          {isWeek0   && <span className="text-[9px] font-bold text-[--color-primary] leading-none">WEEK&nbsp;0</span>}
+                          {isKickoff && <span className="hidden sm:inline text-[9px] font-bold text-(--color-success) leading-none">KICKOFF</span>}
+                          {isWeek0   && <span className="hidden sm:inline text-[9px] font-bold text-(--color-primary) leading-none">WEEK&nbsp;0</span>}
                         </div>
 
-                        <div className="space-y-0.5">
+                        {/* Phones: a dot per meeting */}
+                        {dayMeetings.length > 0 && (
+                          <div className="flex flex-wrap justify-center gap-0.5 sm:hidden">
+                            {dayMeetings.slice(0, 3).map((m) => (
+                              <span key={m.id} className="h-1.5 w-1.5 rounded-full"
+                                style={{ backgroundColor: m.cancelled ? "var(--color-text-disabled)" : "var(--color-secondary)" }} />
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="hidden sm:block space-y-0.5">
                           {dayMeetings.slice(0, MAX_CHIPS).map((m) => (
                             <button key={m.id}
                               onClick={(e) => { e.stopPropagation(); setSelected(m); }}
                               className={[
                                 "w-full text-left text-[10px] font-medium px-1.5 py-0.5 rounded-sm truncate leading-relaxed transition-opacity",
-                                m.cancelled ? "line-through opacity-40 bg-[--color-surface-overlay] text-[--color-text-secondary]" : "text-white hover:opacity-85",
+                                m.cancelled ? "line-through opacity-40 bg-(--color-surface-overlay) text-(--color-text-secondary)" : "text-white hover:opacity-85",
                               ].join(" ")}
                               style={!m.cancelled ? { backgroundColor: "var(--color-secondary)" } : undefined}>
                               {fmt12(m.startTime)} {m.title ?? "Build meeting"}
@@ -274,14 +284,14 @@ export function CalendarClient({ season, meetings, allTasks, isLeadership }: Pro
                           ))}
                           {dayMeetings.length > MAX_CHIPS && (
                             <button onClick={(e) => { e.stopPropagation(); setSelected(dayMeetings[MAX_CHIPS]); }}
-                              className="text-[10px] text-[--color-secondary] hover:underline px-1.5">
+                              className="text-[10px] text-(--color-secondary) hover:underline px-1.5">
                               +{dayMeetings.length - MAX_CHIPS} more
                             </button>
                           )}
                         </div>
 
                         {isLeadership && isCurrentMonth && dayMeetings.length === 0 && (
-                          <span className="absolute bottom-1 right-1.5 text-[10px] text-[--color-text-disabled] opacity-0 group-hover:opacity-100 transition-opacity select-none">+ add</span>
+                          <span className="hidden sm:inline absolute bottom-1 right-1.5 text-[10px] text-(--color-text-disabled) opacity-0 group-hover:opacity-100 transition-opacity select-none">+ add</span>
                         )}
                       </div>
                     );
@@ -292,8 +302,19 @@ export function CalendarClient({ season, meetings, allTasks, isLeadership }: Pro
           })}
         </div>
 
+        {/* Phones: the month's meetings as a list (the grid only shows dots) */}
+        <MobileAgenda
+          meetings={meetings.filter((m) => {
+            if (fullSeason) return true;
+            const d = new Date(m.date);
+            return d.getUTCFullYear() === viewYear && d.getUTCMonth() === viewMonth;
+          })}
+          heading={fullSeason ? "All meetings this season" : `Meetings in ${MONTH_NAMES[viewMonth]}`}
+          onOpen={setSelected}
+        />
+
         {/* Legend */}
-        <div className="flex flex-wrap gap-4 mt-3 text-small text-[--color-text-secondary]">
+        <div className="flex flex-wrap gap-x-4 gap-y-2 mt-3 text-small text-(--color-text-secondary)">
           <span className="flex items-center gap-1.5">
             <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "var(--color-secondary)" }} />
             Build meeting
@@ -303,17 +324,24 @@ export function CalendarClient({ season, meetings, allTasks, isLeadership }: Pro
             Today
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="text-[--color-success] font-bold text-xs">KICKOFF</span>
+            <span className="text-(--color-success) font-bold text-xs">KICKOFF</span>
             Season kickoff
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="text-[--color-primary] font-bold text-xs">WEEK 0</span>
+            <span className="text-(--color-primary) font-bold text-xs">WEEK 0</span>
             Robot complete deadline
           </span>
           {isLeadership && (
-            <span className="ml-auto italic">Click a day to add a meeting · Click an event to edit</span>
+            <span className="hidden sm:inline ml-auto italic">Click a day to add a meeting · Click an event to edit</span>
           )}
         </div>
+
+        {isLeadership && (
+          <button onClick={handleGenerate} disabled={isPending}
+            className="mt-3 text-small text-(--color-secondary) hover:underline disabled:opacity-50">
+            {meetings.length > 0 ? "Regenerate meetings from the season's meeting days…" : "Generate meetings from the season's meeting days"}
+          </button>
+        )}
       </div>
 
       {/* ── Meeting detail / edit dialog ── */}
@@ -385,7 +413,7 @@ function MeetingDialog({
       <DialogContent title={meeting.title ?? "Build meeting"} description={dateLabel}>
         <div className="space-y-4">
           {meeting.cancelled && (
-            <div className="rounded-md bg-[--color-danger]/10 border border-[--color-danger]/20 px-3 py-2 text-sm text-[--color-danger]">
+            <div className="rounded-md bg-(--color-danger)/10 border border-(--color-danger)/20 px-3 py-2 text-sm text-(--color-danger)">
               Cancelled{meeting.cancelReason ? ` — ${meeting.cancelReason}` : ""}
             </div>
           )}
@@ -394,24 +422,24 @@ function MeetingDialog({
             <>
               <div className="grid grid-cols-2 gap-3">
                 {[["Start", fmt12(meeting.startTime)], ["End", fmt12(meeting.endTime)]].map(([l, v]) => (
-                  <div key={l} className="rounded-md bg-[--color-surface-overlay] px-3 py-2">
-                    <p className="text-label text-[--color-text-secondary]">{l}</p>
-                    <p className="text-sm font-medium text-[--color-text-primary]">{v}</p>
+                  <div key={l} className="rounded-md bg-(--color-surface-overlay) px-3 py-2">
+                    <p className="text-label text-(--color-text-secondary)">{l}</p>
+                    <p className="text-sm font-medium text-(--color-text-primary)">{v}</p>
                   </div>
                 ))}
               </div>
               {meeting.notes && (
                 <div>
-                  <p className="text-label text-[--color-text-secondary] mb-1">Agenda / notes</p>
-                  <p className="text-sm text-[--color-text-primary] whitespace-pre-wrap">{meeting.notes}</p>
+                  <p className="text-label text-(--color-text-secondary) mb-1">Agenda / notes</p>
+                  <p className="text-sm text-(--color-text-primary) whitespace-pre-wrap">{meeting.notes}</p>
                 </div>
               )}
               {meeting.tasks.length > 0 && (
                 <div>
-                  <p className="text-label text-[--color-text-secondary] mb-2">Linked tasks</p>
+                  <p className="text-label text-(--color-text-secondary) mb-2">Linked tasks</p>
                   <div className="space-y-1">
                     {meeting.tasks.map((t) => (
-                      <div key={t.id} className="flex items-center gap-2 text-sm text-[--color-text-primary]">
+                      <div key={t.id} className="flex items-center gap-2 text-sm text-(--color-text-primary)">
                         <span className="w-2 h-2 rounded-full flex-shrink-0"
                           style={{ backgroundColor: SUBTEAM_COLORS[t.subTeam ?? ""] ?? "#64748B" }} />
                         {t.name}
@@ -422,14 +450,14 @@ function MeetingDialog({
               )}
               {/* Cancel-meeting inline form */}
               {cancelling && (
-                <div className="rounded-md border border-[--color-danger]/30 bg-[--color-danger]/5 p-3 space-y-3">
-                  <p className="text-sm font-medium text-[--color-danger]">Cancel this meeting?</p>
+                <div className="rounded-md border border-(--color-danger)/30 bg-(--color-danger)/5 p-3 space-y-3">
+                  <p className="text-sm font-medium text-(--color-danger)">Cancel this meeting?</p>
                   <input
                     type="text"
                     value={cancelReason}
                     onChange={(e) => setCancelReason(e.target.value)}
                     placeholder="Reason (optional)"
-                    className="h-9 w-full rounded-md border border-[--color-border] bg-[--color-surface] px-3 text-sm text-[--color-text-primary] focus:outline-none focus:border-[--color-primary]"
+                    className="h-9 w-full rounded-md border border-(--color-border) bg-(--color-surface) px-3 text-sm text-(--color-text-primary) focus:outline-none focus:border-(--color-primary)"
                     autoFocus
                   />
                   <div className="flex gap-2">
@@ -463,27 +491,27 @@ function MeetingDialog({
               <div className="grid grid-cols-2 gap-3">
                 {[["Start time","startTime",startTime,setStartTime],["End time","endTime",endTime,setEndTime]].map(([label,,val,setter]:any) => (
                   <div key={label}>
-                    <label className="text-sm font-medium text-[--color-text-primary] block mb-1.5">{label}</label>
+                    <label className="text-sm font-medium text-(--color-text-primary) block mb-1.5">{label}</label>
                     <input type="time" value={val} onChange={(e) => setter(e.target.value)}
-                      className="h-11 w-full rounded-md border border-[--color-border] bg-[--color-surface] px-3 text-sm text-[--color-text-primary] focus:outline-none focus:border-[--color-primary]" />
+                      className="h-11 w-full rounded-md border border-(--color-border) bg-(--color-surface) px-3 text-sm text-(--color-text-primary) focus:outline-none focus:border-(--color-primary)" />
                   </div>
                 ))}
               </div>
               <Textarea label="Agenda / notes" rows={4} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Topics for this meeting..." />
               {allTasks.length > 0 && (
                 <div>
-                  <p className="text-sm font-medium text-[--color-text-primary] mb-2">Link tasks</p>
-                  <div className="max-h-40 overflow-y-auto space-y-0.5 rounded-md border border-[--color-border] p-2">
+                  <p className="text-sm font-medium text-(--color-text-primary) mb-2">Link tasks</p>
+                  <div className="max-h-40 overflow-y-auto space-y-0.5 rounded-md border border-(--color-border) p-2">
                     {allTasks.map((t) => (
                       <label key={t.id} className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer text-sm ${
-                        selectedTasks.includes(t.id) ? "bg-[--color-primary]/10" : "hover:bg-[--color-surface-overlay]"
+                        selectedTasks.includes(t.id) ? "bg-(--color-primary)/10" : "hover:bg-(--color-surface-overlay)"
                       }`}>
                         <input type="checkbox" checked={selectedTasks.includes(t.id)}
                           onChange={(e) => setSelectedTasks(p => e.target.checked ? [...p, t.id] : p.filter(id => id !== t.id))}
                           className="rounded" />
                         <span className="w-2 h-2 rounded-full flex-shrink-0"
                           style={{ backgroundColor: SUBTEAM_COLORS[t.subTeam ?? ""] ?? "#64748B" }} />
-                        <span className="truncate text-[--color-text-primary]">{t.name}</span>
+                        <span className="truncate text-(--color-text-primary)">{t.name}</span>
                       </label>
                     ))}
                   </div>
@@ -528,3 +556,46 @@ function AddMeetingDialog({ defaultDate, onClose, onSave }: {
   );
 }
 
+
+// ── Phones: list of meetings under the grid ─────────────────────────────────
+
+function MobileAgenda({ meetings, heading, onOpen }: {
+  meetings: Meeting[];
+  heading:  string;
+  onOpen:   (m: Meeting) => void;
+}) {
+  const sorted = [...meetings].sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime));
+  return (
+    <section className="mt-4 sm:hidden">
+      <h3 className="text-h3 text-(--color-text-primary) mb-2">{heading}</h3>
+      {sorted.length === 0 ? (
+        <p className="text-small text-(--color-text-secondary)">No meetings.</p>
+      ) : (
+        <ul className="card p-0 divide-y divide-(--color-border) overflow-hidden">
+          {sorted.map((m) => {
+            const d = new Date(m.date);
+            return (
+              <li key={m.id}>
+                <button onClick={() => onOpen(m)} className="flex w-full items-center gap-3 px-3 py-2.5 text-left">
+                  <span className="w-12 shrink-0 text-center leading-tight">
+                    <span className="block text-xs text-(--color-text-secondary)">{d.toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" })}</span>
+                    <span className="block text-base font-semibold text-(--color-text-primary)">{d.getUTCDate()}</span>
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className={`block truncate text-sm font-medium ${m.cancelled ? "line-through text-(--color-text-secondary)" : "text-(--color-text-primary)"}`}>
+                      {m.title ?? "Build meeting"}
+                    </span>
+                    <span className="block text-small text-(--color-text-secondary)">
+                      {fmt12(m.startTime)} – {fmt12(m.endTime)}{m.cancelled ? " · cancelled" : ""}
+                    </span>
+                  </span>
+                  <span aria-hidden className="text-(--color-text-secondary)">›</span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
+}

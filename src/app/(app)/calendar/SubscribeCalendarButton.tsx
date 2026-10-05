@@ -32,7 +32,7 @@ export function SubscribeCalendarButton({ icsUrl }: { icsUrl: string }) {
 
             {/* Google Calendar one-click */}
             <div>
-              <p className="text-label font-medium text-[--color-text-secondary] uppercase tracking-wide mb-2">Google Calendar</p>
+              <p className="text-label font-medium text-(--color-text-secondary) uppercase tracking-wide mb-2">Google Calendar</p>
               <a href={googleUrl} target="_blank" rel="noopener noreferrer">
                 <Button className="w-full gap-2">
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
@@ -45,25 +45,25 @@ export function SubscribeCalendarButton({ icsUrl }: { icsUrl: string }) {
 
             {/* ICS URL for Apple / Outlook */}
             <div>
-              <p className="text-label font-medium text-[--color-text-secondary] uppercase tracking-wide mb-2">
+              <p className="text-label font-medium text-(--color-text-secondary) uppercase tracking-wide mb-2">
                 Apple Calendar / Outlook / other
               </p>
-              <div className="rounded-md border border-[--color-border] bg-[--color-surface-overlay] px-3 py-2.5 flex items-center gap-2">
-                <code className="text-xs text-[--color-text-primary] flex-1 truncate">{icsUrl}</code>
+              <div className="rounded-md border border-(--color-border) bg-(--color-surface-overlay) px-3 py-2.5 flex items-center gap-2">
+                <code className="text-xs text-(--color-text-primary) flex-1 truncate">{icsUrl}</code>
                 <Button variant="outline" size="sm" onClick={copy} className="shrink-0">
                   {copied ? "Copied ✓" : "Copy"}
                 </Button>
               </div>
-              <div className="mt-3 space-y-1.5 text-small text-[--color-text-secondary]">
-                <p><strong className="text-[--color-text-primary]">Apple Calendar:</strong> File → New Calendar Subscription → paste URL</p>
-                <p><strong className="text-[--color-text-primary]">Outlook:</strong> Add calendar → From internet → paste URL</p>
-                <p><strong className="text-[--color-text-primary]">Other:</strong> Look for "Subscribe to calendar" or "Add from URL" and paste the link</p>
+              <div className="mt-3 space-y-1.5 text-small text-(--color-text-secondary)">
+                <p><strong className="text-(--color-text-primary)">Apple Calendar:</strong> File → New Calendar Subscription → paste URL</p>
+                <p><strong className="text-(--color-text-primary)">Outlook:</strong> Add calendar → From internet → paste URL</p>
+                <p><strong className="text-(--color-text-primary)">Other:</strong> Look for "Subscribe to calendar" or "Add from URL" and paste the link</p>
               </div>
             </div>
 
             {/* Download */}
-            <div className="pt-2 border-t border-[--color-border]">
-              <a href={icsUrl} download className="text-small text-[--color-secondary] hover:underline">
+            <div className="pt-2 border-t border-(--color-border)">
+              <a href={icsUrl} download className="text-small text-(--color-secondary) hover:underline">
                 Or download the .ics file to import manually →
               </a>
             </div>
