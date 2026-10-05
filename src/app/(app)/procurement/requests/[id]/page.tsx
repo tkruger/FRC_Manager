@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { statusBadgeVariant, statusLabel } from "@/lib/procurement-helpers";
 import { definitionFor, resolveCurrentStep, availableActions } from "@/lib/workflow/engine";
@@ -14,6 +13,7 @@ import { ItemsTable } from "@/components/orders/ItemsTable";
 import { HelpLink } from "@/components/HelpLink";
 import { RequestActions } from "./RequestActions";
 import { RequestTimeline, type TimelineEntry } from "./RequestTimeline";
+import { ExportCsvButton } from "@/components/orders/ExportCsvButton";
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -103,9 +103,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       <section className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-h2 text-(--color-text-primary)">Items</h2>
-          <a href={`/api/orders/csv?order=${order.id}`} download>
-            <Button size="sm" variant="outline">Export CSV</Button>
-          </a>
+          <ExportCsvButton order={order.id} />
         </div>
         {closed && (
           <p className="text-small text-(--color-text-secondary)">This order was {order.status.toLowerCase()}; its items won&apos;t be ordered.</p>

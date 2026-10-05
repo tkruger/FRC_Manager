@@ -188,7 +188,7 @@ export default function HelpPage() {
           <li><b>Arrival</b> — when a box shows up, anyone can tick the items and tap <b>Mark arrived</b>. Each item is added to inventory (matched by its inventory link, part number or name, or created new) and becomes <b>Arrived</b>.</li>
         </Steps>
         <ul className="list">
-          <li><b>Export CSV</b> on an order, or on the Orders list (for every order on the tab you&apos;re viewing), downloads the items in the same columns, with a header row.</li>
+          <li><b>Export CSV</b> on an order, or on the Orders list (for every order on the tab you&apos;re viewing), downloads the items in the same spreadsheet format (no header row). In the iPhone app it opens in Safari so you can save the file.</li>
           <li>The order moves along by itself: it&apos;s ordered once every item is ordered, and complete once every item has arrived.</li>
           <li>Captains (Team Leadership) and the Team Admin can set any item&apos;s status by hand. Arrived items can&apos;t be changed back, because their stock has already been added.</li>
           <li>Each order page shows a <b>Waiting on</b> banner and a timeline of who did what and when.</li>

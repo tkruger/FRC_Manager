@@ -9,6 +9,7 @@ import { createOrder } from "@/lib/orders/create";
 import { addTracking, setItemStatus, markArrived, toOrderCsv } from "@/lib/orders/items";
 import { lookupProduct, type ProductInfo } from "@/lib/orders/lookup";
 import { ORDER_ADMIN_ROLES, STATUS_OVERRIDE_ROLES } from "@/lib/orders/constants";
+import { createExportToken } from "@/lib/orders/export-token";
 
 type Result<T = object> = ({ success: true } & T) | { success: false; error: string };
 
@@ -125,4 +126,23 @@ export async function exportToOrderCsvAction(opts: { itemIds?: string[]; onlyNew
   const res = await toOrderCsv(who.teamId, { itemIds: opts.itemIds, onlyNew: opts.onlyNew, markExported: true });
   refresh();
   return { success: true, ...res };
+}
+
+/**
+ * A short-lived link to a CSV export that works without a login — the iPhone
+ * home-screen app opens it in Safari, which can download files.
+ */
+export async function createOrderExportLinkAction(scope: { order?: string; view?: string }): Promise<Result<{ path: string }>> {
+  const who = await actor();
+  if (!who) return { success: false, error: "Not authenticated." };
+
+  const view = z.enum(["open", "mine", "all"]).catch("open").parse(scope.view);
+  if (scope.order) {
+    const owned = await prisma.purchaseRequest.findFirst({
+      where: { id: scope.order, season: { teamId: who.teamId } }, select: { id: true },
+    });
+    if (!owned) return { success: false, error: "Order not found." };
+  }
+  const token = createExportToken({ userId: who.id, teamId: who.teamId, ...(scope.order ? { order: scope.order } : { view }) });
+  return { success: true, path: `/api/orders/csv?token=${encodeURIComponent(token)}` };
 }

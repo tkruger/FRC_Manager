@@ -9,6 +9,7 @@ import { statusBadgeVariant, statusLabel } from "@/lib/procurement-helpers";
 import { definitionFor, resolveCurrentStep } from "@/lib/workflow/engine";
 import { ITEM_STATUSES, ITEM_STATUS_INFO, ORDER_ADMIN_ROLES } from "@/lib/orders/constants";
 import { HelpLink } from "@/components/HelpLink";
+import { ExportCsvButton } from "@/components/orders/ExportCsvButton";
 
 const OPEN = ["SUBMITTED", "APPROVED", "ORDERED", "PARTIAL_RECEIVED"] as const;
 
@@ -85,9 +86,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         </div>
         <div className="flex flex-wrap gap-2">
           {isAdmin && <Link href="/procurement/admin"><Button variant="secondary" size="sm">Team Admin</Button></Link>}
-          <a href={`/api/orders/csv?view=${view}`} download title="Every order on this tab, one item per line">
-            <Button variant="outline" size="sm">Export CSV</Button>
-          </a>
+          <ExportCsvButton view={view} title="Every order on this tab, one item per line" />
           <Link href="/procurement/vendors"><Button variant="outline" size="sm">Vendors</Button></Link>
           <Link href="/procurement/requests/new"><Button size="sm">+ New order</Button></Link>
         </div>

@@ -24,6 +24,10 @@ export default auth((req) => {
   const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
   if (isPublic) return NextResponse.next();
 
+  // CSV exports opened in Safari from the iPhone app carry a signed, short-lived
+  // token instead of a login (the route verifies it)
+  if (pathname === "/api/orders/csv" && req.nextUrl.searchParams.has("token")) return NextResponse.next();
+
   if (!req.auth) {
     const loginUrl = new URL("/login", req.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
