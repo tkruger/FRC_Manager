@@ -157,7 +157,7 @@ model Team {
   /// Next number for auto-assigned tool asset tags (TOOL-0001, …)
   nextToolNumber Int      @default(1)
   /// Next sequential order item ID (0001, 0002, …)
-  nextOrderItemNumber Int @default(1)
+  nextOrderItemNumber Int @default(401)
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

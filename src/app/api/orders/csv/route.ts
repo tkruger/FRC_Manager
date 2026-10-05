@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import type { Prisma, PurchaseStatus } from "@/generated/prisma";
 import { CSV_ITEM_SELECT, itemsToCsv } from "@/lib/orders/items";
 
-// Download orders as CSV in the purchasing spreadsheet's format (no header row):
+// Download orders as CSV in the purchasing spreadsheet format, with a header row:
 // #XXXX, Vendor, Part Name, Link, Unit Price, Qty, Order Notes, Order Date.
 //   ?order=<id>                 one order's items
 //   ?view=open|mine|all         every order on that Orders tab (active season)
@@ -44,7 +44,7 @@ export async function GET(req: Request) {
     orderBy: [{ orderNumber: "asc" }, { id: "asc" }],
   });
 
-  return new Response(itemsToCsv(items) + "\n", {
+  return new Response(itemsToCsv(items, { header: true }) + "\n", {
     headers: {
       "Content-Type":        "text/csv; charset=utf-8",
       "Content-Disposition": `attachment; filename="${filename}-${new Date().toISOString().slice(0, 10)}.csv"`,

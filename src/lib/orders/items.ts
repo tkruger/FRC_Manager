@@ -201,12 +201,14 @@ export const CSV_ITEM_SELECT = {
 type CsvItem = Prisma.PurchaseLineItemGetPayload<{ select: typeof CSV_ITEM_SELECT }>;
 
 /**
- * The purchasing spreadsheet's format — no header row, one item per line:
+ * The purchasing spreadsheet's format, one item per line (header row optional):
  * #XXXX (item ID), Vendor, Part Name, Link, Unit Price, Qty, Order Notes, Order Date.
  * Used by the Team Admin export and the order exports, so they always match.
  */
-export function itemsToCsv(items: CsvItem[]): string {
-  return items.map((i) => [
+export const CSV_HEADER = ["ID", "Vendor", "Part Name", "Link", "Unit Price", "Qty", "Order Notes", "Order Date"];
+
+export function itemsToCsv(items: CsvItem[], opts: { header?: boolean } = {}): string {
+  const rows = items.map((i) => [
     `#${formatItemId(i.orderNumber)}`,
     i.vendorName ?? "",
     i.name,
@@ -215,7 +217,8 @@ export function itemsToCsv(items: CsvItem[]): string {
     i.quantity,
     i.notes ?? "",
     i.request.submittedAt.toISOString().slice(0, 10),
-  ].map(csvCell).join(",")).join("\n");
+  ].map(csvCell).join(","));
+  return (opts.header ? [CSV_HEADER.join(","), ...rows] : rows).join("\n");
 }
 
 /** "To order" items for the Team Admin, in the spreadsheet format above. */

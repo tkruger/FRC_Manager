@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { HelpTopic } from "@/components/HelpLink";
+import { HelpBadge, type HelpTopic } from "@/components/HelpLink";
 
 export const metadata = { title: "Help & guide — FRC Manager" };
 
@@ -28,7 +28,7 @@ export default function HelpPage() {
       <div>
         <h1 className="text-h1 text-(--color-text-primary)">Help &amp; guide</h1>
         <p className="text-body text-(--color-text-secondary) mt-1">
-          How FRC Manager works, section by section. Look for the <HelpBadge /> icon on a page to jump straight to its part of this guide.
+          How FRC Manager works, section by section. Tap the <HelpBadge /> button on a page to jump straight to its part of this guide.
         </p>
       </div>
 
@@ -188,7 +188,7 @@ export default function HelpPage() {
           <li><b>Arrival</b> — when a box shows up, anyone can tick the items and tap <b>Mark arrived</b>. Each item is added to inventory (matched by its inventory link, part number or name, or created new) and becomes <b>Arrived</b>.</li>
         </Steps>
         <ul className="list">
-          <li><b>Export CSV</b> on an order, or on the Orders list (for every order on the tab you&apos;re viewing), downloads the items in the same spreadsheet format.</li>
+          <li><b>Export CSV</b> on an order, or on the Orders list (for every order on the tab you&apos;re viewing), downloads the items in the same columns, with a header row.</li>
           <li>The order moves along by itself: it&apos;s ordered once every item is ordered, and complete once every item has arrived.</li>
           <li>Captains (Team Leadership) and the Team Admin can set any item&apos;s status by hand. Arrived items can&apos;t be changed back, because their stock has already been added.</li>
           <li>Each order page shows a <b>Waiting on</b> banner and a timeline of who did what and when.</li>
@@ -329,11 +329,5 @@ function Table({ head, rows }: { head: string[]; rows: string[][] }) {
         </tbody>
       </table>
     </div>
-  );
-}
-
-function HelpBadge() {
-  return (
-    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-(--color-border-strong) text-xs font-bold align-middle">?</span>
   );
 }

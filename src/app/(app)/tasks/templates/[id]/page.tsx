@@ -56,9 +56,7 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
             <Button variant="outline" size="sm">Download CSV</Button>
           </a>
           {isMentor && <TemplateCSVImport templateId={id} />}
-          <span className="ml-auto inline-flex items-center gap-1.5 text-small text-(--color-text-secondary)">
-            How templates work <HelpLink topic="templates" label="How templates work" />
-          </span>
+          <span className="ml-auto"><HelpLink topic="templates" label="How templates work" /></span>
         </div>
 
         {isMentor
