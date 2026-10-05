@@ -96,7 +96,7 @@ export function PushPrompt({ vapidPublicKey }: { vapidPublicKey: string | null }
             <>
               <p>Get a heads-up on this device when something needs you:</p>
               <ul className="list-disc pl-5 space-y-1 text-(--color-text-secondary)">
-                <li>purchase requests waiting on your approval</li>
+                <li>orders waiting on your approval</li>
                 <li>meeting reminders and schedule changes</li>
                 <li>tasks you&apos;re assigned, and ones coming due</li>
                 <li>a countdown to each competition</li>

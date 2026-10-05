@@ -36,7 +36,7 @@ export function VersionHistory({ versions, canEdit }: { versions: Version[]; can
       <div>
         <h2 className="text-h3 text-(--color-text-primary)">Version history</h2>
         <p className="text-small text-(--color-text-secondary)">
-          Saving creates a new version. Requests keep following the version they started on.
+          Saving creates a new version. Orders keep following the version they started on.
         </p>
       </div>
       {error && <p className="text-sm text-(--color-danger)">{error}</p>}
@@ -47,7 +47,7 @@ export function VersionHistory({ versions, canEdit }: { versions: Version[]; can
               <span className="text-sm font-medium text-(--color-text-primary)">Version {v.version}</span>
               {v.isActive && <Badge variant="success">Active</Badge>}
               <span className="text-small text-(--color-text-secondary) truncate">
-                {formatDate(new Date(v.createdAt))}{v.createdBy && ` · ${v.createdBy}`} · {v.requests} request{v.requests === 1 ? "" : "s"}
+                {formatDate(new Date(v.createdAt))}{v.createdBy && ` · ${v.createdBy}`} · {v.requests} order{v.requests === 1 ? "" : "s"}
               </span>
             </div>
             {canEdit && !v.isActive && (

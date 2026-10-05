@@ -18,23 +18,23 @@ export const TOPICS = [
   // Procurement
   {
     id: "purchase.action_needed", group: "Purchasing",
-    label: "Requests waiting on you",
-    description: "A purchase request reaches a step you can act on (approve, order, receive).",
+    label: "Orders waiting on you",
+    description: "An order reaches a step you can act on (approve, order, receive).",
     audience: "Roles assigned to that step in the purchase workflow",
     defaultInApp: true, defaultPush: true,
   },
   {
     id: "purchase.reminders", group: "Purchasing",
     label: "Reminders until you act",
-    description: "Repeats while a request is still waiting on you — daily for routine requests, every few hours for urgent and emergency ones.",
+    description: "Repeats while an order is still waiting on you — daily for routine orders, every few hours for urgent and emergency ones.",
     audience: "Roles assigned to that step in the purchase workflow",
     defaultInApp: false, defaultPush: true,
   },
   {
     id: "purchase.my_requests", group: "Purchasing",
-    label: "Updates on my requests",
-    description: "Your request is approved, denied, ordered, delivered or cancelled.",
-    audience: "The person who submitted the request",
+    label: "Updates on my orders",
+    description: "Your order is approved, denied, ordered, delivered or cancelled.",
+    audience: "The person who submitted the order",
     defaultInApp: true, defaultPush: true,
   },
   {

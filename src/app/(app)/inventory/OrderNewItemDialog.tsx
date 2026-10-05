@@ -77,7 +77,7 @@ function NewItemForm({ onDone }: { onDone: () => void }) {
     <form action={action} className="space-y-4">
       <p className="text-small text-(--color-text-secondary)">
         For things not in inventory yet. This adds the item to inventory with 0 in stock, puts it in the
-        order queue and sends the purchase request. If an item with this name already exists, it&apos;s used instead.
+        order queue and sends the order. If an item with this name already exists, it&apos;s used instead.
       </p>
 
       {state && !state.success && (

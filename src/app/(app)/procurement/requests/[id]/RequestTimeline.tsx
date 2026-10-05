@@ -33,20 +33,20 @@ const DOT: Record<string, string> = {
 function headline(e: TimelineEntry): string {
   const who = e.actor ?? "Someone";
   switch (e.action) {
-    case "created":   return `${who} submitted the request`;
+    case "created":   return `${who} submitted the order`;
     case "entered":   return `Waiting on ${e.stepName}`;
     case "skipped":   return `${e.stepName} skipped`;
     case "approve":   return `${who} approved (${e.stepName})`;
-    case "deny":      return `${who} denied the request (${e.stepName})`;
+    case "deny":      return `${who} denied the order (${e.stepName})`;
     case "order": {
       const conf  = e.data?.orderConfirmation ? ` · #${e.data.orderConfirmation}` : "";
       const total = typeof e.data?.actualTotal === "number" ? ` · ${formatCurrency(e.data.actualTotal)}` : "";
       return `${who} placed the order${conf}${total}`;
     }
     case "receive":   return `${who} confirmed delivery`;
-    case "cancel":    return `${who} cancelled the request`;
+    case "cancel":    return `${who} cancelled the order`;
     case "effect":    return e.note ?? "Updated";
-    case "completed": return "Request complete";
+    case "completed": return "Order complete";
     default:          return e.action;
   }
 }

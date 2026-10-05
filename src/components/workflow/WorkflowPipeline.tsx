@@ -29,14 +29,14 @@ export function WorkflowPipeline({ def, counts }: Props) {
       <Stage
         index="start"
         accent="#64748B"
-        title="Request is raised"
+        title="Order is placed"
         badge="Trigger"
       >
         <Detail label="How">
           {def.trigger.autoReorder
-            ? "Automatically: when an item's stock falls to or below its minimum, it is added to the inventory order queue. Someone then turns it into a purchase request with one click."
+            ? "Automatically: when an item's stock falls to or below its minimum, it is added to the inventory order queue. Someone then turns it into an order with one click."
             : "Automatic reorders are off — low stock does not add items to the order queue."}
-          {" "}Anyone on the team can also order an item from inventory (including one that isn&apos;t tracked yet, which adds it with 0 in stock) or submit a purchase request directly.
+          {" "}Anyone on the team can also order an item from inventory (including one that isn&apos;t tracked yet, which adds it with 0 in stock) or place an order directly.
         </Detail>
         {def.trigger.autoReorder && (
           <Detail label="Notifies">
@@ -51,12 +51,12 @@ export function WorkflowPipeline({ def, counts }: Props) {
 
       <Stage index="end" accent="#1A7F4B" title="Done" badge="Complete">
         <Detail label="Result">
-          The request is closed as Received.
+          The order is closed as Received.
           {def.steps.some((s) => s.effects.addStock) && " Stock levels reflect the delivery."}
           {def.steps.some((s) => s.effects.recordExpense) && " The budget shows the actual spend."}
         </Detail>
         <Detail label="Reminders">
-          Whoever a request is waiting on is reminded every {hours(def.reminders.routineHours)} for routine requests and
+          Whoever an order is waiting on is reminded every {hours(def.reminders.routineHours)} for routine orders and
           every {hours(def.reminders.urgentHours)} for urgent or emergency ones, until someone acts. People can opt out in their notification settings.
         </Detail>
         <Detail label="Other endings">
@@ -95,7 +95,7 @@ function StepStage({ step, number, count }: { step: WorkflowStep; number: number
       <Detail label="Who acts">
         {STEP_TYPE_DISPLAY[step.type].verb}: {describeRoles(step.roles)}
         {!step.roles.includes("HEAD_MENTOR") && " (Head Mentor can always act)"}
-        {step.type === "approval" && step.allowSelfApproval === false && ". Requesters can't approve their own request"}
+        {step.type === "approval" && step.allowSelfApproval === false && ". Requesters can't approve their own order"}
       </Detail>
       <Detail label="Applies">
         {cond ? <>Only when {cond}. Otherwise <span className="font-medium">skipped automatically</span>.</> : "Always"}

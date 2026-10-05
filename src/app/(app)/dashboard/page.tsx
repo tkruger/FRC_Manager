@@ -133,7 +133,7 @@ export default async function DashboardPage() {
           { title: "Tasks",         href: "/tasks",           desc: "Kanban & build schedule", color: "#DC2626",              icon: "✅" },
           { title: "Tools",         href: "/tools",           desc: "Checkout & maintenance",  color: "#7C3AED",              icon: "🔧" },
           { title: "Inventory",     href: "/inventory",       desc: "Parts & materials",       color: "var(--color-secondary)", icon: "📦" },
-          { title: "Procurement",   href: "/procurement",     desc: "Orders & requests",       color: "#059669",              icon: "🛒" },
+          { title: "Procurement",   href: "/procurement",     desc: "Orders & purchasing",       color: "#059669",              icon: "🛒" },
           { title: "Budget",        href: "/budget",          desc: "Spend & BOM tracking",    color: "#D97706",              icon: "💰" },
           { title: "Fleet",         href: "/fleet",           desc: "Manage your robots",      color: "var(--color-primary)", icon: "🤖" },
           { title: "Safety",        href: "/safety",          desc: "Certs & checklists",      color: "#0891B2",              icon: "🛡️" },

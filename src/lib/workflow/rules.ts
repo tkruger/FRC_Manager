@@ -71,7 +71,7 @@ export function availableActions(
   // Cancelling is possible until the order is placed: by the requester, anyone who
   // can act on the current step, or a Head Mentor.
   if (step.type !== "receive" && (canAct || actor.id === r.requestedById || actor.roles.includes("HEAD_MENTOR"))) {
-    actions.push({ action: "cancel", stepKey: step.key, label: "Cancel request" });
+    actions.push({ action: "cancel", stepKey: step.key, label: "Cancel order" });
   }
   return actions;
 }

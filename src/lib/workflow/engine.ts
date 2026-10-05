@@ -270,7 +270,7 @@ export async function performAction(
   const def  = await definitionFor(r.workflowDefinitionId);
   const step = resolveCurrentStep(def, r);
   if (!step || step.key !== stepKey) {
-    return { success: false, error: "This request has already moved on. Refresh to see its current state." };
+    return { success: false, error: "This order has already moved on. Refresh to see its current state." };
   }
   if (!opts.system && !availableActions(def, r, actor).some((a) => a.action === action)) {
     return { success: false, error: "You don't have permission to do that at this step." };
@@ -319,7 +319,7 @@ export async function performAction(
           if (step.notify.requester) {
             outbox.push(() => createNotification({
               topic: "purchase.my_requests", userId: r.requestedById, type: "PURCHASE_DENIED",
-              title: `Purchase request denied: "${r.title}"`, body: input.note || undefined, linkUrl: link,
+              title: `Order denied: "${r.title}"`, body: input.note || undefined, linkUrl: link,
             }));
           }
           if (step.notify.discord) {
@@ -386,7 +386,7 @@ export async function performAction(
           if (actor.id !== r.requestedById) {
             outbox.push(() => createNotification({
               topic: "purchase.my_requests", userId: r.requestedById, type: "PURCHASE_DENIED",
-              title: `Purchase request cancelled: "${r.title}"`, body: input.note || undefined, linkUrl: link,
+              title: `Order cancelled: "${r.title}"`, body: input.note || undefined, linkUrl: link,
             }));
           }
           break;
@@ -395,7 +395,7 @@ export async function performAction(
     });
   } catch (e) {
     if (e instanceof StaleError) {
-      return { success: false, error: "This request was just updated by someone else. Refresh to see its current state." };
+      return { success: false, error: "This order was just updated by someone else. Refresh to see its current state." };
     }
     throw e;
   }
@@ -418,7 +418,7 @@ export async function performCurrentStepAction(
   });
   if (!r) return { success: false, error: "Request not found." };
   const step = resolveCurrentStep(await definitionFor(r.workflowDefinitionId), r);
-  if (!step) return { success: false, error: "This request is already closed." };
+  if (!step) return { success: false, error: "This order is already closed." };
   const result = await performAction(requestId, step.key, action, actor, input, opts);
   return { ...result, stepName: step.name };
 }

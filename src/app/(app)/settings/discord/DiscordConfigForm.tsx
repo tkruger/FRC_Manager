@@ -10,7 +10,7 @@ import { toast } from "@/components/ui/toast";
 
 const CHANNEL_FIELDS = [
   { name: "channelBuildAlerts", label: "Build alerts channel ID",  hint: "#build-alerts — task overdue, critical issues, weight warnings" },
-  { name: "channelOrders",      label: "Orders channel ID",        hint: "#orders — purchase requests submitted, approved, received" },
+  { name: "channelOrders",      label: "Orders channel ID",        hint: "#orders — orders submitted, approved, received" },
   { name: "channelInventory",   label: "Inventory channel ID",     hint: "#inventory-alerts — items below threshold" },
   { name: "channelTasks",       label: "Tasks channel ID",         hint: "#build-updates — task assignments" },
   { name: "channelSafety",      label: "Safety channel ID",        hint: "#safety — incident reports" },

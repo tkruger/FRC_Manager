@@ -63,7 +63,7 @@ export default async function WorkflowSettingsPage() {
             ? <>Version {active.version} · saved {formatDate(active.createdAt)}{active.createdBy && ` by ${active.createdBy}`}</>
             : "Using the default workflow"}
           {onOlderVersions > 0 && (
-            <> · {onOlderVersions} open request{onOlderVersions === 1 ? " is" : "s are"} still following an earlier version</>
+            <> · {onOlderVersions} open order{onOlderVersions === 1 ? " is" : "s are"} still following an earlier version</>
           )}
         </p>
       </div>

@@ -28,7 +28,7 @@ export async function notifyPurchaseSubmitted(teamId: string, title: string, est
   const isEmergency = priority === "EMERGENCY";
   await postToChannel(teamId, "channelOrders", [
     embed({
-      title: `${isEmergency ? "🚨" : "📋"} Purchase Request ${isEmergency ? "EMERGENCY" : "Submitted"}`,
+      title: isEmergency ? "🚨 EMERGENCY Order" : "📋 Order Submitted",
       description: `**${title}** — Est. $${estimatedTotal.toFixed(2)}`,
       fields: [{ name: "Priority", value: priority, inline: true }],
       color: isEmergency ? COLORS.danger : COLORS.warning,
@@ -42,7 +42,7 @@ export async function notifyPurchaseApproved(teamId: string, requestedById: stri
     if (discordId) {
       await sendDM(discordId, null, [
         embed({
-          title: "✅ Purchase Request Approved",
+          title: "✅ Order Approved",
           description: `**${title}** was approved by **${approverName}**.`,
           color: COLORS.success,
         }),
@@ -50,7 +50,7 @@ export async function notifyPurchaseApproved(teamId: string, requestedById: stri
     }
     // Also post to orders channel
     await postToChannel(teamId, "channelOrders", [
-      embed({ title: "✅ Request Approved", description: `**${title}** — approved by ${approverName}`, color: COLORS.success }),
+      embed({ title: "✅ Order Approved", description: `**${title}** — approved by ${approverName}`, color: COLORS.success }),
     ]);
   } catch { /* best-effort */ }
 }
@@ -61,7 +61,7 @@ export async function notifyPurchaseDenied(teamId: string, requestedById: string
     if (discordId) {
       await sendDM(discordId, null, [
         embed({
-          title: "❌ Purchase Request Denied",
+          title: "❌ Order Denied",
           description: `**${title}**${reason ? `\nReason: ${reason}` : ""}`,
           color: COLORS.danger,
         }),
@@ -72,7 +72,7 @@ export async function notifyPurchaseDenied(teamId: string, requestedById: string
 
 export async function notifyPurchaseProgress(teamId: string, title: string, detail: string) {
   await postToChannel(teamId, "channelOrders", [
-    embed({ title: "📦 Purchase Update", description: `**${title}** — ${detail}`, color: COLORS.info }),
+    embed({ title: "📦 Order Update", description: `**${title}** — ${detail}`, color: COLORS.info }),
   ]);
 }
 

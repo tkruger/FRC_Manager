@@ -124,11 +124,11 @@ export function WorkflowEditor({ def, counts, isCustom }: Props) {
     <div className="space-y-4">
       <div className="card py-3 px-4 text-small text-(--color-text-secondary)">
         A workflow is: any number of <b>approval</b> steps (each can apply only in certain cases), then <b>Place order</b>,
-        then <b>Receive</b>. Changes apply to new requests only.
+        then <b>Receive</b>. Changes apply to new orders only.
       </div>
 
       {/* Trigger */}
-      <EditorCard title="Request is raised" badge="Trigger">
+      <EditorCard title="Order is placed" badge="Trigger">
         <Check
           label="Automatically add items to the order queue when stock falls to or below their minimum"
           checked={draft.trigger.autoReorder}
@@ -175,7 +175,7 @@ export function WorkflowEditor({ def, counts, isCustom }: Props) {
       {/* Reminders */}
       <EditorCard title="Reminders" badge="Until someone acts">
         <div className="grid gap-3 sm:grid-cols-2">
-          <FieldRow label="Routine requests — remind every (hours)">
+          <FieldRow label="Routine orders — remind every (hours)">
             <input type="number" min={1} max={168} className={inputCls} value={draft.reminders.routineHours}
               onChange={(e) => setDraft((d) => ({ ...d, reminders: { ...d.reminders, routineHours: clampHours(e.target.value) } }))} />
           </FieldRow>
@@ -229,14 +229,14 @@ function StepEditor({
         <>
           <ConditionEditor value={step.when ?? null} onChange={(when) => onChange({ when })} />
           <Check
-            label="Requesters may approve their own request"
+            label="Requesters may approve their own order"
             checked={step.allowSelfApproval !== false}
             onChange={(v) => onChange({ allowSelfApproval: v })}
           />
         </>
       )}
 
-      <FieldRow label="Notify when a request reaches this step">
+      <FieldRow label="Notify when an order reaches this step">
         <RoleChips value={step.notify.roles} onChange={(roles) => onChange({ notify: { ...step.notify, roles } })} />
       </FieldRow>
       <div className="flex flex-wrap gap-x-6 gap-y-2">

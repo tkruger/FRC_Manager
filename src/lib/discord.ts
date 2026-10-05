@@ -256,9 +256,9 @@ export const SLASH_COMMANDS = [
   },
 
   // Orders
-  { name: "order", description: "Purchase requests",
+  { name: "order", description: "Orders",
     options: [
-      { name: "request", description: "Submit a purchase request", type: 1,
+      { name: "request", description: "Submit an order", type: 1,
         options: [
           { name: "item",   description: "Item name",   type: 3, required: true },
           { name: "qty",    description: "Quantity",    type: 4, required: true },
@@ -266,14 +266,14 @@ export const SLASH_COMMANDS = [
           { name: "cost",   description: "Unit cost ($)", type: 10, required: true },
           { name: "reason", description: "Why is this needed?", type: 3, required: true },
         ]},
-      { name: "status",  description: "Check status of your requests", type: 1 },
+      { name: "status",  description: "Check status of your orders", type: 1 },
       { name: "pending", description: "Orders awaiting approval (with their numbers) and items waiting to be ordered", type: 1 },
-      { name: "approve", description: "Approve a purchase request", type: 1,
+      { name: "approve", description: "Approve an order", type: 1,
         options: [
           { name: "id",    description: "Number from /order pending", type: 4, required: true },
           { name: "notes", description: "Optional approval notes", type: 3, required: false },
         ]},
-      { name: "deny", description: "Deny a purchase request", type: 1,
+      { name: "deny", description: "Deny an order", type: 1,
         options: [
           { name: "id",     description: "Number from /order pending", type: 4, required: true },
           { name: "reason", description: "Reason for denial", type: 3, required: true },

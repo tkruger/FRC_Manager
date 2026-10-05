@@ -147,10 +147,10 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
                 {r.purchaseRequest ? (
                   <Link href={`/procurement/requests/${r.purchaseRequest.id}`} className="flex items-center gap-2 hover:underline">
                     <Badge variant={statusBadgeVariant(r.purchaseRequest.status)}>{statusLabel(r.purchaseRequest.status)}</Badge>
-                    <span className="text-small text-(--color-secondary)">View request</span>
+                    <span className="text-small text-(--color-secondary)">View order</span>
                   </Link>
                 ) : (
-                  <Badge variant="warning">Needs a request</Badge>
+                  <Badge variant="warning">Needs an order</Badge>
                 )}
               </div>
             </div>

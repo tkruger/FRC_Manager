@@ -718,20 +718,18 @@ export async function handleOrderStatus(ctx: InteractionContext): Promise<Respon
     take: 10,
   });
 
-  if (requests.length === 0) return ephemeralReply("You have no open purchase requests.");
+  if (requests.length === 0) return ephemeralReply("You have no open orders.");
 
   const STATUS_EMOJI: Record<string, string> = {
     DRAFT: "📝", SUBMITTED: "⏳", APPROVED: "✅", DENIED: "❌",
     ORDERED: "📦", PARTIAL_RECEIVED: "🔄", RECEIVED: "✅",
   };
 
-  const lines = requests.map((r) => {
-    const ref = `PR-${r.id.slice(-6).toUpperCase()}`;
-    return `${STATUS_EMOJI[r.status] ?? "•"} **${r.title}** — ${r.status} | $${(r.estimatedTotal ?? 0).toFixed(2)} | ${ref}`;
-  });
+  const lines = requests.map((r) =>
+    `${STATUS_EMOJI[r.status] ?? "•"} **${r.title}** — ${r.status.replace("_", " ").toLowerCase()} · ${(r.estimatedTotal ?? 0).toFixed(2)}`);
 
   return ephemeralReply(null, [
-    embed({ title: "📋 Your Purchase Requests", description: lines.join("\n"), color: COLORS.info }),
+    embed({ title: "📋 Your Orders", description: lines.join("\n"), color: COLORS.info }),
   ]);
 }
 

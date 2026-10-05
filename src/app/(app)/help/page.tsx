@@ -149,14 +149,14 @@ export default function HelpPage() {
           <li><b>All items</b> lists the team&apos;s stock. Taking something for a robot (<b>Acquire</b>) reduces the stock count.</li>
           <li>Each item can have a <b>minimum</b>. When stock falls to or below it, the item goes into the <b>order queue</b> automatically.</li>
           <li><b>Low stock</b> shows items at or below their minimum, with an <b>Order</b> button.</li>
-          <li>The <b>Order queue</b> shows everything that needs ordering or is on its way, and where each request is. Items stay there until the delivery is received.</li>
+          <li>The <b>Order queue</b> shows everything that needs ordering or is on its way, and where each order is. Items stay there until the delivery is received.</li>
         </ul>
         <H3>Ordering something</H3>
         <Steps>
-          <li><b>Item already in inventory:</b> tap <b>Order</b>, set the quantity, priority and reason, and submit. You&apos;ll see where the request went and a link to it.</li>
-          <li><b>Something new:</b> tap <b>+ Order a new item</b>. It&apos;s added to inventory with 0 in stock, put in the order queue, and the purchase request is sent — all in one go. If an item with the same name already exists, that one is used.</li>
+          <li><b>Item already in inventory:</b> tap <b>Order</b>, set the quantity, priority and reason, and submit. You&apos;ll see where the order went and a link to it.</li>
+          <li><b>Something new:</b> tap <b>+ Order a new item</b>. It&apos;s added to inventory with 0 in stock, put in the order queue, and the order is sent — all in one go. If an item with the same name already exists, that one is used.</li>
         </Steps>
-        <p>An item that&apos;s already on an open request can&apos;t be requested again — open the existing request from the order queue instead.</p>
+        <p>An item that&apos;s already on an open order can&apos;t be ordered again — open the existing order from the order queue instead.</p>
       </Section>
 
       <Section id="purchasing" title="Orders">
@@ -262,7 +262,7 @@ export default function HelpPage() {
         <H3>Quiet hours &amp; time zone</H3>
         <p>
           No push notifications arrive during your quiet hours (9 PM–7 AM unless you change them); reminders wait until they end.
-          Emergency purchase requests and serious safety incidents still come through. Daily digests arrive around 8 AM in your
+          Emergency orders and serious safety incidents still come through. Daily digests arrive around 8 AM in your
           time zone. Meeting times use the team time zone, which Head Mentors and Team Leadership set on the same page.
         </p>
       </Section>
@@ -289,7 +289,7 @@ export default function HelpPage() {
         <ul className="list">
           <li>Team Leadership connects the team&apos;s Discord server in <b>Settings → Discord</b>.</li>
           <li>Run <code>/link</code> in Discord to connect your account, then use commands such as <code>/tasks mine</code>, <code>/task done</code>, <code>/milestone next</code>, <code>/tool checkout</code>, <code>/stock check</code> and <code>/order request</code>. <code>/help</code> lists them all.</li>
-          <li>Purchase requests follow the same workflow and permissions in Discord as in the app.</li>
+          <li>Orders follow the same workflow and permissions in Discord as in the app.</li>
         </ul>
       </Section>
     </div>

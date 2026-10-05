@@ -88,7 +88,7 @@ export function ReorderButton({ itemId, itemName, reorderQty, unitCost, supplier
               />
 
               <div className="flex gap-2 pt-1">
-                <Button type="submit" isLoading={isPending}>Submit purchase request</Button>
+                <Button type="submit" isLoading={isPending}>Submit order</Button>
                 <DialogClose asChild>
                   <Button type="button" variant="outline">Cancel</Button>
                 </DialogClose>
