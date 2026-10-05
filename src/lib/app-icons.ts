@@ -13,6 +13,10 @@ export const APP_ICONS = [
   { id: "05_duotone_orange",             label: "Duotone — orange" },
   { id: "07_silhouette_white_on_orange", label: "Silhouette — white on orange" },
   { id: "08_front_closeup",              label: "Front close-up" },
+  { id: "09_red_bumpers_charcoal",       label: "Red bumpers — charcoal" },
+  { id: "10_red_bumpers_studio",         label: "Red bumpers — studio" },
+  { id: "11_blue_bumpers_charcoal",      label: "Blue bumpers — charcoal" },
+  { id: "12_blue_bumpers_studio",        label: "Blue bumpers — studio" },
 ] as const;
 
 export type AppIconId = (typeof APP_ICONS)[number]["id"];
