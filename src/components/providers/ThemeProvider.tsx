@@ -95,6 +95,9 @@ export function ThemeProvider({ children, initialMode = "AUTO_SYSTEM" }: Props) 
     const resolved = resolveTheme(m);
     setResolved(resolved);
     document.documentElement.setAttribute("data-theme", resolved === "dark" ? "dark" : "");
+    // Status bar / browser chrome colour follows the app theme, not just the system one
+    document.querySelectorAll('meta[name="theme-color"]').forEach((m) =>
+      m.setAttribute("content", resolved === "dark" ? "#080A10" : "#FFFFFF"));
   }
 
   function setMode(m: DisplayMode) {
