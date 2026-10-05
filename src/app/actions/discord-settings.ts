@@ -88,3 +88,51 @@ export async function revokeDiscordLinkAction(linkId: string): Promise<{ success
   revalidatePath("/settings/discord");
   return { success: true };
 }
+
+// ── Test message ──────────────────────────────────────────────────────────────
+
+const TEST_MESSAGE = "Thank you for installing the FRC Manager, this message means I am installed and ready to go!";
+
+/** Why Discord refused, in plain words (from its JSON error codes). */
+function explainDiscordError(message: string): string {
+  const code = Number(message.match(/"code":\s*(\d+)/)?.[1]);
+  if (message.includes("DISCORD_BOT_TOKEN")) return "The bot token isn't set (DISCORD_BOT_TOKEN in Vercel).";
+  if (message.startsWith("Discord API 401")) return "Discord rejected the bot token — check DISCORD_BOT_TOKEN in Vercel.";
+  switch (code) {
+    case 10003: return "That channel ID doesn't exist — check the channel IDs below.";
+    case 10004: return "The bot isn't in that server — invite it, and check the Guild ID.";
+    case 50001: return "The bot can't see that channel — give it View Channels there.";
+    case 50013: return "The bot is missing permissions in that channel — it needs View Channels, Send Messages and Embed Links.";
+    default:    return message;
+  }
+}
+
+/**
+ * Post a test message to the team's server: the General channel, else the first
+ * configured channel, else the server's system channel.
+ */
+export async function sendDiscordTestAction(): Promise<{ success: true; channel: string } | { success: false; error: string }> {
+  let session;
+  try { session = await requireAdmin(); } catch (e: any) { return { success: false, error: e.message }; }
+
+  const config = await prisma.discordConfig.findUnique({ where: { teamId: session.user.teamId! } });
+  if (!config) return { success: false, error: "Connect a Discord server first." };
+
+  const { discordRequest, sendChannelMessage } = await import("@/lib/discord");
+  try {
+    let channelId =
+      config.channelGeneral || config.channelBuildAlerts || config.channelOrders || config.channelTasks ||
+      config.channelInventory || config.channelSafety || config.channelMilestones || config.dailySummaryChannel || null;
+    if (!channelId) {
+      const guild = await discordRequest(`/guilds/${config.guildId}`);
+      channelId = guild?.system_channel_id ?? null;
+    }
+    if (!channelId) return { success: false, error: "No channel to post in — add a channel ID below (General is used first)." };
+
+    await sendChannelMessage(channelId, TEST_MESSAGE);
+    const channel = await discordRequest(`/channels/${channelId}`).catch(() => null);
+    return { success: true, channel: channel?.name ? `#${channel.name}` : `channel ${channelId}` };
+  } catch (e: any) {
+    return { success: false, error: explainDiscordError(String(e?.message ?? e)) };
+  }
+}

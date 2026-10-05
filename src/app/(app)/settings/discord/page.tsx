@@ -8,6 +8,7 @@ import { formatDate } from "@/lib/utils";
 import { DiscordConfigForm } from "./DiscordConfigForm";
 import { RevokeLinkButton } from "./RevokeLinkButton";
 import { RegisterCommandsButton } from "./RegisterCommandsButton";
+import { TestServerButton } from "./TestServerButton";
 import { PageTitle } from "@/components/PageHeader";
 
 export default async function DiscordSettingsPage() {
@@ -62,7 +63,12 @@ export default async function DiscordSettingsPage() {
               <Badge variant="neutral">Not connected</Badge>
             )}
           </div>
-          {config?.active && <RegisterCommandsButton />}
+          {config?.active && (
+            <div className="flex flex-col items-end gap-2">
+              <TestServerButton />
+              <RegisterCommandsButton />
+            </div>
+          )}
         </div>
 
         {/* Setup instructions */}
