@@ -8,7 +8,7 @@ import { formatDate } from "@/lib/utils";
 import { DiscordConfigForm } from "./DiscordConfigForm";
 import { RevokeLinkButton } from "./RevokeLinkButton";
 import { RegisterCommandsButton } from "./RegisterCommandsButton";
-import { HelpLink } from "@/components/HelpLink";
+import { PageTitle } from "@/components/PageHeader";
 
 export default async function DiscordSettingsPage() {
   const session = await auth();
@@ -40,7 +40,7 @@ export default async function DiscordSettingsPage() {
           <Link href="/settings/members" className="hover:text-[--color-primary]">Settings</Link>
           <span className="mx-2">›</span>Discord
         </nav>
-        <h1 className="text-h1 text-[--color-text-primary] flex items-center gap-2">Discord Integration <HelpLink topic="discord" /></h1>
+        <PageTitle help="discord">Discord Integration</PageTitle>
         <p className="text-body text-[--color-text-secondary] mt-1">
           Connect your team's Discord server to enable slash commands and proactive notifications.
         </p>

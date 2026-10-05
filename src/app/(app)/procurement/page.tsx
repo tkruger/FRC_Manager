@@ -8,7 +8,7 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { statusBadgeVariant, statusLabel } from "@/lib/procurement-helpers";
 import { definitionFor, resolveCurrentStep } from "@/lib/workflow/engine";
 import { ITEM_STATUSES, ITEM_STATUS_INFO, ORDER_ADMIN_ROLES } from "@/lib/orders/constants";
-import { HelpLink } from "@/components/HelpLink";
+import { PageHeader } from "@/components/PageHeader";
 import { ExportCsvButton } from "@/components/orders/ExportCsvButton";
 
 const OPEN = ["SUBMITTED", "APPROVED", "ORDERED", "PARTIAL_RECEIVED"] as const;
@@ -79,18 +79,17 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-h1 text-(--color-text-primary) flex items-center gap-2">Orders <HelpLink topic="purchasing" /></h1>
-          <p className="text-body text-(--color-text-secondary) mt-1">{activeSeason.name}</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
+      <PageHeader
+        title="Orders"
+        help="purchasing"
+        subtitle={activeSeason.name}
+        actions={<>
           {isAdmin && <Link href="/procurement/admin"><Button variant="secondary" size="sm">Team Admin</Button></Link>}
           <ExportCsvButton view={view} title="Every order on this tab, one item per line" />
           <Link href="/procurement/vendors"><Button variant="outline" size="sm">Vendors</Button></Link>
           <Link href="/procurement/requests/new"><Button size="sm">+ New order</Button></Link>
-        </div>
-      </div>
+        </>}
+      />
 
       {/* Items across open orders, by status */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

@@ -10,7 +10,7 @@ import { SaveSeasonDialog } from "./SaveSeasonDialog";
 import { DeleteTemplateButton } from "./DeleteTemplateButton";
 import { ApplyCustomTemplateButton } from "./ApplyCustomTemplateButton";
 import { shortDate } from "@/lib/schedule-helpers";
-import { HelpLink } from "@/components/HelpLink";
+import { PageHeader } from "@/components/PageHeader";
 
 const MENTOR_ROLES = ["HEAD_MENTOR", "BUILD_LEAD", "INVENTORY_ADMIN"];
 
@@ -58,18 +58,15 @@ export default async function TemplatesPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <nav className="text-small text-[--color-text-secondary] mb-1">
-            <Link href="/tasks" className="hover:text-[--color-primary]">Schedule</Link>
-            <span className="mx-2">›</span>Templates
-          </nav>
-          <h1 className="text-h1 text-[--color-text-primary] flex items-center gap-2">Season templates <HelpLink topic="templates" /></h1>
-          <p className="text-body text-[--color-text-secondary] mt-1">
-            Apply a task template to instantly populate your build season schedule.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2 shrink-0">
+      <PageHeader
+        title="Season templates"
+        help="templates"
+        breadcrumb={<>
+          <Link href="/tasks" className="hover:text-(--color-primary)">Tasks</Link>
+          <span className="mx-2">›</span>Templates
+        </>}
+        subtitle="Apply a task template to instantly populate your build season schedule."
+        actions={<>
           <a href="/api/templates/empty" download>
             <Button variant="outline" size="sm">Download blank CSV</Button>
           </a>
@@ -79,8 +76,8 @@ export default async function TemplatesPage() {
               <NewTemplateDialog />
             </>
           )}
-        </div>
-      </div>
+        </>}
+      />
 
       {/* Custom templates */}
       {customTemplates.length > 0 && (

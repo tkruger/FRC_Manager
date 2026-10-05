@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { ActiveSeasonCard } from "./ActiveSeasonCard";
 import { NewSeasonButton } from "./NewSeasonButton";
 import { PastSeasonsCard } from "./PastSeasonsCard";
-import { HelpLink } from "@/components/HelpLink";
+import { PageHeader } from "@/components/PageHeader";
 
 export default async function SeasonSettingsPage() {
   const session = await auth();
@@ -40,15 +40,12 @@ export default async function SeasonSettingsPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-h1 text-[--color-text-primary] flex items-center gap-2">Season <HelpLink topic="season" /></h1>
-          <p className="text-body text-[--color-text-secondary] mt-1">
-            Configure the active build season, kickoff date, and robots.
-          </p>
-        </div>
-        {isHeadMentor && <NewSeasonButton hasActiveSeason={!!activeSeason} />}
-      </div>
+      <PageHeader
+        title="Season"
+        help="season"
+        subtitle="Configure the active build season, kickoff date, and robots."
+        actions={isHeadMentor && <NewSeasonButton hasActiveSeason={!!activeSeason} />}
+      />
 
       {/* No active season prompt */}
       {!activeSeason && (

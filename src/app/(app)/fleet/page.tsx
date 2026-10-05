@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ProgressBar } from "@/components/ui/progress";
 import { formatWeight } from "@/lib/utils";
-import { HelpLink } from "@/components/HelpLink";
+import { PageHeader } from "@/components/PageHeader";
 
 const ROBOT_WEIGHT_LIMIT = 115; // lbs body
 
@@ -63,19 +63,16 @@ export default async function FleetPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-h1 text-[--color-text-primary] flex items-center gap-2">Robot Fleet <HelpLink topic="fleet" /></h1>
-          <p className="text-body text-[--color-text-secondary] mt-1">
-            {activeSeason ? activeSeason.name : "No active season"}
-          </p>
-        </div>
-        {activeSeason && (
+      <PageHeader
+        title="Robot Fleet"
+        help="fleet"
+        subtitle={activeSeason ? activeSeason.name : "No active season"}
+        actions={activeSeason && (
           <Link href="/settings/season">
             <Button variant="outline" size="sm">+ Add robot</Button>
           </Link>
         )}
-      </div>
+      />
 
       {/* Active robots */}
       {activeSeason && activeSeason.robots.length > 0 ? (

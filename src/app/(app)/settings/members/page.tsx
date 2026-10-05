@@ -9,7 +9,7 @@ import { DenyButton } from "./DenyButton";
 import { MemberRoleEditor } from "./MemberRoleEditor";
 import { AccessCodeForm } from "./AccessCodeForm";
 import type { Role } from "@/generated/prisma";
-import { HelpLink } from "@/components/HelpLink";
+import { PageTitle } from "@/components/PageHeader";
 
 export default async function MembersPage() {
   const session = await auth();
@@ -41,7 +41,7 @@ export default async function MembersPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       <div>
-        <h1 className="text-h1 text-[--color-text-primary] flex items-center gap-2">Team members <HelpLink topic="roles" /></h1>
+        <PageTitle help="roles">Team members</PageTitle>
         <p className="text-body text-[--color-text-secondary] mt-1">
           Team {team?.teamNumber} — {team?.name}
         </p>

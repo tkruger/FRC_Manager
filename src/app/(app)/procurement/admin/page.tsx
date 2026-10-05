@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ORDER_ADMIN_ROLES } from "@/lib/orders/constants";
 import { ITEM_ROW_SELECT, toItemRow } from "@/lib/orders/rows";
 import { ItemsTable } from "@/components/orders/ItemsTable";
-import { HelpLink } from "@/components/HelpLink";
+import { PageTitle } from "@/components/PageHeader";
 import { CsvExport } from "./CsvExport";
 
 // Team Admin workspace: approved items to purchase, tracking links, deliveries.
@@ -37,7 +37,7 @@ export default async function OrderAdminPage() {
           <Link href="/procurement" className="hover:text-(--color-primary)">Orders</Link>
           <span className="mx-2">›</span>Team Admin
         </nav>
-        <h1 className="text-h1 text-(--color-text-primary) flex items-center gap-2">Team Admin <HelpLink topic="purchasing" /></h1>
+        <PageTitle help="purchasing">Team Admin</PageTitle>
         <p className="text-body text-(--color-text-secondary) mt-1">
           Approved items to purchase. Add a tracking link to mark items ordered — one link can cover several items that ship together.
         </p>

@@ -34,7 +34,7 @@ export function CompetitionsSection({
 
   return (
     <div className="mt-5 pt-4 border-t border-(--color-border)">
-      <div className="flex items-center justify-between gap-3 mb-3">
+      <div className="flex flex-col gap-3 mb-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h3 className="text-h3 text-(--color-text-primary)">Competitions</h3>
           <p className="text-small text-(--color-text-secondary)">

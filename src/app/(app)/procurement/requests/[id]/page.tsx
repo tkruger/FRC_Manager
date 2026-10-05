@@ -10,7 +10,7 @@ import { describeCondition, describeRoles, evaluateCondition } from "@/lib/workf
 import { ITEM_STATUSES, ITEM_STATUS_INFO, ORDER_ADMIN_ROLES, STATUS_OVERRIDE_ROLES } from "@/lib/orders/constants";
 import { ITEM_ROW_SELECT, toItemRow } from "@/lib/orders/rows";
 import { ItemsTable } from "@/components/orders/ItemsTable";
-import { HelpLink } from "@/components/HelpLink";
+import { PageHeader } from "@/components/PageHeader";
 import { RequestActions } from "./RequestActions";
 import { RequestTimeline, type TimelineEntry } from "./RequestTimeline";
 import { ExportCsvButton } from "@/components/orders/ExportCsvButton";
@@ -66,16 +66,17 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         <span className="text-(--color-text-primary)">{order.title}</span>
       </nav>
 
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <div>
-          <h1 className="text-h1 text-(--color-text-primary) flex items-center gap-2">{order.title} <HelpLink topic="purchasing" /></h1>
-          <div className="flex items-center gap-2 mt-2 flex-wrap">
+      <PageHeader
+        title={order.title}
+        help="purchasing"
+        subtitle={
+          <div className="flex items-center gap-2 pt-1 flex-wrap">
             <Badge variant={statusBadgeVariant(order.status)}>{statusLabel(order.status)}</Badge>
             {counts.map(({ s, n }) => <Badge key={s} variant={ITEM_STATUS_INFO[s].badge}>{n} {ITEM_STATUS_INFO[s].label.toLowerCase()}</Badge>)}
           </div>
-        </div>
-        <RequestActions requestId={order.id} actions={actions} />
-      </div>
+        }
+        actions={actions.length > 0 && <RequestActions requestId={order.id} actions={actions} />}
+      />
 
       {currentStep && (
         <div className="card py-3 px-4 border-l-4" style={{ borderLeftColor: "var(--color-warning)" }}>

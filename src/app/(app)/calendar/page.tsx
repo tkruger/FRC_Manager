@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { CalendarClient } from "./CalendarClient";
 import { SubscribeCalendarButton } from "@/components/calendar/SubscribeCalendarButton";
 import { GenerateShareLinkButton } from "./GenerateShareLinkButton";
-import { HelpLink } from "@/components/HelpLink";
+import { PageHeader } from "@/components/PageHeader";
 
 export default async function CalendarPage() {
   const session = await auth();
@@ -47,14 +47,11 @@ export default async function CalendarPage() {
   return (
     <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5">
       {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="text-h1 text-(--color-text-primary) flex flex-wrap items-center gap-x-3 gap-y-1">Calendar <HelpLink topic="calendar" /></h1>
-          <p className="text-body text-(--color-text-secondary) mt-0.5">
-            {activeSeason.name} · {activeSeason.meetings.filter((m) => !m.cancelled).length} meetings
-          </p>
-        </div>
-        <div className="flex gap-2 flex-wrap sm:justify-end">
+      <PageHeader
+        title="Calendar"
+        help="calendar"
+        subtitle={<>{activeSeason.name} · {activeSeason.meetings.filter((m) => !m.cancelled).length} meetings</>}
+        actions={<>
           {calendarUrl
             ? <SubscribeCalendarButton icsUrl={calendarUrl} />
             : <GenerateShareLinkButton seasonId={activeSeason.id} />}
@@ -63,8 +60,8 @@ export default async function CalendarPage() {
               <Button variant="outline" size="sm">Public view ↗</Button>
             </Link>
           )}
-        </div>
-      </div>
+        </>}
+      />
 
       <CalendarClient
         season={{

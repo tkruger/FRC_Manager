@@ -10,7 +10,7 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { AddFundingDialog } from "./AddFundingDialog";
 import { LogExpenseDialog } from "./LogExpenseDialog";
 import { BudgetBurndownCard } from "./BudgetBurndownCard";
-import { HelpLink } from "@/components/HelpLink";
+import { PageHeader } from "@/components/PageHeader";
 
 const BUDGET_ROLES = ["HEAD_MENTOR", "BUDGET_MANAGER"];
 
@@ -49,7 +49,7 @@ export default async function BudgetDashboard() {
   if (!budget) {
     return (
       <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
-        <h1 className="text-h1 text-[--color-text-primary] flex items-center gap-2">Budget <HelpLink topic="budget" /></h1>
+        <PageHeader title="Budget" help="budget" />
         <div className="card text-center py-12">
           <p className="text-body text-[--color-text-secondary] mb-4">No budget configured for {activeSeason.name}.</p>
           {canEdit
@@ -75,12 +75,11 @@ export default async function BudgetDashboard() {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-h1 text-[--color-text-primary] flex items-center gap-2">Budget <HelpLink topic="budget" /></h1>
-          <p className="text-body text-[--color-text-secondary] mt-1">{activeSeason.name}</p>
-        </div>
-        <div className="flex flex-wrap gap-2 items-center">
+      <PageHeader
+        title="Budget"
+        help="budget"
+        subtitle={activeSeason.name}
+        actions={<>
           {!canEdit && (
             <span className="text-small text-[--color-text-secondary] italic">Read-only view</span>
           )}
@@ -91,8 +90,8 @@ export default async function BudgetDashboard() {
           {canEdit && (
             <LogExpenseDialog budgetId={budget.id} categories={budget.categories} />
           )}
-        </div>
-      </div>
+        </>}
+      />
 
       {/* Burndown chart */}
       <BudgetBurndownCard
