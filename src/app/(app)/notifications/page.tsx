@@ -72,26 +72,33 @@ export default async function NotificationsPage() {
           <p className="text-body text-[--color-text-secondary]">No notifications yet.</p>
         </div>
       ) : (
-        <div className="card divide-y divide-[--color-border]">
-          {notifications.map((n) => (
-            <div key={n.id} className={`py-4 flex gap-3 ${!n.read ? "bg-[--color-primary]/5" : ""}`}>
-              <span className="text-xl shrink-0">{TYPE_ICONS[n.type] ?? "🔔"}</span>
-              <div className="flex-1 min-w-0">
-                <p className={`text-sm font-medium ${!n.read ? "text-[--color-text-primary]" : "text-[--color-text-secondary]"}`}>
-                  {n.title}
-                </p>
-                {n.body && <p className="text-small text-[--color-text-secondary] mt-0.5">{n.body}</p>}
-                <div className="flex items-center gap-3 mt-1">
-                  <span className="text-small text-[--color-text-disabled]">{formatDate(n.createdAt)}</span>
-                  {n.linkUrl && (
-                    <Link href={n.linkUrl} className="text-small text-[--color-secondary] hover:underline">
-                      View →
-                    </Link>
-                  )}
+        <div className="card p-0 divide-y divide-(--color-border)">
+          {notifications.map((n) => {
+            const content = (
+              <>
+                <span className="text-xl shrink-0">{TYPE_ICONS[n.type] ?? "🔔"}</span>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-medium ${!n.read ? "text-(--color-text-primary)" : "text-(--color-text-secondary)"}`}>
+                    {n.title}
+                  </p>
+                  {n.body && <p className="text-small text-(--color-text-secondary) mt-0.5">{n.body}</p>}
+                  <div className="flex items-center gap-3 mt-1">
+                    <span className="text-small text-(--color-text-disabled)">{formatDate(n.createdAt)}</span>
+                    {n.linkUrl && <span className="text-small text-(--color-secondary)">View →</span>}
+                  </div>
                 </div>
-              </div>
-            </div>
-          ))}
+              </>
+            );
+            const rowClass = `px-5 py-4 flex gap-3 transition-colors ${!n.read ? "bg-(--color-primary)/5" : ""}`;
+            // The whole notification opens what it's about
+            return n.linkUrl ? (
+              <Link key={n.id} href={n.linkUrl} className={`${rowClass} hover:bg-(--color-surface-overlay)`}>
+                {content}
+              </Link>
+            ) : (
+              <div key={n.id} className={rowClass}>{content}</div>
+            );
+          })}
         </div>
       )}
     </div>

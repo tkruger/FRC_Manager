@@ -136,27 +136,33 @@ export function NotificationsDropdown({ unreadCount }: { unreadCount: number }) 
                 <p className="text-small text-[--color-text-secondary]">No notifications yet</p>
               </div>
             )}
-            {!loading && notifications.map((n) => (
-              <div
-                key={n.id}
-                className={`flex gap-3 px-4 py-3 transition-colors hover:bg-[--color-surface-overlay] ${!n.read ? "bg-[--color-primary]/4" : ""}`}
-              >
-                <span className="text-base shrink-0 mt-0.5">{TYPE_ICONS[n.type] ?? "🔔"}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[--color-text-primary] leading-snug">{n.title}</p>
-                  {n.body && <p className="text-small text-[--color-text-secondary] mt-0.5 truncate">{n.body}</p>}
-                  <p className="text-[10px] text-[--color-text-disabled] mt-1">{formatDate(n.createdAt)}</p>
-                </div>
-                {n.linkUrl && (
-                  <Link href={n.linkUrl} onClick={() => setOpen(false)}
-                    className="shrink-0 text-[--color-secondary] hover:text-[--color-primary] mt-0.5">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+            {!loading && notifications.map((n) => {
+              const content = (
+                <>
+                  <span className="text-base shrink-0 mt-0.5">{TYPE_ICONS[n.type] ?? "🔔"}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-(--color-text-primary) leading-snug">{n.title}</p>
+                    {n.body && <p className="text-small text-(--color-text-secondary) mt-0.5 truncate">{n.body}</p>}
+                    <p className="text-[10px] text-(--color-text-disabled) mt-1">{formatDate(n.createdAt)}</p>
+                  </div>
+                  {n.linkUrl && (
+                    <svg className="w-4 h-4 shrink-0 mt-0.5 text-(--color-secondary)" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                     </svg>
-                  </Link>
-                )}
-              </div>
-            ))}
+                  )}
+                </>
+              );
+              const rowClass = `flex gap-3 px-4 py-3 transition-colors ${!n.read ? "bg-(--color-primary)/4" : ""}`;
+              // The whole notification opens what it's about
+              return n.linkUrl ? (
+                <Link key={n.id} href={n.linkUrl} onClick={() => setOpen(false)}
+                  className={`${rowClass} hover:bg-(--color-surface-overlay) focus-visible:bg-(--color-surface-overlay) focus-visible:outline-none`}>
+                  {content}
+                </Link>
+              ) : (
+                <div key={n.id} className={rowClass}>{content}</div>
+              );
+            })}
           </div>
         </div>
       )}
