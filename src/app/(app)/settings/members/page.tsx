@@ -58,10 +58,10 @@ export default async function MembersPage() {
           </h2>
           <div className="space-y-4">
             {pending.map((u) => (
-              <div key={u.id} className="flex items-start justify-between gap-4 py-3 border-b border-[--color-border] last:border-0">
+              <div key={u.id} className="flex flex-col gap-3 py-3 border-b border-(--color-border) last:border-0 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div className="min-w-0">
                   <p className="font-medium text-[--color-text-primary]">{u.name}</p>
-                  <p className="text-small text-[--color-text-secondary]">{u.email}</p>
+                  <p className="text-small text-[--color-text-secondary] break-all">{u.email}</p>
                   <p className="text-small text-[--color-text-secondary]">Requested {formatDate(u.createdAt)}</p>
                   {u.registrationNote && (
                     <p className="mt-1 text-small text-[--color-text-primary] italic">
@@ -88,27 +88,30 @@ export default async function MembersPage() {
       {/* Active members */}
       <div>
         <h2 className="text-h2 text-[--color-text-primary] mb-3">Active members ({active.length})</h2>
-        <div className="card divide-y divide-[--color-border]">
+        <div className="card divide-y divide-(--color-border)">
           {active.map((u) => (
-            <div key={u.id} className="flex items-center justify-between gap-4 py-3">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="font-medium text-[--color-text-primary] truncate">{u.name}</p>
-                  {u.id === session.user.id && (
-                    <span className="text-xs text-[--color-text-secondary]">(you)</span>
-                  )}
-                </div>
-                <p className="text-small text-[--color-text-secondary]">{u.email}</p>
-              </div>
-              <div className="flex items-center gap-3 shrink-0">
-                <div className="flex gap-1 flex-wrap justify-end max-w-[200px]">
-                  {u.roles.map((r) => (
-                    <Badge key={r.role} variant="info">{ROLE_LABELS[r.role as Role]}</Badge>
-                  ))}
+            // Name + email with Edit roles beside them; the roles wrap underneath at any width
+            <div key={u.id} className="space-y-2 py-3 first:pt-0 last:pb-0">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-medium text-(--color-text-primary) break-words">
+                    {u.name}
+                    {u.id === session.user.id && (
+                      <span className="ml-2 text-xs font-normal text-(--color-text-secondary)">(you)</span>
+                    )}
+                  </p>
+                  <p className="text-small text-(--color-text-secondary) break-all">{u.email}</p>
                 </div>
                 {u.id !== session.user.id && (
-                  <MemberRoleEditor userId={u.id} currentRoles={u.roles.map((r) => r.role as Role)} />
+                  <div className="shrink-0">
+                    <MemberRoleEditor userId={u.id} currentRoles={u.roles.map((r) => r.role as Role)} />
+                  </div>
                 )}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {u.roles.map((r) => (
+                  <Badge key={r.role} variant="info">{ROLE_LABELS[r.role as Role]}</Badge>
+                ))}
               </div>
             </div>
           ))}
@@ -119,12 +122,12 @@ export default async function MembersPage() {
       {other.length > 0 && (
         <div>
           <h2 className="text-h2 text-[--color-text-primary] mb-3">Inactive</h2>
-          <div className="card divide-y divide-[--color-border]">
+          <div className="card divide-y divide-(--color-border)">
             {other.map((u) => (
               <div key={u.id} className="flex items-center justify-between gap-4 py-3">
-                <div>
+                <div className="min-w-0">
                   <p className="font-medium text-[--color-text-primary]">{u.name}</p>
-                  <p className="text-small text-[--color-text-secondary]">{u.email}</p>
+                  <p className="text-small text-[--color-text-secondary] break-all">{u.email}</p>
                 </div>
                 <Badge variant={statusVariant(u.status)}>{u.status}</Badge>
               </div>
