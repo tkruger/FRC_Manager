@@ -174,8 +174,6 @@ model Season {
   year               Int
   kickoffDate        DateTime        // season start
   endDate            DateTime        // season end
-  /// Deprecated: replaced by endDate (Week 0 now comes from the season's competitions). Kept until production stops reading it.
-  week0Date          DateTime?
   isActive           Boolean  @default(false)
   meetingDays        String[]
   meetingStartTime   String          // default start time (fallback when no per-day override)
