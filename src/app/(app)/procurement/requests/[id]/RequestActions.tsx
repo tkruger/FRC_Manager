@@ -61,7 +61,7 @@ export function RequestActions({ requestId, actions }: Props) {
       {panel && (
         <div className="w-full sm:w-72 card space-y-3">
           <Textarea
-            label={panel === "deny" ? "Reason for denial" : "Reason for cancelling"}
+            label={panel === "deny" ? "Reason for denial" : "Reason for canceling"}
             rows={2}
             value={reason}
             onChange={(e) => setReason(e.target.value)}

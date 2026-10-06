@@ -14,7 +14,8 @@ export function statusBadgeVariant(status: PurchaseStatus): "success" | "warning
 }
 
 export function statusLabel(status: PurchaseStatus): string {
-  return status.replace(/_/g, " ");
+  // American spelling for display; the stored value stays CANCELLED
+  return status === "CANCELLED" ? "CANCELED" : status.replace(/_/g, " ");
 }
 
 export function priorityBadgeVariant(priority: RequestPriority): "danger" | "warning" | "neutral" {

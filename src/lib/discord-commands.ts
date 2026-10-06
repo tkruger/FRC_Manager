@@ -726,7 +726,7 @@ export async function handleOrderStatus(ctx: InteractionContext): Promise<Respon
   };
 
   const lines = requests.map((r) =>
-    `${STATUS_EMOJI[r.status] ?? "•"} **${r.title}** — ${r.status.replace("_", " ").toLowerCase()} · ${(r.estimatedTotal ?? 0).toFixed(2)}`);
+    `${STATUS_EMOJI[r.status] ?? "•"} **${r.title}** — ${r.status.replace("_", " ").toLowerCase().replace("cancelled", "canceled")} · ${(r.estimatedTotal ?? 0).toFixed(2)}`);
 
   return ephemeralReply(null, [
     embed({ title: "📋 Your Orders", description: lines.join("\n"), color: COLORS.info }),

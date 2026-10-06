@@ -9,7 +9,7 @@ export type HelpTopic =
 /** Visual of the help button, also used inside the guide when referring to it. */
 export function HelpBadge({ label = "Guide" }: { label?: string }) {
   return (
-    // Tinted (not solid) so it stays readable in every colour theme, light or dark
+    // Tinted (not solid) so it stays readable in every color theme, light or dark
     <span className="inline-flex h-7 items-center gap-1.5 rounded-full bg-(--color-secondary)/15 px-2.5 text-xs font-semibold text-(--color-secondary) ring-1 ring-(--color-secondary)/50 shadow-sm transition-all group-hover:scale-105 group-hover:bg-(--color-secondary)/25 group-hover:shadow-md">
       <BookOpen className="h-3.5 w-3.5" aria-hidden strokeWidth={2.25} />
       {label}
@@ -17,7 +17,7 @@ export function HelpBadge({ label = "Guide" }: { label?: string }) {
   );
 }
 
-/** Coloured "Guide" button that opens the matching section of the help guide. */
+/** Colored "Guide" button that opens the matching section of the help guide. */
 export function HelpLink({ topic, label }: { topic: HelpTopic; label?: string }) {
   return (
     <Link

@@ -357,7 +357,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--color-primary)
   -webkit-backdrop-filter: blur(40px);
 }
 
-/* iOS: no grey flash when tapping non-interactive areas (e.g. the header behind the status bar) */
+/* iOS: no gray flash when tapping non-interactive areas (e.g. the header behind the status bar) */
 html { -webkit-tap-highlight-color: transparent; }
 
 /* ── Kanban sticky notes (Settings → Appearance → Task cards) ─────────────── */

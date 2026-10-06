@@ -171,7 +171,7 @@ export default function HelpPage() {
           <li>Set the quantity, sub-team, importance (Routine, Urgent or Emergency), why it&apos;s needed, and any notes for the Team Admin.</li>
           <li>Paste a product link to fill in the item. If the page sells several products (a WCP parts page, or a product with sizes), you&apos;ll get a list to pick from: tick one or more and each becomes its own item. Amazon links fill in the name, price and ASIN.</li>
           <li>Not ready to submit? Tap <b>Save draft</b>. Your drafts are under <b>Orders → My drafts</b>, only visible to you, until you submit or delete them.</li>
-          <li>Submit. Items show a draft ID (like DRAFT-7K2Q) until the order is approved; then each gets its permanent 4-digit item ID (0415, 0416, …). Denied or cancelled orders never use up item IDs.</li>
+          <li>Submit. Items show a draft ID (like DRAFT-7K2Q) until the order is approved; then each gets its permanent 4-digit item ID (0415, 0416, …). Denied or canceled orders never use up item IDs.</li>
           <li>Need to change something? Anyone who can approve or order it (and Head Mentors) can tap <b>Edit order</b> while it&apos;s open to change, add or remove items. Arrived items are locked, and every edit is noted in the order&apos;s progress.</li>
         </Steps>
         <p>You can also order straight from <b>Inventory</b> — the <b>Order</b> button on low-stock items, or <b>Order a new item</b>.</p>

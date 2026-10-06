@@ -30,7 +30,7 @@ const HOVER_STYLE: React.CSSProperties = {
   boxShadow: "0 2px 12px -2px color-mix(in srgb, var(--color-secondary) 55%, transparent), inset 0 1px 0 rgb(255 255 255 / .15)",
 };
 
-// For outline/ghost buttons — hover tints with the secondary colour
+// For outline/ghost buttons — hover tints with the secondary color
 const OUTLINE_HOVER_STYLE: React.CSSProperties = {
   backgroundColor: "color-mix(in srgb, var(--color-secondary) 10%, transparent)",
   borderColor: "color-mix(in srgb, var(--color-secondary) 60%, transparent)",

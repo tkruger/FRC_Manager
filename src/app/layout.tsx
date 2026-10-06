@@ -23,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
     appleWebApp: {
       capable:          true,
       // Not "black-translucent": drawing under the status bar makes iOS lay its own
-      // blurred fade over the top of the app. A normal status bar takes its colour
+      // blurred fade over the top of the app. A normal status bar takes its color
       // from theme-color (kept in sync with light/dark mode below).
       statusBarStyle:   "default",
       title:            "FRC Manager",

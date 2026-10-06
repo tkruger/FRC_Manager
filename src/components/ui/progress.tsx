@@ -7,7 +7,7 @@ interface ProgressBarProps {
   sublabel?: string;
   showValue?: boolean;
   className?: string;
-  /** Thresholds for colour zones (percentages). Defaults: warn at 80, danger at 95 */
+  /** Thresholds for color zones (percentages). Defaults: warn at 80, danger at 95 */
   warnAt?: number;
   dangerAt?: number;
 }

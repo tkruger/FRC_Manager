@@ -132,7 +132,7 @@ export function CalendarClient({ season, meetings, allTasks, isLeadership }: Pro
   function handleCancel(meetingId: string, reason?: string) {
     startTransition(async () => {
       const res = await cancelMeetingAction(meetingId, reason);
-      if (res.success) toast.success("Meeting cancelled"); else toast.error(res.error ?? "Couldn't cancel.");
+      if (res.success) toast.success("Meeting canceled"); else toast.error(res.error ?? "Couldn't cancel.");
       setSelected(null);
       router.refresh();
     });
@@ -414,7 +414,7 @@ function MeetingDialog({
         <div className="space-y-4">
           {meeting.cancelled && (
             <div className="rounded-md bg-(--color-danger)/10 border border-(--color-danger)/20 px-3 py-2 text-sm text-(--color-danger)">
-              Cancelled{meeting.cancelReason ? ` — ${meeting.cancelReason}` : ""}
+              Canceled{meeting.cancelReason ? ` — ${meeting.cancelReason}` : ""}
             </div>
           )}
 
@@ -586,7 +586,7 @@ function MobileAgenda({ meetings, heading, onOpen }: {
                       {m.title ?? "Build meeting"}
                     </span>
                     <span className="block text-small text-(--color-text-secondary)">
-                      {fmt12(m.startTime)} – {fmt12(m.endTime)}{m.cancelled ? " · cancelled" : ""}
+                      {fmt12(m.startTime)} – {fmt12(m.endTime)}{m.cancelled ? " · canceled" : ""}
                     </span>
                   </span>
                   <span aria-hidden className="text-(--color-text-secondary)">›</span>

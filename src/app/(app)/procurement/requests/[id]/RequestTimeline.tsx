@@ -44,7 +44,7 @@ function headline(e: TimelineEntry): string {
       return `${who} placed the order${conf}${total}`;
     }
     case "receive":   return `${who} confirmed delivery`;
-    case "cancel":    return `${who} cancelled the order`;
+    case "cancel":    return `${who} canceled the order`;
     case "effect":    return e.note ?? "Updated";
     case "completed": return "Order complete";
     default:          return e.action;

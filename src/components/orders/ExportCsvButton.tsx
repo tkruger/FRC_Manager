@@ -17,7 +17,7 @@ export function ExportCsvButton({ order, view, title }: { order?: string; view?:
 
   async function exportCsv() {
     if (!(isIos() && isStandalone())) {
-      // Normal browsers: the session cookie authorises a plain download
+      // Normal browsers: the session cookie authorizes a plain download
       const a = document.createElement("a");
       a.href = `/api/orders/csv?${params}`;
       a.download = "";

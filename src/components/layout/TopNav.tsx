@@ -63,7 +63,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
   return (
     <>
       {/* ── Top navigation bar ── */}
-      {/* CSS grid with 1fr | auto | 1fr ensures the center nav is always viewport-centred
+      {/* CSS grid with 1fr | auto | 1fr ensures the center nav is always viewport-centered
           regardless of how wide the left logo or right controls are */}
       <header className="fixed inset-x-0 top-0 z-40 h-safe-nav safe-top-pad transition-colors"
         style={{
@@ -91,7 +91,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
             )}
           </div>
 
-          {/* Centre: module tabs — always perfectly centred */}
+          {/* Center: module tabs — always perfectly centered */}
           <nav className="flex items-center" aria-label="Modules">
             {MODULE_TABS.map(({ label, href, exact, icon: Icon }) => {
               const active = exact ? pathname === href : (pathname.startsWith(href) && href !== "/dashboard");

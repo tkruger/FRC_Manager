@@ -28,7 +28,7 @@ export function DialogContent({ children, title, description, className }: Dialo
           "inset-x-0 bottom-0 rounded-t-2xl",
           "data-[state=open]:animate-in data-[state=closed]:animate-out",
           "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
-          // Desktop: centred modal
+          // Desktop: centered modal
           "sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-lg",
           "sm:border sm:border-[--color-border]",
           "sm:data-[state=closed]:slide-out-to-left-1/2 sm:data-[state=closed]:slide-out-to-top-[48%]",

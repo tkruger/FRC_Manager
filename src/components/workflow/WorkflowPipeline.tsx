@@ -60,7 +60,7 @@ export function WorkflowPipeline({ def, counts }: Props) {
           every {hours(def.reminders.urgentHours)} for urgent or emergency ones, until someone acts. People can opt out in their notification settings.
         </Detail>
         <Detail label="Other endings">
-          Denied at an approval step, or cancelled before ordering. Either way, a linked reorder goes back into the queue.
+          Denied at an approval step, or canceled before ordering. Either way, a linked reorder goes back into the queue.
         </Detail>
       </Stage>
     </ol>

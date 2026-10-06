@@ -33,7 +33,7 @@ export const TOPICS = [
   {
     id: "purchase.my_requests", group: "Purchasing",
     label: "Updates on my orders",
-    description: "Your order is approved, denied, ordered, delivered or cancelled.",
+    description: "Your order is approved, denied, ordered, delivered or canceled.",
     audience: "The person who submitted the order",
     defaultInApp: true, defaultPush: true,
   },
@@ -56,7 +56,7 @@ export const TOPICS = [
   {
     id: "meetings.changes", group: "Meetings",
     label: "Meeting changes",
-    description: "A meeting is added, moved, cancelled or reinstated.",
+    description: "A meeting is added, moved, canceled or reinstated.",
     audience: "Everyone on the team",
     defaultInApp: true, defaultPush: true,
   },

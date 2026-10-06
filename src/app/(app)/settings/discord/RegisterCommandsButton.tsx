@@ -24,11 +24,12 @@ export function RegisterCommandsButton() {
   }
 
   return (
-    <div className="flex flex-col items-end gap-2">
+    <>
       <Button variant="outline" size="sm" onClick={handle} isLoading={isPending}>
         Register commands
       </Button>
-      {result && <p className="text-small text-[--color-text-secondary] max-w-xs text-right">{result}</p>}
-    </div>
+      {/* Full width on its own line under the buttons */}
+      {result && <p className="basis-full text-small text-(--color-text-secondary) break-words">{result}</p>}
+    </>
   );
 }

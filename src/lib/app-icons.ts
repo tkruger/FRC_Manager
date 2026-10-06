@@ -6,8 +6,8 @@
 
 export const APP_ICONS = [
   { id: "06_lineart_orange",             label: "Line art — orange" },
-  { id: "01_fullcolor_charcoal",         label: "Full colour — charcoal" },
-  { id: "02_fullcolor_orange",           label: "Full colour — orange" },
+  { id: "01_fullcolor_charcoal",         label: "Full color — charcoal" },
+  { id: "02_fullcolor_orange",           label: "Full color — orange" },
   { id: "03_silhouette_black_on_orange", label: "Silhouette — black on orange" },
   { id: "04_stencil_orange_on_black",    label: "Stencil — orange on black" },
   { id: "05_duotone_orange",             label: "Duotone — orange" },

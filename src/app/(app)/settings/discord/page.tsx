@@ -48,28 +48,25 @@ export default async function DiscordSettingsPage() {
       </div>
 
       {/* Connection status */}
-      <div className="card">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-h3 text-[--color-text-primary] mb-1">Connection status</h2>
-            {config?.active ? (
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <Badge variant="success">Connected</Badge>
-                  <span className="text-small text-[--color-text-secondary]">Guild ID: <code>{config.guildId}</code></span>
-                </div>
-              </div>
-            ) : (
-              <Badge variant="neutral">Not connected</Badge>
-            )}
-          </div>
-          {config?.active && (
-            <div className="flex flex-col items-end gap-2">
-              <TestServerButton />
-              <RegisterCommandsButton />
+      <div className="card space-y-4">
+        <div>
+          <h2 className="text-h3 text-(--color-text-primary) mb-2">Connection status</h2>
+          {config?.active ? (
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <Badge variant="success">Connected</Badge>
+              <span className="text-small text-(--color-text-secondary) break-all">Guild ID: <code>{config.guildId}</code></span>
             </div>
+          ) : (
+            <Badge variant="neutral">Not connected</Badge>
           )}
         </div>
+        {/* Actions sit under the status (they used to squeeze in beside it and run off phones) */}
+        {config?.active && (
+          <div className="flex flex-wrap items-center gap-2">
+            <TestServerButton />
+            <RegisterCommandsButton />
+          </div>
+        )}
 
         {/* Setup instructions */}
         {!config?.active && (

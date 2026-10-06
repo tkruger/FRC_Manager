@@ -112,7 +112,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           <ExportCsvButton order={order.id} />
         </div>
         {closed && (
-          <p className="text-small text-(--color-text-secondary)">This order was {order.status.toLowerCase()}; its items won&apos;t be ordered.</p>
+          <p className="text-small text-(--color-text-secondary)">This order was {order.status.toLowerCase().replace("cancelled", "canceled")}; its items won&apos;t be ordered.</p>
         )}
         <ItemsTable
           items={items}

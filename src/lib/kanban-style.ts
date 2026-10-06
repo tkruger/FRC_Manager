@@ -6,7 +6,7 @@ import { useSyncExternalStore } from "react";
 
 export type KanbanCardStyle = "plain" | "rainbow" | "single";
 
-/** Sticky-note paper colours (light enough for dark text in either theme) */
+/** Sticky-note paper colors (light enough for dark text in either theme) */
 export const STICKY_COLORS = [
   { id: "yellow", label: "Yellow", hex: "#FFE97A" },
   { id: "pink",   label: "Pink",   hex: "#FFB8D2" },
@@ -51,7 +51,7 @@ export function useKanbanStyle() {
   };
 }
 
-/** Small stable number from a task id, so each note keeps its colour and tilt */
+/** Small stable number from a task id, so each note keeps its color and tilt */
 function hash(id: string): number {
   let h = 0;
   for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;

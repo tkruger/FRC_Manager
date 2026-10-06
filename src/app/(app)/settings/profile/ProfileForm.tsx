@@ -223,8 +223,8 @@ export function ProfileForm({ initialName, initialEmail }: Props) {
 
 const CARD_STYLES: { id: KanbanCardStyle; label: string; desc: string }[] = [
   { id: "plain",   label: "Plain cards",            desc: "Clean cards with a sub-team stripe" },
-  { id: "rainbow", label: "Sticky notes — rainbow", desc: "Each task on its own colour of note" },
-  { id: "single",  label: "Sticky notes — one colour", desc: "Every note the same colour you pick" },
+  { id: "rainbow", label: "Sticky notes — rainbow", desc: "Each task on its own color of note" },
+  { id: "single",  label: "Sticky notes — one color", desc: "Every note the same color you pick" },
 ];
 
 /** Kanban board card look — saved on this device. */
@@ -257,8 +257,8 @@ function TaskCardStyle({ mounted }: { mounted: boolean }) {
       </div>
 
       {mounted && style === "single" && (
-        <div className="mt-3 flex flex-wrap items-center gap-2" role="radiogroup" aria-label="Sticky note colour">
-          <span className="text-sm text-(--color-text-secondary) mr-1">Note colour</span>
+        <div className="mt-3 flex flex-wrap items-center gap-2" role="radiogroup" aria-label="Sticky note color">
+          <span className="text-sm text-(--color-text-secondary) mr-1">Note color</span>
           {STICKY_COLORS.map((c) => (
             <button
               key={c.id}

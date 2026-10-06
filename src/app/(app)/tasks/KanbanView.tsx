@@ -367,7 +367,7 @@ function KanbanCard({
   );
 
   if (style !== "plain") {
-    // Sticky note: paper colour, a slight tilt, folded corner and shadow; the pin shows the sub-team
+    // Sticky note: paper color, a slight tilt, folded corner and shadow; the pin shows the sub-team
     const look = stickyNoteLook(task.id, style, color);
     return (
       <div

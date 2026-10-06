@@ -1,7 +1,7 @@
 import type { WorkflowDef } from "./types";
 
 /**
- * Built-in purchase workflow. Used by teams that haven't customised theirs, and
+ * Built-in purchase workflow. Used by teams that haven't customized theirs, and
  * by requests created before workflows were configurable (workflowDefinitionId = null).
  * Mirrors the original hard-coded process, plus role checks on every step.
  */

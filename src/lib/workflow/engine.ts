@@ -386,7 +386,7 @@ export async function performAction(
           if (actor.id !== r.requestedById) {
             outbox.push(() => createNotification({
               topic: "purchase.my_requests", userId: r.requestedById, type: "PURCHASE_DENIED",
-              title: `Order cancelled: "${r.title}"`, body: input.note || undefined, linkUrl: link,
+              title: `Order canceled: "${r.title}"`, body: input.note || undefined, linkUrl: link,
             }));
           }
           break;
@@ -428,7 +428,7 @@ export async function describeRequestState(requestId: string): Promise<string> {
   const r = await prisma.purchaseRequest.findUnique({ where: { id: requestId }, select: STATE_SELECT });
   if (!r) return "Unknown";
   const step = resolveCurrentStep(await definitionFor(r.workflowDefinitionId), r);
-  return step ? `Waiting on: ${step.name}` : r.status.replace(/_/g, " ").toLowerCase();
+  return step ? `Waiting on: ${step.name}` : r.status.replace(/_/g, " ").toLowerCase().replace("cancelled", "canceled");
 }
 
 class StaleError extends Error {}

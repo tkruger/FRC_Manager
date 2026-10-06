@@ -31,7 +31,7 @@ export function meetingChanged(
     const title = {
       added:     "New meeting scheduled",
       moved:     "Meeting changed",
-      cancelled: "Meeting cancelled",
+      cancelled: "Meeting canceled",
       restored:  "Meeting back on",
     }[kind];
     await notifyRoles(m.season.teamId, "all", {

@@ -381,7 +381,7 @@ function MeetingDialog({
         <div className="space-y-4">
           {meeting.cancelled && (
             <div className="rounded-md bg-[--color-danger]/10 border border-[--color-danger]/20 px-3 py-2 text-sm text-[--color-danger]">
-              Cancelled{meeting.cancelReason ? ` — ${meeting.cancelReason}` : ""}
+              Canceled{meeting.cancelReason ? ` — ${meeting.cancelReason}` : ""}
             </div>
           )}
 
