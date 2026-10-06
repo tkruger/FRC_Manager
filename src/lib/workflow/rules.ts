@@ -76,3 +76,15 @@ export function availableActions(
   return actions;
 }
 
+
+/**
+ * Who can edit an open order: anyone who can approve it or order it (the roles on the
+ * workflow's approval and order steps), and Head Mentors.
+ */
+export function canEditOrder(def: WorkflowDef, r: StepState, roles: WorkflowRole[]): boolean {
+  if (TERMINAL.includes(r.status)) return false;
+  if (roles.includes("HEAD_MENTOR")) return true;
+  return def.steps
+    .filter((s) => s.type === "approval" || s.type === "order")
+    .some((s) => s.roles.some((role) => roles.includes(role)));
+}

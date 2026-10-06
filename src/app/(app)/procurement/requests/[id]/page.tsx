@@ -5,7 +5,8 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { statusBadgeVariant, statusLabel } from "@/lib/procurement-helpers";
-import { definitionFor, resolveCurrentStep, availableActions } from "@/lib/workflow/engine";
+import { definitionFor, resolveCurrentStep, availableActions, canEditOrder } from "@/lib/workflow/engine";
+import { Button } from "@/components/ui/button";
 import { describeCondition, describeRoles, evaluateCondition } from "@/lib/workflow/types";
 import { ITEM_STATUSES, ITEM_STATUS_INFO, ORDER_ADMIN_ROLES, STATUS_OVERRIDE_ROLES } from "@/lib/orders/constants";
 import { ITEM_ROW_SELECT, toItemRow } from "@/lib/orders/rows";
@@ -34,6 +35,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   const def         = await definitionFor(order.workflowDefinitionId);
   const currentStep = resolveCurrentStep(def, order);
   const actions     = availableActions(def, order, { id: session.user.id, roles });
+  const canEdit     = canEditOrder(def, order, roles);
 
   // Steps still ahead of the current one, and whether they'll apply to this order
   const currentIndex = currentStep ? def.steps.findIndex((s) => s.key === currentStep.key) : -1;
@@ -75,7 +77,10 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             {counts.map(({ s, n }) => <Badge key={s} variant={ITEM_STATUS_INFO[s].badge}>{n} {ITEM_STATUS_INFO[s].label.toLowerCase()}</Badge>)}
           </div>
         }
-        actions={actions.length > 0 && <RequestActions requestId={order.id} actions={actions} />}
+        actions={(canEdit || actions.length > 0) && <>
+          {canEdit && <Link href={`/procurement/requests/${order.id}/edit`}><Button variant="outline" size="sm">Edit order</Button></Link>}
+          {actions.length > 0 && <RequestActions requestId={order.id} actions={actions} />}
+        </>}
       />
 
       {currentStep && (

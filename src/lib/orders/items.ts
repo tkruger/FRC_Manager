@@ -173,7 +173,7 @@ async function stockItem(tx: Tx, item: Awaited<ReturnType<typeof teamItems>>[num
  * Orders sit on the "order" step until every item is ordered, and on the
  * "receive" step until every item has arrived; then they move on by themselves.
  */
-async function syncOrders(requestIds: string[], actor: Actor) {
+export async function syncOrders(requestIds: string[], actor: Actor) {
   for (const requestId of new Set(requestIds)) {
     for (let pass = 0; pass < 2; pass++) {
       const r = await prisma.purchaseRequest.findUnique({

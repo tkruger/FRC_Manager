@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import type { Actor } from "@/lib/workflow/engine";
 import { createOrder } from "@/lib/orders/create";
+import { editOrder } from "@/lib/orders/edit";
 import { addTracking, setItemStatus, markArrived, toOrderCsv } from "@/lib/orders/items";
 import { lookupProduct, type ProductInfo } from "@/lib/orders/lookup";
 import { ORDER_ADMIN_ROLES, STATUS_OVERRIDE_ROLES } from "@/lib/orders/constants";
@@ -58,6 +59,28 @@ export async function createOrderAction(input: unknown): Promise<Result<{ reques
 
   const res = await createOrder({ actor: who, seasonId: season.id, name: parsed.data.name, items: parsed.data.items });
   if (res.success) refresh([res.requestId]);
+  return res;
+}
+
+// ── Edit order ──────────────────────────────────────────────────────────────
+
+const EditOrderSchema = z.object({
+  requestId: z.string().min(1),
+  name:      z.string().trim().min(1, "Give the order a name.").max(120),
+  // Arrived items aren't sent (they're locked), so an order may come back with none here
+  items:     z.array(ItemSchema.extend({ id: z.string().optional() })).max(100),
+});
+
+/** Anyone who can approve or order this order (and Head Mentors) — checked in editOrder. */
+export async function editOrderAction(input: unknown): Promise<Result> {
+  const who = await actor();
+  if (!who) return { success: false, error: "Not authenticated." };
+
+  const parsed = EditOrderSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Please check the order." };
+
+  const res = await editOrder({ actor: who, ...parsed.data });
+  if (res.success) refresh([parsed.data.requestId]);
   return res;
 }
 

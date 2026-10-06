@@ -27,7 +27,7 @@ import {
 type Tx = Prisma.TransactionClient;
 
 export type { WorkflowAction, AvailableAction } from "./rules";
-export { resolveCurrentStep, availableActions, canActOnStep } from "./rules";
+export { resolveCurrentStep, availableActions, canActOnStep, canEditOrder } from "./rules";
 
 export interface Actor {
   id:     string;

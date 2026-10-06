@@ -170,6 +170,7 @@ export default function HelpPage() {
           <li>For each item, paste the product <b>link</b> — for most FRC vendors (REV, AndyMark, WCP and other Shopify stores) the vendor, name, part number and price fill in automatically. Some sites (McMaster-Carr, Amazon) block this; just type the details.</li>
           <li>Set the quantity, sub-team, importance (Routine, Urgent or Emergency), why it&apos;s needed, and any notes for the Team Admin.</li>
           <li>Submit. Items show a draft ID (like DRAFT-7K2Q) until the order is approved; then each gets its permanent 4-digit item ID (0415, 0416, …). Denied or cancelled orders never use up item IDs.</li>
+          <li>Need to change something? Anyone who can approve or order it (and Head Mentors) can tap <b>Edit order</b> while it&apos;s open to change, add or remove items. Arrived items are locked, and every edit is noted in the order&apos;s progress.</li>
         </Steps>
         <p>You can also order straight from <b>Inventory</b> — the <b>Order</b> button on low-stock items, or <b>Order a new item</b>.</p>
         <H3>Item statuses</H3>

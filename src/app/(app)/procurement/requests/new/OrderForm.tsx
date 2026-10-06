@@ -4,12 +4,17 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn, formatCurrency } from "@/lib/utils";
-import { createOrderAction, lookupProductAction } from "@/app/actions/orders";
+import { createOrderAction, editOrderAction, lookupProductAction } from "@/app/actions/orders";
+import { toast } from "@/components/ui/toast";
 import { IMPORTANCE_OPTIONS } from "@/lib/orders/constants";
 import { SUBTEAM_OPTIONS } from "@/lib/schedule-helpers";
 
 interface Item {
   key:        number;
+  /** Existing item (edit mode) */
+  id?:        string;
+  /** Its item ID or draft ID, shown on the card */
+  ref?:       string;
   link:       string;
   vendorName: string;
   name:       string;
@@ -34,10 +39,21 @@ function blankItem(defaults?: Partial<Item>): Item {
   };
 }
 
-export function OrderForm({ vendors }: { vendors: string[] }) {
+/** Values for editing an existing order */
+export interface OrderFormEdit {
+  requestId: string;
+  name:      string;
+  items:     Omit<Item, "key" | "lookup">[];
+  /** Arrived items: shown, but can't be changed or removed */
+  locked:    { ref: string; name: string; quantity: number }[];
+}
+
+export function OrderForm({ vendors, edit }: { vendors: string[]; edit?: OrderFormEdit }) {
   const router = useRouter();
-  const [name, setName]   = useState("");
-  const [items, setItems] = useState<Item[]>(() => [blankItem()]);
+  const [name, setName]   = useState(edit?.name ?? "");
+  const [items, setItems] = useState<Item[]>(() =>
+    edit ? edit.items.map((i) => ({ ...i, key: nextKey++, lookup: "idle" as const })) : [blankItem()]);
+  const locked = edit?.locked ?? [];
   const [error, setError] = useState<string | null>(null);
   const [pending, start]  = useTransition();
 
@@ -67,22 +83,31 @@ export function OrderForm({ vendors }: { vendors: string[] }) {
   function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    const payload = {
+      name,
+      items: items.map((i) => ({
+        id:         i.id,
+        name:       i.name,
+        vendorName: i.vendorName || undefined,
+        partNumber: i.partNumber || undefined,
+        link:       i.link || undefined,
+        unitCost:   i.unitCost === "" ? null : Number(i.unitCost),
+        quantity:   Number(i.quantity),
+        subTeam:    i.subTeam || null,
+        importance: i.importance,
+        reasoning:  i.reasoning || undefined,
+        notes:      i.notes || undefined,
+      })),
+    };
     start(async () => {
-      const res = await createOrderAction({
-        name,
-        items: items.map((i) => ({
-          name:       i.name,
-          vendorName: i.vendorName || undefined,
-          partNumber: i.partNumber || undefined,
-          link:       i.link || undefined,
-          unitCost:   i.unitCost === "" ? null : Number(i.unitCost),
-          quantity:   Number(i.quantity),
-          subTeam:    i.subTeam || null,
-          importance: i.importance,
-          reasoning:  i.reasoning || undefined,
-          notes:      i.notes || undefined,
-        })),
-      });
+      if (edit) {
+        const res = await editOrderAction({ ...payload, requestId: edit.requestId });
+        if (!res.success) { setError(res.error); return; }
+        toast.success("Order saved");
+        router.push(`/procurement/requests/${edit.requestId}`);
+        return;
+      }
+      const res = await createOrderAction(payload);
       if (!res.success) { setError(res.error); return; }
       router.push(`/procurement/requests/${res.requestId}`);
     });
@@ -98,13 +123,26 @@ export function OrderForm({ vendors }: { vendors: string[] }) {
           placeholder="e.g. Intake prototype parts" />
       </label>
 
+      {locked.length > 0 && (
+        <div className="card space-y-2">
+          <p className="text-sm font-medium text-(--color-text-primary)">Arrived — can&apos;t be changed</p>
+          <ul className="text-small text-(--color-text-secondary) space-y-1">
+            {locked.map((l) => (
+              <li key={l.ref}><span className="font-mono text-xs mr-2">{l.ref}</span>{l.name} × {l.quantity}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <datalist id="vendor-names">{vendors.map((v) => <option key={v} value={v} />)}</datalist>
 
       {items.map((item, idx) => (
         <fieldset key={item.key} className="card space-y-3">
           <div className="flex items-center justify-between">
-            <legend className="text-h3 text-(--color-text-primary)">Item {idx + 1}</legend>
-            {items.length > 1 && (
+            <legend className="text-h3 text-(--color-text-primary)">
+              {item.ref ? <><span className="font-mono text-sm text-(--color-text-secondary) mr-2">{item.ref}</span>{item.name || `Item ${idx + 1}`}</> : `${edit ? "New item" : "Item"} ${idx + 1}`}
+            </legend>
+            {(items.length > 1 || locked.length > 0) && (
               <button type="button" className="text-small text-(--color-danger) hover:underline"
                 onClick={() => setItems((list) => list.filter((i) => i.key !== item.key))}>
                 Remove
@@ -187,8 +225,14 @@ export function OrderForm({ vendors }: { vendors: string[] }) {
       <div className="sticky bottom-16 lg:bottom-4 z-10 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-(--color-surface) border border-(--color-border) p-3 shadow-lg">
         <p className="text-sm text-(--color-text-primary)">
           {items.length} item{items.length === 1 ? "" : "s"} · <b>{formatCurrency(total)}</b>
+          {locked.length > 0 && <span className="text-(--color-text-secondary)"> + {locked.length} arrived</span>}
         </p>
-        <Button type="submit" isLoading={pending}>Submit order</Button>
+        <div className="flex gap-2">
+          {edit && (
+            <Button type="button" variant="outline" onClick={() => router.push(`/procurement/requests/${edit.requestId}`)}>Cancel</Button>
+          )}
+          <Button type="submit" isLoading={pending}>{edit ? "Save changes" : "Submit order"}</Button>
+        </div>
       </div>
     </form>
   );
