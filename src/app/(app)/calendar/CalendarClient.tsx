@@ -146,7 +146,7 @@ export function CalendarClient({ season, meetings, allTasks, isLeadership }: Pro
     });
   }
   function handleGenerate() {
-    if (!confirm("Replace all auto-generated meetings with fresh ones from the season config? Continue?")) return;
+    if (!confirm("Rebuild meetings from tomorrow to the season end from the season's meeting days and times? Future meetings are replaced (including any you've edited). Past meetings and today's stay as they are.")) return;
     startTransition(async () => {
       await generateMeetingsAction(season.id);
       router.refresh();

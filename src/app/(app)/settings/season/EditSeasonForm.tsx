@@ -43,9 +43,8 @@ export function EditSeasonForm({ season, onClose }: { season: Season; onClose: (
   useEffect(() => {
     if (state?.success) {
       const m = state.meetings;
-      const moved = m && (m.added || m.removed)
-        ? ` — meetings updated: ${m.added} added, ${m.removed} removed`
-        : "";
+      const parts = m ? [m.moved && `${m.moved} moved`, m.added && `${m.added} added`, m.removed && `${m.removed} removed`].filter(Boolean) : [];
+      const moved = parts.length ? ` — future meetings: ${parts.join(", ")}` : "";
       toast.success(`Season saved${moved}`);
       router.refresh(); onClose();
     }

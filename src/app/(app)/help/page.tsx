@@ -119,7 +119,7 @@ export default function HelpPage() {
       <Section id="season" title="Season, robots & competitions">
         <ul className="list">
           <li><b>Season settings</b> (Head Mentors) hold the season&apos;s start (kickoff) and end dates, its competitions, meeting days and times, and expected attendance. Only one season is active at a time; everything else in the app uses the active season.</li>
-          <li>Changing the season&apos;s start or end date updates the calendar: future meetings outside the new dates are removed and meetings are added on your meeting days for newly covered dates. Past meetings, and any you&apos;ve edited, canceled or added yourself, are left alone. Once the season has started, its start date is locked.</li>
+          <li>Changing the season&apos;s dates or meeting schedule updates the calendar <b>from tomorrow on</b> — past meetings, and today&apos;s, never change. Future meetings move to a day&apos;s new times, days dropped from the schedule lose their meetings (unless one has a title, notes, tasks or was canceled), and new meeting days and dates get meetings. A meeting you&apos;ve moved to another time by hand keeps its time. Once the season has started, its start date is locked.</li>
           <li><b>Robots</b>: add the season&apos;s robots and use <b>Edit robot</b> to change a name, role, status, weight target or description. A robot&apos;s name always includes the season year.</li>
           <li><b>Past seasons</b> open on their own page with their stats, robots, competitions and milestones.</li>
         </ul>

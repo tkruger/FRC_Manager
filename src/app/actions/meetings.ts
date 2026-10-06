@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { regenerateFutureMeetings } from "@/lib/season-meetings";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import * as notify from "@/lib/notify/events";
@@ -24,11 +25,7 @@ async function findTeamMeeting(meetingId: string, teamId: string) {
   });
 }
 
-const DAY_MAP: Record<string, number> = {
-  SUN: 0, MON: 1, TUE: 2, WED: 3, THU: 4, FRI: 5, SAT: 6,
-};
-
-/** Generate all meeting instances for a season between the season start and end */
+/** Regenerate the season's regular meetings from tomorrow to the season end */
 export async function generateMeetingsAction(
   seasonId: string
 ): Promise<{ success: boolean; error?: string; count?: number }> {
@@ -40,39 +37,12 @@ export async function generateMeetingsAction(
   });
   if (!season) return { success: false, error: "Season not found." };
 
-  // Delete any auto-generated (not manually customized) meetings
-  await prisma.meeting.deleteMany({ where: { seasonId } });
+  // Rebuild from tomorrow on — past meetings (and today's) are never changed
+  const count = await regenerateFutureMeetings(seasonId);
+  if (count > 0) await notify.meetingsPublished(session.user.teamId!, count, session.user.id);
 
-  const dayTimes = (season.meetingDayTimes as Record<string, { start: string; end: string }>) ?? {};
-  const meetingDayNums = season.meetingDays.map((d) => DAY_MAP[d]).filter((n) => n !== undefined);
-
-  const meetings: { seasonId: string; date: Date; startTime: string; endTime: string }[] = [];
-  const cursor = new Date(season.kickoffDate);
-  cursor.setHours(0, 0, 0, 0);
-
-  const end = new Date(season.endDate);
-  end.setHours(23, 59, 59, 999);
-
-  while (cursor <= end) {
-    if (meetingDayNums.includes(cursor.getDay())) {
-      const dayKey = Object.entries(DAY_MAP).find(([, v]) => v === cursor.getDay())?.[0] ?? "";
-      const times = dayTimes[dayKey] ?? { start: season.meetingStartTime, end: season.meetingEndTime };
-      meetings.push({
-        seasonId,
-        date:      new Date(cursor),
-        startTime: times.start,
-        endTime:   times.end,
-      });
-    }
-    cursor.setDate(cursor.getDate() + 1);
-  }
-
-  await prisma.meeting.createMany({ data: meetings });
-  if (meetings.length > 0) await notify.meetingsPublished(session.user.teamId!, meetings.length, session.user.id);
-
-  revalidatePath("/schedule/calendar");
-  revalidatePath("/schedule");
-  return { success: true, count: meetings.length };
+  revalidatePath("/calendar");
+  return { success: true, count };
 }
 
 export async function updateMeetingAction(

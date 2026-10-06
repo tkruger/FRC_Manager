@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { seasonStarted, syncSeasonMeetings } from "@/lib/season-meetings";
+import { seasonStarted, syncSeasonMeetings, scheduleChanged } from "@/lib/season-meetings";
 import * as notify from "@/lib/notify/events";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
@@ -62,7 +62,7 @@ const SeasonSchema = z.object({
 }).refine((d) => new Date(d.endDate) > new Date(d.kickoffDate), { message: "The season has to end after it starts." });
 
 export type SeasonActionState =
-  | { success: true; seasonId: string; meetings?: { added: number; removed: number } }
+  | { success: true; seasonId: string; meetings?: { added: number; removed: number; moved: number } }
   | { success: false; error: string };
 
 /** Extract per-day time config from form data:
@@ -180,7 +180,7 @@ export async function updateSeasonAction(
 
   const before = await prisma.season.findFirst({
     where:  { id: seasonId, teamId: session.user.teamId },
-    select: { kickoffDate: true, endDate: true },
+    select: { kickoffDate: true, endDate: true, meetingDays: true, meetingStartTime: true, meetingEndTime: true, meetingDayTimes: true },
   });
   if (!before) return { success: false, error: "Season not found." };
   const kickoff = new Date(d.kickoffDate);
@@ -208,8 +208,12 @@ export async function updateSeasonAction(
   });
   if (updated.count === 0) return { success: false, error: "Season not found." };
 
-  // New dates: the calendar follows (future meetings only; anything edited by hand stays)
-  const meetings = datesChanged ? await syncSeasonMeetings(seasonId) : undefined;
+  // New dates or meeting schedule: future meetings follow (from tomorrow on; past ones and
+  // meetings moved by hand stay as they are)
+  const timesChanged = scheduleChanged(before, {
+    meetingDays: d.meetingDays, meetingStartTime: globalStart, meetingEndTime: globalEnd, meetingDayTimes: dayTimes,
+  });
+  const meetings = datesChanged || timesChanged ? await syncSeasonMeetings(seasonId, before) : undefined;
   if (meetings?.added) await notify.meetingsPublished(session.user.teamId!, meetings.added, session.user.id);
 
   // Robots copy the season year into their display name ("2026 Ironclad") —
