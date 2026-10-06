@@ -9,7 +9,7 @@ const inputCls =
 
 /**
  * A tool's name is also its group: tools with the same name share a card. Pick an existing
- * name from the list, or "+ New name…" to type one (it then appears in the list next time).
+ * named group from the list, or "+ New group…" to type one (it then appears in the list next time).
  * With no tools yet it's just a text box. Submits as `name`.
  */
 export function ToolNamePicker({
@@ -34,7 +34,7 @@ export function ToolNamePicker({
   return (
     <div className="space-y-2">
       <label htmlFor="tool-name" className="block text-sm font-medium text-(--color-text-primary)">
-        Tool name <span className="text-(--color-danger)" aria-hidden>*</span>
+        Named group <span className="text-(--color-danger)" aria-hidden>*</span>
       </label>
       <input type="hidden" name="name" value={value} />
 
@@ -46,9 +46,9 @@ export function ToolNamePicker({
           required={choice !== NEW}
           onChange={(e) => pick(e.target.value)}
         >
-          <option value="" disabled>Choose a tool…</option>
+          <option value="" disabled>Choose a group…</option>
           {names.map((n) => <option key={n} value={n}>{n}</option>)}
-          <option value={NEW}>+ New name…</option>
+          <option value={NEW}>+ New group…</option>
         </select>
       )}
 
@@ -65,7 +65,7 @@ export function ToolNamePicker({
         />
       )}
       <p className="text-small text-(--color-text-secondary)">
-        Tools with the same name are grouped together{names.length > 0 ? " — pick one to add another of the same tool." : "."}
+        Tools in the same named group share one card{names.length > 0 ? " — pick a group to add another of the same tool." : "."}
       </p>
     </div>
   );
