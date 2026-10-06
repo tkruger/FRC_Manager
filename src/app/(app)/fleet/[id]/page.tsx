@@ -9,6 +9,7 @@ import { Table, TableHead, TableBody, Th, Td, Tr } from "@/components/ui/table";
 import { formatWeight, formatCurrency, formatDate } from "@/lib/utils";
 import { WeightLogger } from "./WeightLogger";
 import { EditRobotDialog } from "@/components/fleet/EditRobotDialog";
+import { PrecheckCard } from "@/components/fleet/PrecheckCard";
 import { ROBOT_EDIT_ROLES } from "@/lib/rbac";
 
 const ROBOT_WEIGHT_LIMIT = 115;
@@ -24,6 +25,7 @@ export default async function RobotDetailPage({ params }: { params: Promise<{ id
     where: { id, season: { teamId: session.user.teamId } },
     include: {
       season: { select: { name: true, kickoffDate: true, week0Date: true } },
+      precheckUpdatedBy: { select: { name: true } },
       inUseItems: {
         where: { status: { in: ["INSTALLED_ROBOT","INSTALLED_PRACTICE","IN_USE","AVAILABLE"] } },
         select: { id: true, name: true, subsystem: true, quantity: true, unitWeight: true, status: true, currentLocation: true },
@@ -91,6 +93,12 @@ export default async function RobotDetailPage({ params }: { params: Promise<{ id
           </Link>
         </div>
       </div>
+
+      {/* Official self-inspection */}
+      <PrecheckCard showName={false} robot={{
+        id: robot.id, name: robot.displayName, url: robot.precheckUrl, status: robot.precheckStatus,
+        updatedAt: robot.precheckUpdatedAt?.toISOString() ?? null, updatedBy: robot.precheckUpdatedBy?.name ?? null,
+      }} />
 
       {/* Weight + BOM summary */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

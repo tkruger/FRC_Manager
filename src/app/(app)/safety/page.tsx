@@ -94,7 +94,7 @@ export default async function SafetyPage() {
           <div className="grid grid-cols-1 gap-3">
             {[
               { label: "Certification matrix",      desc: "View all members × all certifications", href: "/safety/certifications", color: "var(--color-secondary)" },
-              { label: "Pre-competition inspection", desc: "Run the FIRST inspection checklist",   href: "/safety/inspection",     color: "var(--color-primary)"   },
+              { label: "Pre-competition inspection", desc: "PRECHECK status for each robot, plus checklists",   href: "/safety/inspection",     color: "var(--color-primary)"   },
             ].map((a) => (
               <Link key={a.href} href={a.href}
                 className="card flex items-center gap-4 hover:border-[--color-primary] transition-colors"

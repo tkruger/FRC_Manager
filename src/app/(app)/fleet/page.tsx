@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ProgressBar } from "@/components/ui/progress";
 import { formatWeight } from "@/lib/utils";
 import { PageHeader } from "@/components/PageHeader";
+import { PRECHECK_STATUS_INFO } from "@/lib/precheck";
 
 const ROBOT_WEIGHT_LIMIT = 115; // lbs body
 
@@ -112,6 +113,12 @@ export default async function FleetPage() {
                 {robot.description && (
                   <p className="text-small text-[--color-text-secondary] truncate">{robot.description}</p>
                 )}
+
+                <div>
+                  <Badge variant={PRECHECK_STATUS_INFO[robot.precheckStatus].badge}>
+                    PRECHECK: {PRECHECK_STATUS_INFO[robot.precheckStatus].label}
+                  </Badge>
+                </div>
               </Link>
             );
           })}

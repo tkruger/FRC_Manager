@@ -196,3 +196,36 @@ export async function updateCheckItemAction(
   });
   revalidatePath("/safety/inspection");
 }
+
+// ── PRECHECK (official self-inspection) ─────────────────────────────────────
+
+/** Save a robot's PRECHECK link and/or status. Any team member, like the in-app checklist. */
+export async function updatePrecheckAction(
+  robotId: string,
+  input: { url?: string | null; status?: string },
+): Promise<{ success: true } | { success: false; error: string }> {
+  const session = await auth();
+  if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
+
+  const { isPrecheckUrl, PRECHECK_STATUSES } = await import("@/lib/precheck");
+  const data: { precheckUrl?: string | null; precheckStatus?: (typeof PRECHECK_STATUSES)[number] } = {};
+  if (input.url !== undefined) {
+    const url = input.url?.trim() || null;
+    if (url && !isPrecheckUrl(url)) return { success: false, error: "Paste the link PRECHECK gives you, like https://precheck.frc.nexus/AbCd1234." };
+    data.precheckUrl = url;
+  }
+  if (input.status !== undefined) {
+    if (!PRECHECK_STATUSES.includes(input.status as never)) return { success: false, error: "Unknown status." };
+    data.precheckStatus = input.status as (typeof PRECHECK_STATUSES)[number];
+  }
+
+  const res = await prisma.robot.updateMany({
+    where: { id: robotId, season: { teamId: session.user.teamId } },
+    data:  { ...data, precheckUpdatedAt: new Date(), precheckUpdatedById: session.user.id },
+  });
+  if (res.count === 0) return { success: false, error: "Robot not found." };
+
+  revalidatePath("/safety", "layout");
+  revalidatePath("/fleet", "layout");
+  return { success: true };
+}

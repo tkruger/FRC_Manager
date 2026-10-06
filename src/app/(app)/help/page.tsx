@@ -230,7 +230,7 @@ export default function HelpPage() {
         <ul className="list">
           <li><b>Incidents</b>: anyone can report one. Safety Captains and Head Mentors are notified straight away.</li>
           <li><b>Certifications</b>: Safety Captains, Inventory Admins and Head Mentors award and revoke them. You&apos;re reminded 14 and 3 days before yours expires.</li>
-          <li><b>Inspection</b>: run a pre-competition checklist for a robot and tick items off as they pass.</li>
+          <li><b>Inspection</b>: run FIRST&apos;s official self-inspection at <a href="https://precheck.frc.nexus/" target="_blank" rel="noopener noreferrer" className="link">PRECHECK</a>, paste the link it gives you at the end into the robot&apos;s PRECHECK box, and set its status: <b>Complete</b>, <b>Needs work</b> or <b>Incomplete</b>. The status shows on the robot&apos;s Fleet card. The in-app checklist is still there below it.</li>
         </ul>
       </Section>
 

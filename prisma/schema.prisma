@@ -51,6 +51,7 @@ model User {
   userCertifications   UserCertification[]
   purchaseRequests     PurchaseRequest[]   @relation("Requester")
   orderDrafts          OrderDraft[]
+  precheckUpdates      Robot[]             @relation("PrecheckUpdatedBy")
   purchaseApprovals    PurchaseRequest[]   @relation("Approver")
   purchaseEvents       PurchaseRequestEvent[]
   workflowVersions     WorkflowDefinition[]
@@ -250,10 +251,24 @@ model Robot {
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
+  // Official FIRST self-inspection (precheck.frc.nexus): the team's link and where they are
+  precheckUrl         String?
+  precheckStatus      PrecheckStatus @default(INCOMPLETE)
+  precheckUpdatedAt   DateTime?
+  precheckUpdatedById String?
+  precheckUpdatedBy   User?          @relation("PrecheckUpdatedBy", fields: [precheckUpdatedById], references: [id], onDelete: SetNull)
+
   inUseItems    InUseInventoryItem[]
   tasks         Task[]
   bomItems      BomItem[]
   weightSnaps   WeightSnapshot[]
+}
+
+/// Set by the team after running PRECHECK
+enum PrecheckStatus {
+  COMPLETE
+  NEEDS_WORK
+  INCOMPLETE
 }
 
 enum RobotRole {

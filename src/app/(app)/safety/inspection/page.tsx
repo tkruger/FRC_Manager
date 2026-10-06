@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StartInspectionButton } from "./StartInspectionButton";
 import { CheckItemButton } from "./CheckItemButton";
+import { PrecheckCard } from "@/components/fleet/PrecheckCard";
+import { PRECHECK_HOME } from "@/lib/precheck";
 
 export default async function InspectionPage({ searchParams }: { searchParams: Promise<{ checklistId?: string }> }) {
   const { checklistId } = await searchParams;
@@ -19,7 +21,11 @@ export default async function InspectionPage({ searchParams }: { searchParams: P
 
   const robots = await prisma.robot.findMany({
     where: { season: { teamId: session.user.teamId, isActive: true }, archived: false },
-    select: { id: true, displayName: true },
+    select: {
+      id: true, displayName: true, precheckUrl: true, precheckStatus: true, precheckUpdatedAt: true,
+      precheckUpdatedBy: { select: { name: true } },
+    },
+    orderBy: { createdAt: "asc" },
   });
 
   // Load checklist if specified
@@ -65,8 +71,32 @@ export default async function InspectionPage({ searchParams }: { searchParams: P
           <Link href="/safety" className="hover:text-[--color-primary]">Safety</Link>
           <span className="mx-2">›</span>Inspection
         </nav>
-        <h1 className="text-h1 text-[--color-text-primary]">Pre-competition inspection</h1>
+        <h1 className="text-h1 text-(--color-text-primary)">Pre-competition inspection</h1>
       </div>
+
+      {/* Official self-inspection */}
+      <section className="space-y-3">
+        <div>
+          <h2 className="text-h2 text-(--color-text-primary)">PRECHECK</h2>
+          <p className="text-small text-(--color-text-secondary) mt-1">
+            FIRST&apos;s official self-inspection. Run it at{" "}
+            <a href={PRECHECK_HOME} target="_blank" rel="noopener noreferrer" className="text-(--color-secondary) hover:underline">precheck.frc.nexus</a>,
+            paste the link it gives you at the end, and set where the robot stands.
+          </p>
+        </div>
+        {robots.length === 0 ? (
+          <div className="card text-small text-(--color-text-secondary)">Add a robot to this season to track its PRECHECK.</div>
+        ) : (
+          robots.map((r) => (
+            <PrecheckCard key={r.id} robot={{
+              id: r.id, name: r.displayName, url: r.precheckUrl, status: r.precheckStatus,
+              updatedAt: r.precheckUpdatedAt?.toISOString() ?? null, updatedBy: r.precheckUpdatedBy?.name ?? null,
+            }} />
+          ))
+        )}
+      </section>
+
+      <h2 className="text-h2 text-(--color-text-primary) pt-2">In-app checklist</h2>
 
       {/* Start new checklist */}
       {!checklist && (
