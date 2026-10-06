@@ -186,7 +186,7 @@ export function OrderForm({ vendors, edit, draft }: {
   }
 
   return (
-    <form onSubmit={submit} className="space-y-5">
+    <form onSubmit={submit} className="space-y-5" autoComplete="off">
       {picker && (
         <ProductPicker open vendorName={picker.vendorName} choices={picker.choices}
           onCancel={() => setPicker(null)} onPick={addPicked} />
@@ -233,6 +233,12 @@ export function OrderForm({ vendors, edit, draft }: {
                 className={inputCls}
                 type="text"
                 inputMode="url"
+                // Not contact details — keeps iOS from offering "AutoFill Contact"
+                name="product-link"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
                 placeholder="Paste a product link to fill in the details"
                 value={item.link}
                 onChange={(e) => update(item.key, { link: e.target.value, lookup: "idle" })}
