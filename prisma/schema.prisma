@@ -50,6 +50,7 @@ model User {
   toolCheckouts        ToolCheckout[]
   userCertifications   UserCertification[]
   purchaseRequests     PurchaseRequest[]   @relation("Requester")
+  orderDrafts          OrderDraft[]
   purchaseApprovals    PurchaseRequest[]   @relation("Approver")
   purchaseEvents       PurchaseRequestEvent[]
   workflowVersions     WorkflowDefinition[]
@@ -151,6 +152,7 @@ model Team {
   workflows     WorkflowDefinition[]
   trackings     Tracking[]
   vendors       Vendor[]
+  orderDrafts   OrderDraft[]
   tools         Tool[]
   discordConfig DiscordConfig?
   timezone      String?   // IANA zone used for meeting times and daily reminders
@@ -1296,4 +1298,21 @@ model Meeting {
   tasks        Task[]   @relation("MeetingTasks")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+/// An order someone has started but not submitted yet. Private to them; it isn't an
+/// order (no items, IDs or workflow) until submitted.
+model OrderDraft {
+  id        String   @id @default(cuid())
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  /// The order form's items, as typed
+  items     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, updatedAt])
 }

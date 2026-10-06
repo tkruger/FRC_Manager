@@ -4,7 +4,9 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn, formatCurrency } from "@/lib/utils";
-import { createOrderAction, editOrderAction, lookupProductAction } from "@/app/actions/orders";
+import { createOrderAction, editOrderAction, lookupProductAction, saveOrderDraftAction } from "@/app/actions/orders";
+import type { ProductChoice } from "@/lib/orders/lookup";
+import { ProductPicker } from "./ProductPicker";
 import { toast } from "@/components/ui/toast";
 import { IMPORTANCE_OPTIONS } from "@/lib/orders/constants";
 import { SUBTEAM_OPTIONS } from "@/lib/schedule-helpers";
@@ -39,6 +41,9 @@ function blankItem(defaults?: Partial<Item>): Item {
   };
 }
 
+/** The form's own fields, as saved in a draft */
+export type DraftItem = Omit<Item, "key" | "lookup" | "id" | "ref">;
+
 /** Values for editing an existing order */
 export interface OrderFormEdit {
   requestId: string;
@@ -48,11 +53,23 @@ export interface OrderFormEdit {
   locked:    { ref: string; name: string; quantity: number }[];
 }
 
-export function OrderForm({ vendors, edit }: { vendors: string[]; edit?: OrderFormEdit }) {
+export function OrderForm({ vendors, edit, draft }: {
+  vendors: string[];
+  edit?:   OrderFormEdit;
+  /** A saved draft to carry on with (new orders only) */
+  draft?:  { id: string; name: string; items: DraftItem[] };
+}) {
   const router = useRouter();
-  const [name, setName]   = useState(edit?.name ?? "");
-  const [items, setItems] = useState<Item[]>(() =>
-    edit ? edit.items.map((i) => ({ ...i, key: nextKey++, lookup: "idle" as const })) : [blankItem()]);
+  const [name, setName]   = useState(edit?.name ?? draft?.name ?? "");
+  const [items, setItems] = useState<Item[]>(() => {
+    const start = edit?.items ?? draft?.items;
+    // Saved items keep their looked-up details, so don't look them up again on blur
+    return start?.length ? start.map((i) => ({ ...i, key: nextKey++, lookup: i.link ? "done" as const : "idle" as const })) : [blankItem()];
+  });
+  const [draftId, setDraftId]   = useState(draft?.id ?? null);
+  const [savingDraft, setSaving] = useState(false);
+  // A link that sells several products waits here for the person to pick
+  const [picker, setPicker] = useState<{ itemKey: number; vendorName: string | null; choices: ProductChoice[] } | null>(null);
   const locked = edit?.locked ?? [];
   const [error, setError] = useState<string | null>(null);
   const [pending, start]  = useTransition();
@@ -67,6 +84,11 @@ export function OrderForm({ vendors, edit }: { vendors: string[]; edit?: OrderFo
     const res = await lookupProductAction(url);
     if (!res.success) { update(item.key, { lookup: "failed" }); return; }
     const p = res.product;
+    if (p.choices?.length) {
+      update(item.key, { lookup: "done", vendorName: item.vendorName || p.vendorName || "" });
+      setPicker({ itemKey: item.key, vendorName: p.vendorName, choices: p.choices });
+      return;
+    }
     // Only fill fields the person hasn't typed in themselves
     setItems((list) => list.map((i) => i.key !== item.key ? i : {
       ...i,
@@ -76,6 +98,47 @@ export function OrderForm({ vendors, edit }: { vendors: string[]; edit?: OrderFo
       partNumber: i.partNumber || p.partNumber || "",
       unitCost:   i.unitCost || (p.unitCost != null ? p.unitCost.toFixed(2) : ""),
     }));
+  }
+
+  /** Picked products: the first fills the item the link was pasted into, the rest follow it */
+  function addPicked(picked: ProductChoice[]) {
+    if (!picker) return;
+    const target = items.find((i) => i.key === picker.itemKey);
+    if (!target) { setPicker(null); return; }
+    const filled: Item[] = picked.map((c, idx) => ({
+      ...(idx === 0 ? target : blankItem({ subTeam: target.subTeam })),
+      importance: target.importance,
+      reasoning:  target.reasoning,
+      link:       c.url,
+      vendorName: target.vendorName || picker.vendorName || "",
+      name:       c.label,
+      partNumber: c.partNumber ?? "",
+      unitCost:   c.unitCost != null ? c.unitCost.toFixed(2) : "",
+      lookup:     "done",
+    }));
+    setItems((list) => list.flatMap((i) => (i.key === picker.itemKey ? filled : [i])));
+    setPicker(null);
+    // Prices that weren't on the parts page come from each product's own page
+    for (const i of filled) if (!i.unitCost) fillFromLink(i, i.link);
+  }
+
+  async function saveDraft() {
+    setError(null);
+    setSaving(true);
+    const res = await saveOrderDraftAction({
+      draftId,
+      name,
+      items: items.map((i): DraftItem => ({
+        link: i.link, vendorName: i.vendorName, name: i.name, partNumber: i.partNumber, unitCost: i.unitCost,
+        quantity: i.quantity, subTeam: i.subTeam, importance: i.importance, reasoning: i.reasoning, notes: i.notes,
+      })),
+    });
+    setSaving(false);
+    if (!res.success) { setError(res.error); return; }
+    setDraftId(res.draftId);
+    // Keep the draft in the address so a refresh (or a bookmark) brings it back
+    router.replace(`/procurement/requests/new?draft=${res.draftId}`, { scroll: false });
+    toast.success("Draft saved — find it under Orders → Drafts");
   }
 
   const total = items.reduce((s, i) => s + (Number(i.unitCost) || 0) * (Number(i.quantity) || 0), 0);
@@ -107,7 +170,7 @@ export function OrderForm({ vendors, edit }: { vendors: string[]; edit?: OrderFo
         router.push(`/procurement/requests/${edit.requestId}`);
         return;
       }
-      const res = await createOrderAction(payload);
+      const res = await createOrderAction({ ...payload, draftId });
       if (!res.success) { setError(res.error); return; }
       router.push(`/procurement/requests/${res.requestId}`);
     });
@@ -115,6 +178,10 @@ export function OrderForm({ vendors, edit }: { vendors: string[]; edit?: OrderFo
 
   return (
     <form onSubmit={submit} className="space-y-5">
+      {picker && (
+        <ProductPicker open vendorName={picker.vendorName} choices={picker.choices}
+          onCancel={() => setPicker(null)} onPick={addPicked} />
+      )}
       {error && <div className="text-sm text-(--color-danger) bg-(--color-danger)/10 rounded px-3 py-2">{error}</div>}
 
       <label className="block space-y-1.5">
@@ -230,6 +297,9 @@ export function OrderForm({ vendors, edit }: { vendors: string[]; edit?: OrderFo
         <div className="flex gap-2">
           {edit && (
             <Button type="button" variant="outline" onClick={() => router.push(`/procurement/requests/${edit.requestId}`)}>Cancel</Button>
+          )}
+          {!edit && (
+            <Button type="button" variant="outline" onClick={saveDraft} isLoading={savingDraft}>Save draft</Button>
           )}
           <Button type="submit" isLoading={pending}>{edit ? "Save changes" : "Submit order"}</Button>
         </div>

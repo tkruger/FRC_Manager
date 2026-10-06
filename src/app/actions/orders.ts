@@ -43,8 +43,10 @@ const ItemSchema = z.object({
 });
 
 const OrderSchema = z.object({
-  name:  z.string().trim().min(1, "Give the order a name.").max(120),
-  items: z.array(ItemSchema).min(1, "Add at least one item.").max(100),
+  name:    z.string().trim().min(1, "Give the order a name.").max(120),
+  items:   z.array(ItemSchema).min(1, "Add at least one item.").max(100),
+  /** Submitting a saved draft removes it */
+  draftId: z.string().nullable().optional(),
 });
 
 export async function createOrderAction(input: unknown): Promise<Result<{ requestId: string; stage: string }>> {
@@ -58,8 +60,51 @@ export async function createOrderAction(input: unknown): Promise<Result<{ reques
   if (!season) return { success: false, error: "No active season. Set up a season first." };
 
   const res = await createOrder({ actor: who, seasonId: season.id, name: parsed.data.name, items: parsed.data.items });
-  if (res.success) refresh([res.requestId]);
+  if (res.success) {
+    if (parsed.data.draftId) await prisma.orderDraft.deleteMany({ where: { id: parsed.data.draftId, userId: who.id } });
+    refresh([res.requestId]);
+  }
   return res;
+}
+
+// ── Drafts ──────────────────────────────────────────────────────────────────
+
+// Drafts hold the form as typed, so fields are loose strings; they're checked on submit
+const DraftSchema = z.object({
+  draftId: z.string().nullable().optional(),
+  name:    z.string().max(120),
+  items:   z.array(z.object({
+    link: z.string().max(2000), vendorName: z.string().max(120), name: z.string().max(200), partNumber: z.string().max(120),
+    unitCost: z.string().max(20), quantity: z.string().max(20), subTeam: z.string().max(40), importance: z.string().max(20),
+    reasoning: z.string().max(2000), notes: z.string().max(2000),
+  })).max(100),
+});
+
+/** Save an in-progress order (private to its author). Creates it the first time. */
+export async function saveOrderDraftAction(input: unknown): Promise<Result<{ draftId: string }>> {
+  const who = await actor();
+  if (!who) return { success: false, error: "Not authenticated." };
+  const parsed = DraftSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: "Couldn't save this draft." };
+
+  const { draftId, items } = parsed.data;
+  const name = parsed.data.name.trim() || "Untitled order";
+  if (draftId) {
+    const updated = await prisma.orderDraft.updateMany({ where: { id: draftId, userId: who.id }, data: { name, items } });
+    if (updated.count === 1) { revalidatePath("/procurement"); return { success: true, draftId }; }
+    // Deleted meanwhile (or someone else's id) — save as a new draft instead
+  }
+  const created = await prisma.orderDraft.create({ data: { teamId: who.teamId, userId: who.id, name, items } });
+  revalidatePath("/procurement");
+  return { success: true, draftId: created.id };
+}
+
+export async function deleteOrderDraftAction(draftId: string): Promise<Result> {
+  const who = await actor();
+  if (!who) return { success: false, error: "Not authenticated." };
+  await prisma.orderDraft.deleteMany({ where: { id: draftId, userId: who.id } });
+  revalidatePath("/procurement");
+  return { success: true };
 }
 
 // ── Edit order ──────────────────────────────────────────────────────────────

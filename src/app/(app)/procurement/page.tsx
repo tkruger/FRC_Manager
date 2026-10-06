@@ -10,6 +10,7 @@ import { definitionFor, resolveCurrentStep } from "@/lib/workflow/engine";
 import { ITEM_STATUSES, ITEM_STATUS_INFO, ORDER_ADMIN_ROLES } from "@/lib/orders/constants";
 import { PageHeader } from "@/components/PageHeader";
 import { ExportCsvButton } from "@/components/orders/ExportCsvButton";
+import { DeleteDraftButton } from "./DeleteDraftButton";
 
 const OPEN = ["SUBMITTED", "APPROVED", "ORDERED", "PARTIAL_RECEIVED"] as const;
 
@@ -39,7 +40,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
     ...(view === "mine" ? { requestedById: session.user.id } : {}),
   };
 
-  const [orders, itemCounts] = await Promise.all([
+  const [orders, itemCounts, drafts] = await Promise.all([
     prisma.purchaseRequest.findMany({
       where,
       include: {
@@ -53,6 +54,12 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
       by:    ["status"],
       where: { request: { seasonId: activeSeason.id, status: { in: [...OPEN] } } },
       _count: { _all: true },
+    }),
+    // Your own unsubmitted orders
+    prisma.orderDraft.findMany({
+      where:   { userId: session.user.id, teamId: session.user.teamId },
+      orderBy: { updatedAt: "desc" },
+      select:  { id: true, name: true, items: true, updatedAt: true },
     }),
   ]);
 
@@ -75,6 +82,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
     { key: "open", label: "Open" },
     { key: "mine", label: "Mine" },
     { key: "all",  label: "All" },
+    ...(drafts.length > 0 || view === "drafts" ? [{ key: "drafts", label: `My drafts (${drafts.length})` }] : []),
   ];
 
   return (
@@ -113,7 +121,38 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         ))}
       </div>
 
-      {rows.length === 0 ? (
+      {view === "drafts" ? (
+        drafts.length === 0 ? (
+          <div className="card text-center py-10">
+            <p className="text-body text-(--color-text-secondary)">No drafts. Use <b>Save draft</b> on a new order to finish it later.</p>
+          </div>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2">
+            {drafts.map((d) => {
+              const items = Array.isArray(d.items) ? (d.items as { name?: string; unitCost?: string; quantity?: string }[]) : [];
+              const total = items.reduce((s, i) => s + (Number(i.unitCost) || 0) * (Number(i.quantity) || 0), 0);
+              const named = items.map((i) => i.name?.trim()).filter(Boolean) as string[];
+              return (
+                <div key={d.id} className="card space-y-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-sm font-semibold text-(--color-text-primary)">{d.name}</p>
+                    <p className="text-sm font-semibold text-(--color-text-primary) whitespace-nowrap">{formatCurrency(total)}</p>
+                  </div>
+                  <p className="text-small text-(--color-text-secondary)">
+                    {items.length} item{items.length === 1 ? "" : "s"}
+                    {named.length > 0 && ` · ${named.slice(0, 3).join(", ")}${named.length > 3 ? ` +${named.length - 3}` : ""}`}
+                    {" · "}saved {formatDate(d.updatedAt)}
+                  </p>
+                  <div className="flex items-center gap-3 pt-1">
+                    <Link href={`/procurement/requests/new?draft=${d.id}`}><Button size="sm">Continue</Button></Link>
+                    <DeleteDraftButton draftId={d.id} name={d.name} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )
+      ) : rows.length === 0 ? (
         <div className="card text-center py-10">
           <p className="text-body text-(--color-text-secondary) mb-4">{view === "open" ? "No open orders." : "No orders yet."}</p>
           <Link href="/procurement/requests/new"><Button size="sm">+ New order</Button></Link>
