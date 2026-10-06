@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { seasonStarted } from "@/lib/season-meetings";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { ActiveSeasonCard } from "../ActiveSeasonCard";
@@ -65,6 +66,7 @@ export default async function PastSeasonPage({ params }: { params: Promise<{ id:
         canEdit={isHeadMentor}
         season={{
           ...season,
+          startLocked: seasonStarted(season.kickoffDate),
           meetingDayTimes: season.meetingDayTimes as Record<string, { start: string; end: string }> | null,
           competitions: season.competitionEvents.map((c) => ({
             id: c.id, name: c.name, location: c.location, stage: c.stage, stageNumber: c.stageNumber,

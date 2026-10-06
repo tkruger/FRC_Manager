@@ -86,7 +86,7 @@ export default function HelpPage() {
           head={["Starts relative to", "Uses", "Example"]}
           rows={[
             ["Kickoff", "The season's kickoff date", "+3 → 3 days after kickoff"],
-            ["Week 0", "Your Week0 competition — or the first week competition if there's no Week0", "−5 → 5 days before Week 0"],
+            ["Week 0", "Your Week0 competition — or the first week competition if there&apos;s no Week0", "−5 → 5 days before Week 0"],
             ["Season end", "The season's end date, set in Season settings", "−7 → a week before the season ends"],
             ["Practice match", "Competitions designated PracticeMatch1, PracticeMatch2, …", "−1 → day before each practice match"],
             ["Week competition", "Competitions designated Week0, Week1, Week2, …", "−2 → pack the robot 2 days before each event"],
@@ -118,7 +118,8 @@ export default function HelpPage() {
 
       <Section id="season" title="Season, robots & competitions">
         <ul className="list">
-          <li><b>Season settings</b> (Head Mentors) hold the season's start (kickoff) and end dates, its competitions, meeting days and times, and expected attendance. Only one season is active at a time; everything else in the app uses the active season.</li>
+          <li><b>Season settings</b> (Head Mentors) hold the season&apos;s start (kickoff) and end dates, its competitions, meeting days and times, and expected attendance. Only one season is active at a time; everything else in the app uses the active season.</li>
+          <li>Changing the season&apos;s start or end date updates the calendar: future meetings outside the new dates are removed and meetings are added on your meeting days for newly covered dates. Past meetings, and any you&apos;ve edited, canceled or added yourself, are left alone. Once the season has started, its start date is locked.</li>
           <li><b>Robots</b>: add the season&apos;s robots and use <b>Edit robot</b> to change a name, role, status, weight target or description. A robot&apos;s name always includes the season year.</li>
           <li><b>Past seasons</b> open on their own page with their stats, robots, competitions and milestones.</li>
         </ul>

@@ -26,6 +26,8 @@ interface Season {
   year: number;
   kickoffDate: Date;
   endDate: Date;
+  /** The season has started, so its start date can't change */
+  startLocked: boolean;
   meetingDays: string[];
   meetingStartTime: string;
   meetingEndTime: string;

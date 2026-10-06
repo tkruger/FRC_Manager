@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { seasonStarted } from "@/lib/season-meetings";
 import { redirect } from "next/navigation";
 import { ActiveSeasonCard } from "./ActiveSeasonCard";
 import { NewSeasonButton } from "./NewSeasonButton";
@@ -64,6 +65,7 @@ export default async function SeasonSettingsPage() {
         <ActiveSeasonCard
           season={{
             ...activeSeason,
+            startLocked: seasonStarted(activeSeason.kickoffDate),
             meetingDayTimes: activeSeason.meetingDayTimes as Record<string, { start: string; end: string }> | null,
             competitions: activeSeason.competitionEvents.map((c) => ({
               id: c.id, name: c.name, location: c.location, stage: c.stage, stageNumber: c.stageNumber,

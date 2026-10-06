@@ -2,6 +2,8 @@
 
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { seasonStarted, syncSeasonMeetings } from "@/lib/season-meetings";
+import * as notify from "@/lib/notify/events";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
@@ -60,7 +62,7 @@ const SeasonSchema = z.object({
 }).refine((d) => new Date(d.endDate) > new Date(d.kickoffDate), { message: "The season has to end after it starts." });
 
 export type SeasonActionState =
-  | { success: true; seasonId: string }
+  | { success: true; seasonId: string; meetings?: { added: number; removed: number } }
   | { success: false; error: string };
 
 /** Extract per-day time config from form data:
@@ -176,13 +178,27 @@ export async function updateSeasonAction(
 
   const { dayTimes, globalStart, globalEnd } = extractDayTimes(formData, d.meetingDays);
 
+  const before = await prisma.season.findFirst({
+    where:  { id: seasonId, teamId: session.user.teamId },
+    select: { kickoffDate: true, endDate: true },
+  });
+  if (!before) return { success: false, error: "Season not found." };
+  const kickoff = new Date(d.kickoffDate);
+  const end     = new Date(d.endDate);
+  const sameDay = (a: Date, b: Date) => a.toISOString().slice(0, 10) === b.toISOString().slice(0, 10);
+  // Once a season has started, its start date stays put
+  if (seasonStarted(before.kickoffDate) && !sameDay(kickoff, before.kickoffDate)) {
+    return { success: false, error: "This season has already started, so its start date can't be changed." };
+  }
+  const datesChanged = !sameDay(kickoff, before.kickoffDate) || !sameDay(end, before.endDate);
+
   const updated = await prisma.season.updateMany({
     where: { id: seasonId, teamId: session.user.teamId },
     data: {
       name:               d.name,
       year:               d.year,
-      kickoffDate:        new Date(d.kickoffDate),
-      endDate:            new Date(d.endDate),
+      kickoffDate:        kickoff,
+      endDate:            end,
       meetingDays:        d.meetingDays,
       meetingStartTime:   globalStart,
       meetingEndTime:     globalEnd,
@@ -191,6 +207,10 @@ export async function updateSeasonAction(
     },
   });
   if (updated.count === 0) return { success: false, error: "Season not found." };
+
+  // New dates: the calendar follows (future meetings only; anything edited by hand stays)
+  const meetings = datesChanged ? await syncSeasonMeetings(seasonId) : undefined;
+  if (meetings?.added) await notify.meetingsPublished(session.user.teamId!, meetings.added, session.user.id);
 
   // Robots copy the season year into their display name ("2026 Ironclad") —
   // keep them in step when the season's year changes.
@@ -205,8 +225,8 @@ export async function updateSeasonAction(
   revalidatePath("/", "layout");
   revalidatePath("/settings/season");
   revalidatePath("/dashboard");
-  revalidatePath("/schedule");
-  return { success: true, seasonId };
+  revalidatePath("/calendar");
+  return { success: true, seasonId, meetings };
 }
 
 const RobotSchema = z.object({

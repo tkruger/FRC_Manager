@@ -25,6 +25,7 @@ interface Season {
   year: number;
   kickoffDate: Date;
   endDate: Date;
+  startLocked: boolean;
   meetingDays: string[];
   meetingStartTime: string;
   meetingEndTime: string;
@@ -40,7 +41,14 @@ export function EditSeasonForm({ season, onClose }: { season: Season; onClose: (
   const [selectedDays, setSelectedDays] = useState<string[]>(season.meetingDays);
 
   useEffect(() => {
-    if (state?.success) { toast.success("Season saved"); router.refresh(); onClose(); }
+    if (state?.success) {
+      const m = state.meetings;
+      const moved = m && (m.added || m.removed)
+        ? ` — meetings updated: ${m.added} added, ${m.removed} removed`
+        : "";
+      toast.success(`Season saved${moved}`);
+      router.refresh(); onClose();
+    }
   }, [state, router, onClose]);
 
   function toDateInputValue(d: Date) {
@@ -68,9 +76,12 @@ export function EditSeasonForm({ season, onClose }: { season: Season; onClose: (
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Start date" name="kickoffDate" type="date" required defaultValue={toDateInputValue(season.kickoffDate)} hint="Kickoff" />
+        <Field label="Start date" name="kickoffDate" type="date" required defaultValue={toDateInputValue(season.kickoffDate)}
+          readOnly={season.startLocked} aria-readonly={season.startLocked}
+          className={season.startLocked ? "opacity-60 cursor-not-allowed" : undefined}
+          hint={season.startLocked ? "Locked — the season has started" : "Kickoff. Changing it updates future meetings."} />
         <Field label="End date" name="endDate" type="date" required defaultValue={toDateInputValue(season.endDate)}
-          hint="After your last competition" />
+          hint="After your last competition. Changing it updates future meetings." />
       </div>
 
       {/* Per-day meeting times */}
