@@ -1311,6 +1311,8 @@ model Meeting {
   notes        String?  // full agenda / notes (markdown)
   cancelled    Boolean  @default(false)
   cancelReason String?
+  /// Someone set this meeting's date/time by hand (edited or added it) — schedule changes leave it alone
+  customTime   Boolean  @default(false)
   tasks        Task[]   @relation("MeetingTasks")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { seasonStarted, syncSeasonMeetings, scheduleChanged } from "@/lib/season-meetings";
+import { seasonStarted, syncSeasonMeetings } from "@/lib/season-meetings";
 import * as notify from "@/lib/notify/events";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
@@ -180,7 +180,7 @@ export async function updateSeasonAction(
 
   const before = await prisma.season.findFirst({
     where:  { id: seasonId, teamId: session.user.teamId },
-    select: { kickoffDate: true, endDate: true, meetingDays: true, meetingStartTime: true, meetingEndTime: true, meetingDayTimes: true },
+    select: { kickoffDate: true },
   });
   if (!before) return { success: false, error: "Season not found." };
   const kickoff = new Date(d.kickoffDate);
@@ -190,7 +190,6 @@ export async function updateSeasonAction(
   if (seasonStarted(before.kickoffDate) && !sameDay(kickoff, before.kickoffDate)) {
     return { success: false, error: "This season has already started, so its start date can't be changed." };
   }
-  const datesChanged = !sameDay(kickoff, before.kickoffDate) || !sameDay(end, before.endDate);
 
   const updated = await prisma.season.updateMany({
     where: { id: seasonId, teamId: session.user.teamId },
@@ -208,12 +207,9 @@ export async function updateSeasonAction(
   });
   if (updated.count === 0) return { success: false, error: "Season not found." };
 
-  // New dates or meeting schedule: future meetings follow (from tomorrow on; past ones and
-  // meetings moved by hand stay as they are)
-  const timesChanged = scheduleChanged(before, {
-    meetingDays: d.meetingDays, meetingStartTime: globalStart, meetingEndTime: globalEnd, meetingDayTimes: dayTimes,
-  });
-  const meetings = datesChanged || timesChanged ? await syncSeasonMeetings(seasonId, before) : undefined;
+  // Future meetings (from tomorrow on) follow the season's dates and schedule on every save,
+  // so they can never drift from it. Past meetings, and ones whose time was set by hand, stay.
+  const meetings = await syncSeasonMeetings(seasonId);
   if (meetings?.added) await notify.meetingsPublished(session.user.teamId!, meetings.added, session.user.id);
 
   // Robots copy the season year into their display name ("2026 Ironclad") —

@@ -70,6 +70,11 @@ export async function updateMeetingAction(
       })).map((t) => t.id)
     : undefined;
 
+  const timeSetByHand =
+    (data.date && new Date(data.date).getTime() !== before.date.getTime()) ||
+    (data.startTime && data.startTime !== before.startTime) ||
+    (data.endTime && data.endTime !== before.endTime);
+
   await prisma.meeting.update({
     where: { id: meetingId },
     data: {
@@ -79,6 +84,8 @@ export async function updateMeetingAction(
       ...(data.title !== undefined ? { title: data.title } : {}),
       ...(data.notes !== undefined ? { notes: data.notes } : {}),
       ...(taskIds        ? { tasks: { set: taskIds.map((id) => ({ id })) } } : {}),
+      // Its own date/time now — season schedule changes won't move it
+      ...(timeSetByHand  ? { customTime: true } : {}),
     },
   });
 
@@ -90,7 +97,7 @@ export async function updateMeetingAction(
   );
   if (moved) await notify.meetingChanged(meetingId, "moved", session.user.id);
 
-  revalidatePath("/schedule/calendar");
+  revalidatePath("/calendar");
   return { success: true };
 }
 
@@ -108,7 +115,7 @@ export async function cancelMeetingAction(
   });
   await notify.meetingChanged(meetingId, "cancelled", session.user.id);
 
-  revalidatePath("/schedule/calendar");
+  revalidatePath("/calendar");
   return { success: true };
 }
 
@@ -118,7 +125,7 @@ export async function restoreMeetingAction(meetingId: string): Promise<{ success
   if (!await findTeamMeeting(meetingId, session.user.teamId!)) return { success: false };
   await prisma.meeting.update({ where: { id: meetingId }, data: { cancelled: false, cancelReason: null } });
   await notify.meetingChanged(meetingId, "restored", session.user.id);
-  revalidatePath("/schedule/calendar");
+  revalidatePath("/calendar");
   return { success: true };
 }
 
@@ -140,11 +147,12 @@ export async function addMeetingAction(
   if (!date || !startTime || !endTime) return { success: false, error: "Date and times are required." };
 
   const meeting = await prisma.meeting.create({
-    data: { seasonId, date: new Date(date), startTime, endTime, title },
+    // Added by hand, so schedule changes leave its time alone
+    data: { seasonId, date: new Date(date), startTime, endTime, title, customTime: true },
   });
   await notify.meetingChanged(meeting.id, "added", session.user.id);
 
-  revalidatePath("/schedule/calendar");
+  revalidatePath("/calendar");
   return { success: true };
 }
 
@@ -164,6 +172,6 @@ export async function generateCalendarTokenAction(
     data:  { calendarToken: token },
   });
 
-  revalidatePath("/schedule/calendar");
+  revalidatePath("/calendar");
   return { success: true, token };
 }

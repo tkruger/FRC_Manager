@@ -45,26 +45,16 @@ export function seasonStarted(kickoffDate: Date): boolean {
   return kickoffDate < startOfToday();
 }
 
-/** Whether two schedules would put meetings on different days or at different times */
-export function scheduleChanged(a: MeetingSchedule, b: MeetingSchedule): boolean {
-  const key = (t: { start: string; end: string } | null) => (t ? `${t.start}-${t.end}` : "none");
-  return [...new Set([...a.meetingDays, ...b.meetingDays])]
-    .some((day) => key(timesFor(a, day)) !== key(timesFor(b, day)));
-}
-
 /**
- * Bring future meetings in line with the season (after its dates or schedule change):
+ * Bring future meetings (from tomorrow on) in line with the season's dates and schedule:
  * - meetings outside the season's dates are removed
- * - with the previous schedule given: meetings still at the old time for their day move
- *   to the new time; meetings on a day that's no longer a meeting day are removed unless
- *   someone has added a title, notes or tasks to them, or canceled them
+ * - regular meetings take their day's current times
+ * - meetings on a day that's no longer a meeting day are removed, unless someone has
+ *   added a title, notes or tasks to them, or canceled them
  * - meeting days without a meeting get one
- * Meetings someone has moved to another time are left alone.
+ * Meetings whose time someone set by hand (customTime) are left alone.
  */
-export async function syncSeasonMeetings(
-  seasonId: string,
-  previous?: MeetingSchedule,
-): Promise<{ added: number; removed: number; moved: number }> {
+export async function syncSeasonMeetings(seasonId: string): Promise<{ added: number; removed: number; moved: number }> {
   const season = await prisma.season.findUnique({ where: { id: seasonId } });
   if (!season) return { added: 0, removed: 0, moved: 0 };
 
@@ -77,24 +67,18 @@ export async function syncSeasonMeetings(
   });
 
   let moved = 0;
-  if (previous) {
-    const future = await prisma.meeting.findMany({
-      where:  { seasonId, date: { gte: cutoff } },
-      select: { id: true, date: true, startTime: true, endTime: true, title: true, notes: true, cancelled: true, _count: { select: { tasks: true } } },
-    });
-    for (const m of future) {
-      const day = DAY_KEYS[m.date.getDay()];
-      const before = timesFor(previous, day);
-      // Moved by hand (or never one of the regular meetings): leave it
-      if (!before || m.startTime !== before.start || m.endTime !== before.end) continue;
-      const after = timesFor(season, day);
-      if (!after) {
-        const inUse = m.title || m.notes || m.cancelled || m._count.tasks > 0;
-        if (!inUse) { await prisma.meeting.delete({ where: { id: m.id } }); removed++; }
-      } else if (after.start !== before.start || after.end !== before.end) {
-        await prisma.meeting.update({ where: { id: m.id }, data: { startTime: after.start, endTime: after.end } });
-        moved++;
-      }
+  const future = await prisma.meeting.findMany({
+    where:  { seasonId, date: { gte: cutoff }, customTime: false },
+    select: { id: true, date: true, startTime: true, endTime: true, title: true, notes: true, cancelled: true, _count: { select: { tasks: true } } },
+  });
+  for (const m of future) {
+    const times = timesFor(season, DAY_KEYS[m.date.getDay()]);
+    if (!times) {
+      const inUse = m.title || m.notes || m.cancelled || m._count.tasks > 0;
+      if (!inUse) { await prisma.meeting.delete({ where: { id: m.id } }); removed++; }
+    } else if (m.startTime !== times.start || m.endTime !== times.end) {
+      await prisma.meeting.update({ where: { id: m.id }, data: { startTime: times.start, endTime: times.end } });
+      moved++;
     }
   }
 
