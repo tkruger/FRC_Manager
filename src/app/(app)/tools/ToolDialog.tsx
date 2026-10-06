@@ -23,10 +23,12 @@ interface Props {
   currentUserId: string;
   hasCert:       boolean;
   onClose:       () => void;
+  names?:        string[];
+  groupSize?:    number;
 }
 
 /** Everything about one physical tool, in a window over the tools list. */
-export function ToolDialog({ tool, initialTab, canEdit, currentUserId, hasCert, onClose }: Props) {
+export function ToolDialog({ tool, initialTab, canEdit, currentUserId, hasCert, onClose, names = [], groupSize = 1 }: Props) {
   const router = useRouter();
   const available = isAvailable(tool);
   const tabs: { id: ToolTab; label: string }[] = [
@@ -135,7 +137,7 @@ export function ToolDialog({ tool, initialTab, canEdit, currentUserId, hasCert, 
             {tab === "edit" && canEdit && (
               <>
                 <ToolImageUploadPanel toolId={tool.id} currentImageUrl={tool.image} />
-                <EditToolForm tool={tool} />
+                <EditToolForm tool={tool} names={names} groupSize={groupSize} />
                 <div className="border-t border-(--color-border) pt-4 flex flex-wrap items-center justify-between gap-2">
                   <p className="text-small text-(--color-text-secondary)">Lost, broken or sold? Retiring hides this tool but keeps its history.</p>
                   <Button

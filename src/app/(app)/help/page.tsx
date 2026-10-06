@@ -220,6 +220,7 @@ export default function HelpPage() {
       <Section id="tools" title="Tools">
         <ul className="list">
           <li>Every physical tool is its own entry with its own <b>asset tag</b> (TOOL-0001, TOOL-0002, …) and barcode. Tools with the same name — say, three drills — are grouped on one card so you can see which ones are free.</li>
+          <li>When adding a tool, pick its name from the list to add another of a tool you already have, or choose <b>+ New name…</b> to start a new group. Renaming a tool that shares its name asks whether to rename the <b>whole group</b> or <b>just this one</b> (which moves it into its own group).</li>
           <li>Tap a tool for its details, to check it out, or (for tool managers) to edit or retire it — it opens in a window over the list.</li>
           <li>Check a tool out with an expected return date and check it back in with its condition. The condition you report becomes that tool&apos;s condition — it doesn&apos;t affect other tools with the same name. Tools that are out of service or out for maintenance can&apos;t be checked out.</li>
           <li><b>Add tool</b> can add several identical tools at once; each gets its own tag.</li>

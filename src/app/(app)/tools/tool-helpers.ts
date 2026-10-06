@@ -30,3 +30,20 @@ export function isAvailable(t: ToolRow) {
   return !t.checkout && !UNAVAILABLE.includes(t.condition);
 }
 
+
+/** Tools with the same name (ignoring case and spaces) form one group */
+export function groupKey(name: string): string {
+  return name.trim().toLowerCase();
+}
+
+/** The names in use (one spelling per group, A–Z) and how many tools are in each group */
+export function toolGroups(tools: { name: string }[]): { names: string[]; sizes: Record<string, number> } {
+  const sizes: Record<string, number> = {};
+  const spelling = new Map<string, string>();
+  for (const t of tools) {
+    const key = groupKey(t.name);
+    sizes[key] = (sizes[key] ?? 0) + 1;
+    if (!spelling.has(key)) spelling.set(key, t.name.trim());
+  }
+  return { names: [...spelling.values()].sort((a, b) => a.localeCompare(b)), sizes };
+}

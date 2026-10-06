@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ToolDialog, type ToolTab } from "./ToolDialog";
 import { CheckinButton } from "./CheckinButton";
-import { CONDITION_BADGE, isAvailable, type ToolRow } from "./tool-helpers";
+import { CONDITION_BADGE, groupKey, isAvailable, type ToolRow } from "./tool-helpers";
 
 interface Props {
   tools:         ToolRow[];
@@ -14,13 +14,17 @@ interface Props {
   myCertNames:   string[];
   /** Server time (ms) — keeps rendering pure when marking overdue checkouts */
   now:           number;
+  /** Every tool name in use (groups), for the name picker */
+  names:         string[];
+  /** Tools per group, across all tools (not just this tab) */
+  groupSizes:    Record<string, number>;
 }
 
 function shortDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-export function ToolsClient({ tools, canEdit, currentUserId, myCertNames, now }: Props) {
+export function ToolsClient({ tools, canEdit, currentUserId, myCertNames, now, names, groupSizes }: Props) {
   const [search, setSearch] = useState("");
   const [open, setOpen]     = useState<{ id: string; tab: ToolTab } | null>(null);
 
@@ -129,6 +133,8 @@ export function ToolsClient({ tools, canEdit, currentUserId, myCertNames, now }:
           currentUserId={currentUserId}
           hasCert={!selected.requiresCertification || !selected.certificationName || myCertNames.includes(selected.certificationName)}
           onClose={() => setOpen(null)}
+          names={names}
+          groupSize={groupSizes[groupKey(selected.name)] ?? 1}
         />
       )}
     </>

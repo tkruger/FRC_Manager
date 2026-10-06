@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AddToolDialog } from "./AddToolDialog";
 import { Button } from "@/components/ui/button";
 import { ToolsClient } from "./ToolsClient";
+import { toolGroups } from "./tool-helpers";
 import type { ToolRow } from "./tool-helpers";
 import { PageHeader } from "@/components/PageHeader";
 
@@ -61,6 +62,9 @@ export default async function ToolsPage({ searchParams }: { searchParams: Promis
     { key: "needs-maintenance", label: "Needs maintenance" },
   ];
 
+  // Name = group: the picker lists the names in use; group sizes drive the rename prompt
+  const groups = toolGroups(rows);
+
   const filtered =
     view === "mine"              ? mine :
     view === "checked-out"       ? checkedOut :
@@ -84,7 +88,7 @@ export default async function ToolsPage({ searchParams }: { searchParams: Promis
               Scan
             </Button>
           </Link>
-          <AddToolDialog />
+          <AddToolDialog names={groups.names} />
         </>}
       />
 
@@ -114,7 +118,7 @@ export default async function ToolsPage({ searchParams }: { searchParams: Promis
           <p className="text-body text-(--color-text-secondary) mb-4">
             {view ? "Nothing here right now." : "No tools yet."}
           </p>
-          {!view && <AddToolDialog />}
+          {!view && <AddToolDialog names={groups.names} />}
         </div>
       ) : (
         <ToolsClient
@@ -123,6 +127,8 @@ export default async function ToolsPage({ searchParams }: { searchParams: Promis
           currentUserId={session.user.id}
           myCertNames={myCerts.map((c) => c.certName)}
           now={now.getTime()}
+          names={groups.names}
+          groupSizes={groups.sizes}
         />
       )}
     </div>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { EditToolForm } from "../EditToolForm";
 import { ToolImageUploadPanel } from "../ToolImageUploadPanel";
 import { BarcodePanel } from "../BarcodePanel";
+import { groupKey, toolGroups } from "../../tool-helpers";
 
 const TOOL_EDIT_ROLES = ["INVENTORY_ADMIN", "BUILD_LEAD", "TEAM_LEADERSHIP", "HEAD_MENTOR"];
 
@@ -19,6 +20,10 @@ export default async function ToolEditPage({ params }: { params: Promise<{ id: s
     where: { id, teamId: session.user.teamId },
   });
   if (!tool) notFound();
+
+  const groups = toolGroups(await prisma.tool.findMany({
+    where: { teamId: session.user.teamId, retired: false }, select: { name: true },
+  }));
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
@@ -36,7 +41,7 @@ export default async function ToolEditPage({ params }: { params: Promise<{ id: s
 
       <div className="card space-y-4">
         <h2 className="text-h3 text-[--color-text-primary]">Edit details</h2>
-        <EditToolForm key={tool.updatedAt.toISOString()} tool={{
+        <EditToolForm key={tool.updatedAt.toISOString()} names={groups.names} groupSize={groups.sizes[groupKey(tool.name)] ?? 1} tool={{
           id:                      tool.id,
           name:                    tool.name,
           toolType:                tool.toolType,

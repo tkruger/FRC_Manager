@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { NewToolForm } from "./new/NewToolForm";
 
-export function AddToolDialog() {
+export function AddToolDialog({ names = [] }: { names?: string[] }) {
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -13,7 +13,7 @@ export function AddToolDialog() {
         <Button size="sm">+ Add tool</Button>
       </DialogTrigger>
       <DialogContent title="Add tool" className="sm:max-w-xl">
-        <NewToolForm onClose={() => setOpen(false)} />
+        <NewToolForm names={names} onClose={() => setOpen(false)} />
       </DialogContent>
     </Dialog>
   );

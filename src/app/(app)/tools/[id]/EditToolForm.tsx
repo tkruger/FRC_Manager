@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateToolAction } from "@/app/actions/tools";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Field } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
+import { ToolNamePicker } from "../ToolNamePicker";
 
 const TYPE_OPTS = [
   { value: "POWER_TOOL",          label: "Power Tool" },
@@ -52,17 +53,43 @@ interface Tool {
   notes: string | null;
 }
 
-export function EditToolForm({ tool }: { tool: Tool }) {
+export function EditToolForm({ tool, names = [], groupSize = 1 }: {
+  tool:       Tool;
+  /** Existing tool names (groups) for the name picker */
+  names?:     string[];
+  /** How many tools share this tool's name (its group), itself included */
+  groupSize?: number;
+}) {
   const router = useRouter();
   const boundAction = updateToolAction.bind(null, tool.id);
   const [state, action, pending] = useActionState(boundAction, null);
 
+  // Renaming a tool that shares its name: rename the whole group, or just this one?
+  const formRef  = useRef<HTMLFormElement>(null);
+  const scopeRef = useRef<"all" | "one" | null>(null);
+  const [name, setName]   = useState(tool.name);
+  const [scope, setScope] = useState<"all" | "one">("one");
+  const [asking, setAsking] = useState(false);
+  const renamed = name.trim() !== "" && name.trim() !== tool.name.trim();
+
+  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    if (renamed && groupSize > 1 && !scopeRef.current) { e.preventDefault(); setAsking(true); }
+  }
+  function choose(next: "all" | "one") {
+    scopeRef.current = next;
+    setScope(next);
+    setAsking(false);
+    // Submit once the hidden scope field has re-rendered
+    setTimeout(() => { formRef.current?.requestSubmit(); scopeRef.current = null; }, 0);
+  }
+
   useEffect(() => {
-    if (state?.success) { toast.success("Tool saved"); router.refresh(); }
+    if (state?.success) { toast.success(state.renamed ? `Renamed ${state.renamed} tools` : "Tool saved"); router.refresh(); }
   }, [state, router]);
 
   return (
-    <form action={action} className="space-y-5">
+    <form ref={formRef} action={action} onSubmit={onSubmit} className="space-y-5">
+      <input type="hidden" name="renameScope" value={scope} />
       {state && !state.success && (
         <div className="rounded-md bg-(--color-danger)/10 border border-(--color-danger)/20 px-4 py-3 text-sm text-(--color-danger)">
           {state.error}
@@ -74,7 +101,20 @@ export function EditToolForm({ tool }: { tool: Tool }) {
         </div>
       )}
 
-      <Field label="Tool name" name="name" required defaultValue={tool.name} />
+      <ToolNamePicker names={names} defaultValue={tool.name} onChange={setName} />
+      {asking && (
+        <div role="alertdialog" aria-label="Rename the group?" className="rounded-lg border border-(--color-primary)/40 bg-(--color-primary)/8 p-3 space-y-3">
+          <p className="text-sm text-(--color-text-primary)">
+            <b>{groupSize}</b> tools are called <b>{tool.name}</b>. Rename all of them to <b>{name.trim()}</b>, or just this one?
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" size="sm" onClick={() => choose("all")}>Rename all {groupSize}</Button>
+            <Button type="button" size="sm" variant="outline" onClick={() => choose("one")}>Just this one</Button>
+            <Button type="button" size="sm" variant="ghost" onClick={() => setAsking(false)}>Cancel</Button>
+          </div>
+          <p className="text-xs text-(--color-text-secondary)">Just this one moves it into its own group{name.trim() ? ` (${name.trim()})` : ""}.</p>
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-4">
         <Select label="Type"  name="toolType" options={TYPE_OPTS}  defaultValue={tool.toolType} />
         <Select label="Space" name="space"    options={SPACE_OPTS} defaultValue={tool.space} />

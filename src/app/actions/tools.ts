@@ -148,7 +148,7 @@ export async function updateToolAction(
   toolId: string,
   _prev: { success: boolean; error?: string } | null,
   formData: FormData
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; renamed?: number }> {
   const session = await auth();
   if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
   if (!session.user.roles.some((r) => TOOL_EDIT_ROLES.includes(r)))
@@ -159,7 +159,7 @@ export async function updateToolAction(
   if (!parsed.success) return { success: false, error: "Please fill in all required fields." };
   const d = parsed.data;
 
-  const existing = await prisma.tool.findFirst({ where: { id: toolId, teamId }, select: { assetTag: true } });
+  const existing = await prisma.tool.findFirst({ where: { id: toolId, teamId }, select: { assetTag: true, name: true } });
   if (!existing) return { success: false, error: "Tool not found." };
 
   // Every tool keeps a tag; clearing it assigns the next TOOL-#### number
@@ -187,9 +187,19 @@ export async function updateToolAction(
     },
   });
 
+  // Name is the group: "rename all" renames every tool that had this one's old name
+  let renamed: number | undefined;
+  if (formData.get("renameScope") === "all" && d.name.trim() !== existing.name.trim()) {
+    const res = await prisma.tool.updateMany({
+      where: { teamId, retired: false, name: { equals: existing.name.trim(), mode: "insensitive" } },
+      data:  { name: d.name },
+    });
+    renamed = res.count + 1;
+  }
+
   revalidatePath("/tools");
   revalidatePath(`/tools/${toolId}`);
-  return { success: true };
+  return { success: true, renamed };
 }
 
 export async function checkoutToolAction(

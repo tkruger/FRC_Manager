@@ -8,6 +8,7 @@ import { Field } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ToolImageCapture } from "@/components/ui/ToolImageCapture";
+import { ToolNamePicker } from "../ToolNamePicker";
 
 const TYPE_OPTS = [
   { value: "POWER_TOOL",          label: "Power Tool" },
@@ -32,7 +33,7 @@ const CONDITION_OPTS = [
   { value: "FAIR",      label: "Fair" },
 ];
 
-export function NewToolForm({ onClose }: { onClose?: () => void } = {}) {
+export function NewToolForm({ onClose, names = [] }: { onClose?: () => void; names?: string[] } = {}) {
   const router = useRouter();
   const [state, action, pending] = useActionState(createToolAction, null);
 
@@ -49,7 +50,7 @@ export function NewToolForm({ onClose }: { onClose?: () => void } = {}) {
         <div className="rounded-md bg-(--color-danger)/10 border border-(--color-danger)/20 px-4 py-3 text-sm text-(--color-danger)">{state.error}</div>
       )}
 
-      <Field label="Tool name" name="name" required placeholder='e.g. Cordless Drill — DeWalt 20V #3' />
+      <ToolNamePicker names={names} />
       <div className="grid grid-cols-2 gap-4">
         <Select label="Type" name="toolType" options={TYPE_OPTS} defaultValue="OTHER" />
         <Select label="Space" name="space" options={SPACE_OPTS} defaultValue="SHOP_ONLY" />
