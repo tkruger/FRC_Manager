@@ -33,6 +33,14 @@ interface Item {
 const inputCls =
   "w-full rounded-md border border-(--color-border) bg-(--color-surface) text-(--color-text-primary) px-2.5 py-2 text-sm focus:border-(--color-primary) focus:outline-none";
 
+/**
+ * The link inside whatever was pasted. Sharing from the Amazon app (and others) copies
+ * "Product name https://a.co/d/…", not just the link.
+ */
+function extractUrl(text: string): string | null {
+  return text.match(/https?:\/\/[^\s<>"']+/i)?.[0]?.replace(/[).,!?]+$/, "") ?? null;
+}
+
 let nextKey = 1;
 function blankItem(defaults?: Partial<Item>): Item {
   return {
@@ -78,8 +86,9 @@ export function OrderForm({ vendors, edit, draft }: {
     setItems((list) => list.map((i) => (i.key === key ? { ...i, ...patch } : i)));
 
   async function fillFromLink(item: Item, link = item.link) {
-    const url = link.trim();
-    if (!/^https?:\/\//i.test(url)) return;
+    const url = extractUrl(link);
+    if (!url) return;
+    if (url !== item.link) update(item.key, { link: url });
     update(item.key, { lookup: "loading" });
     const res = await lookupProductAction(url);
     if (!res.success) { update(item.key, { lookup: "failed" }); return; }
@@ -222,13 +231,18 @@ export function OrderForm({ vendors, edit, draft }: {
             <div className="flex gap-2">
               <input
                 className={inputCls}
-                type="url"
+                type="text"
+                inputMode="url"
                 placeholder="Paste a product link to fill in the details"
                 value={item.link}
                 onChange={(e) => update(item.key, { link: e.target.value, lookup: "idle" })}
                 onPaste={(e) => {
-                  const text = e.clipboardData.getData("text").trim();
-                  if (/^https?:\/\//i.test(text)) setTimeout(() => fillFromLink(item, text), 0);
+                  const url = extractUrl(e.clipboardData.getData("text"));
+                  if (!url) return;
+                  // Keep just the link, not the product name shared with it
+                  e.preventDefault();
+                  update(item.key, { link: url, lookup: "idle" });
+                  setTimeout(() => fillFromLink({ ...item, link: url }, url), 0);
                 }}
                 onBlur={() => { if (item.lookup === "idle") fillFromLink(item); }}
               />

@@ -39,7 +39,7 @@ const KNOWN_VENDORS: [RegExp, string][] = [
   [/(^|\.)vexrobotics\.com$/, "VEX Robotics"],
   [/(^|\.)mcmaster\.com$/, "McMaster-Carr"],
   [/(^|\.)amazon\.[a-z.]+$/, "Amazon"],
-  [/^(a\.co|amzn\.to|amzn\.com)$/, "Amazon"],
+  [/^(a\.co|amzn\.to|amzn\.com|amzn\.eu|amzn\.asia)$/, "Amazon"],
   [/(^|\.)digikey\.com$/, "Digi-Key"],
   [/(^|\.)mouser\.com$/, "Mouser"],
   [/(^|\.)automationdirect\.com$/, "AutomationDirect"],
@@ -229,22 +229,31 @@ const BROWSER_HEADERS = {
   "Accept-Language": "en-US,en;q=0.9",
 };
 
-const AMAZON_SHORT = /^(a\.co|amzn\.to|amzn\.com)$/i;
+const AMAZON_SHORT = /^(a\.co|amzn\.to|amzn\.com|amzn\.eu|amzn\.asia)$/i;
 
 function asinFrom(url: URL): string | null {
   return url.pathname.match(/\/(?:dp|gp\/product|gp\/aw\/d|product)\/([A-Z0-9]{10})(?:[/?]|$)/i)?.[1]?.toUpperCase() ?? null;
 }
 
-/** Short links (a.co, amzn.to) redirect to the product page — follow them first */
+/**
+ * Short links from the Amazon app's Share button (a.co/d/…, amzn.to/…) redirect to the
+ * product page — follow them first. Some answer with a page instead of a redirect;
+ * then the product link is read from that page.
+ */
 async function resolveShortLink(url: URL): Promise<URL> {
   if (!AMAZON_SHORT.test(url.hostname)) return url;
   let current = url;
-  for (let hop = 0; hop < 4 && !asinFrom(current); hop++) {
+  for (let hop = 0; hop < 5 && !asinFrom(current); hop++) {
     await assertPublicUrl(current);
     const res = await fetch(current, { redirect: "manual", signal: AbortSignal.timeout(6000), headers: BROWSER_HEADERS });
     const next = res.headers.get("location");
-    if (!next || res.status < 300 || res.status >= 400) break;
-    current = new URL(next, current);
+    if (next && res.status >= 300 && res.status < 400) { current = new URL(next, current); continue; }
+    if (res.ok) {
+      const html = (await res.text()).slice(0, 500_000);
+      const link = html.match(/https?:\/\/(?:www\.)?amazon\.[a-z.]+\/(?:[^"'\s<>]*\/)?(?:dp|gp\/product)\/[A-Z0-9]{10}/i)?.[0];
+      if (link) current = new URL(link);
+    }
+    break;
   }
   return current;
 }
