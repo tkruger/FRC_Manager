@@ -23,3 +23,11 @@ export function formatWeight(lbs: number | null | undefined): string {
 export function getRobotDisplayName(year: number, name: string): string {
   return `${year} ${name}`;
 }
+
+/** "15:05" → "3:05 PM" */
+export function formatTime12(time24: string | null | undefined): string {
+  if (!time24) return "—";
+  const [h, m] = time24.split(":").map(Number);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return time24;
+  return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
+}

@@ -9,6 +9,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
+import { TimeSelect } from "@/components/ui/time-select";
+import { formatTime12 } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { SUBTEAM_COLORS } from "@/lib/schedule-helpers";
 import { toast } from "@/components/ui/toast";
@@ -37,10 +39,7 @@ interface Props {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function fmt12(time24: string) {
-  const [h, m] = time24.split(":").map(Number);
-  return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
-}
+const fmt12 = formatTime12;
 
 function ymd(date: Date) {
   return date.toISOString().slice(0, 10);
@@ -488,12 +487,11 @@ function MeetingDialog({
           ) : (
             <div className="space-y-4">
               <Field label="Title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Drivetrain sprint" />
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[["Start time","startTime",startTime,setStartTime],["End time","endTime",endTime,setEndTime]].map(([label,,val,setter]:any) => (
                   <div key={label}>
-                    <label className="text-sm font-medium text-(--color-text-primary) block mb-1.5">{label}</label>
-                    <input type="time" value={val} onChange={(e) => setter(e.target.value)}
-                      className="h-11 w-full rounded-md border border-(--color-border) bg-(--color-surface) px-3 text-sm text-(--color-text-primary) focus:outline-none focus:border-(--color-primary)" />
+                    <span className="text-sm font-medium text-(--color-text-primary) block mb-1.5">{label}</span>
+                    <TimeSelect value={val} onChange={setter} aria-label={label} />
                   </div>
                 ))}
               </div>
@@ -541,9 +539,15 @@ function AddMeetingDialog({ defaultDate, onClose, onSave }: {
       <DialogContent title="Add meeting">
         <form onSubmit={(e) => { e.preventDefault(); onSave(new FormData(e.currentTarget)); }} className="space-y-4">
           <Field label="Date" name="date" type="date" required defaultValue={defaultDate || new Date().toISOString().split("T")[0]} />
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Start time" name="startTime" type="time" required defaultValue="15:00" />
-            <Field label="End time"   name="endTime"   type="time" required defaultValue="20:00" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <span className="text-sm font-medium text-(--color-text-primary) block mb-1.5">Start time</span>
+              <TimeSelect name="startTime" defaultValue="15:00" aria-label="Start time" />
+            </div>
+            <div>
+              <span className="text-sm font-medium text-(--color-text-primary) block mb-1.5">End time</span>
+              <TimeSelect name="endTime" defaultValue="20:00" aria-label="End time" />
+            </div>
           </div>
           <Field label="Title (optional)" name="title" placeholder="e.g. Weekend build sprint" />
           <div className="flex gap-2 pt-2">

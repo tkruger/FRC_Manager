@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatTime12 } from "@/lib/utils";
 import { EditSeasonForm } from "./EditSeasonForm";
 import { RobotForm } from "./RobotForm";
 import { CompetitionsSection, type Competition } from "./CompetitionsSection";
@@ -37,6 +37,9 @@ interface Season {
   competitions: Competition[];
 }
 
+const WEEK_ORDER = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+const DAY_SHORT: Record<string, string> = { MON: "Mon", TUE: "Tue", WED: "Wed", THU: "Thu", FRI: "Fri", SAT: "Sat", SUN: "Sun" };
+
 /** Full season card. Also used for past seasons (isActive=false) on /settings/season/[id]. */
 export function ActiveSeasonCard({
   season, canEdit = false, isActive = true,
@@ -53,13 +56,30 @@ export function ActiveSeasonCard({
                 <h2 className="text-h3 text-[--color-text-primary]">{season.name}</h2>
                 {isActive ? <Badge variant="success">Active</Badge> : <Badge variant="neutral">Past season</Badge>}
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-1 text-small text-[--color-text-secondary] mt-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-1 text-small text-(--color-text-secondary) mt-2">
                 <span>Starts: <strong className="text-(--color-text-primary)">{formatDate(season.kickoffDate)}</strong></span>
                 <span>Ends: <strong className="text-(--color-text-primary)">{formatDate(season.endDate)}</strong></span>
-                <span>Meeting days: <strong className="text-[--color-text-primary]">{season.meetingDays.join(", ")}</strong></span>
-                <span>Start time: <strong className="text-[--color-text-primary]">{season.meetingStartTime}</strong></span>
-                <span>End time: <strong className="text-[--color-text-primary]">{season.meetingEndTime}</strong></span>
-                <span>Attendance: <strong className="text-[--color-text-primary]">{season.expectedAttendance}</strong></span>
+                <span>Attendance: <strong className="text-(--color-text-primary)">{season.expectedAttendance}</strong></span>
+              </div>
+
+              {/* Every meeting day with its own times */}
+              <div className="mt-3">
+                <p className="text-small text-(--color-text-secondary) mb-1">Meeting schedule</p>
+                {season.meetingDays.length === 0 ? (
+                  <p className="text-small text-(--color-text-secondary)">No meeting days set.</p>
+                ) : (
+                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-0.5 text-small">
+                    {WEEK_ORDER.filter((d) => season.meetingDays.includes(d)).map((d) => {
+                      const t = season.meetingDayTimes?.[d] ?? { start: season.meetingStartTime, end: season.meetingEndTime };
+                      return (
+                        <li key={d} className="flex gap-3">
+                          <span className="w-10 font-medium text-(--color-text-primary)">{DAY_SHORT[d]}</span>
+                          <span className="text-(--color-text-primary)">{formatTime12(t.start)} – {formatTime12(t.end)}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
               </div>
             </div>
             {canEdit && (

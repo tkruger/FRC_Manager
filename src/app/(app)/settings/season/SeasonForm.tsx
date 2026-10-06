@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createSeasonAction } from "@/app/actions/season";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
+import { TimeSelect } from "@/components/ui/time-select";
 
 const DAYS = [
   { value: "MON", label: "Monday" },
@@ -69,7 +70,7 @@ export function SeasonForm({ onClose }: { onClose?: () => void } = {}) {
           {DAYS.map(({ value, label }) => {
             const checked = selectedDays.includes(value);
             return (
-              <div key={value} className={`flex items-center gap-3 px-3 py-3 transition-colors ${checked ? "bg-[--color-primary]/8" : "hover:bg-[--color-surface-overlay]"}`}>
+              <div key={value} className={`flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-3 transition-colors ${checked ? "bg-(--color-primary)/8" : "hover:bg-(--color-surface-overlay)"}`}>
                 <label className="flex items-center gap-3 cursor-pointer flex-shrink-0 min-w-[140px]">
                   <input
                     type="checkbox"
@@ -84,21 +85,10 @@ export function SeasonForm({ onClose }: { onClose?: () => void } = {}) {
                   <span className="text-sm text-[--color-text-primary]">{label}</span>
                 </label>
                 {checked && (
-                  <div className="flex items-center gap-2 ml-auto">
-                    <label className="text-small text-[--color-text-secondary]">Start</label>
-                    <input
-                      type="time"
-                      name={`dayStart_${value}`}
-                      defaultValue={DEFAULT_TIMES[value]?.start ?? "15:00"}
-                      className="h-8 rounded border border-[--color-border] bg-[--color-surface] px-2 text-sm text-[--color-text-primary] focus:outline-none focus:border-[--color-primary]"
-                    />
-                    <label className="text-small text-[--color-text-secondary]">End</label>
-                    <input
-                      type="time"
-                      name={`dayEnd_${value}`}
-                      defaultValue={DEFAULT_TIMES[value]?.end ?? "20:00"}
-                      className="h-8 rounded border border-[--color-border] bg-[--color-surface] px-2 text-sm text-[--color-text-primary] focus:outline-none focus:border-[--color-primary]"
-                    />
+                  <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+                    <TimeSelect size="sm" name={`dayStart_${value}`} defaultValue={DEFAULT_TIMES[value]?.start ?? "15:00"} aria-label={`${label} start time`} />
+                    <span className="text-small text-(--color-text-secondary)">to</span>
+                    <TimeSelect size="sm" name={`dayEnd_${value}`} defaultValue={DEFAULT_TIMES[value]?.end ?? "20:00"} aria-label={`${label} end time`} />
                   </div>
                 )}
               </div>

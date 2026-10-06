@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { saveDiscordConfigAction, disconnectDiscordAction } from "@/app/actions/discord-settings";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
+import { TimeSelect } from "@/components/ui/time-select";
 import type { DiscordConfig } from "@/generated/prisma";
 import { toast } from "@/components/ui/toast";
 
@@ -80,7 +81,10 @@ export function DiscordConfigForm({ config }: { config: DiscordConfig | null }) 
         </label>
         <div className="grid grid-cols-2 gap-4">
           <Field label="Summary channel ID" name="dailySummaryChannel" defaultValue={config?.dailySummaryChannel ?? ""} placeholder="Channel ID" />
-          <Field label="Delivery time" name="dailySummaryTime" type="time" defaultValue={config?.dailySummaryTime ?? "08:00"} />
+          <div>
+            <span className="block text-sm font-medium text-(--color-text-primary) mb-1.5">Delivery time</span>
+            <TimeSelect name="dailySummaryTime" defaultValue={config?.dailySummaryTime ?? "08:00"} aria-label="Delivery time" />
+          </div>
         </div>
       </div>
 
