@@ -70,6 +70,14 @@ export function EditToolForm({ tool, names = [], groupSize = 1 }: {
   const [name, setName]   = useState(tool.name);
   const [scope, setScope] = useState<"all" | "one">("one");
   const [asking, setAsking] = useState(false);
+  const promptRef = useRef<HTMLDivElement>(null);
+
+  // The question sits by the name field, above the Save button: bring it into view
+  useEffect(() => {
+    if (!asking) return;
+    promptRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    promptRef.current?.querySelector("button")?.focus({ preventScroll: true });
+  }, [asking]);
   const renamed = name.trim() !== "" && name.trim() !== tool.name.trim();
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -103,7 +111,7 @@ export function EditToolForm({ tool, names = [], groupSize = 1 }: {
 
       <ToolNamePicker names={names} defaultValue={tool.name} onChange={setName} />
       {asking && (
-        <div role="alertdialog" aria-label="Rename the group?" className="rounded-lg border border-(--color-primary)/40 bg-(--color-primary)/8 p-3 space-y-3">
+        <div ref={promptRef} role="alertdialog" aria-label="Rename the group?" className="rounded-lg border border-(--color-primary)/40 bg-(--color-primary)/8 p-3 space-y-3">
           <p className="text-sm text-(--color-text-primary)">
             <b>{groupSize}</b> tools are called <b>{tool.name}</b>. Rename all of them to <b>{name.trim()}</b>, or just this one?
           </p>
