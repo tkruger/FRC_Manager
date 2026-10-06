@@ -25,7 +25,7 @@ interface Props {
   allMembers:  { id: string; name: string }[];
   allRobots:   { id: string; displayName: string }[];
   kickoffDate?: string;
-  week0Date?:  string;
+  endDate?:  string;
   canEdit:     boolean;
 }
 
@@ -55,7 +55,7 @@ function getColTasks(tasks: KanbanTask[], colId: string, statuses: Record<string
 }
 
 export function KanbanView({
-  tasks, allTasks, allMembers, allRobots, kickoffDate, week0Date, canEdit,
+  tasks, allTasks, allMembers, allRobots, kickoffDate, endDate, canEdit,
 }: Props) {
   const router = useRouter();
   const [, startTransition]   = useTransition();
@@ -285,7 +285,7 @@ export function KanbanView({
           allMembers={allMembers}
           allRobots={allRobots}
           kickoffDate={kickoffDate}
-          week0Date={week0Date}
+          endDate={endDate}
           onClose={() => setSelectedTask(null)}
           onUpdated={() => { setSelectedTask(null); router.refresh(); }}
         />

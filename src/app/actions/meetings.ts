@@ -28,7 +28,7 @@ const DAY_MAP: Record<string, number> = {
   SUN: 0, MON: 1, TUE: 2, WED: 3, THU: 4, FRI: 5, SAT: 6,
 };
 
-/** Generate all meeting instances for a season between kickoff and week0 */
+/** Generate all meeting instances for a season between the season start and end */
 export async function generateMeetingsAction(
   seasonId: string
 ): Promise<{ success: boolean; error?: string; count?: number }> {
@@ -40,7 +40,7 @@ export async function generateMeetingsAction(
   });
   if (!season) return { success: false, error: "Season not found." };
 
-  // Delete any auto-generated (not manually-customised) meetings
+  // Delete any auto-generated (not manually customized) meetings
   await prisma.meeting.deleteMany({ where: { seasonId } });
 
   const dayTimes = (season.meetingDayTimes as Record<string, { start: string; end: string }>) ?? {};
@@ -50,7 +50,7 @@ export async function generateMeetingsAction(
   const cursor = new Date(season.kickoffDate);
   cursor.setHours(0, 0, 0, 0);
 
-  const end = new Date(season.week0Date);
+  const end = new Date(season.endDate);
   end.setHours(23, 59, 59, 999);
 
   while (cursor <= end) {

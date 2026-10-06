@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { competitionCountdown } from "@/lib/competition";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,10 @@ export default async function GanttPage({ searchParams }: { searchParams: Promis
   if (!session?.user?.teamId) redirect("/dashboard");
 
   const [activeSeason, activeRobotId] = await Promise.all([
-    prisma.season.findFirst({ where: { teamId: session.user.teamId, isActive: true } }),
+    prisma.season.findFirst({
+      where:   { teamId: session.user.teamId, isActive: true },
+      include: { competitionEvents: { select: { name: true, stage: true, stageNumber: true, startDate: true, endDate: true } } },
+    }),
     getActiveRobotId(),
   ]);
   if (!activeSeason) redirect("/settings/season");
@@ -57,7 +61,7 @@ export default async function GanttPage({ searchParams }: { searchParams: Promis
   }));
 
   const totalDays = Math.round(
-    (activeSeason.week0Date.getTime() - activeSeason.kickoffDate.getTime()) / 86_400_000
+    (activeSeason.endDate.getTime() - activeSeason.kickoffDate.getTime()) / 86_400_000
   ) + 1;
 
   const canEdit = session.user.roles.some((r) =>
@@ -65,8 +69,9 @@ export default async function GanttPage({ searchParams }: { searchParams: Promis
   );
 
   const now = new Date();
-  const daysToWeek0 = daysBetween(now, activeSeason.week0Date);
-  const totalBuildDays = daysBetween(activeSeason.kickoffDate, activeSeason.week0Date);
+  const daysToEnd = daysBetween(now, activeSeason.endDate);
+  const nextComp = competitionCountdown(activeSeason.competitionEvents, now);
+  const totalBuildDays = daysBetween(activeSeason.kickoffDate, activeSeason.endDate);
   const elapsed = daysBetween(activeSeason.kickoffDate, now);
   const buildProgress = Math.round(Math.min(Math.max((elapsed / totalBuildDays) * 100, 0), 100));
   const totalTasks = allTaskStats.length;
@@ -96,8 +101,9 @@ export default async function GanttPage({ searchParams }: { searchParams: Promis
 
       <SeasonProgressBar
         kickoffDate={activeSeason.kickoffDate.toISOString()}
-        week0Date={activeSeason.week0Date.toISOString()}
-        daysToWeek0={daysToWeek0}
+        endDate={activeSeason.endDate.toISOString()}
+        daysToEnd={daysToEnd}
+        nextCompetition={nextComp}
         buildProgress={buildProgress}
         totalTasks={totalTasks}
         completeTasks={completeTasks}
@@ -117,7 +123,7 @@ export default async function GanttPage({ searchParams }: { searchParams: Promis
         <GanttClient
           tasks={ganttTasks}
           kickoffDate={activeSeason.kickoffDate.toISOString()}
-          week0Date={activeSeason.week0Date.toISOString()}
+          endDate={activeSeason.endDate.toISOString()}
           meetingDays={activeSeason.meetingDays}
           seasonName={activeSeason.name}
         />

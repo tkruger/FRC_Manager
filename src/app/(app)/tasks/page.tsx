@@ -1,5 +1,6 @@
 ﻿import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { competitionCountdown } from "@/lib/competition";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -26,7 +27,10 @@ export default async function SchedulePage({
   );
 
   const [activeSeason, activeRobotId] = await Promise.all([
-    prisma.season.findFirst({ where: { teamId: session.user.teamId, isActive: true } }),
+    prisma.season.findFirst({
+      where:   { teamId: session.user.teamId, isActive: true },
+      include: { competitionEvents: { select: { name: true, stage: true, stageNumber: true, startDate: true, endDate: true } } },
+    }),
     getActiveRobotId(),
   ]);
 
@@ -49,9 +53,10 @@ export default async function SchedulePage({
 
   const now = new Date();
   const kickoff = activeSeason.kickoffDate;
-  const week0 = activeSeason.week0Date;
-  const daysToWeek0 = daysBetween(now, week0);
-  const totalBuildDays = daysBetween(kickoff, week0);
+  const end = activeSeason.endDate;
+  const daysToEnd = daysBetween(now, end);
+  const totalBuildDays = daysBetween(kickoff, end);
+  const nextComp = competitionCountdown(activeSeason.competitionEvents, now);
   const elapsed = daysBetween(kickoff, now);
   const buildProgress = Math.round(Math.min(Math.max((elapsed / totalBuildDays) * 100, 0), 100));
 
@@ -131,7 +136,7 @@ export default async function SchedulePage({
   }
 
   const kickoffStr = activeSeason.kickoffDate.toISOString().split("T")[0];
-  const week0Str   = activeSeason.week0Date.toISOString().split("T")[0];
+  const endStr     = activeSeason.endDate.toISOString().split("T")[0];
 
   return (
     <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5">
@@ -161,8 +166,9 @@ export default async function SchedulePage({
       {/* Season progress bar */}
       <SeasonProgressBar
         kickoffDate={activeSeason.kickoffDate.toISOString()}
-        week0Date={activeSeason.week0Date.toISOString()}
-        daysToWeek0={daysToWeek0}
+        endDate={activeSeason.endDate.toISOString()}
+        daysToEnd={daysToEnd}
+        nextCompetition={nextComp}
         buildProgress={buildProgress}
         totalTasks={totalTasks}
         completeTasks={completeTasks}
@@ -180,7 +186,7 @@ export default async function SchedulePage({
           allMembers={allMembers}
           allRobots={allRobots}
           kickoffDate={kickoffStr}
-          week0Date={week0Str}
+          endDate={endStr}
         />
       ) : (
         <KanbanView
@@ -189,7 +195,7 @@ export default async function SchedulePage({
           allMembers={allMembers}
           allRobots={allRobots}
           kickoffDate={kickoffStr}
-          week0Date={week0Str}
+          endDate={endStr}
           canEdit={canEdit}
         />
       )}

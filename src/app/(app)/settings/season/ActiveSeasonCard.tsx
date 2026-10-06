@@ -25,7 +25,7 @@ interface Season {
   name: string;
   year: number;
   kickoffDate: Date;
-  week0Date: Date;
+  endDate: Date;
   meetingDays: string[];
   meetingStartTime: string;
   meetingEndTime: string;
@@ -52,8 +52,8 @@ export function ActiveSeasonCard({
                 {isActive ? <Badge variant="success">Active</Badge> : <Badge variant="neutral">Past season</Badge>}
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-1 text-small text-[--color-text-secondary] mt-2">
-                <span>Kickoff: <strong className="text-[--color-text-primary]">{formatDate(season.kickoffDate)}</strong></span>
-                <span>Week 0: <strong className="text-[--color-text-primary]">{formatDate(season.week0Date)}</strong></span>
+                <span>Starts: <strong className="text-(--color-text-primary)">{formatDate(season.kickoffDate)}</strong></span>
+                <span>Ends: <strong className="text-(--color-text-primary)">{formatDate(season.endDate)}</strong></span>
                 <span>Meeting days: <strong className="text-[--color-text-primary]">{season.meetingDays.join(", ")}</strong></span>
                 <span>Start time: <strong className="text-[--color-text-primary]">{season.meetingStartTime}</strong></span>
                 <span>End time: <strong className="text-[--color-text-primary]">{season.meetingEndTime}</strong></span>

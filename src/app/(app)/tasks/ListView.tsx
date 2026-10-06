@@ -23,7 +23,7 @@ interface Props {
   allMembers: { id: string; name: string }[];
   allRobots: { id: string; displayName: string }[];
   kickoffDate?: string;
-  week0Date?: string;
+  endDate?: string;
 }
 
 const PRIORITY_ORDER: Record<string, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
@@ -37,7 +37,7 @@ export function ListView({
   allMembers,
   allRobots,
   kickoffDate,
-  week0Date,
+  endDate,
 }: Props) {
   const router = useRouter();
   const [selectedTask, setSelectedTask] = useState<TaskModalData | null>(null);
@@ -239,7 +239,7 @@ export function ListView({
           allMembers={allMembers}
           allRobots={allRobots}
           kickoffDate={kickoffDate}
-          week0Date={week0Date}
+          endDate={endDate}
           onClose={() => setSelectedTask(null)}
           onUpdated={() => {
             setSelectedTask(null);

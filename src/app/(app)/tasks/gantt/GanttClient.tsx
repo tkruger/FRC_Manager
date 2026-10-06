@@ -28,7 +28,7 @@ export interface GanttTask {
 export interface GanttProps {
   tasks: GanttTask[];
   kickoffDate: string;
-  week0Date: string;
+  endDate: string;
   meetingDays: string[];
   seasonName: string;
 }
@@ -52,10 +52,10 @@ const ZOOM_LEVELS = [
 ];
 
 // ─── Component ────────────────────────────────────────────────────────────────
-export function GanttClient({ tasks, kickoffDate, week0Date, meetingDays, seasonName }: GanttProps) {
+export function GanttClient({ tasks, kickoffDate, endDate, meetingDays, seasonName }: GanttProps) {
   const kickoff   = new Date(kickoffDate);
-  const week0     = new Date(week0Date);
-  const totalDays = daysBetween(kickoff, week0) + 1;
+  const end       = new Date(endDate);
+  const totalDays = daysBetween(kickoff, end) + 1;
   const today     = new Date();
   const todayOff  = clamp(daysBetween(kickoff, today), 0, totalDays);
 
@@ -301,10 +301,10 @@ export function GanttClient({ tasks, kickoffDate, week0Date, meetingDays, season
             );
           })}
 
-          {/* Week 0 footer */}
+          {/* Season end footer */}
           <div className="flex bg-[--color-surface-raised]" style={{ height: 26, borderTop: "1px solid color-mix(in srgb, var(--color-border) 60%, transparent)" }}>
             <div className="shrink-0 px-3 flex items-center" style={{ width: LABEL_W, borderRight: "1px solid color-mix(in srgb, var(--color-border) 50%, transparent)" }}>
-              <span className="text-label font-semibold text-[--color-primary]">Week 0</span>
+              <span className="text-label font-semibold text-(--color-primary)">Season end</span>
             </div>
             <div className="flex-1 relative">
               {totalDays - 1 >= viewStart && totalDays - 1 <= viewEnd && (

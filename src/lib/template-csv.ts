@@ -78,7 +78,7 @@ export function emptyCSV(): string {
     "Example Task,Optional description,MECHANICAL,5,3,MEDIUM,,false,false,,KICKOFF,",
     "Pack the robot,,OPERATIONS,-2,1,HIGH,,false,false,,WEEK,",
     "# startOffset: days after (positive) or before (negative) the anchor",
-    "# anchor: KICKOFF SEASON_WEEK0 PRACTICE WEEK PLAYOFF WORLDS OFFSEASON",
+    "# anchor: KICKOFF SEASON_WEEK0 SEASON_END PRACTICE WEEK PLAYOFF WORLDS OFFSEASON",
     "# anchorNumber: blank = every competition of that type (one task each); a number = only that one (e.g. WEEK + 1 = Week1)",
     "# subTeam: MECHANICAL ELECTRICAL PROGRAMMING DRIVE_TEAM STRATEGY DESIGN OUTREACH OPERATIONS",
     "# priority: CRITICAL HIGH MEDIUM LOW",

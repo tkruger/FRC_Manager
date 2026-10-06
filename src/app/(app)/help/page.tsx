@@ -63,7 +63,7 @@ export default function HelpPage() {
         <p>Everything the team needs to get done this season. Switch between three views at the top of the page:</p>
         <ul className="list">
           <li><b>Kanban</b> — cards in columns by status. Drag a card to another column to change its status. <b>Future</b> holds tasks that haven&apos;t started yet.</li>
-          <li><b>Gantt</b> — tasks on a timeline from kickoff to Week 0 (only tasks with start and due dates appear).</li>
+          <li><b>Gantt</b> — tasks on a timeline from the season start to its end (only tasks with start and due dates appear).</li>
           <li><b>List</b> — a sortable table.</li>
         </ul>
         <ul className="list">
@@ -86,7 +86,8 @@ export default function HelpPage() {
           head={["Starts relative to", "Uses", "Example"]}
           rows={[
             ["Kickoff", "The season's kickoff date", "+3 → 3 days after kickoff"],
-            ["Season Week 0 date", "The end of the build season, set in Season settings", "−5 → 5 days before Week 0"],
+            ["Week 0", "Your Week0 competition — or the first week competition if there's no Week0", "−5 → 5 days before Week 0"],
+            ["Season end", "The season's end date, set in Season settings", "−7 → a week before the season ends"],
             ["Practice match", "Competitions designated PracticeMatch1, PracticeMatch2, …", "−1 → day before each practice match"],
             ["Week competition", "Competitions designated Week0, Week1, Week2, …", "−2 → pack the robot 2 days before each event"],
             ["Playoff", "Competitions designated Playoff0, Playoff1, …", "0 → on the day of each playoff"],
@@ -110,14 +111,14 @@ export default function HelpPage() {
         <H3>Import &amp; export (CSV)</H3>
         <ul className="list">
           <li><b>Download CSV</b> exports a template; <b>Import CSV</b> adds tasks from a spreadsheet, with a preview first. The empty CSV includes an example and notes on every column.</li>
-          <li>Columns <code>anchor</code> (KICKOFF, SEASON_WEEK0, PRACTICE, WEEK, PLAYOFF, WORLDS, OFFSEASON) and <code>anchorNumber</code> (blank = each) set the start, with <code>startOffset</code> as the days before/after. Older CSVs without an anchor still work: positive offsets count from kickoff, negative ones back from Week 0.</li>
+          <li>Columns <code>anchor</code> (KICKOFF, SEASON_WEEK0, SEASON_END, PRACTICE, WEEK, PLAYOFF, WORLDS, OFFSEASON) and <code>anchorNumber</code> (blank = each) set the start, with <code>startOffset</code> as the days before/after. Older CSVs without an anchor still work: positive offsets count from kickoff, negative ones back from Week 0.</li>
           <li><code>prerequisiteNames</code> lists other task names separated by <code>|</code>.</li>
         </ul>
       </Section>
 
       <Section id="season" title="Season, robots & competitions">
         <ul className="list">
-          <li><b>Season settings</b> (Head Mentors) hold the kickoff and Week 0 dates, meeting days and times, and expected attendance. Only one season is active at a time; everything else in the app uses the active season.</li>
+          <li><b>Season settings</b> (Head Mentors) hold the season's start (kickoff) and end dates, its competitions, meeting days and times, and expected attendance. Only one season is active at a time; everything else in the app uses the active season.</li>
           <li><b>Robots</b>: add the season&apos;s robots and use <b>Edit robot</b> to change a name, role, status, weight target or description. A robot&apos;s name always includes the season year.</li>
           <li><b>Past seasons</b> open on their own page with their stats, robots, competitions and milestones.</li>
         </ul>

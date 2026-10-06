@@ -23,7 +23,7 @@ interface Meeting {
 }
 interface TaskOption { id: string; name: string; status: string; subTeam: string | null; dueDate: string | null; }
 interface Season {
-  id: string; name: string; kickoffDate: string; week0Date: string;
+  id: string; name: string; kickoffDate: string; endDate: string;
   meetingDays: string[]; calendarToken: string | null;
 }
 
@@ -60,7 +60,7 @@ export function CalendarClient({ season, meetings, allTasks, isLeadership }: Pro
   const [isPending, startTransition] = useTransition();
 
   const kickoff = new Date(season.kickoffDate);
-  const week0   = new Date(season.week0Date);
+  const seasonEnd = new Date(season.endDate);
   const today   = new Date();
 
   // Always open on the current month
@@ -84,7 +84,7 @@ export function CalendarClient({ season, meetings, allTasks, isLeadership }: Pro
 
   // Special day lookup
   const kickoffKey = ymd(kickoff);
-  const week0Key   = ymd(week0);
+  const endKey     = ymd(seasonEnd);
 
   // Month navigation
   function prevMonth() {
@@ -120,7 +120,7 @@ export function CalendarClient({ season, meetings, allTasks, isLeadership }: Pro
   const seasonMonths: { year: number; month: number }[] = [];
   {
     const cur = new Date(kickoff.getFullYear(), kickoff.getMonth(), 1);
-    const end = new Date(week0.getFullYear(),  week0.getMonth(),   1);
+    const end = new Date(seasonEnd.getFullYear(), seasonEnd.getMonth(), 1);
     while (cur <= end) {
       seasonMonths.push({ year: cur.getFullYear(), month: cur.getMonth() });
       cur.setMonth(cur.getMonth() + 1);
@@ -225,7 +225,7 @@ export function CalendarClient({ season, meetings, allTasks, isLeadership }: Pro
                     const key         = ymd(date);
                     const isToday     = key === ymd(today);
                     const isKickoff   = key === kickoffKey;
-                    const isWeek0     = key === week0Key;
+                    const isEnd       = key === endKey;
                     const isWeekend   = date.getDay() === 0 || date.getDay() === 6;
                     const dayMeetings = meetingMap[key] ?? [];
                     const MAX_CHIPS   = 3;
@@ -250,14 +250,14 @@ export function CalendarClient({ season, meetings, allTasks, isLeadership }: Pro
                             "text-xs font-semibold w-6 h-6 flex items-center justify-center rounded-full",
                             isToday ? "text-white"
                               : isKickoff ? "text-(--color-success) ring-1 ring-(--color-success)"
-                              : isWeek0 ? "text-(--color-primary) ring-1 ring-(--color-primary)"
+                              : isEnd ? "text-(--color-primary) ring-1 ring-(--color-primary)"
                               : isCurrentMonth ? "text-(--color-text-primary)" : "text-(--color-text-disabled)",
                           ].join(" ")}
                             style={isToday ? { backgroundColor: "var(--color-primary)" } : undefined}>
                             {date.getDate()}
                           </span>
                           {isKickoff && <span className="hidden sm:inline text-[9px] font-bold text-(--color-success) leading-none">KICKOFF</span>}
-                          {isWeek0   && <span className="hidden sm:inline text-[9px] font-bold text-(--color-primary) leading-none">WEEK&nbsp;0</span>}
+                          {isEnd     && <span className="hidden sm:inline text-[9px] font-bold text-(--color-primary) leading-none">SEASON&nbsp;END</span>}
                         </div>
 
                         {/* Phones: a dot per meeting */}
@@ -328,8 +328,8 @@ export function CalendarClient({ season, meetings, allTasks, isLeadership }: Pro
             Season kickoff
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="text-(--color-primary) font-bold text-xs">WEEK 0</span>
-            Robot complete deadline
+            <span className="text-(--color-primary) font-bold text-xs">SEASON END</span>
+            Last day of the season
           </span>
           {isLeadership && (
             <span className="hidden sm:inline ml-auto italic">Click a day to add a meeting · Click an event to edit</span>

@@ -98,7 +98,7 @@ export default async function BudgetDashboard() {
         totalAllocated={totalAllocated}
         totalSpent={totalSpent}
         kickoffDate={activeSeason.kickoffDate.toISOString()}
-        week0Date={activeSeason.week0Date.toISOString()}
+        endDate={activeSeason.endDate.toISOString()}
         categories={budget.categories.map((c) => ({ id: c.id, label: c.label, allocation: c.allocation }))}
         expenses={budget.expenses.map((e) => ({
           date:       e.date.toISOString(),

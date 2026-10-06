@@ -62,9 +62,9 @@ export default async function PublicSchedulePage({ params }: { params: Promise<{
               </strong>
             </span>
             <span>
-              Week 0:{" "}
+              Ends:{" "}
               <strong className="text-[--color-text-primary]">
-                {season.week0Date.toLocaleDateString("en-US", {
+                {season.endDate.toLocaleDateString("en-US", {
                   month: "short", day: "numeric", year: "numeric",
                 })}
               </strong>

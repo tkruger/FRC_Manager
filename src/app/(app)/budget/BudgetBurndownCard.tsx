@@ -15,7 +15,7 @@ interface Props {
   totalAllocated: number;
   totalSpent:     number;
   kickoffDate:    string;
-  week0Date:      string;
+  endDate:      string;
   categories:     Category[];
   expenses:       Expense[];
 }
@@ -40,7 +40,7 @@ function ChartTooltip({ active, payload, label }: any) {
 // ─── Build cumulative burndown data ─────────────────────────────────────────
 
 function buildBurndownData(
-  kickoff: Date, week0: Date, totalAllocated: number, expenses: Expense[]
+  kickoff: Date, end: Date, totalAllocated: number, expenses: Expense[]
 ) {
   // Sample one point per week
   const weeks: { week: string; remaining: number; spent: number }[] = [];
@@ -50,7 +50,7 @@ function buildBurndownData(
 
   const cur = new Date(kickoff);
   let weekNum = 0;
-  while (cur <= week0) {
+  while (cur <= end) {
     // Accumulate expenses up to this date
     while (ei < sortedExpenses.length && sortedExpenses[ei].date.slice(0, 10) <= cur.toISOString().slice(0, 10)) {
       cumSpent += sortedExpenses[ei].amount;
@@ -66,7 +66,7 @@ function buildBurndownData(
     }
     cur.setDate(cur.getDate() + 1);
   }
-  // Ensure week0 is always included
+  // Ensure the season end is always included
   weeks.push({
     week: "Wk 0",
     remaining: Math.max(0, totalAllocated - cumSpent),
@@ -148,11 +148,11 @@ function CategoryBars({ data, compact = false }: {
 
 // ─── Main component ──────────────────────────────────────────────────────────
 
-export function BudgetBurndownCard({ totalAllocated, totalSpent, kickoffDate, week0Date, categories, expenses }: Props) {
+export function BudgetBurndownCard({ totalAllocated, totalSpent, kickoffDate, endDate, categories, expenses }: Props) {
   const [open, setOpen] = useState(false);
   const [tab, setTab]   = useState<"burndown" | "categories">("burndown");
 
-  const burndownData  = useMemo(() => buildBurndownData(new Date(kickoffDate), new Date(week0Date), totalAllocated, expenses), [kickoffDate, week0Date, totalAllocated, expenses]);
+  const burndownData  = useMemo(() => buildBurndownData(new Date(kickoffDate), new Date(endDate), totalAllocated, expenses), [kickoffDate, endDate, totalAllocated, expenses]);
   const categoryData  = useMemo(() => buildCategoryData(categories, expenses), [categories, expenses]);
 
   const pct = totalAllocated > 0 ? Math.round((totalSpent / totalAllocated) * 100) : 0;

@@ -7,7 +7,7 @@ import { z } from "zod";
 import { findTeamTemplate, findTeamTemplateTask } from "@/lib/template-access";
 import { STANDARD_TASKS } from "@/lib/standard-template";
 import {
-  TASK_ANCHORS, STAGE_INFO, isCompetitionAnchor, legacyAnchor, resolveAnchor, addDays,
+  TASK_ANCHORS, STAGE_INFO, isCompetitionAnchor, legacyAnchor, resolveAnchor, addDays, week0Competition,
   type TaskAnchor, type SeasonDates,
 } from "@/lib/competition";
 import type { Prisma, TaskPriority, SubTeam } from "@/generated/prisma";
@@ -191,7 +191,8 @@ export async function saveSeasonAsTemplateAction(
   try { session = await requireMentor(); } catch (e: any) { return { success: false, error: e.message }; }
 
   const activeSeason = await prisma.season.findFirst({
-    where: { teamId: session.user.teamId, isActive: true },
+    where:   { teamId: session.user.teamId, isActive: true },
+    include: { competitionEvents: { select: { stage: true, stageNumber: true, startDate: true } } },
   });
   if (!activeSeason) return { success: false, error: "No active season." };
 
@@ -203,10 +204,16 @@ export async function saveSeasonAsTemplateAction(
 
   if (tasks.length === 0) return { success: false, error: "No tasks in the current season to save." };
 
-  // Convert absolute dates to offsets relative to kickoff / week0
+  // Convert absolute dates to offsets from whichever season date is nearest:
+  // kickoff, Week 0 (the Week0 / first week competition) or the season end
+  const DAY = 86400000;
   const kickoff = activeSeason.kickoffDate.getTime();
-  const week0   = activeSeason.week0Date.getTime();
-  const DAY     = 86400000;
+  const week0   = week0Competition(activeSeason.competitionEvents);
+  const anchors: { anchor: TaskAnchor; ms: number }[] = [
+    { anchor: "KICKOFF",    ms: kickoff },
+    ...(week0 ? [{ anchor: "SEASON_WEEK0" as TaskAnchor, ms: week0.startDate.getTime() }] : []),
+    { anchor: "SEASON_END", ms: activeSeason.endDate.getTime() },
+  ];
 
   const template = await prisma.seasonTemplate.create({
     data: {
@@ -217,18 +224,17 @@ export async function saveSeasonAsTemplateAction(
         create: tasks.map((t) => {
           const startMs = t.startDate ? t.startDate.getTime() : kickoff;
           const dueMs   = t.dueDate   ? t.dueDate.getTime()   : startMs + DAY;
-          // Determine anchor: closer to week0 end gets negative offset
-          const fromKickoff = Math.round((startMs - kickoff) / DAY);
-          const fromWeek0   = Math.round((startMs - week0)   / DAY);
-          const nearWeek0   = Math.abs(fromWeek0) < Math.abs(fromKickoff);
-          const startOffset = nearWeek0 ? fromWeek0 : fromKickoff;
+          const nearest = anchors
+            .map((a) => ({ anchor: a.anchor, offset: Math.round((startMs - a.ms) / DAY) }))
+            .sort((a, b) => Math.abs(a.offset) - Math.abs(b.offset))[0];
+          const startOffset = nearest.offset;
           const durationBuildDays = Math.max(1, Math.round((dueMs - startMs) / DAY));
 
           return {
             name:                 t.name,
             subTeam:              t.subTeam,
             startOffset,
-            anchor:               (nearWeek0 ? "SEASON_WEEK0" : "KICKOFF") as TaskAnchor,
+            anchor:               nearest.anchor,
             durationBuildDays,
             priority:             t.priority,
             isMilestone:          t.isMilestone,
@@ -284,7 +290,7 @@ async function applyToActiveSeason(teamId: string, userId: string, tasks: Applic
 
   const dates: SeasonDates = {
     kickoffDate:  season.kickoffDate,
-    week0Date:    season.week0Date,
+    endDate:      season.endDate,
     competitions: season.competitionEvents,
   };
   const existing = new Set(

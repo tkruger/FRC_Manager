@@ -39,7 +39,7 @@ export default async function NewTaskPage() {
         members={members}
         existingTasks={existingTasks}
         kickoffDate={activeSeason.kickoffDate.toISOString().split("T")[0]}
-        week0Date={activeSeason.week0Date.toISOString().split("T")[0]}
+        endDate={activeSeason.endDate.toISOString().split("T")[0]}
       />
     </div>
   );

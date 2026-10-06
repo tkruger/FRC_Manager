@@ -24,7 +24,7 @@ interface Season {
   name: string;
   year: number;
   kickoffDate: Date;
-  week0Date: Date;
+  endDate: Date;
   meetingDays: string[];
   meetingStartTime: string;
   meetingEndTime: string;
@@ -68,9 +68,9 @@ export function EditSeasonForm({ season, onClose }: { season: Season; onClose: (
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Kickoff date" name="kickoffDate" type="date" required defaultValue={toDateInputValue(season.kickoffDate)} />
-        <Field label="Week 0 date" name="week0Date" type="date" required defaultValue={toDateInputValue(season.week0Date)}
-          hint="Your internal robot-complete deadline" />
+        <Field label="Start date" name="kickoffDate" type="date" required defaultValue={toDateInputValue(season.kickoffDate)} hint="Kickoff" />
+        <Field label="End date" name="endDate" type="date" required defaultValue={toDateInputValue(season.endDate)}
+          hint="After your last competition" />
       </div>
 
       {/* Per-day meeting times */}

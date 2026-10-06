@@ -122,20 +122,15 @@ export async function GET(
     "END:VEVENT",
   );
 
-  // Week 0
-  const week0End = new Date(season.week0Date.getTime() + 86400000);
+  // Season end (competitions are listed below as their own events)
+  const endNext = new Date(season.endDate.getTime() + 86400000);
   L(
     "BEGIN:VEVENT",
-    prop("UID",     `week0-${season.id}@frc-manager.app`),
+    prop("UID",     `season-end-${season.id}@frc-manager.app`),
     prop("DTSTAMP", now),
-    prop("DTSTART", icsDate(season.week0Date), "VALUE=DATE"),
-    prop("DTEND",   icsDate(week0End),          "VALUE=DATE"),
-    prop("SUMMARY", esc(`${season.name} - WEEK 0 (Robot Done)`)),
-    "BEGIN:VALARM",
-    "TRIGGER:-P3D",
-    "ACTION:DISPLAY",
-    prop("DESCRIPTION", "Week 0 is in 3 days - robot must be done!"),
-    "END:VALARM",
+    prop("DTSTART", icsDate(season.endDate), "VALUE=DATE"),
+    prop("DTEND",   icsDate(endNext),        "VALUE=DATE"),
+    prop("SUMMARY", esc(`${season.name} - Season ends`)),
     "END:VEVENT",
   );
 

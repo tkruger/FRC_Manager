@@ -11,6 +11,7 @@ import type { DiscordConfig, DiscordLink } from "@/generated/prisma";
 import { performCurrentStepAction, describeRequestState, type Actor } from "@/lib/workflow/engine";
 import { createOrder } from "@/lib/orders/create";
 import { itemRef } from "@/lib/orders/constants";
+import { competitionCountdown } from "@/lib/competition";
 
 async function actorFor(userId: string, teamId: string): Promise<Actor> {
   const user = await prisma.user.findUniqueOrThrow({
@@ -65,7 +66,10 @@ async function hasRole(userId: string, roles: string[]): Promise<boolean> {
 }
 
 async function getActiveSeason(teamId: string) {
-  return prisma.season.findFirst({ where: { teamId, isActive: true } });
+  return prisma.season.findFirst({
+    where:   { teamId, isActive: true },
+    include: { competitionEvents: { select: { name: true, stage: true, stageNumber: true, startDate: true, endDate: true } } },
+  });
 }
 
 // ─── /link ─────────────────────────────────────────────────────────────────
@@ -170,9 +174,10 @@ export async function handleTeamStatus(ctx: InteractionContext): Promise<Respons
   if (!season) return ephemeralReply("❌ No active season configured.");
 
   const now = new Date();
-  const daysToWeek0 = differenceInCalendarDays(season.week0Date, now);
+  const daysToEnd = differenceInCalendarDays(season.endDate, now);
   const kickoffDay  = differenceInCalendarDays(now, season.kickoffDate) + 1;
-  const totalDays   = differenceInCalendarDays(season.week0Date, season.kickoffDate);
+  const totalDays   = differenceInCalendarDays(season.endDate, season.kickoffDate);
+  const nextComp    = competitionCountdown(season.competitionEvents, now);
 
   const [taskStats, robotData, inventoryAlerts, openCheckouts, nextMilestone] = await Promise.all([
     prisma.task.groupBy({
@@ -211,7 +216,7 @@ export async function handleTeamStatus(ctx: InteractionContext): Promise<Respons
   const weightBar = weight > 0 ? `${weight.toFixed(1)} lbs / 115 lbs ${weight > 103 ? "🔴" : weight > 90 ? "🟡" : "🟢"}` : "No data";
 
   const lines = [
-    `**Build Day ${kickoffDay} of ${totalDays}** · Week 0 in **${daysToWeek0} days**`,
+    `**Day ${kickoffDay} of ${totalDays}** · ${nextComp ? `${nextComp.name} in **${nextComp.days} days**` : daysToEnd >= 0 ? `Season ends in **${daysToEnd} days**` : "Season over"}`,
     "",
     `⚖️ **Robot Weight:** ${weightBar}`,
     `📋 **Tasks:** ${pct}% complete · ${overdue} overdue · ${blocked} blocked`,

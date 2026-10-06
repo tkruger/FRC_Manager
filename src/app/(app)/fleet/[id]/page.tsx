@@ -24,7 +24,7 @@ export default async function RobotDetailPage({ params }: { params: Promise<{ id
   const robot = await prisma.robot.findFirst({
     where: { id, season: { teamId: session.user.teamId } },
     include: {
-      season: { select: { name: true, kickoffDate: true, week0Date: true } },
+      season: { select: { name: true, kickoffDate: true, endDate: true } },
       precheckUpdatedBy: { select: { name: true } },
       inUseItems: {
         where: { status: { in: ["INSTALLED_ROBOT","INSTALLED_PRACTICE","IN_USE","AVAILABLE"] } },

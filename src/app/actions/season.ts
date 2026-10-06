@@ -18,24 +18,24 @@ async function requireHeadMentor() {
 const ALL_DAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
 /**
- * Check if the proposed kickoff→week0 range overlaps any existing season
+ * Check if the proposed start→end range overlaps any existing season
  * for this team. Excludes `excludeSeasonId` (used when editing an existing season).
- * Two ranges overlap when: proposedKickoff < existingWeek0 AND proposedWeek0 > existingKickoff
+ * Two ranges overlap when: proposedStart < existingEnd AND proposedEnd > existingStart
  */
 async function checkSeasonOverlap(
   teamId: string,
   kickoffDate: Date,
-  week0Date: Date,
+  endDate: Date,
   excludeSeasonId?: string
 ): Promise<string | null> {
   const overlapping = await prisma.season.findFirst({
     where: {
       teamId,
       ...(excludeSeasonId ? { id: { not: excludeSeasonId } } : {}),
-      kickoffDate: { lt: week0Date },    // existing starts before proposed ends
-      week0Date:   { gt: kickoffDate },  // existing ends after proposed starts
+      kickoffDate: { lt: endDate },    // existing starts before proposed ends
+      endDate:   { gt: kickoffDate },  // existing ends after proposed starts
     },
-    select: { name: true, kickoffDate: true, week0Date: true },
+    select: { name: true, kickoffDate: true, endDate: true },
   });
 
   if (!overlapping) return null;
@@ -45,7 +45,7 @@ async function checkSeasonOverlap(
 
   return (
     `This season's schedule overlaps with "${overlapping.name}" ` +
-    `(${fmt(overlapping.kickoffDate)} – ${fmt(overlapping.week0Date)}). ` +
+    `(${fmt(overlapping.kickoffDate)} – ${fmt(overlapping.endDate)}). ` +
     `Adjust the dates so they don't conflict.`
   );
 }
@@ -54,10 +54,10 @@ const SeasonSchema = z.object({
   name:               z.string().min(1),
   year:               z.coerce.number().int().min(2000).max(2100),
   kickoffDate:        z.string().min(1),
-  week0Date:          z.string().min(1),
+  endDate:            z.string().min(1),
   meetingDays:        z.array(z.string()).min(1),
   expectedAttendance: z.coerce.number().int().min(1).default(10),
-});
+}).refine((d) => new Date(d.endDate) > new Date(d.kickoffDate), { message: "The season has to end after it starts." });
 
 export type SeasonActionState =
   | { success: true; seasonId: string }
@@ -101,18 +101,18 @@ export async function createSeasonAction(
     name: formData.get("name"),
     year: formData.get("year"),
     kickoffDate: formData.get("kickoffDate"),
-    week0Date: formData.get("week0Date"),
+    endDate: formData.get("endDate"),
     meetingDays: days,
     expectedAttendance: formData.get("expectedAttendance"),
   });
 
-  if (!parsed.success) return { success: false, error: "Please fill in all required fields." };
+  if (!parsed.success) return { success: false, error: parsed.error.issues.find((i) => i.code === "custom")?.message ?? "Please fill in all required fields." };
   const d = parsed.data;
 
   const overlapError = await checkSeasonOverlap(
     session.user.teamId!,
     new Date(d.kickoffDate),
-    new Date(d.week0Date)
+    new Date(d.endDate)
   );
   if (overlapError) return { success: false, error: overlapError };
 
@@ -129,7 +129,7 @@ export async function createSeasonAction(
       name:               d.name,
       year:               d.year,
       kickoffDate:        new Date(d.kickoffDate),
-      week0Date:          new Date(d.week0Date),
+      endDate:            new Date(d.endDate),
       isActive:           true,
       meetingDays:        d.meetingDays,
       meetingStartTime:   globalStart,
@@ -158,18 +158,18 @@ export async function updateSeasonAction(
     name:               formData.get("name"),
     year:               formData.get("year"),
     kickoffDate:        formData.get("kickoffDate"),
-    week0Date:          formData.get("week0Date"),
+    endDate:            formData.get("endDate"),
     meetingDays:        days.length > 0 ? days : ["MON"],
     expectedAttendance: formData.get("expectedAttendance"),
   });
 
-  if (!parsed.success) return { success: false, error: "Please fill in all required fields." };
+  if (!parsed.success) return { success: false, error: parsed.error.issues.find((i) => i.code === "custom")?.message ?? "Please fill in all required fields." };
   const d = parsed.data;
 
   const overlapError = await checkSeasonOverlap(
     session.user.teamId!,
     new Date(d.kickoffDate),
-    new Date(d.week0Date),
+    new Date(d.endDate),
     seasonId  // exclude self when editing
   );
   if (overlapError) return { success: false, error: overlapError };
@@ -182,7 +182,7 @@ export async function updateSeasonAction(
       name:               d.name,
       year:               d.year,
       kickoffDate:        new Date(d.kickoffDate),
-      week0Date:          new Date(d.week0Date),
+      endDate:            new Date(d.endDate),
       meetingDays:        d.meetingDays,
       meetingStartTime:   globalStart,
       meetingEndTime:     globalEnd,

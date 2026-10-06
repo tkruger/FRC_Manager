@@ -26,7 +26,7 @@ export function designation(stage: CompetitionStage, stageNumber: number | null 
 
 // ── Template task anchors ───────────────────────────────────────────────────
 
-export const TASK_ANCHORS = ["KICKOFF", "SEASON_WEEK0", ...COMPETITION_STAGES] as const;
+export const TASK_ANCHORS = ["KICKOFF", "SEASON_WEEK0", "SEASON_END", ...COMPETITION_STAGES] as const;
 export type TaskAnchor = (typeof TASK_ANCHORS)[number];
 
 export function isCompetitionAnchor(a: TaskAnchor): a is CompetitionStage {
@@ -34,8 +34,9 @@ export function isCompetitionAnchor(a: TaskAnchor): a is CompetitionStage {
 }
 
 export const ANCHOR_OPTIONS: { value: TaskAnchor; label: string }[] = [
-  { value: "KICKOFF",      label: "Kickoff" },
-  { value: "SEASON_WEEK0", label: "Season Week 0 date" },
+  { value: "KICKOFF",      label: "Kickoff (season start)" },
+  { value: "SEASON_WEEK0", label: "Week 0 (Week0, or the first week competition)" },
+  { value: "SEASON_END",   label: "Season end" },
   { value: "PRACTICE",     label: "Practice match (PracticeMatch#)" },
   { value: "WEEK",         label: "Week competition (Week#)" },
   { value: "PLAYOFF",      label: "Playoff (Playoff#)" },
@@ -46,6 +47,7 @@ export const ANCHOR_OPTIONS: { value: TaskAnchor; label: string }[] = [
 function anchorName(anchor: TaskAnchor, n: number | null | undefined): string {
   if (anchor === "KICKOFF") return "kickoff";
   if (anchor === "SEASON_WEEK0") return "Week 0";
+  if (anchor === "SEASON_END") return "season end";
   if (anchor === "WORLDS") return "Worlds";
   return n != null ? designation(anchor, n) : `each ${STAGE_INFO[anchor].label.toLowerCase()}`;
 }
@@ -66,7 +68,7 @@ export function legacyAnchor(offset: number): TaskAnchor {
 
 export interface SeasonDates {
   kickoffDate: Date;
-  week0Date:   Date;
+  endDate:     Date;
   competitions: { name: string; stage: CompetitionStage; stageNumber: number | null; startDate: Date }[];
 }
 
@@ -82,8 +84,13 @@ export interface AnchorTarget {
  * season has no such competition, so the task is skipped.
  */
 export function resolveAnchor(anchor: TaskAnchor, anchorNumber: number | null | undefined, season: SeasonDates): AnchorTarget[] {
-  if (anchor === "KICKOFF")      return [{ date: season.kickoffDate, suffix: null }];
-  if (anchor === "SEASON_WEEK0") return [{ date: season.week0Date,   suffix: null }];
+  if (anchor === "KICKOFF")    return [{ date: season.kickoffDate, suffix: null }];
+  if (anchor === "SEASON_END") return [{ date: season.endDate,     suffix: null }];
+  if (anchor === "SEASON_WEEK0") {
+    // Week 0 is the build deadline: the season's Week0 competition, else its first week competition
+    const w0 = week0Competition(season.competitions);
+    return w0 ? [{ date: w0.startDate, suffix: null }] : [];
+  }
 
   const matches = season.competitions
     .filter((c) => c.stage === anchor && (anchorNumber == null || c.stageNumber === anchorNumber))
@@ -99,8 +106,32 @@ export function resolveAnchor(anchor: TaskAnchor, anchorNumber: number | null | 
   }));
 }
 
+/** The Week0 competition, or the first Week competition if there is no Week0 */
+export function week0Competition<T extends { stage: CompetitionStage; stageNumber: number | null; startDate: Date }>(competitions: T[]): T | null {
+  const weeks = competitions.filter((c) => c.stage === "WEEK").sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+  return weeks.find((c) => c.stageNumber === 0) ?? weeks[0] ?? null;
+}
+
+/** The next competition that hasn't finished yet (for countdowns) */
+export function nextCompetition<T extends { startDate: Date; endDate: Date }>(competitions: T[], now = new Date()): T | null {
+  const today = new Date(now); today.setHours(0, 0, 0, 0);
+  return [...competitions].filter((c) => c.endDate >= today).sort((a, b) => a.startDate.getTime() - b.startDate.getTime())[0] ?? null;
+}
+
 export function addDays(d: Date, days: number): Date {
   const out = new Date(d);
   out.setDate(out.getDate() + days);
   return out;
+}
+
+/** "Week1 · 12" style countdown to the next competition, or null when none are left */
+export function competitionCountdown(
+  competitions: { name: string; stage: CompetitionStage; stageNumber: number | null; startDate: Date; endDate: Date }[],
+  now = new Date(),
+): { name: string; days: number } | null {
+  const next = nextCompetition(competitions, now);
+  if (!next) return null;
+  const today = new Date(now); today.setHours(0, 0, 0, 0);
+  const start = new Date(next.startDate); start.setHours(0, 0, 0, 0);
+  return { name: designation(next.stage, next.stageNumber), days: Math.round((start.getTime() - today.getTime()) / 86_400_000) };
 }

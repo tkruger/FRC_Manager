@@ -7,8 +7,10 @@ const STORAGE_KEY = "frc-schedule-progress-collapsed";
 
 interface Props {
   kickoffDate: string;
-  week0Date: string;
-  daysToWeek0: number;
+  endDate: string;
+  daysToEnd: number;
+  /** Countdown to the next competition, e.g. { name: "Week1", days: 12 } */
+  nextCompetition?: { name: string; days: number } | null;
   buildProgress: number;
   totalTasks: number;
   completeTasks: number;
@@ -17,8 +19,9 @@ interface Props {
 
 export function SeasonProgressBar({
   kickoffDate,
-  week0Date,
-  daysToWeek0,
+  endDate,
+  daysToEnd,
+  nextCompetition,
   buildProgress,
   totalTasks,
   completeTasks,
@@ -49,11 +52,17 @@ export function SeasonProgressBar({
       >
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 min-w-0">
           <p className="text-small text-[--color-text-secondary] whitespace-nowrap">
-            Kickoff {shortDate(new Date(kickoffDate))} → Week 0 {shortDate(new Date(week0Date))}
-            {daysToWeek0 >= 0
-              ? <span className="ml-1 font-medium text-[--color-text-primary]">· {daysToWeek0}d left</span>
-              : <span className="ml-1 font-medium text-[--color-warning]">· {Math.abs(daysToWeek0)}d ago</span>}
+            Kickoff {shortDate(new Date(kickoffDate))} → Ends {shortDate(new Date(endDate))}
+            {daysToEnd >= 0
+              ? <span className="ml-1 font-medium text-(--color-text-primary)">· {daysToEnd}d left</span>
+              : <span className="ml-1 font-medium text-(--color-warning)">· ended {Math.abs(daysToEnd)}d ago</span>}
           </p>
+          {nextCompetition && (
+            <p className="text-small text-(--color-text-secondary) whitespace-nowrap">
+              Next: <span className="font-medium text-(--color-text-primary)">{nextCompetition.name}</span>
+              {" · "}{nextCompetition.days <= 0 ? "now" : `${nextCompetition.days}d`}
+            </p>
+          )}
           <p className="text-small font-medium text-[--color-text-primary] whitespace-nowrap">
             {completeTasks}/{totalTasks} tasks complete
           </p>

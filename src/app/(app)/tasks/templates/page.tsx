@@ -128,11 +128,11 @@ export default async function TemplatesPage() {
               <h3 className="text-h3 text-[--color-text-primary]">Standard 6-Week FRC Build Season</h3>
               <p className="text-body text-[--color-text-secondary] mt-1">
                 {STANDARD_MILESTONES.length} milestones + {22 - STANDARD_MILESTONES.length} supporting tasks,
-                anchored to your kickoff and Week 0 dates. Missing tasks are added; existing tasks are never overwritten.
+                anchored to your kickoff, competitions and season end. Missing tasks are added; existing tasks are never overwritten.
               </p>
               {activeSeason && (
                 <p className="text-small text-[--color-text-secondary] mt-2">
-                  Kickoff: <strong>{shortDate(activeSeason.kickoffDate)}</strong> · Week 0: <strong>{shortDate(activeSeason.week0Date)}</strong>
+                  Kickoff: <strong>{shortDate(activeSeason.kickoffDate)}</strong> · Ends: <strong>{shortDate(activeSeason.endDate)}</strong>
                 </p>
               )}
             </div>

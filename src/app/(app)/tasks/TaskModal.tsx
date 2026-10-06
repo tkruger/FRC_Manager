@@ -35,7 +35,7 @@ export interface TaskModalData {
   dependents: { id: string; name: string; status: string }[];
   robot: { id: string; displayName: string } | null;
   kickoffDate?: string;
-  week0Date?: string;
+  endDate?: string;
 }
 
 interface Props {
@@ -44,12 +44,12 @@ interface Props {
   allMembers?: { id: string; name: string }[];
   allRobots?: { id: string; displayName: string }[];
   kickoffDate?: string;
-  week0Date?: string;
+  endDate?: string;
   onClose: () => void;
   onUpdated?: () => void;
 }
 
-export function TaskModal({ task, allTasks = [], allMembers = [], allRobots = [], kickoffDate, week0Date, onClose, onUpdated }: Props) {
+export function TaskModal({ task, allTasks = [], allMembers = [], allRobots = [], kickoffDate, endDate, onClose, onUpdated }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [editing, setEditing] = useState(false);
@@ -228,7 +228,7 @@ export function TaskModal({ task, allTasks = [], allMembers = [], allRobots = []
               allMembers={allMembers}
               allRobots={allRobots}
               kickoffDate={kickoffDate}
-              week0Date={week0Date}
+              endDate={endDate}
               onCancel={() => setEditing(false)}
               onSaved={() => { setEditing(false); onUpdated?.(); router.refresh(); }}
             />
@@ -241,13 +241,13 @@ export function TaskModal({ task, allTasks = [], allMembers = [], allRobots = []
 
 // ─── Inline edit form inside the modal ────────────────────────────────────────
 
-function EditTaskForm({ task, allTasks, allMembers, allRobots, kickoffDate, week0Date, onCancel, onSaved }: {
+function EditTaskForm({ task, allTasks, allMembers, allRobots, kickoffDate, endDate, onCancel, onSaved }: {
   task: TaskModalData;
   allTasks: { id: string; name: string; status: string }[];
   allMembers: { id: string; name: string }[];
   allRobots: { id: string; displayName: string }[];
   kickoffDate?: string;
-  week0Date?: string;
+  endDate?: string;
   onCancel: () => void;
   onSaved: () => void;
 }) {
@@ -307,8 +307,8 @@ function EditTaskForm({ task, allTasks, allMembers, allRobots, kickoffDate, week
         )}
       </div>
       <div className="grid grid-cols-2 gap-4">
-        <Field label="Start date" name="startDate" type="date" min={kickoffDate} max={week0Date} defaultValue={toDateVal(task.startDate)} />
-        <Field label="Due date"   name="dueDate"   type="date" min={kickoffDate} max={week0Date} defaultValue={toDateVal(task.dueDate)} />
+        <Field label="Start date" name="startDate" type="date" min={kickoffDate} max={endDate} defaultValue={toDateVal(task.startDate)} />
+        <Field label="Due date"   name="dueDate"   type="date" min={kickoffDate} max={endDate} defaultValue={toDateVal(task.dueDate)} />
       </div>
       <Field label="Estimated hours" name="estimatedHours" type="number" min="0" step="0.5" defaultValue={task.estimatedHours ?? ""} />
       <div className="space-y-2">

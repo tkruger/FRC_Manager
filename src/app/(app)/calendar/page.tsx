@@ -68,7 +68,7 @@ export default async function CalendarPage() {
           id:            activeSeason.id,
           name:          activeSeason.name,
           kickoffDate:   activeSeason.kickoffDate.toISOString(),
-          week0Date:     activeSeason.week0Date.toISOString(),
+          endDate:     activeSeason.endDate.toISOString(),
           meetingDays:   activeSeason.meetingDays,
           calendarToken: activeSeason.calendarToken,
         }}

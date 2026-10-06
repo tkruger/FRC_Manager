@@ -1,5 +1,6 @@
 ﻿import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { competitionCountdown } from "@/lib/competition";
 import Link from "next/link";
 import { formatDate } from "@/lib/utils";
 import { differenceInCalendarDays } from "date-fns";
@@ -13,6 +14,7 @@ export default async function DashboardPage() {
         where: { teamId: session.user.teamId, isActive: true },
         include: {
           robots:          { where: { archived: false }, select: { id: true, displayName: true, role: true } },
+          competitionEvents: { select: { name: true, stage: true, stageNumber: true, startDate: true, endDate: true } },
           _count: {
             select: {
               tasks:           true,
@@ -24,9 +26,11 @@ export default async function DashboardPage() {
     : null;
 
   const now = new Date();
-  const daysToWeek0 = activeSeason
-    ? differenceInCalendarDays(activeSeason.week0Date, now)
+  const daysToEnd = activeSeason
+    ? differenceInCalendarDays(activeSeason.endDate, now)
     : null;
+  // Counts down to the next competition; once they're all done, to the season end
+  const nextComp = activeSeason ? competitionCountdown(activeSeason.competitionEvents, now) : null;
 
   // Overdue tasks count
   const overdueCount = activeSeason
@@ -68,7 +72,7 @@ export default async function DashboardPage() {
         <div className="card border-l-4 border-l-[--color-warning]">
           <p className="text-sm font-medium text-[--color-text-primary]">No active season configured</p>
           <p className="text-small text-[--color-text-secondary] mt-1">
-            A Head Mentor can set up the current season, kickoff date, and Week 0 deadline in{" "}
+            A Head Mentor can set up the current season, start and end dates in{" "}
             <Link href="/settings/season" className="text-[--color-secondary] hover:underline">
               Season Settings
             </Link>.
@@ -81,12 +85,12 @@ export default async function DashboardPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
             {
-              label: "Week 0",
-              value: daysToWeek0 !== null && daysToWeek0 >= 0
-                ? `${daysToWeek0}d away`
-                : daysToWeek0 !== null ? "Past" : "—",
-              sub: formatDate(activeSeason.week0Date),
-              urgent: daysToWeek0 !== null && daysToWeek0 <= 14,
+              label: nextComp ? "Next competition" : "Season ends",
+              value: nextComp
+                ? (nextComp.days <= 0 ? "Now" : `${nextComp.days}d away`)
+                : daysToEnd !== null && daysToEnd >= 0 ? `${daysToEnd}d away` : "Ended",
+              sub: nextComp ? nextComp.name : formatDate(activeSeason.endDate),
+              urgent: nextComp ? nextComp.days <= 14 : false,
               href: "/tasks",
               accent: "#059669",
             },

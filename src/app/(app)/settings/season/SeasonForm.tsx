@@ -53,8 +53,8 @@ export function SeasonForm({ onClose }: { onClose?: () => void } = {}) {
         <Field label="Season year" name="year" type="number" required defaultValue={currentYear} min={2000} max={2100} />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Kickoff date" name="kickoffDate" type="date" required />
-        <Field label="Week 0 date" name="week0Date" type="date" required hint="Your internal robot-complete deadline" />
+        <Field label="Start date" name="kickoffDate" type="date" required hint="Kickoff" />
+        <Field label="End date" name="endDate" type="date" required hint="After your last competition" />
       </div>
 
       {/* Per-day meeting times */}

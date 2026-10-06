@@ -14,10 +14,10 @@ interface Props {
   members: { id: string; name: string }[];
   existingTasks: { id: string; name: string; status: string }[];
   kickoffDate: string;
-  week0Date: string;
+  endDate: string;
 }
 
-export function NewTaskForm({ robots, members, existingTasks, kickoffDate, week0Date }: Props) {
+export function NewTaskForm({ robots, members, existingTasks, kickoffDate, endDate }: Props) {
   const router = useRouter();
   const [state, action, pending] = useActionState(createTaskAction, null);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
@@ -73,13 +73,13 @@ export function NewTaskForm({ robots, members, existingTasks, kickoffDate, week0
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field
             label="Start date" name="startDate" type="date"
-            min={kickoffDate} max={week0Date}
+            min={kickoffDate} max={endDate}
             hint={`Kickoff: ${kickoffDate}`}
           />
           <Field
             label="Due date" name="dueDate" type="date"
-            min={kickoffDate} max={week0Date}
-            hint={`Week 0: ${week0Date}`}
+            min={kickoffDate} max={endDate}
+            hint={`Season ends ${endDate}`}
           />
         </div>
         <Field label="Estimated hours" name="estimatedHours" type="number" min="0" step="0.5" placeholder="e.g. 8" />
