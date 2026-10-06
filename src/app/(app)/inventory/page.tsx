@@ -15,8 +15,10 @@ import { PageHeader } from "@/components/PageHeader";
 // Roles that may see the Low stock and Order queue tabs
 const RESTRICTED_TAB_ROLES = ["HEAD_MENTOR", "TEAM_LEADERSHIP", "BUILD_LEAD", "INVENTORY_ADMIN"];
 
-export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ view?: string; category?: string }> }) {
-  const { view, category } = await searchParams;
+export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ view?: string; category?: string; retired?: string }> }) {
+  const { view, category, retired } = await searchParams;
+  // Retired items only appear on All items, when asked for
+  const showRetired = !view && retired === "1";
   const session = await auth();
   if (!session?.user?.teamId) redirect("/dashboard");
 
@@ -33,11 +35,11 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   });
   if (!activeSeason) redirect("/settings/season");
 
-  const [items, reorderRequests, vendors] = await Promise.all([
+  const [allItems, reorderRequests, vendors, retiredCount] = await Promise.all([
     prisma.baseInventoryItem.findMany({
       where: {
         seasonId: activeSeason.id,
-        archived: false,
+        ...(showRetired ? {} : { archived: false }),
         ...(category ? { category: category as any } : {}),
       },
       orderBy: [{ category: "asc" }, { name: "asc" }],
@@ -57,7 +59,9 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
       select: { id: true, name: true },
       orderBy: { name: "asc" },
     }),
+    prisma.baseInventoryItem.count({ where: { seasonId: activeSeason.id, archived: true } }),
   ]);
+  const items = allItems.filter((i) => !i.archived);
 
   const lowStock  = items.filter((i) => i.currentStock <= i.minStockThreshold && i.minStockThreshold > 0);
   const displayed = view === "low-stock" ? lowStock
@@ -161,10 +165,17 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
       {/* All items tab — client component with inline search */}
       {!view && (
         <InventoryTableClient
-          items={items}
+          items={allItems}
           robots={seasons_robots}
           emptyMessage="No items found."
           canAdd={canManageInventory}
+          retiredToggle={retiredCount > 0 || showRetired ? {
+            showing: showRetired,
+            count:   retiredCount,
+            href:    showRetired
+              ? `/inventory${category ? `?category=${encodeURIComponent(category)}` : ""}`
+              : `/inventory?retired=1${category ? `&category=${encodeURIComponent(category)}` : ""}`,
+          } : undefined}
         />
       )}
 

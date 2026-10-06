@@ -52,6 +52,7 @@ model User {
   purchaseRequests     PurchaseRequest[]   @relation("Requester")
   orderDrafts          OrderDraft[]
   precheckUpdates      Robot[]             @relation("PrecheckUpdatedBy")
+  inventoryRetired     BaseInventoryItem[] @relation("InventoryRetiredBy")
   purchaseApprovals    PurchaseRequest[]   @relation("Approver")
   purchaseEvents       PurchaseRequestEvent[]
   workflowVersions     WorkflowDefinition[]
@@ -433,7 +434,11 @@ model BaseInventoryItem {
   storageLocation      String?
   image                String?
   notes                String?
+  /// Retired: removed from inventory (kept for history; can be restored)
   archived             Boolean       @default(false)
+  retiredAt            DateTime?
+  retiredById          String?
+  retiredBy            User?         @relation("InventoryRetiredBy", fields: [retiredById], references: [id], onDelete: SetNull)
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
 

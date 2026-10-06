@@ -3,8 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 import { EditBaseItemForm } from "./EditBaseItemForm";
+import { RetireItemButton } from "./RetireItemButton";
 
 function stockVariant(current: number, min: number): "danger" | "warning" | "success" {
   if (current === 0) return "danger";
@@ -19,7 +20,8 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
 
   const [item, vendors] = await Promise.all([
     prisma.baseInventoryItem.findFirst({
-      where: { id, season: { teamId: session.user.teamId } },
+      where:   { id, season: { teamId: session.user.teamId } },
+      include: { retiredBy: { select: { name: true } } },
     }),
     prisma.vendor.findMany({
       where: { teamId: session.user.teamId },
@@ -47,10 +49,23 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
         <span className="text-[--color-text-primary]">{item.name}</span>
       </nav>
 
+      {/* Retired: out of the inventory until restored */}
+      {item.archived && (
+        <div className="card py-3 px-4 border-l-4" style={{ borderLeftColor: "var(--color-warning)" }}>
+          <p className="text-sm text-(--color-text-primary)">
+            <span className="font-semibold">Retired</span>
+            <span className="text-(--color-text-secondary)">
+              {item.retiredAt && ` on ${formatDate(item.retiredAt)}`}{item.retiredBy && ` by ${item.retiredBy.name}`} —
+              it isn&apos;t part of the inventory, low stock or the order queue.
+            </span>
+          </p>
+        </div>
+      )}
+
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div>
-          <h1 className="text-h1 text-[--color-text-primary]">{item.name}</h1>
+          <h1 className="text-h1 text-(--color-text-primary)">{item.name}</h1>
           <div className="flex gap-2 mt-2 flex-wrap">
             <Badge variant={stockVariant(item.currentStock, item.minStockThreshold)}>
               {item.currentStock} {item.unitOfMeasure.toLowerCase()} in stock
@@ -60,6 +75,8 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
             {item.isFirstChoiceItem && <Badge variant="info">FIRST Choice</Badge>}
           </div>
         </div>
+        {/* Inventory Admins and Head Mentors */}
+        {canEdit && <RetireItemButton itemId={item.id} itemName={item.name} retired={item.archived} />}
       </div>
 
       {/* Quick stats */}

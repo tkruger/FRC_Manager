@@ -14,6 +14,9 @@ export async function maybeQueueReorder(
   teamId: string,
 ): Promise<void> {
   if (item.minStockThreshold <= 0 || newStock > item.minStockThreshold) return;
+  // Retired items are out of the inventory — never restock them automatically
+  const live = await prisma.baseInventoryItem.findUnique({ where: { id: item.id }, select: { archived: true } });
+  if (!live || live.archived) return;
 
   const { def } = await getActiveWorkflow(teamId);
   if (!def.trigger.autoReorder) return;

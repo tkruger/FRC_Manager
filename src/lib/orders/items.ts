@@ -137,7 +137,7 @@ const CATEGORY_BY_SUBTEAM: Partial<Record<string, ItemCategory>> = {
 async function stockItem(tx: Tx, item: Awaited<ReturnType<typeof teamItems>>[number]) {
   const seasonId = item.request.seasonId;
   const existing =
-    (item.baseItemId && await tx.baseInventoryItem.findFirst({ where: { id: item.baseItemId, seasonId }, select: { id: true } })) ||
+    (item.baseItemId && await tx.baseInventoryItem.findFirst({ where: { id: item.baseItemId, seasonId, archived: false }, select: { id: true } })) ||
     (item.partNumber && await tx.baseInventoryItem.findFirst({
       where:  { seasonId, archived: false, partNumber: { equals: item.partNumber, mode: "insensitive" } },
       select: { id: true },

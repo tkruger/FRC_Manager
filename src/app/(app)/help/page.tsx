@@ -152,6 +152,7 @@ export default function HelpPage() {
           <li>Each item can have a <b>minimum</b>. When stock falls to or below it, the item goes into the <b>order queue</b> automatically.</li>
           <li><b>Low stock</b> shows items at or below their minimum, with an <b>Order</b> button.</li>
           <li>The <b>Order queue</b> shows everything that needs ordering or is on its way, and where each order is. Items stay there until the delivery is received.</li>
+          <li><b>Retiring an item</b> (Inventory Admins and Head Mentors): open the item and tap <b>Retire item</b>. It leaves the inventory, low stock and the order queue, and can&apos;t be added to new orders, but its history stays. Tick <b>Show retired items</b> on All items to see retired items, and open one to <b>Restore</b> it.</li>
         </ul>
         <H3>Ordering something</H3>
         <Steps>

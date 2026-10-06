@@ -20,6 +20,8 @@ interface Item {
   unitCost: number | null;
   reorderQuantity: number | null;
   preferredSupplier: string | null;
+  /** Retired — shown only when retired items are revealed */
+  archived: boolean;
 }
 
 interface Props {
@@ -27,6 +29,8 @@ interface Props {
   robots:       { id: string; displayName: string }[];
   emptyMessage: string;
   canAdd:       boolean;
+  /** "Show retired items" link, when there are any */
+  retiredToggle?: { showing: boolean; count: number; href: string };
 }
 
 function stockVariant(item: Item): "danger" | "warning" | "success" {
@@ -35,7 +39,7 @@ function stockVariant(item: Item): "danger" | "warning" | "success" {
   return "success";
 }
 
-export function InventoryTableClient({ items, robots, emptyMessage, canAdd }: Props) {
+export function InventoryTableClient({ items, robots, emptyMessage, canAdd, retiredToggle }: Props) {
   const [search, setSearch] = useState("");
 
   const displayed = search.trim()
@@ -49,13 +53,24 @@ export function InventoryTableClient({ items, robots, emptyMessage, canAdd }: Pr
   return (
     <>
       {/* Search — matches tools pattern; parent space-y-6 handles gap to table */}
-      <input
-        type="search"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search items…"
-        className="w-full sm:max-w-xs rounded-md border border-[--color-border] bg-[--color-surface] text-[--color-text-primary] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary]/40 focus:border-[--color-primary]"
-      />
+      <div className="flex flex-wrap items-center gap-3">
+        <input
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search items…"
+          className="w-full sm:max-w-xs rounded-md border border-(--color-border) bg-(--color-surface) text-(--color-text-primary) px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-(--color-primary)/40 focus:border-(--color-primary)"
+        />
+        {retiredToggle && (
+          <Link href={retiredToggle.href} scroll={false}
+            className="inline-flex items-center gap-2 text-sm text-(--color-text-secondary) hover:text-(--color-text-primary)">
+            <span aria-hidden className={`flex h-4 w-4 items-center justify-center rounded border text-[10px] ${retiredToggle.showing ? "border-(--color-primary) bg-(--color-primary) text-white" : "border-(--color-border-strong)"}`}>
+              {retiredToggle.showing ? "✓" : ""}
+            </span>
+            Show retired items ({retiredToggle.count})
+          </Link>
+        )}
+      </div>
 
       {displayed.length === 0 ? (
         <div className="card text-center py-12">
@@ -74,7 +89,7 @@ export function InventoryTableClient({ items, robots, emptyMessage, canAdd }: Pr
           </TableHead>
           <TableBody>
             {displayed.map((item) => (
-              <Tr key={item.id} className="group">
+              <Tr key={item.id} className={item.archived ? "group opacity-60" : "group"}>
                 <Td>
                   <Link
                     href={`/inventory/${item.id}`}
@@ -82,6 +97,7 @@ export function InventoryTableClient({ items, robots, emptyMessage, canAdd }: Pr
                   >
                     {item.name}
                   </Link>
+                  {item.archived && <Badge variant="neutral" className="ml-2 text-xs">Retired</Badge>}
                   {item.partNumber && (
                     <p className="text-mono text-[--color-text-secondary]">{item.partNumber}</p>
                   )}
@@ -105,12 +121,14 @@ export function InventoryTableClient({ items, robots, emptyMessage, canAdd }: Pr
                 <Td>{item.storageLocation ?? "—"}</Td>
                 <Td right>{formatCurrency(item.unitCost)}</Td>
                 <Td>
-                  <AcquireButton
-                    itemId={item.id}
-                    itemName={item.name}
-                    robots={robots}
-                    maxQty={item.currentStock}
-                  />
+                  {!item.archived && (
+                    <AcquireButton
+                      itemId={item.id}
+                      itemName={item.name}
+                      robots={robots}
+                      maxQty={item.currentStock}
+                    />
+                  )}
                 </Td>
               </Tr>
             ))}

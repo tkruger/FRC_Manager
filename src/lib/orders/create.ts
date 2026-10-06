@@ -39,7 +39,7 @@ export async function createOrder(input: {
   const requestedItemIds = [...new Set(items.map((i) => i.baseItemId).filter((id): id is string => !!id))];
   const validItemIds = new Set(
     requestedItemIds.length === 0 ? [] : (await prisma.baseInventoryItem.findMany({
-      where:  { id: { in: requestedItemIds }, seasonId },
+      where:  { id: { in: requestedItemIds }, seasonId, archived: false },
       select: { id: true },
     })).map((b) => b.id)
   );

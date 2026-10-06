@@ -256,3 +256,45 @@ export async function dismissReorderAction(reqId: string): Promise<void> {
   });
   revalidatePath("/inventory");
 }
+
+// ── Retire / restore ────────────────────────────────────────────────────────
+
+/**
+ * Retire an item: it leaves the inventory (lists, low stock, the order queue, new orders)
+ * but its history stays and it can be restored. Inventory Admins and Head Mentors.
+ */
+export async function retireItemAction(itemId: string): Promise<InventoryActionState> {
+  const session = await auth();
+  if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
+  if (!canManageInventory(session.user.roles)) return { success: false, error: "Only Inventory Admins and Head Mentors can retire items." };
+
+  const res = await prisma.baseInventoryItem.updateMany({
+    where: { id: itemId, season: { teamId: session.user.teamId }, archived: false },
+    data:  { archived: true, retiredAt: new Date(), retiredById: session.user.id },
+  });
+  if (res.count === 0) return { success: false, error: "Item not found (or already retired)." };
+
+  // Restock requests nobody has turned into an order yet no longer apply
+  await prisma.reorderRequest.updateMany({
+    where: { baseItemId: itemId, status: "PENDING", purchaseRequestId: null },
+    data:  { status: "DISMISSED", resolvedAt: new Date() },
+  });
+
+  revalidatePath("/inventory", "layout");
+  return { success: true };
+}
+
+export async function restoreItemAction(itemId: string): Promise<InventoryActionState> {
+  const session = await auth();
+  if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
+  if (!canManageInventory(session.user.roles)) return { success: false, error: "Only Inventory Admins and Head Mentors can restore items." };
+
+  const res = await prisma.baseInventoryItem.updateMany({
+    where: { id: itemId, season: { teamId: session.user.teamId }, archived: true },
+    data:  { archived: false, retiredAt: null, retiredById: null },
+  });
+  if (res.count === 0) return { success: false, error: "Item not found (or not retired)." };
+
+  revalidatePath("/inventory", "layout");
+  return { success: true };
+}
