@@ -207,7 +207,7 @@ export async function updateSeasonAction(
   });
   if (updated.count === 0) return { success: false, error: "Season not found." };
 
-  // Future meetings (from tomorrow on) follow the season's dates and schedule on every save,
+  // Meetings that haven't started yet (later today included) follow the season's dates and schedule on every save,
   // so they can never drift from it. Past meetings, and ones whose time was set by hand, stay.
   const meetings = await syncSeasonMeetings(seasonId);
   if (meetings?.added) await notify.meetingsPublished(session.user.teamId!, meetings.added, session.user.id);

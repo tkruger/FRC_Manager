@@ -25,7 +25,7 @@ async function findTeamMeeting(meetingId: string, teamId: string) {
   });
 }
 
-/** Regenerate the season's regular meetings from tomorrow to the season end */
+/** Regenerate the season's regular meetings from now to the season end */
 export async function generateMeetingsAction(
   seasonId: string
 ): Promise<{ success: boolean; error?: string; count?: number }> {
@@ -37,7 +37,7 @@ export async function generateMeetingsAction(
   });
   if (!season) return { success: false, error: "Season not found." };
 
-  // Rebuild from tomorrow on — past meetings (and today's) are never changed
+  // Rebuild every meeting that hasn't started yet — past meetings are never changed
   const count = await regenerateFutureMeetings(seasonId);
   if (count > 0) await notify.meetingsPublished(session.user.teamId!, count, session.user.id);
 
