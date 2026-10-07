@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { SessionProvider } from "next-auth/react";
+import { Analytics } from "@vercel/analytics/next";
 import { auth } from "@/lib/auth";
 import { cookies } from "next/headers";
 import { APP_ICON_COOKIE, appIconPath, resolveAppIcon } from "@/lib/app-icons";
@@ -87,6 +88,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             {children}
           </ThemeProvider>
         </SessionProvider>
+        {/* Vercel Web Analytics (page views; no cookies) */}
+        <Analytics />
       </body>
     </html>
   );
