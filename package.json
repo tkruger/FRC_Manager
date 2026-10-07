@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "db:schema": "node scripts/db/create-schema.mjs",
+    "db:export": "node scripts/db/export-data.mjs",
+    "db:import": "node scripts/db/import-data.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",

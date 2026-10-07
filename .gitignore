@@ -181,3 +181,6 @@ next-env.d.ts
 /src/generated/prisma
 
 .vercel
+
+# Database exports (real team data — never commit)
+db-export/
