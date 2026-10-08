@@ -56,3 +56,31 @@ export function fail(e) {
   console.error(`\nStopped: ${e.message}`);
   process.exit(1);
 }
+
+/**
+ * A database's structure, in comparable form: every column (type, nullable, default),
+ * index and constraint. Used to make sure an export and its target line up exactly.
+ */
+export async function schemaSignature(c) {
+  const columns = (await c.query(`select table_name, column_name, data_type, udt_name, is_nullable, column_default
+    from information_schema.columns where table_schema = 'public' and table_name <> '_prisma_migrations'
+    order by table_name, column_name`)).rows
+    .map((r) => `${r.table_name}.${r.column_name} ${r.udt_name}${r.is_nullable === "NO" ? " not null" : ""}${r.column_default ? ` default ${r.column_default}` : ""}`);
+  const indexes = (await c.query(`select indexdef from pg_indexes where schemaname = 'public' and tablename <> '_prisma_migrations'
+    order by indexname`)).rows.map((r) => r.indexdef);
+  const constraints = (await c.query(`select conrelid::regclass::text || ' ' || conname || ' ' || pg_get_constraintdef(oid) d
+    from pg_constraint where connamespace = 'public'::regnamespace and conrelid::regclass::text <> '_prisma_migrations'
+    order by 1`)).rows.map((r) => r.d);
+  const enums = (await c.query(`select t.typname || ': ' || string_agg(e.enumlabel, ', ' order by e.enumsortorder) d
+    from pg_enum e join pg_type t on t.oid = e.enumtypid group by t.typname order by t.typname`)).rows.map((r) => r.d);
+  return [...columns, ...indexes, ...constraints, ...enums];
+}
+
+/** Lines in one signature but not the other */
+export function compareSignatures(expected, actual) {
+  const a = new Set(actual), e = new Set(expected);
+  return {
+    missing: expected.filter((x) => !a.has(x)),  // in the source, not in the target
+    extra:   actual.filter((x) => !e.has(x)),     // in the target, not in the source
+  };
+}

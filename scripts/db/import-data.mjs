@@ -8,7 +8,7 @@
 // are switched off while loading and switched back on at the end, which re-checks them all.
 
 import fs from "node:fs";
-import { appTables, args, connect, fail, host, quote, requireUrl, rowCounts } from "./common.mjs";
+import { appTables, args, compareSignatures, connect, fail, host, quote, requireUrl, rowCounts, schemaSignature } from "./common.mjs";
 
 const target = requireUrl("TARGET_DATABASE_URL");
 const file = process.argv.slice(2).find((a) => !a.startsWith("--"));
@@ -29,6 +29,20 @@ try {
     where finished_at is not null and rolled_back_at is null`)).rows.map((r) => r.migration_name));
   const missing = dump.migrations.filter((m) => !have.has(m));
   if (missing.length) throw new Error(`The new database is missing migrations (run npm run db:schema): ${missing.join(", ")}`);
+
+  // Same structure, line for line (columns, types, defaults, indexes, constraints, enums)
+  if (dump.schema) {
+    const { missing: miss, extra } = compareSignatures(dump.schema, await schemaSignature(c));
+    if (miss.length || extra.length) {
+      console.error("The new database's structure doesn't match the export:");
+      for (const x of miss)  console.error(`  only in the export:       ${x}`);
+      for (const x of extra) console.error(`  only in the new database: ${x}`);
+      throw new Error("Structures differ — nothing was imported. Send this list to whoever maintains the app.");
+    }
+    console.log("Structure matches the export exactly.\n");
+  } else {
+    console.log("(This export has no structure snapshot — re-export to check it first.)\n");
+  }
 
   const tables = await appTables(c);
   const absent = Object.keys(dump.tables).filter((t) => !tables.includes(t));

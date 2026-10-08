@@ -6,7 +6,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { appTables, connect, fail, host, quote, requireUrl } from "./common.mjs";
+import { appTables, connect, fail, host, quote, requireUrl, schemaSignature } from "./common.mjs";
 
 const source = requireUrl("DATABASE_URL");
 
@@ -15,6 +15,9 @@ try {
   const tables = await appTables(c);
   const migrations = (await c.query(`select migration_name from _prisma_migrations
     where finished_at is not null and rolled_back_at is null order by migration_name`)).rows.map((r) => r.migration_name);
+
+  // The exact structure, so the import can check the target matches before loading
+  const schema = await schemaSignature(c);
 
   const data = {};
   let total = 0;
@@ -33,6 +36,7 @@ try {
     from: host(source),
     // The import checks the new database has the same migrations, so the columns line up
     migrations,
+    schema,
     tables: data,
   }));
 
