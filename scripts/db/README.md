@@ -1,5 +1,16 @@
 # Database scripts
 
+## Migrations run on deploy
+
+Every Vercel build starts with `scripts/db/migrate-deploy.mjs`: it applies any pending
+migrations to that environment's `DATABASE_URL` (over a direct, non-pooled connection)
+before building. Production deploys upgrade the production database; preprod deploys
+upgrade the preprod branch. If a migration fails, the build fails and the deployment
+doesn't go live. Locally `npm run build` skips it — run `npm run db:migrate` to apply
+migrations to the database in your `.env` on purpose.
+
+## Moving data
+
 Copy FRC Manager's data into a new Postgres database (for example a new Neon project).
 
 | Command | What it does | Uses |

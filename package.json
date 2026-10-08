@@ -4,14 +4,15 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/db/migrate-deploy.mjs && next build",
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate",
     "db:schema": "node scripts/db/create-schema.mjs",
     "db:export": "node scripts/db/export-data.mjs",
     "db:import": "node scripts/db/import-data.mjs",
-    "db:super-admin": "node scripts/db/super-admin.mjs"
+    "db:super-admin": "node scripts/db/super-admin.mjs",
+    "db:migrate": "node scripts/db/migrate-deploy.mjs --force"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",
