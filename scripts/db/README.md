@@ -4,7 +4,7 @@ Copy FRC Manager's data into a new Postgres database (for example a new Neon pro
 
 | Command | What it does | Uses |
 |---|---|---|
-| `npm run db:schema` | Creates every table in an empty database, using the app's migrations | `TARGET_DATABASE_URL` |
+| `npm run db:schema` | Creates every table in an empty database, using the app's migrations (`--reset` wipes the target first) | `TARGET_DATABASE_URL` |
 | `npm run db:export` | Saves every row of the current database to `db-export/…json` (read-only) | `DATABASE_URL` |
 | `npm run db:import -- <file>` | Loads an export into the target database (`--replace` empties it first) | `TARGET_DATABASE_URL` |
 
