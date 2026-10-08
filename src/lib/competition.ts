@@ -124,14 +124,15 @@ export function addDays(d: Date, days: number): Date {
   return out;
 }
 
-/** "Week1 · 12" style countdown to the next competition, or null when none are left */
+/** Countdown to the next competition — its name (e.g. "Chesapeake District Championship"), its
+ *  code (e.g. "Week1") and days to go — or null when none are left */
 export function competitionCountdown(
   competitions: { name: string; stage: CompetitionStage; stageNumber: number | null; startDate: Date; endDate: Date }[],
   now = new Date(),
-): { name: string; days: number } | null {
+): { name: string; designation: string; days: number } | null {
   const next = nextCompetition(competitions, now);
   if (!next) return null;
   const today = new Date(now); today.setHours(0, 0, 0, 0);
   const start = new Date(next.startDate); start.setHours(0, 0, 0, 0);
-  return { name: designation(next.stage, next.stageNumber), days: Math.round((start.getTime() - today.getTime()) / 86_400_000) };
+  return { name: next.name, designation: designation(next.stage, next.stageNumber), days: Math.round((start.getTime() - today.getTime()) / 86_400_000) };
 }

@@ -58,7 +58,8 @@ export function SeasonProgressBar({
               : <span className="ml-1 font-medium text-(--color-warning)">· ended {Math.abs(daysToEnd)}d ago</span>}
           </p>
           {nextCompetition && (
-            <p className="text-small text-(--color-text-secondary) whitespace-nowrap">
+            // Competition names can be long — trim with "…" rather than widen the page
+            <p className="text-small text-(--color-text-secondary) whitespace-nowrap max-w-full truncate" title={nextCompetition.name}>
               Next: <span className="font-medium text-(--color-text-primary)">{nextCompetition.name}</span>
               {" · "}{nextCompetition.days <= 0 ? "now" : `${nextCompetition.days}d`}
             </p>
