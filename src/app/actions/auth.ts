@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { signIn } from "@/lib/auth";
 import { z } from "zod";
-import { memberAwaitingApproval } from "@/lib/notify/events";
+import { memberAwaitingApproval, teamAwaitingApproval } from "@/lib/notify/events";
 import { AuthError } from "next-auth";
 
 const RegisterSchema = z.object({
@@ -17,7 +17,7 @@ const RegisterSchema = z.object({
 });
 
 export type RegisterState =
-  | { success: true; activated: boolean }
+  | { success: true; activated: boolean; newTeam?: boolean }
   | { success: false; error: string; fieldErrors?: Record<string, string[]> };
 
 export async function registerAction(
@@ -49,12 +49,17 @@ export async function registerAction(
     return { success: false, error: "An account with this email already exists." };
   }
 
-  // Find or create team
+  // Find or create team. A team that's new to FRC Manager waits for a super admin to
+  // approve it; its first member becomes Head Mentor when it's approved.
   let team = await prisma.team.findUnique({ where: { teamNumber } });
+  const newTeam = !team;
   if (!team) {
     team = await prisma.team.create({
-      data: { teamNumber, name: `Team ${teamNumber}` },
+      data: { teamNumber, name: `Team ${teamNumber}`, status: "PENDING" },
     });
+  }
+  if (team.status === "DENIED") {
+    return { success: false, error: `Team ${teamNumber} can't be registered on FRC Manager. Contact the FRC Manager admins if you think this is a mistake.` };
   }
 
   const hashed = await bcrypt.hash(password, 12);
@@ -76,9 +81,14 @@ export async function registerAction(
     },
   });
 
-  if (!codeMatch) await memberAwaitingApproval(team.id, name);
+  if (newTeam) {
+    await teamAwaitingApproval(teamNumber, name);
+  } else if (!codeMatch && team.status === "ACTIVE") {
+    // (A team still awaiting approval has no Head Mentor yet; its founder reviews these later)
+    await memberAwaitingApproval(team.id, name);
+  }
 
-  return { success: true, activated: !!codeMatch };
+  return { success: true, activated: !!codeMatch, newTeam };
 }
 
 export type LoginState =

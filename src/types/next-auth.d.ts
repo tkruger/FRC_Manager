@@ -10,6 +10,8 @@ declare module "next-auth" {
       teamId?: string;
       roles: Role[];
       displayMode?: string;
+      /** Platform admin: approves new teams */
+      isSuperAdmin?: boolean;
     };
   }
 }
@@ -20,5 +22,6 @@ declare module "next-auth/jwt" {
     teamId?: string;
     roles: Role[];
     displayMode?: string;
+    isSuperAdmin?: boolean;
   }
 }

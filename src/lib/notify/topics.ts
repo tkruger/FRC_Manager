@@ -12,6 +12,8 @@ export interface TopicDef {
   defaultPush:  boolean;
   /** Can't be turned off in-app (e.g. account status) */
   required?:   boolean;
+  /** Only shown to (and sent to) super admins */
+  superAdminOnly?: boolean;
 }
 
 export const TOPICS = [
@@ -130,6 +132,15 @@ export const TOPICS = [
     description: "Your account is approved or your roles change.",
     audience: "You",
     defaultInApp: true, defaultPush: true, required: true,
+  },
+
+  // Platform
+  {
+    id: "admin.team_requests", group: "Platform admin",
+    label: "New teams to approve",
+    description: "Someone registers a team that isn't on FRC Manager yet and is waiting for approval.",
+    audience: "Super admins",
+    defaultInApp: true, defaultPush: true, superAdminOnly: true,
   },
 ] as const satisfies readonly TopicDef[];
 

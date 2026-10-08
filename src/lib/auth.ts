@@ -39,11 +39,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (!token?.id) return token;
       const user = await prisma.user.findUnique({
         where:  { id: token.id as string },
-        select: { status: true, teamId: true, roles: { select: { role: true } } },
+        select: { status: true, teamId: true, isSuperAdmin: true, roles: { select: { role: true } } },
       });
       if (!user || user.status === "SUSPENDED" || user.status === "DENIED") return null;
       token.teamId = user.teamId ?? undefined;
       token.roles  = user.status === "ACTIVE" ? user.roles.map((r) => r.role) : [];
+      token.isSuperAdmin = user.status === "ACTIVE" && user.isSuperAdmin;
       return token;
     },
   },

@@ -15,7 +15,7 @@ export default function RegisterPage() {
 
   useEffect(() => {
     if (state?.success && !state.activated) {
-      router.push("/pending");
+      router.push(state.newTeam ? "/pending?team=new" : "/pending");
     }
   }, [state, router]);
 

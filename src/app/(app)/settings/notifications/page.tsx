@@ -23,7 +23,8 @@ export default async function NotificationSettingsPage() {
   ]);
 
   const byTopic = new Map(prefs.map((p) => [p.topic, p]));
-  const topics = TOPICS.map((t) => ({
+  // Platform-admin topics only appear for super admins
+  const topics = TOPICS.filter((t) => !("superAdminOnly" in t && t.superAdminOnly) || session.user.isSuperAdmin).map((t) => ({
     id: t.id, group: t.group, label: t.label, description: t.description, audience: t.audience,
     required: "required" in t && t.required,
     inApp: byTopic.get(t.id)?.inApp ?? t.defaultInApp,

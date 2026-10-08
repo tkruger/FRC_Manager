@@ -22,6 +22,8 @@ model User {
   emailVerified DateTime?
   image         String?
   password      String?   // null for OAuth users
+  /// Platform admin (not a team role): approves new teams and manages other super admins
+  isSuperAdmin  Boolean   @default(false)
 
   // Registration
   status        UserStatus @default(PENDING)
@@ -52,6 +54,7 @@ model User {
   purchaseRequests     PurchaseRequest[]   @relation("Requester")
   orderDrafts          OrderDraft[]
   precheckUpdates      Robot[]             @relation("PrecheckUpdatedBy")
+  teamsReviewed        Team[]              @relation("TeamReviewedBy")
   inventoryRetired     BaseInventoryItem[] @relation("InventoryRetiredBy")
   purchaseApprovals    PurchaseRequest[]   @relation("Approver")
   purchaseEvents       PurchaseRequestEvent[]
@@ -68,6 +71,12 @@ model User {
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+}
+
+enum TeamStatus {
+  PENDING
+  ACTIVE
+  DENIED
 }
 
 enum UserStatus {
@@ -148,6 +157,11 @@ model Team {
   teamNumber  Int     @unique
   name        String
   accessCode  String?
+  /// New teams wait for a super admin (platform admin) to approve them
+  status      TeamStatus @default(ACTIVE)
+  reviewedAt  DateTime?
+  reviewedById String?
+  reviewedBy  User?      @relation("TeamReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
 
   users         User[]
   seasons       Season[]
@@ -1181,6 +1195,7 @@ enum NotificationType {
   MEMBER_APPROVAL_NEEDED
   ACCOUNT_APPROVED
   ACCOUNT_DENIED
+  TEAM_APPROVAL_NEEDED
   PURCHASE_REMINDER
   MEETING_REMINDER
   MEETING_CHANGED

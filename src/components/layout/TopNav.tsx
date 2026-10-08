@@ -57,6 +57,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
   const canManageTeam     = roles.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP"].includes(r));
   const canManageSeason   = roles.includes("HEAD_MENTOR" as any);
   const canManageDiscord  = roles.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP"].includes(r));
+  const isSuperAdmin      = session?.user?.isSuperAdmin === true;
   const canManageTemplates = roles.some((r) => ["HEAD_MENTOR", "BUILD_LEAD", "INVENTORY_ADMIN"].includes(r));
   const [moreOpen, setMoreOpen] = useState(false);
 
@@ -146,7 +147,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
           {/* Notifications dropdown */}
           <NotificationsDropdown unreadCount={unreadNotificationCount} />
 
-          {session?.user && <UserMenu user={session.user} canManageTeam={canManageTeam} canManageSeason={canManageSeason} canManageDiscord={canManageDiscord} canManageTemplates={canManageTemplates} pendingMemberCount={pendingMemberCount} />}
+          {session?.user && <UserMenu user={session.user} canManageTeam={canManageTeam} canManageSeason={canManageSeason} canManageDiscord={canManageDiscord} canManageTemplates={canManageTemplates} isSuperAdmin={isSuperAdmin} pendingMemberCount={pendingMemberCount} />}
         </div>
         </div>
 
@@ -178,7 +179,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
               <CalendarIcon className="w-4 h-4" />
             </Link>
             <NotificationsDropdown unreadCount={unreadNotificationCount} />
-            {session?.user && <UserMenu user={session.user} canManageTeam={canManageTeam} canManageSeason={canManageSeason} canManageDiscord={canManageDiscord} canManageTemplates={canManageTemplates} />}
+            {session?.user && <UserMenu user={session.user} canManageTeam={canManageTeam} canManageSeason={canManageSeason} canManageDiscord={canManageDiscord} canManageTemplates={canManageTemplates} isSuperAdmin={isSuperAdmin} />}
           </div>
         </div>
       </header>
@@ -328,11 +329,12 @@ function RobotSelector({
   );
 }
 
-function UserMenu({ user, canManageTeam, canManageSeason, canManageDiscord, canManageTemplates, pendingMemberCount = 0 }: {
+function UserMenu({ user, canManageTeam, canManageSeason, canManageDiscord, canManageTemplates, isSuperAdmin = false, pendingMemberCount = 0 }: {
   user: { name?: string | null; email?: string | null };
   canManageTeam:      boolean;
   canManageSeason:    boolean;
   canManageDiscord:   boolean;
+  isSuperAdmin?:      boolean;
   canManageTemplates: boolean;
   pendingMemberCount?: number;
 }) {
@@ -449,6 +451,16 @@ function UserMenu({ user, canManageTeam, canManageSeason, canManageDiscord, canM
                 <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/>
               </svg>
               Discord integration
+            </Link>
+          )}
+          {/* Platform admin — not a team role */}
+          {isSuperAdmin && (
+            <Link href="/settings/admin" role="menuitem" onClick={() => setOpen(false)}
+              className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-[--color-text-primary] hover:bg-[--color-surface-overlay] transition-colors">
+              <svg className="w-4 h-4 text-[--color-text-secondary]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+              </svg>
+              Team approvals
             </Link>
           )}
           <div className="border-t border-[--color-border] mt-1 pt-1">

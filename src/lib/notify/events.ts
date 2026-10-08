@@ -113,3 +113,30 @@ export function safetyIncidentFiled(teamId: string, severity: string, reporterId
     bypassQuietHours: severity === "SIGNIFICANT_INJURY",
   }, { exclude: [reporterId] }));
 }
+
+// ── Platform ────────────────────────────────────────────────────────────────
+
+/** A team that's new to FRC Manager registered — every super admin can approve it */
+export function teamAwaitingApproval(teamNumber: number, founderName: string) {
+  return safely(async () => {
+    const admins = await prisma.user.findMany({ where: { isSuperAdmin: true, status: "ACTIVE" }, select: { id: true } });
+    await notifyUsers(admins.map((a) => a.id), {
+      topic: "admin.team_requests",
+      type:  "TEAM_APPROVAL_NEEDED",
+      title: `New team to approve: ${teamNumber}`,
+      body:  `${founderName} registered team ${teamNumber}.`,
+      url:   "/settings/admin",
+    });
+  });
+}
+
+/** The team was approved: its founder can sign in as Head Mentor */
+export function teamApproved(founderId: string, teamNumber: number) {
+  return safely(() => notifyUsers([founderId], {
+    topic: "account",
+    type:  "ACCOUNT_APPROVED",
+    title: `Team ${teamNumber} is approved`,
+    body:  "You're the team's Head Mentor — invite your team and approve them in Team members.",
+    url:   "/settings/members",
+  }));
+}
