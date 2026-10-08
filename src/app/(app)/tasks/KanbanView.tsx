@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { updateTaskStatusAction } from "@/app/actions/tasks";
@@ -14,6 +14,7 @@ import {
 } from "@/lib/schedule-helpers";
 import { useKanbanStyle, stickyNoteLook } from "@/lib/kanban-style";
 import { TaskModal } from "./TaskModal";
+import { useTouchDrag } from "./useTouchDrag";
 import type { TaskModalData } from "./TaskModal";
 import type { TaskStatus } from "@/generated/prisma";
 
@@ -134,10 +135,28 @@ export function KanbanView({
     e.preventDefault();
     setDragOverColId(null);
     if (!draggingId || !isDropTarget) return;
-
-    const taskId   = draggingId;
-    const newStatus = colId as TaskStatus;
+    const taskId = draggingId;
     setDraggingId(null);
+    moveTask(taskId, colId);
+  }
+
+  // Tap and hold to drag on phones and tablets (mouse dragging uses the handlers above)
+  const boardRef = useRef<HTMLDivElement>(null);
+  const isDropColumn = (colId: string | null) => !!colId && !!COLUMNS.find((c) => c.id === colId)?.dropTarget;
+  const touch = useTouchDrag({
+    onStart:  (id) => setDraggingId(id),
+    onOver:   (colId) => setDragOverColId(isDropColumn(colId) ? colId : null),
+    onDrop:   (id, colId) => {
+      setDragOverColId(null);
+      setDraggingId(null);
+      if (isDropColumn(colId)) moveTask(id, colId!);
+    },
+    onCancel: () => { setDragOverColId(null); setDraggingId(null); },
+  }, boardRef);
+
+  /** Move a task to a column (shared by mouse and touch dragging) */
+  function moveTask(taskId: string, colId: string) {
+    const newStatus = colId as TaskStatus;
 
     // Check not same column (using current effective status)
     const currentStatus = localStatuses[taskId] ?? tasks.find((t) => t.id === taskId)?.status;
@@ -225,14 +244,14 @@ export function KanbanView({
       </div>
 
       {/* Kanban columns */}
-      <div className="flex gap-3 overflow-x-auto pb-4" style={{ minHeight: "60vh" }}>
+      <div ref={boardRef} className="flex gap-3 overflow-x-auto pb-4" style={{ minHeight: "60vh" }}>
         {COLUMNS.map((col) => {
           const colTasks    = getColTasks(filtered, col.id, localStatuses);
           const isDragOver  = dragOverColId === col.id;
           const isDragging  = !!draggingId;
 
           return (
-            <div key={col.id} className="flex-shrink-0 w-64 flex flex-col gap-2">
+            <div key={col.id} data-kanban-col={col.id} className="flex-shrink-0 w-64 flex flex-col gap-2">
               {/* Column header */}
               <div className="flex items-center gap-2 px-1">
                 <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: col.accent }} />
@@ -266,9 +285,10 @@ export function KanbanView({
                       key={task.id}
                       task={task}
                       isDragging={draggingId === task.id}
-                      onClick={() => setSelectedTask(task)}
+                      onClick={() => { if (!touch.justDragged.current) setSelectedTask(task); }}
                       onDragStart={() => handleDragStart(task.id)}
                       onDragEnd={handleDragEnd}
+                      onTouchHold={(el, e) => touch.begin(task.id, el, e)}
                     />
                   ))
                 )}
@@ -295,13 +315,15 @@ export function KanbanView({
 }
 
 function KanbanCard({
-  task, isDragging, onClick, onDragStart, onDragEnd,
+  task, isDragging, onClick, onDragStart, onDragEnd, onTouchHold,
 }: {
   task:        KanbanTask;
   isDragging:  boolean;
   onClick:     () => void;
   onDragStart: () => void;
   onDragEnd:   () => void;
+  /** Touch screens: a finger went down on the card (may become a tap-and-hold drag) */
+  onTouchHold: (el: HTMLElement, e: React.TouchEvent) => void;
 }) {
   const stColor     = SUBTEAM_COLORS[task.subTeam ?? ""] ?? "#64748B";
   const priorityCfg = PRIORITY_CONFIG[task.priority as keyof typeof PRIORITY_CONFIG];
@@ -323,6 +345,9 @@ function KanbanCard({
     },
     onDragEnd,
     onClick,
+    onTouchStart: (e: React.TouchEvent<HTMLElement>) => onTouchHold(e.currentTarget, e),
+    // No long-press menu or text selection — holding a card picks it up
+    onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
     role: "button" as const,
     tabIndex: 0,
     onKeyDown: (e: React.KeyboardEvent) => e.key === "Enter" && onClick(),
@@ -373,7 +398,7 @@ function KanbanCard({
       <div
         {...dragProps}
         className={[
-          "sticky-note-wrap cursor-grab active:cursor-grabbing outline-none focus-visible:ring-2 focus-visible:ring-(--color-primary) rounded-sm",
+          "sticky-note-wrap select-none [-webkit-touch-callout:none] cursor-grab active:cursor-grabbing outline-none focus-visible:ring-2 focus-visible:ring-(--color-primary) rounded-sm",
           isDragging ? "opacity-40" : "opacity-100",
         ].join(" ")}
         style={{ transform: `rotate(${look.tilt}deg)` }}
@@ -392,7 +417,7 @@ function KanbanCard({
     <div
       {...dragProps}
       className={[
-        "w-full text-left rounded-md bg-(--color-surface-raised) border p-3 space-y-2 group",
+        "w-full text-left rounded-md bg-(--color-surface-raised) border p-3 space-y-2 group select-none [-webkit-touch-callout:none]",
         "cursor-grab active:cursor-grabbing",
         "hover:border-(--color-primary) hover:shadow-md transition-all",
         isDragging ? "opacity-40 scale-95" : "opacity-100",

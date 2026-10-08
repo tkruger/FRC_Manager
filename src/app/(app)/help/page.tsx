@@ -62,7 +62,7 @@ export default function HelpPage() {
       <Section id="tasks" title="Tasks">
         <p>Everything the team needs to get done this season. Switch between three views at the top of the page:</p>
         <ul className="list">
-          <li><b>Kanban</b> — cards in columns by status. Drag a card to another column to change its status. <b>Future</b> holds tasks that haven&apos;t started yet.</li>
+          <li><b>Kanban</b> — cards in columns by status. Drag a card to another column to change its status — on a phone or tablet, touch and hold a card until it lifts, then drag it. <b>Future</b> holds tasks that haven&apos;t started yet.</li>
           <li><b>Gantt</b> — tasks on a timeline from the season start to its end (only tasks with start and due dates appear).</li>
           <li><b>List</b> — a sortable table.</li>
         </ul>
