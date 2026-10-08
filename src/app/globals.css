@@ -382,12 +382,28 @@ html { -webkit-tap-highlight-color: transparent; }
     var(--note);
   /* Bottom-right corner cut off… */
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--fold)), calc(100% - var(--fold)) 100%, 0 100%);
-  /* Dark ink on paper in light and dark mode alike */
+  /* Dark ink on paper in light and dark mode alike. The theme's bright accent colors are
+     made for dark backgrounds and wash out on pastel paper, so badges (priority) and the
+     milestone diamond get deeper versions here. */
   --color-text-primary:   #1F2430;
-  --color-text-secondary: #4A5160;
+  --color-text-secondary: #3F4655;
   --color-text-disabled:  #6B7280;
-  --color-danger:         #B42318;
+  --color-danger:         #A3160E;
+  --color-warning:        #8A3D00;
+  --color-info:           #0B4F7A;
+  --color-success:        #1B5E2B;
+  --color-primary:        #1E3F8F;
   color: var(--color-text-primary);
+}
+/* Badges on a note: a little more tint and a firmer edge, so they read as labels */
+.sticky-note .badge-success,
+.sticky-note .badge-warning,
+.sticky-note .badge-danger,
+.sticky-note .badge-info,
+.sticky-note .badge-neutral {
+  background: color-mix(in srgb, currentColor 13%, transparent);
+  border-color: color-mix(in srgb, currentColor 40%, transparent);
+  font-weight: 700;
 }
 /* …and folded over: the flap is a darker triangle in that corner */
 .sticky-note::after {
