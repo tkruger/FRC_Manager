@@ -68,8 +68,11 @@ export async function schemaSignature(c) {
     .map((r) => `${r.table_name}.${r.column_name} ${r.udt_name}${r.is_nullable === "NO" ? " not null" : ""}${r.column_default ? ` default ${r.column_default}` : ""}`);
   const indexes = (await c.query(`select indexdef from pg_indexes where schemaname = 'public' and tablename <> '_prisma_migrations'
     order by indexname`)).rows.map((r) => r.indexdef);
+  // contype 'n' (NOT NULL as a named constraint) only exists from Postgres 18 — skip it;
+  // "not null" is already part of each column above, so versions 17 and 18 compare equal
   const constraints = (await c.query(`select conrelid::regclass::text || ' ' || conname || ' ' || pg_get_constraintdef(oid) d
     from pg_constraint where connamespace = 'public'::regnamespace and conrelid::regclass::text <> '_prisma_migrations'
+      and contype <> 'n'
     order by 1`)).rows.map((r) => r.d);
   const enums = (await c.query(`select t.typname || ': ' || string_agg(e.enumlabel, ', ' order by e.enumsortorder) d
     from pg_enum e join pg_type t on t.oid = e.enumtypid group by t.typname order by t.typname`)).rows.map((r) => r.d);
