@@ -9,8 +9,25 @@ import { prisma } from "@/lib/prisma";
 import { authConfig } from "@/lib/auth.config";
 import type { Role } from "@/generated/prisma";
 
+/** The database host this deployment talks to (never the password) */
+function databaseHost(): string {
+  try { return new URL(process.env.DATABASE_URL ?? "").hostname || "(not set)"; } catch { return "(invalid URL)"; }
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
+  events: {
+    // One line in the server logs per sign-in: which database and deployment served it
+    // (Vercel → project → Logs). Helps confirm each environment uses its own database.
+    signIn({ user, account }) {
+      console.info(
+        `[auth] sign-in ${user.email ?? user.id ?? "unknown"} via ${account?.provider ?? "?"} ` +
+        `— database ${databaseHost()} — ${process.env.VERCEL_ENV ?? "local"}` +
+        (process.env.VERCEL_TARGET_ENV && process.env.VERCEL_TARGET_ENV !== process.env.VERCEL_ENV ? ` (${process.env.VERCEL_TARGET_ENV})` : "") +
+        (process.env.VERCEL_GIT_COMMIT_REF ? ` @ ${process.env.VERCEL_GIT_COMMIT_REF}` : ""),
+      );
+    },
+  },
   callbacks: {
     ...authConfig.callbacks,
     // Roles, team and status used to be frozen into the JWT at sign-in, so a suspended
