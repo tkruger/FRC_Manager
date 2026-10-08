@@ -6,7 +6,9 @@ Every Vercel build starts with `scripts/db/migrate-deploy.mjs`: it applies any p
 migrations to that environment's `DATABASE_URL` (over a direct, non-pooled connection)
 before building. Production deploys upgrade the production database; preprod deploys
 upgrade the preprod branch. If a migration fails, the build fails and the deployment
-doesn't go live. Locally `npm run build` skips it — run `npm run db:migrate` to apply
+doesn't go live. It holds its own lock on a direct connection (Prisma's lock is switched
+off — a pooled connection can leave it stuck), so two deploys never migrate the same
+database at once; a second one waits up to 2 minutes. Locally `npm run build` skips it — run `npm run db:migrate` to apply
 migrations to the database in your `.env` on purpose.
 
 ## Moving data
