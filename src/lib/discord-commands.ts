@@ -2,6 +2,7 @@
 // All DB access uses the team's active season and the caller's linked account
 
 import { prisma } from "@/lib/prisma";
+import { appUrl } from "@/lib/app-url";
 import {
   embed, ephemeralReply, reply, COLORS, getStringOption, getIntOption,
   type DiscordEmbed, followUpInteraction,
@@ -100,7 +101,7 @@ export async function handleLink(
     },
   });
 
-  const baseUrl = process.env.NEXTAUTH_URL ?? "https://frc-manager.vercel.app";
+  const baseUrl = appUrl();
   const linkUrl = `${baseUrl}/settings/discord/link?token=${token.token}`;
 
   // A private reply only this person can see — no DM needed (DMs are often blocked and slower)
@@ -226,7 +227,7 @@ export async function handleTeamStatus(ctx: InteractionContext): Promise<Respons
     nextMilestone ? `🏁 **Next milestone:** ${nextMilestone.name} — ${differenceInCalendarDays(nextMilestone.dueDate!, now)} days` : null,
   ].filter(Boolean).join("\n");
 
-  const baseUrl = process.env.NEXTAUTH_URL ?? "https://frc-manager.vercel.app";
+  const baseUrl = appUrl();
   return reply(null, [
     embed({
       title: `🤖 ${season.name} — Team Status`,

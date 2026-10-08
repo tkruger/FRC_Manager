@@ -10,6 +10,7 @@ import { RevokeLinkButton } from "./RevokeLinkButton";
 import { RegisterCommandsButton } from "./RegisterCommandsButton";
 import { TestServerButton } from "./TestServerButton";
 import { PageTitle } from "@/components/PageHeader";
+import { appUrl } from "@/lib/app-url";
 
 export default async function DiscordSettingsPage() {
   const session = await auth();
@@ -32,7 +33,7 @@ export default async function DiscordSettingsPage() {
     }),
   ]);
 
-  const interactionsEndpoint = `${process.env.NEXTAUTH_URL ?? "https://frc-manager.vercel.app"}/api/discord/interactions`;
+  const interactionsEndpoint = `${appUrl()}/api/discord/interactions`;
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">

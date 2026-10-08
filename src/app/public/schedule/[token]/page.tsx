@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { SubscribeCalendarButton } from "@/components/calendar/SubscribeCalendarButton";
 import { PublicCalendarClient } from "./PublicCalendarClient";
+import { appUrl } from "@/lib/app-url";
 
 export default async function PublicSchedulePage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -20,7 +21,7 @@ export default async function PublicSchedulePage({ params }: { params: Promise<{
 
   if (!season) notFound();
 
-  const baseUrl = process.env.NEXTAUTH_URL ?? "https://frc-manager.vercel.app";
+  const baseUrl = appUrl();
   const icsUrl  = `${baseUrl}/api/calendar/${token}.ics`;
 
   const serializedMeetings = season.meetings.map((m) => ({

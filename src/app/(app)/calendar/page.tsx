@@ -7,6 +7,7 @@ import { CalendarClient } from "./CalendarClient";
 import { SubscribeCalendarButton } from "@/components/calendar/SubscribeCalendarButton";
 import { GenerateShareLinkButton } from "./GenerateShareLinkButton";
 import { PageHeader } from "@/components/PageHeader";
+import { appUrl } from "@/lib/app-url";
 
 export default async function CalendarPage() {
   const session = await auth();
@@ -36,7 +37,7 @@ export default async function CalendarPage() {
       })
     : [];
 
-  const baseUrl = process.env.NEXTAUTH_URL ?? "https://frc-manager.vercel.app";
+  const baseUrl = appUrl();
   const calendarUrl = activeSeason.calendarToken
     ? `${baseUrl}/api/calendar/${activeSeason.calendarToken}.ics`
     : null;
