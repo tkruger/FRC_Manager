@@ -364,7 +364,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--color-primary)
 /* iOS: no gray flash when tapping non-interactive areas (e.g. the header behind the status bar) */
 html { -webkit-tap-highlight-color: transparent; }
 
-/* ── Kanban sticky notes (Settings → Appearance → Task cards) ─────────────── */
+/* ── Kanban sticky notes (Settings → Profile & appearance → Task board) ───── */
 /* The wrapper casts the shadow: drop-shadow follows the note's folded-corner shape */
 .sticky-note-wrap {
   filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.12)) drop-shadow(0 6px 8px rgb(0 0 0 / 0.28));

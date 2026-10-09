@@ -185,9 +185,6 @@ export function ProfileForm({ initialName, initialEmail }: Props) {
           )}
         </div>
 
-        {/* Kanban task cards */}
-        <TaskCardStyle mounted={mounted} />
-
         {/* Color theme */}
         <div>
           <p className="text-sm font-medium text-[--color-text-primary] mb-3">Color theme</p>
@@ -217,6 +214,15 @@ export function ProfileForm({ initialName, initialEmail }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Kanban board — its own section, below Appearance */}
+      <div className="card space-y-4">
+        <div>
+          <h2 className="text-h3 text-(--color-text-primary)">Task board</h2>
+          <p className="text-small text-(--color-text-secondary) mt-1">How task cards look on the Kanban board. Saved on this device.</p>
+        </div>
+        <TaskCardStyle mounted={mounted} />
+      </div>
     </div>
   );
 }
@@ -233,7 +239,7 @@ function TaskCardStyle({ mounted }: { mounted: boolean }) {
 
   return (
     <div>
-      <p className="text-sm font-medium text-(--color-text-primary) mb-3">Task cards on the Kanban board</p>
+      <p className="text-sm font-medium text-(--color-text-primary) mb-3">Card style</p>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {CARD_STYLES.map((opt) => {
           const on = mounted && style === opt.id;

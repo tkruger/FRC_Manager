@@ -1,6 +1,6 @@
 "use client";
 
-// How Kanban task cards look — a per-device appearance setting (Settings → Profile & appearance).
+// How Kanban task cards look — a per-device setting (Settings → Profile & appearance → Task board).
 
 import { useSyncExternalStore } from "react";
 
