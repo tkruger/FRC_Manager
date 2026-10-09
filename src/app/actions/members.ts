@@ -155,6 +155,73 @@ export async function suspendMemberAction(userId: string): Promise<{ success: bo
   }
 }
 
+/**
+ * Delete a member. Someone with no history is deleted outright. Someone with history
+ * (orders they requested, safety reports, tool checkouts, certifications) can't be removed
+ * without breaking those records, so their personal details are erased instead: they show as
+ * "Former member", lose every sign-in, role and device, and can never sign in again.
+ * Task assignments are removed either way. Same Head Mentor rules as suspending.
+ */
+export async function deleteMemberAction(userId: string): Promise<{ success: boolean; error?: string; erased?: boolean }> {
+  try {
+    const session = await requireAdmin();
+    if (userId === session.user.id) return { success: false, error: "You can't delete yourself." };
+    const teamId = session.user.teamId!;
+
+    const target = await prisma.user.findFirst({
+      where:  { id: userId, teamId, deletedAt: null },
+      select: {
+        name: true,
+        roles: { select: { role: true } },
+        _count: { select: { purchaseRequests: true, incidentReports: true, toolCheckouts: true, userCertifications: true } },
+      },
+    });
+    if (!target) return { success: false, error: "Member not found." };
+    if (target.roles.some((r) => r.role === "HEAD_MENTOR")) {
+      const invalid = await checkRoleChange({ id: session.user.id, teamId, roles: session.user.roles }, userId, ["TEAM_MEMBER"]);
+      if (invalid) return { success: false, error: invalid.replace("grant or remove the Head Mentor role", "delete a Head Mentor") };
+    }
+
+    const c = target._count;
+    const hasHistory = c.purchaseRequests + c.incidentReports + c.toolCheckouts + c.userCertifications > 0;
+
+    await prisma.$transaction(async (tx) => {
+      // Personal, per-device and per-person things go either way
+      await tx.notification.deleteMany({ where: { userId } });
+      await tx.user.update({ where: { id: userId }, data: { assignedTasks: { set: [] } } });
+
+      if (!hasHistory) {
+        await tx.user.delete({ where: { id: userId } }); // roles, sign-ins, devices, drafts follow (cascade)
+        return;
+      }
+      await tx.userRole.deleteMany({ where: { userId } });
+      await tx.account.deleteMany({ where: { userId } });
+      await tx.session.deleteMany({ where: { userId } });
+      await tx.pushSubscription.deleteMany({ where: { userId } });
+      await tx.notificationPreference.deleteMany({ where: { userId } });
+      await tx.orderDraft.deleteMany({ where: { userId } });
+      await tx.discordLink.updateMany({ where: { userId, revokedAt: null }, data: { revokedAt: new Date() } });
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          name: "Former member",
+          email: `deleted-${userId}@deleted.invalid`,
+          password: null, image: null, registrationNote: null, timezone: null,
+          isSuperAdmin: false,
+          status: "DENIED",
+          deniedReason: "Deleted",
+          deletedAt: new Date(),
+        },
+      });
+    });
+
+    revalidatePath("/settings/members");
+    return { success: true, erased: hasHistory };
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+}
+
 export async function updateTeamAccessCodeAction(
   code: string
 ): Promise<{ success: boolean; error?: string }> {

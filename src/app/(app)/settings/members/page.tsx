@@ -8,6 +8,7 @@ import { ROLE_LABELS } from "@/lib/rbac";
 import { ApproveDialog } from "./ApproveDialog";
 import { DenyButton } from "./DenyButton";
 import { MemberRoleEditor } from "./MemberRoleEditor";
+import { DeleteMemberButton } from "./DeleteMemberButton";
 import { AccessCodeForm } from "./AccessCodeForm";
 import type { Role } from "@/generated/prisma";
 import { PageTitle } from "@/components/PageHeader";
@@ -22,7 +23,8 @@ export default async function MembersPage() {
   const [team, users] = await Promise.all([
     prisma.team.findUnique({ where: { id: session.user.teamId }, select: { teamNumber: true, name: true, accessCode: true } }),
     prisma.user.findMany({
-      where: { teamId: session.user.teamId },
+      // Deleted members (kept only for history) don't appear here
+      where: { teamId: session.user.teamId, deletedAt: null },
       include: { roles: true },
       orderBy: [{ status: "asc" }, { createdAt: "desc" }],
     }),
@@ -110,7 +112,8 @@ export default async function MembersPage() {
                   <p className="text-small text-(--color-text-secondary) break-all">{u.email}</p>
                 </div>
                 {u.id !== session.user.id && (
-                  <div className="shrink-0">
+                  <div className="flex shrink-0 items-center gap-3">
+                    <DeleteMemberButton userId={u.id} name={u.name} />
                     <MemberRoleEditor userId={u.id} currentRoles={u.roles.map((r) => r.role as Role)} />
                   </div>
                 )}
@@ -136,7 +139,10 @@ export default async function MembersPage() {
                   <p className="font-medium text-[--color-text-primary]">{u.name}</p>
                   <p className="text-small text-[--color-text-secondary] break-all">{u.email}</p>
                 </div>
-                <Badge variant={statusVariant(u.status)}>{u.status}</Badge>
+                <span className="flex shrink-0 items-center gap-3">
+                  <Badge variant={statusVariant(u.status)}>{u.status}</Badge>
+                  <DeleteMemberButton userId={u.id} name={u.name} />
+                </span>
               </div>
             ))}
           </div>

@@ -31,6 +31,9 @@ model User {
   approvedBy    String?
   deniedAt      DateTime?
   deniedReason  String?
+  /// Member was deleted but has history (orders, reports, checkouts): their personal details are
+  /// erased and they show as "Former member". Hidden from member lists; can never sign in.
+  deletedAt     DateTime?
   registrationNote String?
 
   // Profile

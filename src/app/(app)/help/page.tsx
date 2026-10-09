@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { APP_VERSION } from "@/lib/version";
 import { HelpBadge, type HelpTopic } from "@/components/HelpLink";
 
 export const metadata = { title: "Help & guide — FRC Manager" };
@@ -293,6 +294,7 @@ export default function HelpPage() {
           ]}
         />
         <p>Role changes and suspensions take effect immediately.</p>
+        <p><b>Deleting a member</b> (Team members → Delete) removes their access straight away and takes them off their tasks. If they have orders, safety reports, tool checkouts or certifications, those stay — shown as &ldquo;Former member&rdquo; — and the rest of their details are erased. It can&apos;t be undone.</p>
       </Section>
 
       <Section id="discord" title="Discord">
@@ -302,6 +304,8 @@ export default function HelpPage() {
           <li>Orders follow the same workflow and permissions in Discord as in the app.</li>
         </ul>
       </Section>
+
+      <p className="text-center text-small text-(--color-text-secondary)">FRC Manager v{APP_VERSION}</p>
     </div>
   );
 }
