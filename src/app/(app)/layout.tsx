@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getActiveRobotId } from "@/app/actions/robot-context";
 import { AnimatedBackground } from "@/components/providers/AnimatedBackground";
 import { PushPrompt } from "@/components/notifications/PushPrompt";
+import { InstallPrompt } from "@/components/InstallPrompt";
 import { Toaster } from "@/components/ui/toast";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -67,6 +68,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <main className="pt-safe-nav pb-14 lg:pb-0">{children}</main>
         {/* First visit on a device: offer push notifications (once) */}
         <PushPrompt vapidPublicKey={process.env.VAPID_PUBLIC_KEY ?? null} />
+        <InstallPrompt />
         {/* "Saved" confirmations after edits */}
         <Toaster />
       </div>

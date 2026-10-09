@@ -39,10 +39,8 @@ export function PushPrompt({ vapidPublicKey }: { vapidPublicKey: string | null }
     const timer = setTimeout(async () => {
       const support = pushSupport();
       if (support === "unsupported") { remember("unsupported"); return; }
-      if (support === "needs-install") {
-        if (!cancelled) { setStep("install"); setOpen(true); }
-        return;
-      }
+      // Not installed yet on iPhone: InstallPrompt explains installing; this asks again inside the app
+      if (support === "needs-install") return;
       // Already decided at the browser level, or already subscribed on this device
       if (Notification.permission === "denied") { remember("blocked"); return; }
       if (Notification.permission === "granted" && await hasSubscription().catch(() => false)) {

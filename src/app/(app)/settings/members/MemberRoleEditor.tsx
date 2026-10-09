@@ -9,7 +9,7 @@ import { ROLE_LABELS } from "@/lib/rbac";
 import type { Role } from "@/generated/prisma";
 import { toast } from "@/components/ui/toast";
 
-const ALL_ROLES: Role[] = ["TEAM_MEMBER", "BUILD_LEAD", "INVENTORY_ADMIN", "BUDGET_MANAGER", "SAFETY_CAPTAIN", "TEAM_ADMIN", "TEAM_LEADERSHIP", "HEAD_MENTOR"];
+const ALL_ROLES: Role[] = ["TEAM_MEMBER", "BUILD_LEAD", "INVENTORY_ADMIN", "BUDGET_MANAGER", "SAFETY_CAPTAIN", "TEAM_ADMIN", "TEAM_LEADERSHIP", "MENTOR", "HEAD_MENTOR"];
 
 export function MemberRoleEditor({ userId, currentRoles }: { userId: string; currentRoles: Role[] }) {
   const router = useRouter();

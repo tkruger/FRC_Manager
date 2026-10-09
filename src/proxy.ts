@@ -18,6 +18,7 @@ const PUBLIC_PATHS = [
   "/api/manifest",      // Web app manifest (chosen home-screen icon)
   "/app-icons",
   "/terms", "/privacy", // Legal pages — linked from Discord and the sign-in screens
+  "/invite",            // Invite links — people open them before they have an account
 ];
 
 export default auth((req) => {

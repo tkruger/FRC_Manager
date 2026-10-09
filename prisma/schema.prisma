@@ -55,6 +55,7 @@ model User {
   orderDrafts          OrderDraft[]
   precheckUpdates      Robot[]             @relation("PrecheckUpdatedBy")
   teamsReviewed        Team[]              @relation("TeamReviewedBy")
+  invitesSent          Invite[]            @relation("InviteSentBy")
   inventoryRetired     BaseInventoryItem[] @relation("InventoryRetiredBy")
   purchaseApprovals    PurchaseRequest[]   @relation("Approver")
   purchaseEvents       PurchaseRequestEvent[]
@@ -109,6 +110,8 @@ enum Role {
   BUDGET_MANAGER
   SAFETY_CAPTAIN
   TEAM_LEADERSHIP
+  /// Can see and manage everything Team Leadership can (it implies TEAM_LEADERSHIP)
+  MENTOR
   HEAD_MENTOR
   /// Places approved orders, exports them to the purchasing spreadsheet, adds tracking links
   TEAM_ADMIN
@@ -169,6 +172,7 @@ model Team {
   trackings     Tracking[]
   vendors       Vendor[]
   orderDrafts   OrderDraft[]
+  invites       Invite[]
   tools         Tool[]
   discordConfig DiscordConfig?
   timezone      String?   // IANA zone used for meeting times and daily reminders
@@ -1353,4 +1357,36 @@ model OrderDraft {
   updatedAt DateTime @updatedAt
 
   @@index([userId, updatedAt])
+}
+
+/// Invitation to join a team. EMAIL invites are for one person and used once; LINK invites
+/// are a shareable join link (posted to Discord) that anyone can use until it expires or is
+/// revoked. Accepting one makes the person an approved Team Member of the team.
+model Invite {
+  id          String     @id @default(cuid())
+  teamId      String
+  team        Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  kind        InviteKind
+  /// The invited address (EMAIL invites only)
+  email       String?
+  token       String     @unique
+  invitedById String?
+  invitedBy   User?      @relation("InviteSentBy", fields: [invitedById], references: [id], onDelete: SetNull)
+  /// Where a LINK invite was posted (Discord channel ID), for the record
+  postedTo    String?
+  createdAt   DateTime   @default(now())
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  /// EMAIL: when it was accepted. LINK: last time someone joined with it
+  acceptedAt  DateTime?
+  uses        Int        @default(0)
+  /// Did the email go out (false = shown to the inviter to send themselves)
+  emailSent   Boolean    @default(false)
+
+  @@index([teamId, createdAt])
+}
+
+enum InviteKind {
+  EMAIL
+  LINK
 }

@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
@@ -87,7 +88,13 @@ export default async function MembersPage() {
 
       {/* Active members */}
       <div>
-        <h2 className="text-h2 text-[--color-text-primary] mb-3">Active members ({active.length})</h2>
+        <div className="flex flex-wrap items-baseline justify-between gap-2 mb-3">
+          <h2 className="text-h2 text-(--color-text-primary)">Active members ({active.length})</h2>
+          <span className="flex flex-wrap items-center gap-4">
+            <Link href="/settings/invites" className="text-sm font-medium text-(--color-secondary) hover:underline">Invite people</Link>
+            <Link href="/settings/roles" className="text-sm font-medium text-(--color-secondary) hover:underline">What can each role do? →</Link>
+          </span>
+        </div>
         <div className="card divide-y divide-(--color-border)">
           {active.map((u) => (
             // Name + email with Edit roles beside them; the roles wrap underneath at any width

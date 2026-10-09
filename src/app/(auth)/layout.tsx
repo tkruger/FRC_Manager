@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { InstallPrompt } from "@/components/InstallPrompt";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -19,6 +20,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           </p>
         </div>
         {children}
+        <InstallPrompt />
         <p className="mt-8 text-center text-small text-(--color-text-secondary)">
           <Link href="/terms" className="hover:text-(--color-primary)">Terms of Service</Link>
           <span className="mx-2">·</span>

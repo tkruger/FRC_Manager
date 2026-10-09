@@ -49,6 +49,7 @@ export default function HelpPage() {
           <li><b>iPhone / iPad:</b> open the site in Safari, tap <b>Share</b>, then <b>Add to Home Screen</b>. Open it from the home-screen icon — it runs full screen, like an app, and can send push notifications.</li>
           <li><b>Android:</b> open the site in Chrome, tap the <b>⋮</b> menu, then <b>Install app</b> (or <b>Add to Home screen</b>).</li>
         </Steps>
+        <p>Opening FRC Manager in a phone browser shows these steps for your device (once every couple of weeks until it&apos;s installed).</p>
         <p>Want a different icon? Pick one under <b>Settings → Profile &amp; appearance → App icon</b> first, then add (or remove and re-add) the app — phones only read the icon when it&apos;s added.</p>
         <H3>Finding your way around</H3>
         <ul className="list">
@@ -275,7 +276,8 @@ export default function HelpPage() {
       </Section>
 
       <Section id="roles" title="Roles & permissions">
-        <p>Head Mentors and Team Leadership approve new members and assign roles. A member can have several roles.</p>
+        <p>Head Mentors, Mentors and Team Leadership approve new members and assign roles. A member can have several roles. <Link href="/settings/roles" className="link">Roles explained</Link> has the full list of who can do what.</p>
+        <p><b>Inviting people:</b> Head Mentors, Mentors, Team Leadership and Team Admins can invite people from <b>Settings → Invite people</b> — by email (separate addresses with commas) or with a join link the bot posts in a Discord channel. Anyone who accepts joins the team straight away as a Team Member.</p>
         <Table
           head={["Role", "Can also…"]}
           rows={[
@@ -285,7 +287,8 @@ export default function HelpPage() {
             ["Budget Manager", "Manage the budget and approve orders."],
             ["Safety Captain", "Award and revoke certifications; notified of safety incidents."],
             ["Team Admin", "Get approved items to order, export the purchasing CSV, add tracking links and set item statuses."],
-            ["Team Leadership", "Approve members and assign roles (except Head Mentor), manage meetings, Discord and the team time zone; act as captains on orders (Team Admin page, item statuses); view the purchase workflow."],
+            ["Team Leadership", "Approve members and assign roles (except Head Mentor), invite people, manage meetings, Discord and the team time zone; act as captains on orders (Team Admin page, item statuses); view the purchase workflow."],
+            ["Mentor", "The same as Team Leadership."],
             ["Head Mentor", "Everything: seasons, robots, applying templates, editing the purchase workflow, and acting on any purchase step. Only Head Mentors can grant or remove the Head Mentor role."],
           ]}
         />

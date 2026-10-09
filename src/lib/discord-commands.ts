@@ -3,6 +3,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { appUrl } from "@/lib/app-url";
+import { withImpliedRoles } from "@/lib/rbac";
 import {
   embed, ephemeralReply, reply, COLORS, getStringOption, getIntOption,
   type DiscordEmbed, followUpInteraction,
@@ -19,7 +20,7 @@ async function actorFor(userId: string, teamId: string): Promise<Actor> {
     where:  { id: userId },
     select: { name: true, roles: { select: { role: true } } },
   });
-  return { id: userId, name: user.name, roles: user.roles.map((r) => r.role), teamId };
+  return { id: userId, name: user.name, roles: withImpliedRoles(user.roles.map((r) => r.role)), teamId };
 }
 
 // ─── Context resolution ────────────────────────────────────────────────────
@@ -63,7 +64,8 @@ function requireLink(link: DiscordLink | null): Response | null {
 /** Check if user has one of the required roles */
 async function hasRole(userId: string, roles: string[]): Promise<boolean> {
   const userRoles = await prisma.userRole.findMany({ where: { userId } });
-  return userRoles.some((r) => roles.includes(r.role) || r.role === "HEAD_MENTOR");
+  const held = withImpliedRoles(userRoles.map((r) => r.role as string));
+  return held.some((r) => roles.includes(r) || r === "HEAD_MENTOR");
 }
 
 async function getActiveSeason(teamId: string) {

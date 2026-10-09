@@ -7,6 +7,7 @@ import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { authConfig } from "@/lib/auth.config";
+import { withImpliedRoles } from "@/lib/rbac";
 import type { Role } from "@/generated/prisma";
 
 /** The database host this deployment talks to (never the password) */
@@ -43,7 +44,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       });
       if (!user || user.status === "SUSPENDED" || user.status === "DENIED") return null;
       token.teamId = user.teamId ?? undefined;
-      token.roles  = user.status === "ACTIVE" ? user.roles.map((r) => r.role) : [];
+      // Mentor counts as Team Leadership (withImpliedRoles) for every permission check
+      token.roles  = user.status === "ACTIVE" ? withImpliedRoles(user.roles.map((r) => r.role)) : [];
       token.isSuperAdmin = user.status === "ACTIVE" && user.isSuperAdmin;
       return token;
     },

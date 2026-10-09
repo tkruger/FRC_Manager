@@ -5,6 +5,7 @@
 // Reminders are held back during each person's quiet hours and retried next run.
 
 import { prisma } from "@/lib/prisma";
+import { withImpliedRoles } from "@/lib/rbac";
 import type { Role } from "@/generated/prisma";
 import { notifyUsers, type OutgoingNotification } from "./deliver";
 import {
@@ -68,7 +69,7 @@ export async function runReminders(now = new Date()): Promise<ReminderRunResult>
       const tz    = isValidTimezone(u.timezone) ? u.timezone : teamTz;
       const local = localParts(now, tz);
       const quiet = inQuietHours(local.hour, u.quietHoursStart, u.quietHoursEnd);
-      return { id: u.id, roles: u.roles.map((r) => r.role), tz, local, quiet, dailySlot: !quiet && local.hour >= DAILY_DIGEST_HOUR };
+      return { id: u.id, roles: withImpliedRoles(u.roles.map((r) => r.role)), tz, local, quiet, dailySlot: !quiet && local.hour >= DAILY_DIGEST_HOUR };
     });
     const awake = members.filter((m) => !m.quiet);
 

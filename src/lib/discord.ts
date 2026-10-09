@@ -281,3 +281,17 @@ export const SLASH_COMMANDS = [
     ]
   },
 ];
+
+/** Why Discord refused, in plain words (from its JSON error codes). */
+export function explainDiscordError(message: string): string {
+  const code = Number(message.match(/"code":\s*(\d+)/)?.[1]);
+  if (message.includes("DISCORD_BOT_TOKEN")) return "The bot token isn't set (DISCORD_BOT_TOKEN in Vercel).";
+  if (message.startsWith("Discord API 401")) return "Discord rejected the bot token — check DISCORD_BOT_TOKEN in Vercel.";
+  switch (code) {
+    case 10003: return "That channel ID doesn't exist — check the channel ID.";
+    case 10004: return "The bot isn't in that server — invite it, and check the Guild ID.";
+    case 50001: return "The bot can't see that channel — give it View Channels there.";
+    case 50013: return "The bot is missing permissions in that channel — it needs View Channels, Send Messages and Embed Links.";
+    default:    return message;
+  }
+}

@@ -58,6 +58,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
   const canManageSeason   = roles.includes("HEAD_MENTOR" as any);
   const canManageDiscord  = roles.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP"].includes(r));
   const isSuperAdmin      = session?.user?.isSuperAdmin === true;
+  const canInvite         = roles.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP", "TEAM_ADMIN"].includes(r));
   const canManageTemplates = roles.some((r) => ["HEAD_MENTOR", "BUILD_LEAD", "INVENTORY_ADMIN"].includes(r));
   const [moreOpen, setMoreOpen] = useState(false);
 
@@ -147,7 +148,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
           {/* Notifications dropdown */}
           <NotificationsDropdown unreadCount={unreadNotificationCount} />
 
-          {session?.user && <UserMenu user={session.user} canManageTeam={canManageTeam} canManageSeason={canManageSeason} canManageDiscord={canManageDiscord} canManageTemplates={canManageTemplates} isSuperAdmin={isSuperAdmin} pendingMemberCount={pendingMemberCount} />}
+          {session?.user && <UserMenu user={session.user} canManageTeam={canManageTeam} canManageSeason={canManageSeason} canManageDiscord={canManageDiscord} canManageTemplates={canManageTemplates} isSuperAdmin={isSuperAdmin} canInvite={canInvite} pendingMemberCount={pendingMemberCount} />}
         </div>
         </div>
 
@@ -179,7 +180,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
               <CalendarIcon className="w-4 h-4" />
             </Link>
             <NotificationsDropdown unreadCount={unreadNotificationCount} />
-            {session?.user && <UserMenu user={session.user} canManageTeam={canManageTeam} canManageSeason={canManageSeason} canManageDiscord={canManageDiscord} canManageTemplates={canManageTemplates} isSuperAdmin={isSuperAdmin} />}
+            {session?.user && <UserMenu user={session.user} canManageTeam={canManageTeam} canManageSeason={canManageSeason} canManageDiscord={canManageDiscord} canManageTemplates={canManageTemplates} isSuperAdmin={isSuperAdmin} canInvite={canInvite} />}
           </div>
         </div>
       </header>
@@ -329,12 +330,13 @@ function RobotSelector({
   );
 }
 
-function UserMenu({ user, canManageTeam, canManageSeason, canManageDiscord, canManageTemplates, isSuperAdmin = false, pendingMemberCount = 0 }: {
+function UserMenu({ user, canManageTeam, canManageSeason, canManageDiscord, canManageTemplates, isSuperAdmin = false, canInvite = false, pendingMemberCount = 0 }: {
   user: { name?: string | null; email?: string | null };
   canManageTeam:      boolean;
   canManageSeason:    boolean;
   canManageDiscord:   boolean;
   isSuperAdmin?:      boolean;
+  canInvite?:         boolean;
   canManageTemplates: boolean;
   pendingMemberCount?: number;
 }) {
@@ -416,6 +418,15 @@ function UserMenu({ user, canManageTeam, canManageSeason, canManageDiscord, canM
               className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-[--color-text-primary] hover:bg-[--color-surface-overlay] transition-colors">
               <UserCircleIcon className="w-4 h-4 text-[--color-text-secondary]" />
               Team members
+            </Link>
+          )}
+          {canInvite && (
+            <Link href="/settings/invites" role="menuitem" onClick={() => setOpen(false)}
+              className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-[--color-text-primary] hover:bg-[--color-surface-overlay] transition-colors">
+              <svg className="w-4 h-4 text-[--color-text-secondary]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
+              </svg>
+              Invite people
             </Link>
           )}
           {canManageTemplates && (

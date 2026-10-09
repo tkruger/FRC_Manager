@@ -14,6 +14,7 @@ export const ROLE_VALUES = [
   "SAFETY_CAPTAIN",
   "TEAM_ADMIN",
   "TEAM_LEADERSHIP",
+  "MENTOR",
   "HEAD_MENTOR",
 ] as const;
 export type WorkflowRole = (typeof ROLE_VALUES)[number];
@@ -120,6 +121,7 @@ export const ROLE_DISPLAY: Record<WorkflowRole, string> = {
   SAFETY_CAPTAIN:  "Safety Captain",
   TEAM_ADMIN:      "Team Admin",
   TEAM_LEADERSHIP: "Team Leadership",
+  MENTOR: "Mentor",
   HEAD_MENTOR:     "Head Mentor",
 };
 

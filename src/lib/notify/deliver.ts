@@ -4,6 +4,7 @@
 
 import webpush from "web-push";
 import { prisma } from "@/lib/prisma";
+import { rolesThatImply } from "@/lib/rbac";
 import type { NotificationType, Role } from "@/generated/prisma";
 import { TOPIC_BY_ID, type TopicId } from "./topics";
 import { FALLBACK_TIMEZONE, inQuietHours, isValidTimezone, localParts } from "./time";
@@ -93,7 +94,8 @@ export async function notifyRoles(
     where: {
       teamId,
       status: "ACTIVE",
-      ...(roles === "all" ? {} : { roles: { some: { role: { in: roles } } } }),
+      // Mentors receive whatever Team Leadership receives
+      ...(roles === "all" ? {} : { roles: { some: { role: { in: rolesThatImply(roles) } } } }),
       ...(opts.exclude?.length ? { id: { notIn: opts.exclude } } : {}),
     },
     select: { id: true },
