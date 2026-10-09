@@ -7,7 +7,7 @@
 // then is an ordinary scroll. Drop it on a column to move it there. Near the edge of the
 // board (or screen) the board scrolls along.
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 
 const HOLD_MS = 450;   // how long to hold before the card lifts
 const SLOP_PX = 10;    // finger movement allowed while holding (more = it's a scroll)
@@ -154,4 +154,22 @@ export function useTouchDrag(handlers: TouchDragHandlers, board: React.RefObject
   }
 
   return { begin, justDragged };
+}
+
+/**
+ * True when the main pointer is a mouse or trackpad. Cards are only marked `draggable` then:
+ * on phones and tablets (iOS 15+, Chrome on Android) a draggable element starts the
+ * browser's own drag on a long press, which cancels our touch events mid-drag — the card
+ * lifts but won't follow the finger.
+ */
+export function useFinePointer(): boolean {
+  return useSyncExternalStore(
+    (onChange) => {
+      const mq = window.matchMedia("(pointer: fine)");
+      mq.addEventListener("change", onChange);
+      return () => mq.removeEventListener("change", onChange);
+    },
+    () => window.matchMedia("(pointer: fine)").matches,
+    () => true, // server render: assume a mouse; phones correct it straight after
+  );
 }

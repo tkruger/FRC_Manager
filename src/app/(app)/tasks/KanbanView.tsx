@@ -14,7 +14,7 @@ import {
 } from "@/lib/schedule-helpers";
 import { useKanbanStyle, stickyNoteLook } from "@/lib/kanban-style";
 import { TaskModal } from "./TaskModal";
-import { useTouchDrag } from "./useTouchDrag";
+import { useFinePointer, useTouchDrag } from "./useTouchDrag";
 import type { TaskModalData } from "./TaskModal";
 import type { TaskStatus } from "@/generated/prisma";
 
@@ -333,9 +333,11 @@ function KanbanCard({
   });
 
   const { style, color } = useKanbanStyle();
+  // Mouse/trackpad: the browser's drag and drop. Touch: our tap-and-hold (see useTouchDrag).
+  const mouseDrag = useFinePointer();
 
   const dragProps = {
-    draggable: true,
+    draggable: mouseDrag,
     onDragStart: (e: React.DragEvent) => {
       // Set data so the browser knows what's being dragged
       e.dataTransfer.effectAllowed = "move";
