@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { isIos, isStandalone } from "@/lib/push-client";
 
-// On a phone or tablet browser (not the installed app), explain how to add FRC Manager to
+// Once signed in, on a phone or tablet browser (not the installed app), explain how to add FRC Manager to
 // the home screen — only the steps for this device and browser. Android Chrome gets a
 // one-tap Install button when the browser offers it. "Not now" waits two weeks.
 
