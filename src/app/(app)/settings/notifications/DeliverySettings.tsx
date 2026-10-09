@@ -67,32 +67,35 @@ export function DeliverySettings(p: Props) {
       <div>
         <h2 className="text-h3 text-(--color-text-primary)">Quiet hours &amp; time zone</h2>
         <p className="text-small text-(--color-text-secondary) mt-0.5">
-          No push notifications during quiet hours; reminders wait until they end. Emergency purchase
-          requests and serious safety incidents still come through. Daily digests arrive around 8 AM.
+          No push notifications during quiet hours; reminders wait until they end. Emergency orders and
+          serious safety incidents still come through. Daily digests arrive around 8 AM.
         </p>
       </div>
 
-      <div className="flex flex-wrap items-end gap-3">
-        <label className="space-y-1.5">
+      {/* Phones: the two times side by side, then time zone, then Save. Wider: one row. */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-[auto_auto_minmax(0,1fr)_auto] sm:items-end">
+        <label className="space-y-1.5 min-w-0">
           <span className="block text-sm font-medium text-(--color-text-primary)">Quiet from</span>
-          <select className={selectCls} value={start} onChange={(e) => setStart(Number(e.target.value))}>
+          <select className={`${selectCls} w-full`} value={start} onChange={(e) => setStart(Number(e.target.value))}>
             {Array.from({ length: 24 }, (_, h) => <option key={h} value={h}>{hourLabel(h)}</option>)}
           </select>
         </label>
-        <label className="space-y-1.5">
+        <label className="space-y-1.5 min-w-0">
           <span className="block text-sm font-medium text-(--color-text-primary)">until</span>
-          <select className={selectCls} value={end} onChange={(e) => setEnd(Number(e.target.value))}>
+          <select className={`${selectCls} w-full`} value={end} onChange={(e) => setEnd(Number(e.target.value))}>
             {Array.from({ length: 24 }, (_, h) => <option key={h} value={h}>{hourLabel(h)}</option>)}
           </select>
         </label>
-        <label className="space-y-1.5 min-w-0 flex-1">
+        <label className="space-y-1.5 min-w-0 col-span-2 sm:col-span-1">
           <span className="block text-sm font-medium text-(--color-text-primary)">My time zone</span>
           <select className={`${selectCls} w-full`} value={tz} onChange={(e) => setTz(e.target.value)}>
             <option value="">Same as team ({effectiveTeam})</option>
             {allZones.map((z) => <option key={z} value={z}>{z}</option>)}
           </select>
         </label>
-        <Button onClick={save} isLoading={pending}>Save</Button>
+        <div className="col-span-2 sm:col-span-1">
+          <Button onClick={save} isLoading={pending}>Save</Button>
+        </div>
       </div>
       {start === end && <p className="text-small text-(--color-text-secondary)">Quiet hours are off.</p>}
 
