@@ -296,27 +296,27 @@ function EditTaskForm({ task, allTasks, allMembers, allRobots, kickoffDate, endD
       <Field label="Task name" name="name" required defaultValue={task.name} />
       <Textarea label="Description" name="description" rows={3} defaultValue={task.description ?? ""} />
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4 [&>*]:min-w-0">
         <Select label="Status" name="status" options={STATUS_OPTIONS} defaultValue={task.status} />
         <Select label="Priority" name="priority" options={PRIORITY_OPTIONS} defaultValue={task.priority} />
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4 [&>*]:min-w-0">
         <Select label="Sub-team" name="subTeam" placeholder="Any" options={SUBTEAM_OPTIONS} defaultValue={task.subTeam ?? ""} />
         {allRobots.length > 0 && (
           <Select label="Robot" name="robotId" placeholder="Any / team-wide" options={robotOptions} defaultValue={task.robot?.id ?? ""} />
         )}
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4 [&>*]:min-w-0">
         <Field label="Start date" name="startDate" type="date" min={kickoffDate} max={endDate} defaultValue={toDateVal(task.startDate)} />
         <Field label="Due date"   name="dueDate"   type="date" min={kickoffDate} max={endDate} defaultValue={toDateVal(task.dueDate)} />
       </div>
       <Field label="Estimated hours" name="estimatedHours" type="number" min="0" step="0.5" defaultValue={task.estimatedHours ?? ""} />
       <div className="space-y-2">
-        <label className="flex items-center gap-2 cursor-pointer">
+        <label className="flex items-center gap-3 min-h-11 cursor-pointer">
           <input type="checkbox" name="isMilestone" defaultChecked={task.isMilestone} className="rounded" />
           <span className="text-sm text-[--color-text-primary]">Milestone</span>
         </label>
-        <label className="flex items-center gap-2 cursor-pointer">
+        <label className="flex items-center gap-3 min-h-11 cursor-pointer">
           <input type="checkbox" name="designReviewRequired" defaultChecked={task.designReviewRequired} className="rounded" />
           <span className="text-sm text-[--color-text-primary]">Design review required</span>
         </label>
