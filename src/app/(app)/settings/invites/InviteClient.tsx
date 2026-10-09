@@ -81,6 +81,10 @@ export function EmailInvites({ emailReady, days }: { emailReady: boolean; days: 
                 {r.status === "link" && <><Badge variant="warning">Not emailed</Badge>{r.url && <CopyLink url={r.url} />}</>}
                 {r.status === "skipped" && <span className="text-small text-(--color-text-secondary)">{r.reason}</span>}
               </span>
+              {/* The email service's own reason, so it can be fixed (e.g. domain not verified) */}
+              {r.status === "link" && r.reason && (
+                <span className="basis-full text-small text-(--color-danger) break-words">Why: {r.reason}</span>
+              )}
             </li>
           ))}
         </ul>
