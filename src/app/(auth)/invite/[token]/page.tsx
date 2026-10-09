@@ -3,9 +3,10 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { findUsableInvite } from "@/lib/invites";
+import { ROLE_LABELS } from "@/lib/rbac";
 import { InviteSignup, JoinTeamButton } from "./InviteForms";
 
-/** Where invite links land: join the team, approved, as a Team Member. Works signed out. */
+/** Where invite links land: join the team, approved, with the invite's roles. Works signed out. */
 export default async function InvitePage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const usable = await findUsableInvite(token);
@@ -32,6 +33,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
         <p className="text-small text-(--color-text-secondary)">You&apos;re invited to join</p>
         <h1 className="text-h2 text-(--color-text-primary)">Team {team.teamNumber}</h1>
         <p className="text-body text-(--color-text-secondary)">{team.name}</p>
+        <p className="text-small text-(--color-text-secondary)">as {invite.roles.map((r) => ROLE_LABELS[r]).join(", ")}</p>
       </div>
 
       {me ? (

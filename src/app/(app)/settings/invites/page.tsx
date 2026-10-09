@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { PageTitle } from "@/components/PageHeader";
-import { withImpliedRoles } from "@/lib/rbac";
+import { withImpliedRoles, grantableRoles, ROLE_LABELS } from "@/lib/rbac";
 import { canInvite, inviteUrl, EMAIL_INVITE_DAYS, LINK_INVITE_DAYS } from "@/lib/invites";
 import { emailConfigured } from "@/lib/email";
 import { discordRequest } from "@/lib/discord";
@@ -16,12 +16,14 @@ export default async function InvitesPage() {
   if (!canInvite(withImpliedRoles(session.user.roles))) redirect("/settings/members");
   const teamId = session.user.teamId;
   const now = new Date();
+  // Roles this person may hand out on an invite (up to their own; Head Mentor only by Head Mentors)
+  const roleOptions = grantableRoles(withImpliedRoles(session.user.roles)).map((r) => ({ value: r, label: ROLE_LABELS[r] }));
 
   const [open, joined, discord] = await Promise.all([
     prisma.invite.findMany({
       where:   { teamId, revokedAt: null, expiresAt: { gt: now }, OR: [{ kind: "LINK" }, { kind: "EMAIL", acceptedAt: null }] },
       orderBy: { createdAt: "desc" },
-      select:  { id: true, kind: true, email: true, token: true, createdAt: true, expiresAt: true, uses: true, emailSent: true, invitedBy: { select: { name: true } } },
+      select:  { id: true, kind: true, email: true, token: true, roles: true, createdAt: true, expiresAt: true, uses: true, emailSent: true, invitedBy: { select: { name: true } } },
     }),
     prisma.invite.findMany({
       where:   { teamId, kind: "EMAIL", acceptedAt: { not: null } },
@@ -50,18 +52,19 @@ export default async function InvitesPage() {
         </nav>
         <PageTitle help="roles">Invite people</PageTitle>
         <p className="text-body text-(--color-text-secondary) mt-1">
-          People who accept an invite join your team straight away as Team Members — no approval needed.
-          Change their roles afterwards in Team members.
+          People who accept an invite join your team straight away with the roles you pick — no approval needed.
+          You can change their roles later in Team members.
         </p>
       </div>
 
-      <EmailInvites emailReady={emailConfigured()} days={EMAIL_INVITE_DAYS} />
+      <EmailInvites emailReady={emailConfigured()} days={EMAIL_INVITE_DAYS} roles={roleOptions} />
 
-      <DiscordInvite connected={!!discord} channels={channels} defaultChannel={discord?.channelGeneral ?? channels[0]?.id ?? ""} days={LINK_INVITE_DAYS} />
+      <DiscordInvite roles={roleOptions} connected={!!discord} channels={channels} defaultChannel={discord?.channelGeneral ?? channels[0]?.id ?? ""} days={LINK_INVITE_DAYS} />
 
       <InviteList
         invites={open.map((i) => ({
           id: i.id, kind: i.kind, email: i.email, url: inviteUrl(i.token), uses: i.uses, emailSent: i.emailSent,
+          roles: i.roles.map((r) => ROLE_LABELS[r]),
           invitedBy: i.invitedBy?.name ?? null, createdAt: i.createdAt.toISOString(), expiresAt: i.expiresAt.toISOString(),
         }))}
         joined={joined.map((j) => ({ id: j.id, email: j.email ?? "", acceptedAt: j.acceptedAt!.toISOString() }))}

@@ -277,7 +277,7 @@ export default function HelpPage() {
 
       <Section id="roles" title="Roles & permissions">
         <p>Head Mentors, Mentors and Team Leadership approve new members and assign roles. A member can have several roles. <Link href="/settings/roles" className="link">Roles explained</Link> has the full list of who can do what.</p>
-        <p><b>Inviting people:</b> Head Mentors, Mentors, Team Leadership and Team Admins can invite people from <b>Settings → Invite people</b> — by email (separate addresses with commas) or with a join link the bot posts in a Discord channel. Anyone who accepts joins the team straight away as a Team Member.</p>
+        <p><b>Inviting people:</b> Head Mentors, Mentors, Team Leadership and Team Admins can invite people from <b>Settings → Invite people</b> — by email (separate addresses with commas) or with a join link the bot posts in a Discord channel. Pick the roles they'll get (Team Member by default — you can give roles up to your own; only Head Mentors can invite Head Mentors). Anyone who accepts joins the team straight away with those roles.</p>
         <Table
           head={["Role", "Can also…"]}
           rows={[

@@ -62,3 +62,14 @@ export function rolesThatImply<T extends string>(roles: T[]): T[] {
 
 // Who can edit robot details (creating robots stays Head Mentor only)
 export const ROBOT_EDIT_ROLES: Role[] = ["HEAD_MENTOR", "TEAM_LEADERSHIP", "BUILD_LEAD"];
+
+/**
+ * Roles someone may hand out (e.g. on an invite): any role ranked at or below their highest
+ * role, and Head Mentor only by a Head Mentor. Pass the person's effective roles.
+ */
+export function grantableRoles(actorRoles: Role[]): Role[] {
+  const top = Math.max(0, ...actorRoles.map((r) => ROLE_RANK[r] ?? 0));
+  return (Object.keys(ROLE_RANK) as Role[])
+    .filter((r) => (r === "HEAD_MENTOR" ? actorRoles.includes("HEAD_MENTOR") : ROLE_RANK[r] <= top))
+    .sort((a, b) => ROLE_RANK[a] - ROLE_RANK[b]);
+}

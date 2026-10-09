@@ -1,7 +1,7 @@
 "use server";
 
 // Inviting people to a team (by email, or a join link posted to Discord) and accepting
-// an invite. Accepting makes the person an approved Team Member — no approval step.
+// an invite. Accepting makes the person an approved member with the invite's roles.
 
 import { z } from "zod";
 import bcrypt from "bcryptjs";
@@ -13,7 +13,7 @@ import { withImpliedRoles } from "@/lib/rbac";
 import { sendEmail, escapeHtml } from "@/lib/email";
 import { sendChannelMessage, embed, COLORS, explainDiscordError } from "@/lib/discord";
 import {
-  canInvite, newInviteToken, inviteUrl, daysFromNow, findUsableInvite, markInviteUsed,
+  canInvite, checkInviteRoles, newInviteToken, inviteUrl, daysFromNow, findUsableInvite, markInviteUsed,
   EMAIL_INVITE_DAYS, LINK_INVITE_DAYS,
 } from "@/lib/invites";
 
@@ -40,10 +40,14 @@ export interface EmailInviteResult {
 }
 
 /** Invite a comma-separated list of addresses. Each gets a personal, single-use invite. */
-export async function sendEmailInvitesAction(raw: string): Promise<{ success: true; results: EmailInviteResult[] } | Fail> {
+export async function sendEmailInvitesAction(raw: string, pickedRoles: string[] = ["TEAM_MEMBER"]): Promise<{ success: true; results: EmailInviteResult[] } | Fail> {
   const session = await requireInviter();
   if (!session) return { success: false, error: "Only Head Mentors, Mentors, Team Leadership and Team Admins can invite people." };
   const teamId = session.user.teamId!;
+  // Roles they'll get on accepting — only ones the inviter may give
+  const roleCheck = checkInviteRoles(withImpliedRoles(session.user.roles), pickedRoles);
+  if (!roleCheck.ok) return { success: false, error: roleCheck.error };
+  const roles = roleCheck.roles;
 
   const emails = [...new Set(raw.split(/[\s,;]+/).map((e) => e.trim().toLowerCase()).filter(Boolean))];
   if (emails.length === 0) return { success: false, error: "Enter at least one email address." };
@@ -69,7 +73,7 @@ export async function sendEmailInvitesAction(raw: string): Promise<{ success: tr
       data:  { revokedAt: new Date() },
     });
     const invite = await prisma.invite.create({
-      data: { teamId, kind: "EMAIL", email, token: newInviteToken(), invitedById: session.user.id, expiresAt: daysFromNow(EMAIL_INVITE_DAYS) },
+      data: { teamId, kind: "EMAIL", email, roles, token: newInviteToken(), invitedById: session.user.id, expiresAt: daysFromNow(EMAIL_INVITE_DAYS) },
     });
     const url = inviteUrl(invite.token);
 
@@ -99,10 +103,12 @@ export async function sendEmailInvitesAction(raw: string): Promise<{ success: tr
 // ── Discord join link ───────────────────────────────────────────────────────
 
 /** Post a team join link to a Discord channel. Anyone with it can join until it expires. */
-export async function postDiscordInviteAction(channelId: string): Promise<{ success: true; url: string } | Fail> {
+export async function postDiscordInviteAction(channelId: string, pickedRoles: string[] = ["TEAM_MEMBER"]): Promise<{ success: true; url: string } | Fail> {
   const session = await requireInviter();
   if (!session) return { success: false, error: "Only Head Mentors, Mentors, Team Leadership and Team Admins can invite people." };
   const teamId = session.user.teamId!;
+  const roleCheck = checkInviteRoles(withImpliedRoles(session.user.roles), pickedRoles);
+  if (!roleCheck.ok) return { success: false, error: roleCheck.error };
   if (!/^\d{5,25}$/.test(channelId)) return { success: false, error: "Pick a channel." };
 
   const [config, team] = await Promise.all([
@@ -113,7 +119,7 @@ export async function postDiscordInviteAction(channelId: string): Promise<{ succ
   if (!team) return { success: false, error: "Team not found." };
 
   const invite = await prisma.invite.create({
-    data: { teamId, kind: "LINK", token: newInviteToken(), invitedById: session.user.id, postedTo: channelId, expiresAt: daysFromNow(LINK_INVITE_DAYS) },
+    data: { teamId, kind: "LINK", roles: roleCheck.roles, token: newInviteToken(), invitedById: session.user.id, postedTo: channelId, expiresAt: daysFromNow(LINK_INVITE_DAYS) },
   });
   const url = inviteUrl(invite.token);
   const until = invite.expiresAt.toLocaleDateString("en-US", { month: "long", day: "numeric" });
@@ -175,7 +181,7 @@ export async function acceptInviteWithNewAccountAction(token: string, input: unk
       status:     "ACTIVE",
       approvedAt: new Date(),
       registrationNote: "Joined with an invite",
-      roles:      { create: { role: "TEAM_MEMBER" } },
+      roles:      { create: usable.invite.roles.map((role) => ({ role })) },
     },
   });
   await markInviteUsed(usable.invite.id);
@@ -205,12 +211,12 @@ export async function acceptInviteAsCurrentUserAction(token: string): Promise<{ 
     return { success: false, error: "Your account already belongs to another team. Use a different account to join this one." };
   }
 
-  // Joining a new team starts as Team Member (no roles carried over from elsewhere)
+  // Joining a team gives exactly the invite's roles (nothing carried over from elsewhere)
   await prisma.$transaction([
     prisma.userRole.deleteMany({ where: { userId: session.user.id } }),
     prisma.user.update({
       where: { id: session.user.id },
-      data:  { teamId: usable.team.id, status: "ACTIVE", approvedAt: new Date(), roles: { create: { role: "TEAM_MEMBER" } } },
+      data:  { teamId: usable.team.id, status: "ACTIVE", approvedAt: new Date(), roles: { create: usable.invite.roles.map((role) => ({ role })) } },
     }),
   ]);
   await markInviteUsed(usable.invite.id);

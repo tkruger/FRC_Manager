@@ -13,6 +13,29 @@ import {
 const inputCls =
   "w-full rounded-md border border-(--color-border) bg-(--color-surface) px-3 py-2 text-sm text-(--color-text-primary) focus:border-(--color-primary) focus:outline-none";
 
+type RoleOption = { value: string; label: string };
+
+/** Which roles the invited people get when they accept (Team Member ticked by default) */
+function RolePicker({ options, value, onChange }: { options: RoleOption[]; value: string[]; onChange: (v: string[]) => void }) {
+  return (
+    <fieldset className="space-y-1.5">
+      <legend className="text-sm font-medium text-(--color-text-primary)">They&apos;ll join as</legend>
+      <div className="flex flex-wrap gap-x-4 gap-y-1">
+        {options.map((o) => (
+          <label key={o.value} className="flex min-h-11 items-center gap-2 text-sm text-(--color-text-primary) cursor-pointer">
+            <input
+              type="checkbox"
+              checked={value.includes(o.value)}
+              onChange={(e) => onChange(e.target.checked ? [...value, o.value] : value.filter((v) => v !== o.value))}
+            />
+            {o.label}
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
 function CopyLink({ url }: { url: string }) {
   return (
     <button
@@ -26,16 +49,17 @@ function CopyLink({ url }: { url: string }) {
 }
 
 /** Invite a comma-separated list of email addresses */
-export function EmailInvites({ emailReady, days }: { emailReady: boolean; days: number }) {
+export function EmailInvites({ emailReady, days, roles: roleOptions }: { emailReady: boolean; days: number; roles: RoleOption[] }) {
   const router = useRouter();
   const [emails, setEmails] = useState("");
+  const [roles, setRoles] = useState<string[]>(["TEAM_MEMBER"]);
   const [results, setResults] = useState<EmailInviteResult[] | null>(null);
   const [pending, start] = useTransition();
 
   function send(e: React.FormEvent) {
     e.preventDefault();
     start(async () => {
-      const res = await sendEmailInvitesAction(emails);
+      const res = await sendEmailInvitesAction(emails, roles);
       if (!res.success) { toast.error(res.error); return; }
       setResults(res.results);
       const sent = res.results.filter((r) => r.status === "sent").length;
@@ -68,7 +92,8 @@ export function EmailInvites({ emailReady, days }: { emailReady: boolean; days: 
           autoCapitalize="off"
           spellCheck={false}
         />
-        <Button type="submit" isLoading={pending}>Send invites</Button>
+        <RolePicker options={roleOptions} value={roles} onChange={setRoles} />
+        <Button type="submit" isLoading={pending} disabled={roles.length === 0}>Send invites</Button>
       </form>
 
       {results && results.length > 0 && (
@@ -94,11 +119,14 @@ export function EmailInvites({ emailReady, days }: { emailReady: boolean; days: 
 }
 
 /** Post a team join link to a Discord channel */
-export function DiscordInvite({ connected, channels, defaultChannel, days }: {
-  connected: boolean; channels: { id: string; name: string }[]; defaultChannel: string; days: number;
+export function DiscordInvite({ connected, channels, defaultChannel, days, roles: roleOptions }: {
+  connected: boolean; channels: { id: string; name: string }[]; defaultChannel: string; days: number; roles: RoleOption[];
 }) {
   const router = useRouter();
   const [channel, setChannel] = useState(defaultChannel);
+  const [roles, setRoles] = useState<string[]>(["TEAM_MEMBER"]);
+  // A shared link with more than Team Member gives those roles to anyone who has it
+  const elevated = roles.some((r) => r !== "TEAM_MEMBER");
   const [url, setUrl] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
@@ -120,6 +148,12 @@ export function DiscordInvite({ connected, channels, defaultChannel, days }: {
           your team can see. It works for {days} days, and you can turn it off below.
         </p>
       </div>
+      <RolePicker options={roleOptions} value={roles} onChange={setRoles} />
+      {elevated && (
+        <p className="text-small text-(--color-warning)">
+          Anyone who uses this link gets these roles. For anything beyond Team Member, an email invite to each person is safer.
+        </p>
+      )}
       <div className="flex flex-wrap gap-2">
         {channels.length > 0 ? (
           <select className={`${inputCls} h-11 min-w-0 flex-1`} value={channel} onChange={(e) => setChannel(e.target.value)} aria-label="Channel">
@@ -131,9 +165,10 @@ export function DiscordInvite({ connected, channels, defaultChannel, days }: {
         )}
         <Button
           isLoading={pending}
-          disabled={!channel}
+          disabled={!channel || roles.length === 0}
           onClick={() => start(async () => {
-            const res = await postDiscordInviteAction(channel);
+            if (elevated && !confirm("Post a link that gives everyone who uses it these roles?")) return;
+            const res = await postDiscordInviteAction(channel, roles);
             if (!res.success) { toast.error(res.error); return; }
             setUrl(res.url);
             toast.success("Join link posted in Discord");
@@ -154,7 +189,7 @@ export function DiscordInvite({ connected, channels, defaultChannel, days }: {
 
 interface OpenInvite {
   id: string; kind: "EMAIL" | "LINK"; email: string | null; url: string; uses: number; emailSent: boolean;
-  invitedBy: string | null; createdAt: string; expiresAt: string;
+  invitedBy: string | null; createdAt: string; expiresAt: string; roles: string[];
 }
 
 /** Invites and links that still work, plus who recently joined */
@@ -177,7 +212,7 @@ export function InviteList({ invites, joined }: { invites: OpenInvite[]; joined:
                   {i.kind === "LINK" && <span className="ml-2 text-small text-(--color-text-secondary)">· {i.uses} joined</span>}
                 </p>
                 <p className="text-small text-(--color-text-secondary)">
-                  {i.invitedBy ? `${i.invitedBy} · ` : ""}{i.kind === "EMAIL" && !i.emailSent ? "not emailed · " : ""}expires {formatDate(i.expiresAt)}
+                  {i.roles.join(", ")} · {i.invitedBy ? `${i.invitedBy} · ` : ""}{i.kind === "EMAIL" && !i.emailSent ? "not emailed · " : ""}expires {formatDate(i.expiresAt)}
                 </p>
               </div>
               <span className="flex items-center gap-3">

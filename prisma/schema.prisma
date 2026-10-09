@@ -1361,7 +1361,7 @@ model OrderDraft {
 
 /// Invitation to join a team. EMAIL invites are for one person and used once; LINK invites
 /// are a shareable join link (posted to Discord) that anyone can use until it expires or is
-/// revoked. Accepting one makes the person an approved Team Member of the team.
+/// revoked. Accepting one makes the person an approved member of the team with the invite's roles.
 model Invite {
   id          String     @id @default(cuid())
   teamId      String
@@ -1382,6 +1382,8 @@ model Invite {
   uses        Int        @default(0)
   /// Did the email go out (false = shown to the inviter to send themselves)
   emailSent   Boolean    @default(false)
+  /// Roles the person gets when they accept
+  roles       Role[]     @default([TEAM_MEMBER])
 
   @@index([teamId, createdAt])
 }
