@@ -3,7 +3,10 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
-import { updateTaskStatusAction } from "@/app/actions/tasks";
+import { updateTaskStatusAction, scheduleTaskStartAction } from "@/app/actions/tasks";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast";
 import {
   STATUS_CONFIG,
   PRIORITY_CONFIG,
@@ -40,7 +43,8 @@ interface Column {
 const now = new Date().toISOString();
 
 const COLUMNS: Column[] = [
-  { id: "FUTURE",      label: "Future",      accent: "#7C3AED", dropTarget: false },
+  // Future isn't a status: Not started tasks whose start date is ahead. Dropping here asks for that date.
+  { id: "FUTURE",      label: "Future",      accent: "#7C3AED", dropTarget: true  },
   { id: "NOT_STARTED", label: "Not Started", accent: "#64748B", dropTarget: true  },
   { id: "IN_PROGRESS", label: "In Progress", accent: "#1D3A8A", dropTarget: true  },
   { id: "BLOCKED",     label: "Blocked",     accent: "#C1121F", dropTarget: true  },
@@ -48,10 +52,18 @@ const COLUMNS: Column[] = [
   { id: "COMPLETE",    label: "Complete",    accent: "#1A7F4B", dropTarget: true  },
 ];
 
-function getColTasks(tasks: KanbanTask[], colId: string, statuses: Record<string, string>) {
+/** Tomorrow as YYYY-MM-DD (local) — the earliest start date for a Future task */
+function tomorrow(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function getColTasks(tasks: KanbanTask[], colId: string, statuses: Record<string, string>, starts: Record<string, string> = {}) {
   const s = (t: KanbanTask) => statuses[t.id] ?? t.status;
-  if (colId === "FUTURE")      return tasks.filter((t) => !!t.startDate && t.startDate > now && s(t) === "NOT_STARTED");
-  if (colId === "NOT_STARTED") return tasks.filter((t) => s(t) === "NOT_STARTED" && (!t.startDate || t.startDate <= now));
+  const start = (t: KanbanTask) => starts[t.id] ?? t.startDate;
+  if (colId === "FUTURE")      return tasks.filter((t) => { const d = start(t); return !!d && d > now && s(t) === "NOT_STARTED"; });
+  if (colId === "NOT_STARTED") return tasks.filter((t) => { const d = start(t); return s(t) === "NOT_STARTED" && (!d || d <= now); });
   return tasks.filter((t) => s(t) === colId);
 }
 
@@ -71,6 +83,9 @@ export function KanbanView({
   const [draggingId,    setDraggingId]    = useState<string | null>(null);
   const [dragOverColId, setDragOverColId] = useState<string | null>(null);
   const [localStatuses, setLocalStatuses] = useState<Record<string, string>>({});
+  const [localStarts,   setLocalStarts]   = useState<Record<string, string>>({});
+  // A card dropped on Future: ask when it should start
+  const [futureDrop, setFutureDrop] = useState<{ taskId: string; name: string; date: string } | null>(null);
 
   // Compute date range from preset
   const dateRange: { from: Date; to: Date } | null = (() => {
@@ -156,6 +171,14 @@ export function KanbanView({
 
   /** Move a task to a column (shared by mouse and touch dragging) */
   function moveTask(taskId: string, colId: string) {
+    if (colId === "FUTURE") {
+      const t = tasks.find((x) => x.id === taskId);
+      if (!t) return;
+      const effectiveStart = localStarts[taskId] ?? t.startDate;
+      if ((localStatuses[taskId] ?? t.status) === "NOT_STARTED" && effectiveStart && effectiveStart > now) return; // already in Future
+      setFutureDrop({ taskId, name: t.name, date: effectiveStart && effectiveStart > now ? effectiveStart.slice(0, 10) : tomorrow() });
+      return;
+    }
     const newStatus = colId as TaskStatus;
 
     // Check not same column (using current effective status)
@@ -246,7 +269,7 @@ export function KanbanView({
       {/* Kanban columns */}
       <div ref={boardRef} className="flex gap-3 overflow-x-auto pb-4" style={{ minHeight: "60vh" }}>
         {COLUMNS.map((col) => {
-          const colTasks    = getColTasks(filtered, col.id, localStatuses);
+          const colTasks    = getColTasks(filtered, col.id, localStatuses, localStarts);
           const isDragOver  = dragOverColId === col.id;
           const isDragging  = !!draggingId;
 
@@ -297,6 +320,50 @@ export function KanbanView({
           );
         })}
       </div>
+
+      {futureDrop && (
+        <Dialog open onOpenChange={(o) => { if (!o) setFutureDrop(null); }}>
+          <DialogContent title="Start later" description={`When should "${futureDrop.name}" start? It waits in Future until then.`}>
+            <form
+              className="space-y-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const { taskId, date } = futureDrop;
+                setFutureDrop(null);
+                // Show it in Future right away; undo if saving fails
+                setLocalStatuses((p) => ({ ...p, [taskId]: "NOT_STARTED" }));
+                setLocalStarts((p) => ({ ...p, [taskId]: `${date}T00:00:00.000Z` }));
+                startTransition(async () => {
+                  const res = await scheduleTaskStartAction(taskId, date);
+                  if (!res.success) {
+                    toast.error(res.error ?? "Couldn't reschedule the task.");
+                    setLocalStatuses((p) => { const n = { ...p }; delete n[taskId]; return n; });
+                    setLocalStarts((p) => { const n = { ...p }; delete n[taskId]; return n; });
+                  }
+                  router.refresh();
+                });
+              }}
+            >
+              <label className="block space-y-1.5">
+                <span className="block text-sm font-medium text-(--color-text-primary)">Start date</span>
+                <input
+                  type="date"
+                  required
+                  min={tomorrow()}
+                  value={futureDrop.date}
+                  onChange={(e) => setFutureDrop({ ...futureDrop, date: e.target.value })}
+                  className="h-11 w-full rounded-md border border-(--color-border) bg-(--color-surface) px-3 text-sm text-(--color-text-primary) focus:border-(--color-primary) focus:outline-none"
+                />
+              </label>
+              <p className="text-small text-(--color-text-secondary)">If the due date would come before this, it moves too, keeping the task&apos;s length.</p>
+              <div className="flex gap-2">
+                <Button type="submit">Move to Future</Button>
+                <Button type="button" variant="outline" onClick={() => setFutureDrop(null)}>Cancel</Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {selectedTask && (
         <TaskModal

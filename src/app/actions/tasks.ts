@@ -245,3 +245,38 @@ export async function logActualHoursAction(
   return { success: true };
 }
 
+
+/**
+ * Kanban "Future" column: the task waits until a later start date. It becomes Not started
+ * with that start date; a due date that would fall before it moves too, keeping the task's
+ * length. `startDate` is YYYY-MM-DD and must be after today.
+ */
+export async function scheduleTaskStartAction(taskId: string, startDate: string): Promise<{ success: boolean; error?: string }> {
+  const session = await auth();
+  if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) return { success: false, error: "Pick a start date." };
+
+  const start = new Date(`${startDate}T00:00:00.000Z`);
+  const todayUtc = new Date(`${new Date().toISOString().slice(0, 10)}T00:00:00.000Z`);
+  if (start <= todayUtc) return { success: false, error: "Pick a date after today." };
+
+  const task = await prisma.task.findFirst({
+    where:  { id: taskId, season: { teamId: session.user.teamId } },
+    select: { startDate: true, dueDate: true },
+  });
+  if (!task) return { success: false, error: "Task not found." };
+
+  let dueDate = task.dueDate;
+  if (dueDate && dueDate < start) {
+    const length = task.startDate ? Math.max(0, dueDate.getTime() - task.startDate.getTime()) : 0;
+    dueDate = new Date(start.getTime() + length);
+  }
+
+  await prisma.task.update({
+    where: { id: taskId },
+    data:  { status: "NOT_STARTED", completionDate: null, startDate: start, dueDate },
+  });
+  revalidatePath("/tasks");
+  revalidatePath(`/tasks/${taskId}`);
+  return { success: true };
+}
