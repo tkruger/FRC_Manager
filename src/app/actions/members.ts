@@ -5,6 +5,8 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import type { Role } from "@/generated/prisma";
 import { createNotification } from "@/lib/notifications";
+import { sendApprovalEmail } from "@/lib/notify/approval-email";
+import { after } from "next/server";
 import { LEADERSHIP_ROLES } from "@/lib/rbac";
 
 async function requireAdmin() {
@@ -77,6 +79,8 @@ export async function approveMemberAction(
       title: "Your account has been approved! Welcome to the team.",
       linkUrl: "/dashboard",
     });
+    // Email too — they're usually not signed in yet. Sent after the response so approving stays quick.
+    after(() => sendApprovalEmail(userId));
 
     revalidatePath("/settings/members");
     return { success: true };

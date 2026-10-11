@@ -7,6 +7,8 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { teamApproved } from "@/lib/notify/events";
+import { sendApprovalEmail } from "@/lib/notify/approval-email";
+import { after } from "next/server";
 
 type Result = { success: true; message?: string } | { success: false; error: string };
 
@@ -49,7 +51,10 @@ export async function approveTeamAction(teamId: string): Promise<Result> {
       await tx.userRole.createMany({ data: [{ userId: founder.id, role: "HEAD_MENTOR" }], skipDuplicates: true });
     }
   });
-  if (founder) await teamApproved(founder.id, team.teamNumber);
+  if (founder) {
+    await teamApproved(founder.id, team.teamNumber);
+    after(() => sendApprovalEmail(founder.id, { newTeam: true }));
+  }
 
   refresh();
   return { success: true, message: founder ? `Team ${team.teamNumber} approved — ${founder.name} is its Head Mentor.` : `Team ${team.teamNumber} approved.` };

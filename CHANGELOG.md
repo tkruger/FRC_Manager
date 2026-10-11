@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Email when someone is approved: new members get a welcome email with their team and roles; founders of newly approved teams get one too
+
 ## 1.0.0 — 2026-10-09
 
 First release of FRC Manager.
