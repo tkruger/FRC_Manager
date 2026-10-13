@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.1 — 2026-10-13
 
 - Email when someone is approved: new members get a welcome email with their team and roles; founders of newly approved teams get one too
 
