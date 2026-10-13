@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Audit log for Mentors, Team Leadership, Head Mentors and the Safety Captain: every tool check-out and check-in and every safety report between two dates, with a print view
+- Tool locations with their own barcodes (LOC-0001, …): scan a tool and then a location to move it there, or scan a location to put several tools away; print labels for one or all
+- Competition pack lists: a master list of tool groups and other items, "Start packing" for any event, and a banner on the Tools page so anyone can help pack by scanning tools into totes and cases. Printable, with what's in each location
 ## 1.0.1 — 2026-10-13
 
 - Email when someone is approved: new members get a welcome email with their team and roles; founders of newly approved teams get one too

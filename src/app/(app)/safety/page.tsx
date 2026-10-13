@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
 import { PageHeader } from "@/components/PageHeader";
+import { canSeeAudit } from "@/lib/packing";
 
 const SEVERITY_BADGE: Record<string, "danger"|"warning"|"info"> = {
   SIGNIFICANT_INJURY: "danger",
@@ -46,6 +47,7 @@ export default async function SafetyPage() {
         help="safety"
         subtitle="Incidents, certifications, and inspection checklists"
         actions={<>
+          {canSeeAudit(session.user.roles) && <Link href="/audit"><Button variant="outline" size="sm">Audit log</Button></Link>}
           <Link href="/safety/certifications"><Button variant="outline" size="sm">Cert matrix</Button></Link>
           <Link href="/safety/inspection"><Button variant="outline" size="sm">Inspection</Button></Link>
           <Link href="/safety/incidents/new"><Button size="sm">+ File incident</Button></Link>

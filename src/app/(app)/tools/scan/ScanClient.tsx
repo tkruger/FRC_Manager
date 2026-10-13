@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BarcodeScanner } from "@/components/ui/BarcodeScanner";
 import { Button } from "@/components/ui/button";
@@ -8,16 +9,31 @@ import { Select } from "@/components/ui/select";
 import { Field } from "@/components/ui/field";
 import { Badge } from "@/components/ui/badge";
 import { checkoutToolAction, checkinToolAction } from "@/app/actions/tools";
+import { moveToolToLocationAction } from "@/app/actions/tool-locations";
 
 interface ScannedTool {
+  kind: "tool";
   id: string;
   name: string;
   assetTag: string | null;
   condition: string;
+  homeLocation: string | null;
   /** One physical tool: free to check out or not */
   available: boolean;
   checkouts: { id: string; user: { name: string } }[];
 }
+
+interface ScannedLocation {
+  kind: "location";
+  id: string;
+  name: string;
+  code: string;
+  tools: { id: string; name: string; assetTag: string | null }[];
+}
+
+type Scanned = ScannedTool | ScannedLocation;
+
+export interface LocationOption { id: string; name: string; code: string }
 
 const CONDITION_OPTIONS = [
   { value: "EXCELLENT",    label: "Excellent — like new" },
@@ -26,28 +42,71 @@ const CONDITION_OPTIONS = [
   { value: "NEEDS_REPAIR", label: "Needs repair" },
 ];
 
-export function ScanClient() {
+/**
+ * What the camera is for right now:
+ *  any      — first scan: a tool (check out / in, move) or a location
+ *  where    — the next scan says where the scanned tool is going
+ *  putAway  — keep scanning tools into a location
+ */
+type Mode = { kind: "any" } | { kind: "where"; tool: ScannedTool } | { kind: "putAway"; location: ScannedLocation };
+
+async function lookup(code: string): Promise<Scanned | { error: string }> {
+  try {
+    const res = await fetch(`/api/tools/scan?code=${encodeURIComponent(code)}`);
+    const data = await res.json();
+    if (!res.ok) return { error: data.error ?? "Not found." };
+    return data as Scanned;
+  } catch {
+    return { error: "Network error — check your connection." };
+  }
+}
+
+export function ScanClient({ locations }: { locations: LocationOption[] }) {
   const router = useRouter();
-  const [scanning, setScanning]     = useState(true);
-  const [tool, setTool]             = useState<ScannedTool | null>(null);
+  const [mode, setMode]             = useState<Mode | null>({ kind: "any" });
+  const [found, setFound]           = useState<Scanned | null>(null);
   const [lookupError, setLookupError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionDone, setActionDone]   = useState<string | null>(null);
   const [checkinId, setCheckinId]     = useState<string | null>(null);
   const [returnCondition, setReturnCondition] = useState("GOOD");
+  const [moveTo, setMoveTo]           = useState("");
+  const [putAwayLog, setPutAwayLog]   = useState<{ text: string; ok: boolean }[]>([]);
   const [isPending, startTransition]  = useTransition();
 
+  const tool = found?.kind === "tool" ? found : null;
+  const location = found?.kind === "location" ? found : null;
+
   async function handleScan(code: string) {
-    setScanning(false);
+    const current = mode;
+    if (current?.kind === "putAway") return putAwayScan(current.location, code);
+    setMode(null);
     setLookupError(null);
-    try {
-      const res = await fetch(`/api/tools/scan?code=${encodeURIComponent(code)}`);
-      const data = await res.json();
-      if (!res.ok) { setLookupError(data.error ?? "Tool not found."); return; }
-      setTool(data);
-    } catch {
-      setLookupError("Network error — check your connection.");
+    const data = await lookup(code);
+    if ("error" in data) { setLookupError(data.error); return; }
+
+    if (current?.kind === "where") {
+      if (data.kind !== "location") { setLookupError(`That's a tool (${data.name}). Scan a location barcode to say where ${current.tool.name} is going.`); setFound(current.tool); return; }
+      return move(current.tool, data.id, data.name);
     }
+    setFound(data);
+  }
+
+  async function putAwayScan(loc: ScannedLocation, code: string) {
+    const data = await lookup(code);
+    if ("error" in data) { setPutAwayLog((l) => [{ text: data.error, ok: false }, ...l]); return; }
+    if (data.kind !== "tool") { setPutAwayLog((l) => [{ text: `${data.name} is a location — scan tools to put in ${loc.name}.`, ok: false }, ...l]); return; }
+    const res = await moveToolToLocationAction(data.id, loc.id);
+    setPutAwayLog((l) => [{ text: res.success ? res.message ?? "Moved." : res.error, ok: res.success }, ...l]);
+  }
+
+  function move(t: ScannedTool, locationId: string, locationName: string) {
+    setActionError(null);
+    startTransition(async () => {
+      const res = await moveToolToLocationAction(t.id, locationId);
+      if (res.success) setActionDone(`✓ ${t.name}${t.assetTag ? ` ${t.assetTag}` : ""} is now in ${locationName}.`);
+      else { setFound(t); setActionError(res.error); }
+    });
   }
 
   function handleCheckout(e: React.FormEvent<HTMLFormElement>) {
@@ -73,12 +132,14 @@ export function ScanClient() {
   }
 
   function reset() {
-    setTool(null);
+    setFound(null);
     setLookupError(null);
     setActionError(null);
     setActionDone(null);
     setCheckinId(null);
-    setScanning(true);
+    setMoveTo("");
+    setPutAwayLog([]);
+    setMode({ kind: "any" });
   }
 
   // ── Done screen ──────────────────────────────────────────────────────────
@@ -95,22 +156,54 @@ export function ScanClient() {
     );
   }
 
-  // ── Scanner view ─────────────────────────────────────────────────────────
-  if (scanning) {
+  // ── Putting tools away into one location ────────────────────────────────
+  if (mode?.kind === "putAway") {
     return (
       <div className="space-y-4">
-        <BarcodeScanner onScan={handleScan} onClose={() => router.push("/tools")} />
-        <p className="text-center text-small text-(--color-text-secondary)">
-          QR codes should contain the tool&apos;s asset tag or ID.
-          <br />
-          <a href="/tools" className="text-(--color-secondary) hover:underline">Browse all tools instead →</a>
-        </p>
+        <div className="card">
+          <p className="text-small text-(--color-text-secondary)">Putting tools in</p>
+          <p className="text-h3 text-(--color-text-primary)">{mode.location.name}</p>
+          <p className="text-mono text-small text-(--color-text-secondary)">{mode.location.code}</p>
+        </div>
+        <BarcodeScanner continuous onScan={handleScan} onClose={reset} closeLabel="Done" />
+        {putAwayLog.length > 0 && (
+          <ul className="card space-y-1.5">
+            {putAwayLog.map((l, i) => (
+              <li key={i} className={`text-sm ${l.ok ? "text-(--color-success)" : "text-(--color-danger)"}`}>{l.ok ? "✓ " : ""}{l.text}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+    );
+  }
+
+  // ── Scanner view ─────────────────────────────────────────────────────────
+  if (mode) {
+    return (
+      <div className="space-y-4">
+        {mode.kind === "where" && (
+          <div className="card">
+            <p className="text-small text-(--color-text-secondary)">Scan the location barcode for where this is going</p>
+            <p className="text-h3 text-(--color-text-primary)">{mode.tool.name} {mode.tool.assetTag && <span className="text-mono text-(--color-text-secondary)">{mode.tool.assetTag}</span>}</p>
+          </div>
+        )}
+        <BarcodeScanner
+          onScan={handleScan}
+          onClose={() => (mode.kind === "where" ? (setFound(mode.tool), setMode(null)) : router.push("/tools"))}
+        />
+        {mode.kind === "any" && (
+          <p className="text-center text-small text-(--color-text-secondary)">
+            Scan a tool to check it out, return it or move it — or a location to put tools there.
+            <br />
+            <Link href="/tools" className="text-(--color-secondary) hover:underline">Browse all tools instead →</Link>
+          </p>
+        )}
       </div>
     );
   }
 
   // ── Lookup error ─────────────────────────────────────────────────────────
-  if (lookupError) {
+  if (lookupError && !found) {
     return (
       <div className="card space-y-4">
         <div className="rounded-md bg-(--color-danger)/10 border border-(--color-danger)/20 px-4 py-3 text-sm text-(--color-danger)">
@@ -121,16 +214,48 @@ export function ScanClient() {
     );
   }
 
+  // ── Location found ───────────────────────────────────────────────────────
+  if (location) {
+    return (
+      <div className="space-y-4">
+        <div className="card space-y-3">
+          <div>
+            <p className="text-small text-(--color-text-secondary)">Location</p>
+            <p className="text-h3 text-(--color-text-primary)">{location.name}</p>
+            <p className="text-mono text-small text-(--color-text-secondary)">{location.code}</p>
+          </div>
+          {location.tools.length > 0 ? (
+            <ul className="divide-y divide-(--color-border) border-t border-(--color-border)">
+              {location.tools.map((t) => (
+                <li key={t.id} className="flex justify-between gap-3 py-1.5 text-sm">
+                  <span className="text-(--color-text-primary)">{t.name}</span>
+                  <span className="font-mono text-xs text-(--color-text-secondary)">{t.assetTag ?? ""}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-small text-(--color-text-secondary)">No tools live here yet.</p>
+          )}
+        </div>
+        <Button className="w-full" onClick={() => { setPutAwayLog([]); setMode({ kind: "putAway", location }); }}>
+          Scan tools to put here
+        </Button>
+        <Button variant="outline" onClick={reset} className="w-full">Scan something else</Button>
+      </div>
+    );
+  }
+
   // ── Tool found — choose action ───────────────────────────────────────────
   if (tool) {
     return (
       <div className="space-y-4">
         {/* Tool summary */}
         <div className="card space-y-2">
-          <div className="flex items-start justify-between">
-            <div>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
               <p className="text-h3 text-(--color-text-primary)">{tool.name}</p>
               {tool.assetTag && <p className="text-mono text-(--color-text-secondary)">{tool.assetTag}</p>}
+              {tool.homeLocation && <p className="text-small text-(--color-text-secondary)">Lives in {tool.homeLocation}</p>}
             </div>
             <Badge variant={tool.available ? "success" : "danger"}>
               {tool.available ? "Available" : tool.checkouts.length ? "Checked out" : "Unavailable"}
@@ -138,9 +263,9 @@ export function ScanClient() {
           </div>
         </div>
 
-        {actionError && (
+        {(actionError || lookupError) && (
           <div className="rounded-md bg-(--color-danger)/10 border border-(--color-danger)/20 px-4 py-3 text-sm text-(--color-danger)">
-            {actionError}
+            {actionError ?? lookupError}
           </div>
         )}
 
@@ -203,8 +328,36 @@ export function ScanClient() {
           </div>
         )}
 
+        {/* Move — scan where it's going, or pick */}
+        {locations.length > 0 && (
+          <div className="card space-y-3">
+            <p className="text-h3 text-(--color-text-primary)">Move it</p>
+            <Button variant="secondary" className="w-full" onClick={() => { setLookupError(null); setMode({ kind: "where", tool }); }}>
+              Scan where it&apos;s going
+            </Button>
+            <div className="flex gap-2">
+              <div className="min-w-0 flex-1">
+                <Select
+                  aria-label="Location"
+                  options={[{ value: "", label: "…or pick a location" }, ...locations.map((l) => ({ value: l.id, label: l.name }))]}
+                  value={moveTo}
+                  onChange={(e) => setMoveTo(e.target.value)}
+                />
+              </div>
+              <Button
+                variant="outline"
+                disabled={!moveTo}
+                isLoading={isPending && !!moveTo}
+                onClick={() => { const l = locations.find((x) => x.id === moveTo); if (l) move(tool, l.id, l.name); }}
+              >
+                Move
+              </Button>
+            </div>
+          </div>
+        )}
+
         <Button variant="outline" onClick={reset} className="w-full">
-          Scan a different tool
+          Scan something else
         </Button>
       </div>
     );

@@ -39,7 +39,9 @@ export const CAPABILITIES: { area: string; items: { action: string; who: Who }[]
       { action: "See inventory, order items, check tools in and out",    who: "everyone" },
       { action: "See low stock and the order queue",                     who: ["BUILD_LEAD", "INVENTORY_ADMIN", "TEAM_LEADERSHIP", "MENTOR"] },
       { action: "Add, edit and retire inventory items",                  who: ["INVENTORY_ADMIN"] },
-      { action: "Add and edit tools",                                    who: ["BUILD_LEAD", "INVENTORY_ADMIN", "TEAM_LEADERSHIP", "MENTOR"] },
+      { action: "Add and edit tools and tool locations",                 who: ["BUILD_LEAD", "INVENTORY_ADMIN", "TEAM_LEADERSHIP", "MENTOR"] },
+      { action: "Help pack for competitions, scan tools into locations", who: "everyone" },
+      { action: "Edit the competition pack list, start and finish packing", who: ["TEAM_LEADERSHIP", "MENTOR"] },
       { action: "Manage vendors",                                        who: ["INVENTORY_ADMIN", "BUDGET_MANAGER"] },
     ],
   },
@@ -59,6 +61,7 @@ export const CAPABILITIES: { area: string; items: { action: string; who: Who }[]
     items: [
       { action: "Report incidents, run PRECHECK and inspections",        who: "everyone" },
       { action: "Award and revoke certifications",                       who: ["SAFETY_CAPTAIN", "INVENTORY_ADMIN"] },
+      { action: "See and print the audit log (tool check-outs and safety reports)", who: ["SAFETY_CAPTAIN", "TEAM_LEADERSHIP", "MENTOR"] },
     ],
   },
   {

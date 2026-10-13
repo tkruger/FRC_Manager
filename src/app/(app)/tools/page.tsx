@@ -8,6 +8,7 @@ import { ToolsClient } from "./ToolsClient";
 import { toolGroups } from "./tool-helpers";
 import type { ToolRow } from "./tool-helpers";
 import { PageHeader } from "@/components/PageHeader";
+import { canSeeAudit, packProgress } from "@/lib/packing";
 
 const TOOL_EDIT_ROLES = ["INVENTORY_ADMIN", "BUILD_LEAD", "TEAM_LEADERSHIP", "HEAD_MENTOR"];
 
@@ -18,7 +19,7 @@ export default async function ToolsPage({ searchParams }: { searchParams: Promis
 
   const canEdit = session.user.roles.some((r) => TOOL_EDIT_ROLES.includes(r));
 
-  const [tools, myCerts] = await Promise.all([
+  const [tools, myCerts, packing, packItems] = await Promise.all([
     prisma.tool.findMany({
       where:   { teamId: session.user.teamId, retired: false },
       include: {
@@ -34,6 +35,12 @@ export default async function ToolsPage({ searchParams }: { searchParams: Promis
       where:  { userId: session.user.id, status: "ACTIVE" },
       select: { certName: true },
     }),
+    prisma.packSession.findMany({
+      where:   { teamId: session.user.teamId, finishedAt: null },
+      orderBy: { startedAt: "asc" },
+      select:  { id: true, competition: { select: { name: true } }, entries: { select: { itemId: true, tool: { select: { name: true } } } } },
+    }),
+    prisma.packListItem.findMany({ where: { teamId: session.user.teamId }, select: { id: true, toolName: true, quantity: true } }),
   ]);
 
   const now = new Date();
@@ -88,9 +95,26 @@ export default async function ToolsPage({ searchParams }: { searchParams: Promis
               Scan
             </Button>
           </Link>
+          <Link href="/tools/pack"><Button variant="outline" size="sm">Pack lists</Button></Link>
+          <Link href="/tools/locations"><Button variant="outline" size="sm">Locations</Button></Link>
+          {canSeeAudit(session.user.roles) && <Link href="/audit"><Button variant="outline" size="sm">Audit log</Button></Link>}
           <AddToolDialog names={groups.names} />
         </>}
       />
+
+      {/* Packing for a competition: anyone can help */}
+      {packing.map((p) => {
+        const prog = packProgress(packItems, p.entries);
+        return (
+          <Link key={p.id} href={`/tools/pack/${p.id}`}
+            className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-(--color-info)/10 border border-(--color-info)/25 px-4 py-3">
+            <span className="text-sm font-medium text-(--color-text-primary)">
+              Packing for {p.competition.name} — {prog.packed} of {prog.needed} packed
+            </span>
+            <span className="text-sm font-medium text-(--color-info)">Help pack →</span>
+          </Link>
+        );
+      })}
 
       <div className="flex gap-1 border-b border-(--color-border) overflow-x-auto">
         {views.map((v) => (

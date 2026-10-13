@@ -72,6 +72,8 @@ model User {
   discordLink          DiscordLink?
   pushSubscriptions    PushSubscription[]
   notificationPrefs    NotificationPreference[]
+  packSessionsStarted  PackSession[]       @relation("PackStartedBy")
+  packEntries          PackEntry[]         @relation("PackedBy")
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -177,10 +179,15 @@ model Team {
   orderDrafts   OrderDraft[]
   invites       Invite[]
   tools         Tool[]
+  toolLocations ToolLocation[]
+  packListItems PackListItem[]
+  packSessions  PackSession[]
   discordConfig DiscordConfig?
   timezone      String?   // IANA zone used for meeting times and daily reminders
   /// Next number for auto-assigned tool asset tags (TOOL-0001, …)
   nextToolNumber Int      @default(1)
+  /// Next number for tool location barcodes (LOC-0001, …)
+  nextLocationNumber Int  @default(1)
   /// Next sequential order item ID (0001, 0002, …)
   nextOrderItemNumber Int @default(401)
 
@@ -230,6 +237,8 @@ model CompetitionEvent {
   stage       CompetitionStage @default(WEEK)
   /// Practice match / week / playoff / offseason number; null for Worlds
   stageNumber Int?
+
+  packSessions PackSession[]
 
   createdAt DateTime @default(now())
 }
@@ -350,6 +359,75 @@ model Tool {
 
   checkouts       ToolCheckout[]
   maintenanceLogs ToolMaintenanceLog[]
+  packEntries     PackEntry[]
+}
+
+/// A place tools live or travel in (shelf, cabinet, tote, competition case), with its own
+/// barcode. Scanning a tool then a location moves the tool there (sets its home location).
+model ToolLocation {
+  id        String   @id @default(cuid())
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  name      String
+  /// What its barcode holds: LOC-0001, …
+  code      String
+  createdAt DateTime @default(now())
+
+  packEntries PackEntry[]
+
+  @@unique([teamId, code])
+  @@unique([teamId, name])
+}
+
+/// The master pack list: what should come to every competition
+model PackListItem {
+  id        String   @id @default(cuid())
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  /// A tool group (tool name): any tools with this name count toward it, by scanning
+  toolName  String?
+  /// Anything else (battery cart, spare bumpers): ticked off by hand
+  label     String?
+  quantity  Int      @default(1)
+  notes     String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  entries PackEntry[]
+}
+
+/// Packing for one competition. A checklist only: packing doesn't change a tool's status.
+model PackSession {
+  id            String           @id @default(cuid())
+  teamId        String
+  team          Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  competitionId String
+  competition   CompetitionEvent @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  startedById   String?
+  startedBy     User?            @relation("PackStartedBy", fields: [startedById], references: [id], onDelete: SetNull)
+  startedAt     DateTime         @default(now())
+  finishedAt    DateTime?
+
+  entries PackEntry[]
+}
+
+/// One tool (scanned) or hand-ticked list item packed for a session, and where it went
+model PackEntry {
+  id         String        @id @default(cuid())
+  sessionId  String
+  session    PackSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  toolId     String?
+  tool       Tool?         @relation(fields: [toolId], references: [id], onDelete: Cascade)
+  itemId     String?
+  item       PackListItem? @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  locationId String?
+  location   ToolLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  packedById String?
+  packedBy   User?         @relation("PackedBy", fields: [packedById], references: [id], onDelete: SetNull)
+  packedAt   DateTime      @default(now())
+
+  @@unique([sessionId, toolId])
+  @@unique([sessionId, itemId])
 }
 
 enum ToolType {

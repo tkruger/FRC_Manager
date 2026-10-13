@@ -435,3 +435,30 @@ html { -webkit-tap-highlight-color: transparent; }
   background: linear-gradient(to top left, transparent 50%, color-mix(in srgb, var(--note) 72%, #000) 50%);
   box-shadow: -1px -1px 2px rgb(0 0 0 / 0.12);
 }
+
+/* ── Printing (audit log, pack lists, location labels) ─────────────────────
+   Always light, no app chrome. Mark anything else to leave off with .no-print. */
+@media print {
+  :root, [data-theme="dark"] {
+    --color-surface:        #FFFFFF;
+    --color-surface-raised: #FFFFFF;
+    --color-surface-overlay:#F3F4F6;
+    --color-border:         #D1D5DB;
+    --color-border-strong:  #9CA3AF;
+    --color-text-primary:   #000000;
+    --color-text-secondary: #374151;
+    --color-primary:        #C1121F;
+    --color-secondary:      #1D3A8A;
+    --color-success:        #1A7F4B;
+    --color-warning:        #B45309;
+    --color-danger:         #C1121F;
+    --color-info:           #1D3A8A;
+  }
+  html, body { background: #fff !important; }
+  #app-shell header.fixed, #app-shell nav.fixed, .bg-orbs, .no-print { display: none !important; }
+  #app-shell main { padding: 0 !important; }
+  .card { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; box-shadow: none !important; break-inside: avoid; }
+  .card::before, .card::after { display: none !important; }
+  .print-break-inside-auto { break-inside: auto; }
+  a { text-decoration: none; color: inherit; }
+}

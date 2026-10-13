@@ -7,15 +7,26 @@ import { Button } from "@/components/ui/button";
 interface BarcodeScannerProps {
   onScan: (code: string) => void;
   onClose: () => void;
+  /** Keep the camera running and report every new code (the same code again only after a pause) */
+  continuous?: boolean;
+  /** Label for the close button (default "Cancel") */
+  closeLabel?: string;
 }
 
-export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
+/** In continuous mode, ignore the same code seen again within this long */
+const REPEAT_MS = 2500;
+
+export function BarcodeScanner({ onScan, onClose, continuous = false, closeLabel = "Cancel" }: BarcodeScannerProps) {
   const videoRef   = useRef<HTMLVideoElement>(null);
   const canvasRef  = useRef<HTMLCanvasElement>(null);
   const streamRef  = useRef<MediaStream | null>(null);
   const rafRef     = useRef<number>(0);
   const [error, setError]   = useState<string | null>(null);
   const [active, setActive] = useState(false);
+  // Latest callback without restarting the camera when the parent re-renders
+  const onScanRef  = useRef(onScan);
+  const lastRef    = useRef<{ code: string; at: number } | null>(null);
+  useEffect(() => { onScanRef.current = onScan; }, [onScan]);
 
   const stopCamera = useCallback(() => {
     cancelAnimationFrame(rafRef.current);
@@ -44,13 +55,22 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
     });
 
     if (code?.data) {
-      stopCamera();
-      onScan(code.data);
-      return;
+      if (!continuous) {
+        stopCamera();
+        onScanRef.current(code.data);
+        return;
+      }
+      const now = Date.now();
+      const last = lastRef.current;
+      if (!last || last.code !== code.data || now - last.at > REPEAT_MS) {
+        onScanRef.current(code.data);
+        navigator.vibrate?.(60);
+      }
+      lastRef.current = { code: code.data, at: now };
     }
 
     rafRef.current = requestAnimationFrame(tick);
-  }, [onScan, stopCamera]);
+  }, [continuous, stopCamera]);
 
   useEffect(() => {
     let mounted = true;
@@ -87,7 +107,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
   return (
     <div className="flex flex-col items-center gap-4">
       {error ? (
-        <div className="rounded-md bg-[--color-danger]/10 border border-[--color-danger]/20 px-4 py-3 text-sm text-[--color-danger] w-full">
+        <div className="rounded-md bg-(--color-danger)/10 border border-(--color-danger)/20 px-4 py-3 text-sm text-(--color-danger) w-full">
           {error}
         </div>
       ) : (
@@ -122,7 +142,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
       <canvas ref={canvasRef} className="hidden" />
 
       <Button variant="outline" onClick={() => { stopCamera(); onClose(); }} className="w-full">
-        Cancel
+        {closeLabel}
       </Button>
     </div>
   );
