@@ -5,14 +5,15 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import type { BudgetCategoryType, FundingType } from "@/generated/prisma";
+import { ActionError, userMessage } from "@/lib/action-error";
 
 const BUDGET_ROLES = ["HEAD_MENTOR", "BUDGET_MANAGER"] as const;
 
 async function requireBudgetRole() {
   const session = await auth();
-  if (!session?.user?.teamId) throw new Error("Not authenticated.");
+  if (!session?.user?.teamId) throw new ActionError("Not authenticated.");
   if (!session.user.roles.some((r) => BUDGET_ROLES.includes(r as any)))
-    throw new Error("Only Head Mentors and Budget Managers can modify the budget.");
+    throw new ActionError("Only Head Mentors and Budget Managers can modify the budget.");
   return session;
 }
 
@@ -40,7 +41,7 @@ export async function setupBudgetAction(
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
   let session;
-  try { session = await requireBudgetRole(); } catch (e: any) { return { success: false, error: e.message }; }
+  try { session = await requireBudgetRole(); } catch (e) { return { success: false, error: userMessage(e) }; }
 
   const activeSeason = await prisma.season.findFirst({
     where: { teamId: session.user.teamId, isActive: true },
@@ -99,11 +100,11 @@ export async function setupBudgetAction(
 }
 
 const FundingSchema = z.object({
-  name: z.string().min(1),
-  type: z.string().min(1),
+  name: z.string().max(300).min(1),
+  type: z.string().max(300).min(1),
   amount: z.coerce.number().min(0),
   status: z.enum(["PLEDGED", "RECEIVED", "PARTIAL"]).default("PLEDGED"),
-  notes: z.string().optional(),
+  notes: z.string().max(5000).optional(),
 });
 
 export async function addFundingSourceAction(
@@ -111,7 +112,7 @@ export async function addFundingSourceAction(
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
   let session;
-  try { session = await requireBudgetRole(); } catch (e: any) { return { success: false, error: e.message }; }
+  try { session = await requireBudgetRole(); } catch (e) { return { success: false, error: userMessage(e) }; }
   if (!await isTeamBudget(budgetId, session.user.teamId!)) return { success: false, error: "Budget not found." };
 
   const parsed = FundingSchema.safeParse({
@@ -139,12 +140,12 @@ export async function addFundingSourceAction(
 }
 
 const ExpenseSchema = z.object({
-  date: z.string().min(1),
+  date: z.string().max(300).min(1),
   amount: z.coerce.number().min(0),
-  vendor: z.string().optional(),
-  description: z.string().min(1),
-  paymentMethod: z.string().optional(),
-  categoryId: z.string().optional(),
+  vendor: z.string().max(300).optional(),
+  description: z.string().max(5000).min(1),
+  paymentMethod: z.string().max(300).optional(),
+  categoryId: z.string().max(300).optional(),
 });
 
 export async function logExpenseAction(
@@ -152,7 +153,7 @@ export async function logExpenseAction(
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
   let session;
-  try { session = await requireBudgetRole(); } catch (e: any) { return { success: false, error: e.message }; }
+  try { session = await requireBudgetRole(); } catch (e) { return { success: false, error: userMessage(e) }; }
   if (!await isTeamBudget(budgetId, session.user.teamId!)) return { success: false, error: "Budget not found." };
 
   const parsed = ExpenseSchema.safeParse({

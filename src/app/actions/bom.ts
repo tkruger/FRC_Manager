@@ -6,13 +6,13 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
 const BomItemSchema = z.object({
-  partName:   z.string().min(1),
-  partNumber: z.string().optional(),
-  subsystem:  z.string().optional(),
+  partName:   z.string().max(300).min(1),
+  partNumber: z.string().max(300).optional(),
+  subsystem:  z.string().max(300).optional(),
   quantity:   z.coerce.number().positive(),
   unitFmv:    z.coerce.number().min(0).optional(),
   source:     z.enum(["BASE_INVENTORY", "KOP", "FIRST_CHOICE", "DIRECT", "DONATED"]).default("DIRECT"),
-  notes:      z.string().optional(),
+  notes:      z.string().max(5000).optional(),
 });
 
 export async function addBomItemAction(

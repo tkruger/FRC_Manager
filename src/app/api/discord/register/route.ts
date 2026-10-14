@@ -3,12 +3,12 @@
 // Requires: DISCORD_BOT_TOKEN, DISCORD_APPLICATION_ID
 import { auth } from "@/lib/auth";
 import { SLASH_COMMANDS } from "@/lib/discord";
-import { LEADERSHIP_ROLES } from "@/lib/rbac";
 import { NextResponse } from "next/server";
 
 export async function POST() {
   const session = await auth();
-  if (!session?.user?.roles?.some((r) => LEADERSHIP_ROLES.includes(r as any))) {
+  // The bot (and its commands) is shared by every team, so this is a platform-admin job
+  if (!session?.user?.isSuperAdmin) {
     return new NextResponse("Forbidden", { status: 403 });
   }
 
@@ -32,8 +32,8 @@ export async function POST() {
   );
 
   if (!res.ok) {
-    const err = await res.text();
-    return NextResponse.json({ error: err }, { status: res.status });
+    console.error("[discord] command registration failed", res.status, await res.text());
+    return NextResponse.json({ error: `Discord refused the commands (${res.status}). See the server logs.` }, { status: 502 });
   }
 
   const data = await res.json();

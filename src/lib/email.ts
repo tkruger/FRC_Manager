@@ -31,7 +31,8 @@ export async function sendEmail(msg: { to: string; subject: string; html: string
     if (!res.ok) {
       const body = await res.json().catch(() => ({})) as { message?: string; name?: string };
       // Shows up in Vercel → Logs; the reason is also shown to whoever sent the invite
-      console.error(`[email] Resend refused (${res.status} ${body.name ?? ""}) sending from "${from}" to ${msg.to}: ${body.message ?? "no message"}`);
+      // The recipient's domain only — no full addresses in the logs
+      console.error(`[email] Resend refused (${res.status} ${body.name ?? ""}) sending from "${from}" to …@${msg.to.split("@")[1] ?? "?"}: ${body.message ?? "no message"}`);
       return { sent: false, error: body.message ?? `Resend error ${res.status}` };
     }
     return { sent: true };
@@ -41,7 +42,4 @@ export async function sendEmail(msg: { to: string; subject: string; html: string
   }
 }
 
-/** Escape text for an HTML email */
-export function escapeHtml(s: string): string {
-  return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
-}
+export { escapeHtml } from "@/lib/html";

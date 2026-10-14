@@ -64,16 +64,30 @@ export function vendorFromHost(hostname: string): string {
 function isPrivateIp(ip: string): boolean {
   if (isIP(ip) === 6) {
     const v = ip.toLowerCase();
-    return v === "::1" || v.startsWith("fc") || v.startsWith("fd") || v.startsWith("fe80") || v.startsWith("::ffff:") && isPrivateIp(v.slice(7));
+    // IPv4-mapped/compatible (::ffff:10.0.0.1, ::10.0.0.1) — judge by the IPv4 part
+    const mapped = v.match(/^::(?:ffff:)?(\d+\.\d+\.\d+\.\d+)$/)?.[1];
+    if (mapped) return isPrivateIp(mapped);
+    const first = parseInt(v.split(":")[0] || "0", 16);
+    return v === "::" || v === "::1" ||
+      (first & 0xfe00) === 0xfc00 ||   // fc00::/7 unique local
+      (first & 0xffc0) === 0xfe80 ||   // fe80::/10 link local
+      (first & 0xff00) === 0xff00 ||   // ff00::/8 multicast
+      v.startsWith("64:ff9b:") ||      // NAT64 (can reach IPv4 private ranges)
+      v.startsWith("2001:db8:");       // documentation
   }
   const [a, b] = ip.split(".").map(Number);
-  return a === 10 || a === 127 || a === 0 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) ||
-         (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127) || a >= 224;
+  return a === 0 || a === 10 || a === 127 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) ||
+         (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127) || (a === 198 && (b === 18 || b === 19)) ||
+         (a === 192 && b === 0) || a >= 224;
 }
 
 async function assertPublicUrl(url: URL) {
   if (url.protocol !== "https:" && url.protocol !== "http:") throw new Error("Only web links are supported.");
   if (url.port && url.port !== "80" && url.port !== "443") throw new Error("Unsupported link.");
+  if (url.username || url.password) throw new Error("Unsupported link.");
+  // Product pages live on real domain names, not bare IPs or local names
+  const host = url.hostname.replace(/^\[|\]$/g, "");
+  if (isIP(host) || !host.includes(".") || /\.(local|internal|localhost)$/i.test(host)) throw new Error("Unsupported link.");
   const addresses = await dnsLookup(url.hostname, { all: true });
   if (addresses.length === 0 || addresses.some((a) => isPrivateIp(a.address))) throw new Error("Unsupported link.");
 }

@@ -26,5 +26,7 @@ declare module "next-auth/jwt" {
     displayMode?: string;
     isSuperAdmin?: boolean;
     status?: string;
+    /** The user's sessionVersion when this session started */
+    sv?: number;
   }
 }

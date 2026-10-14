@@ -22,6 +22,8 @@ model User {
   emailVerified DateTime?
   image         String?
   password      String?   // null for OAuth users
+  /// Bumped on password change/reset and "sign out everywhere": older sessions stop working
+  sessionVersion Int      @default(0)
   /// Platform admin (not a team role): approves new teams and manages other super admins
   isSuperAdmin  Boolean   @default(false)
 
@@ -74,6 +76,7 @@ model User {
   notificationPrefs    NotificationPreference[]
   packSessionsStarted  PackSession[]       @relation("PackStartedBy")
   packEntries          PackEntry[]         @relation("PackedBy")
+  authTokens           AuthToken[]
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -146,6 +149,38 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/// One-time links sent by email: verify an address, reset a password, or confirm a new
+/// email address. Only a SHA-256 of the token is stored.
+model AuthToken {
+  id        String        @id @default(cuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      AuthTokenKind
+  tokenHash String        @unique
+  /// EMAIL_CHANGE: the new address (becomes the account email when confirmed)
+  email     String?
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime      @default(now())
+
+  @@index([userId, kind])
+}
+
+enum AuthTokenKind {
+  EMAIL_VERIFY
+  PASSWORD_RESET
+  EMAIL_CHANGE
+}
+
+/// Fixed-window counters for rate limiting (sign-in, registration, resets…)
+model RateLimit {
+  key     String   @id
+  count   Int
+  resetAt DateTime
+
+  @@index([resetAt])
 }
 
 model VerificationToken {

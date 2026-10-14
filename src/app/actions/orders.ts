@@ -30,23 +30,23 @@ function refresh(requestIds: string[] = []) {
 // ── New order ────────────────────────────────────────────────────────────────
 
 const ItemSchema = z.object({
-  name:       z.string().trim().min(1, "Every item needs a name.").max(200),
-  vendorName: z.string().trim().max(120).optional(),
-  partNumber: z.string().trim().max(120).optional(),
-  link:       z.string().trim().max(2000).optional(),
+  name:       z.string().trim().max(300).min(1, "Every item needs a name.").max(200),
+  vendorName: z.string().trim().max(300).max(120).optional(),
+  partNumber: z.string().trim().max(300).max(120).optional(),
+  link:       z.string().trim().max(300).max(2000).optional(),
   unitCost:   z.number().min(0).max(1_000_000).nullable().optional(),
   quantity:   z.number().positive("Quantity must be more than 0.").max(100_000),
   subTeam:    z.enum(["MECHANICAL", "ELECTRICAL", "PROGRAMMING", "DRIVE_TEAM", "STRATEGY", "DESIGN", "OUTREACH", "OPERATIONS"]).nullable().optional(),
   importance: z.enum(["ROUTINE", "URGENT", "EMERGENCY"]).default("ROUTINE"),
-  reasoning:  z.string().trim().max(2000).optional(),
-  notes:      z.string().trim().max(2000).optional(),
+  reasoning:  z.string().trim().max(5000).max(2000).optional(),
+  notes:      z.string().trim().max(5000).max(2000).optional(),
 });
 
 const OrderSchema = z.object({
-  name:    z.string().trim().min(1, "Give the order a name.").max(120),
+  name:    z.string().trim().max(300).min(1, "Give the order a name.").max(120),
   items:   z.array(ItemSchema).min(1, "Add at least one item.").max(100),
   /** Submitting a saved draft removes it */
-  draftId: z.string().nullable().optional(),
+  draftId: z.string().max(300).nullable().optional(),
 });
 
 export async function createOrderAction(input: unknown): Promise<Result<{ requestId: string; stage: string }>> {
@@ -71,7 +71,7 @@ export async function createOrderAction(input: unknown): Promise<Result<{ reques
 
 // Drafts hold the form as typed, so fields are loose strings; they're checked on submit
 const DraftSchema = z.object({
-  draftId: z.string().nullable().optional(),
+  draftId: z.string().max(300).nullable().optional(),
   name:    z.string().max(120),
   items:   z.array(z.object({
     link: z.string().max(2000), vendorName: z.string().max(120), name: z.string().max(200), partNumber: z.string().max(120),
@@ -110,8 +110,8 @@ export async function deleteOrderDraftAction(draftId: string): Promise<Result> {
 // ── Edit order ──────────────────────────────────────────────────────────────
 
 const EditOrderSchema = z.object({
-  requestId: z.string().min(1),
-  name:      z.string().trim().min(1, "Give the order a name.").max(120),
+  requestId: z.string().max(300).min(1),
+  name:      z.string().trim().max(300).min(1, "Give the order a name.").max(120),
   // Arrived items aren't sent (they're locked), so an order may come back with none here
   items:     z.array(ItemSchema.extend({ id: z.string().optional() })).max(100),
 });

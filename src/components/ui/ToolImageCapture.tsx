@@ -162,7 +162,7 @@ export function ToolImageCapture({ name = "imageUrl", defaultUrl, onUrl }: Props
             <input
               ref={fileRef}
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp"
               onChange={handleFile}
               className="sr-only"
             />

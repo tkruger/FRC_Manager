@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
+import { csvCell } from "@/lib/csv";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -35,13 +36,7 @@ export async function GET(req: NextRequest) {
     "Notes",
   ];
 
-  function escapeCell(val: string | number | boolean | null | undefined): string {
-    const s = String(val ?? "");
-    if (s.includes(",") || s.includes('"') || s.includes("\n")) {
-      return `"${s.replace(/"/g, '""')}"`;
-    }
-    return s;
-  }
+  const escapeCell = csvCell;
 
   const rows = items.map((item) => [
     item.partName,
@@ -67,7 +62,8 @@ export async function GET(req: NextRequest) {
   ];
 
   const csv = csvLines.join("\r\n");
-  const filename = `bom-${robot.displayName.replace(/\s+/g, "-").toLowerCase()}.csv`;
+  // Only safe characters in the header value
+  const filename = `bom-${robot.displayName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "robot"}.csv`;
 
   return new NextResponse(csv, {
     headers: {

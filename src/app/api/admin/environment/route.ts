@@ -1,4 +1,4 @@
-// GET /api/admin/environment — which deployment and database is this? (Head Mentors only)
+// GET /api/admin/environment — which deployment and database is this? (super admins only)
 // For checking environment variables on Vercel: shows the database host, never the password.
 
 import { NextResponse } from "next/server";
@@ -20,7 +20,8 @@ function describe(url: string | undefined) {
 
 export async function GET() {
   const session = await auth();
-  if (!session?.user?.roles?.includes("HEAD_MENTOR")) return new NextResponse("Forbidden", { status: 403 });
+  // Platform details: not for team roles (a Head Mentor runs one team, not the deployment)
+  if (!session?.user?.isSuperAdmin) return new NextResponse("Forbidden", { status: 403 });
 
   // What the database itself reports, to confirm the connection really goes where the URL says
   let connected: unknown;
@@ -29,7 +30,8 @@ export async function GET() {
       select current_database() as db, version() as version, (select count(*) from "Season") as seasons`;
     connected = { database: row.db, postgres: row.version.split(" on ")[0], seasons: Number(row.seasons) };
   } catch (e) {
-    connected = { error: e instanceof Error ? e.message : String(e) };
+    console.error("[environment] database check failed:", e);
+    connected = { error: "Database check failed — see the server logs." };
   }
 
   return NextResponse.json({

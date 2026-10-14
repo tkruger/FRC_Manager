@@ -59,6 +59,14 @@ export default function HelpPage() {
           <li>Your name in the top-right opens your profile, notification settings, this guide and (depending on your role) team settings.</li>
           <li>The bell shows your latest notifications.</li>
         </ul>
+        <H3>Your account</H3>
+        <ul className="list">
+          <li><b>Confirm your email</b> from the link we send when you sign up (or <b>Settings → Profile → Send confirmation link</b>). It&apos;s needed before Google or Discord can sign in to an account that has a password.</li>
+          <li>Forgot your password? Tap <b>Forgot password?</b> on the sign-in page for a reset link. Change it any time in <b>Profile → Account &amp; security</b>.</li>
+          <li>To sign in with Google or Discord too, use <b>Connect</b> under <b>Sign-in methods</b> on your profile.</li>
+          <li>Lost a phone or used a shared computer? <b>Sign out of all devices</b> is on your profile. Changing your password also signs out your other devices.</li>
+          <li>After 10 wrong passwords, sign-in pauses for 15 minutes for that email.</li>
+        </ul>
       </Section>
 
       <Section id="tasks" title="Tasks">

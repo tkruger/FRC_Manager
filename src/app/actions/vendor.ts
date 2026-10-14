@@ -4,14 +4,15 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { ActionError, userMessage } from "@/lib/action-error";
 
 const ADMIN_ROLES = ["HEAD_MENTOR", "INVENTORY_ADMIN", "BUDGET_MANAGER"] as const;
 
 async function requireAdmin() {
   const session = await auth();
-  if (!session?.user?.teamId) throw new Error("Not authenticated.");
+  if (!session?.user?.teamId) throw new ActionError("Not authenticated.");
   const isAdmin = session.user.roles.some((r) => ADMIN_ROLES.includes(r as any));
-  if (!isAdmin) throw new Error("Only admins can manage vendors.");
+  if (!isAdmin) throw new ActionError("Only admins can manage vendors.");
   return session;
 }
 
@@ -31,7 +32,7 @@ const FRC_VENDORS = [
 export async function seedFrcVendorsAction(): Promise<{ success: boolean; error?: string; count?: number }> {
   let session;
   try { session = await requireAdmin(); }
-  catch (e: any) { return { success: false, error: e.message }; }
+  catch (e) { return { success: false, error: userMessage(e) }; }
 
   const existing = await prisma.vendor.findMany({
     where: { teamId: session.user.teamId },
@@ -51,13 +52,13 @@ export async function seedFrcVendorsAction(): Promise<{ success: boolean; error?
 }
 
 const VendorSchema = z.object({
-  name: z.string().min(1),
-  website: z.string().url().optional().or(z.literal("")),
-  frcDiscount: z.string().optional(),
+  name: z.string().max(300).min(1),
+  website: z.string().max(2000).url().optional().or(z.literal("")),
+  frcDiscount: z.string().max(300).optional(),
   typicalLeadDays: z.coerce.number().int().min(0).optional(),
-  primaryContact: z.string().optional(),
-  accountNumber: z.string().optional(),
-  notes: z.string().optional(),
+  primaryContact: z.string().max(300).optional(),
+  accountNumber: z.string().max(300).optional(),
+  notes: z.string().max(5000).optional(),
   preferred: z.coerce.boolean().optional(),
 });
 
@@ -67,7 +68,7 @@ export async function createVendorAction(
 ): Promise<{ success: boolean; error?: string }> {
   let session;
   try { session = await requireAdmin(); }
-  catch (e: any) { return { success: false, error: e.message }; }
+  catch (e) { return { success: false, error: userMessage(e) }; }
 
   const parsed = VendorSchema.safeParse({
     name: formData.get("name"),
@@ -96,7 +97,7 @@ export async function updateVendorAction(
 ): Promise<{ success: boolean; error?: string }> {
   let session;
   try { session = await requireAdmin(); }
-  catch (e: any) { return { success: false, error: e.message }; }
+  catch (e) { return { success: false, error: userMessage(e) }; }
 
   const parsed = VendorSchema.safeParse({
     name: formData.get("name"),

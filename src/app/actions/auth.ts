@@ -6,14 +6,19 @@ import { auth, signIn } from "@/lib/auth";
 import { z } from "zod";
 import { memberAwaitingApproval, teamAwaitingApproval } from "@/lib/notify/events";
 import { AuthError } from "next-auth";
+import { rateLimit, TOO_MANY } from "@/lib/security/rate-limit";
+import { clientIp } from "@/lib/security/request";
+import { safeEqual } from "@/lib/security/crypto";
+import { sendVerificationEmail } from "@/lib/notify/auth-emails";
+import { after } from "next/server";
 
 const RegisterSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  teamNumber: z.coerce.number().int().min(1, "Enter a valid FRC team number"),
-  accessCode: z.string().optional(),
-  registrationNote: z.string().optional(),
+  name: z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name is too long"),
+  email: z.string().trim().toLowerCase().email("Invalid email address").max(254, "Email is too long"),
+  password: z.string().min(8, "Password must be at least 8 characters").max(200, "Password is too long"),
+  teamNumber: z.coerce.number().int().min(1, "Enter a valid FRC team number").max(99999, "Enter a valid FRC team number"),
+  accessCode: z.string().trim().max(100).optional(),
+  registrationNote: z.string().trim().max(500, "Keep the message under 500 characters").optional(),
 });
 
 export type RegisterState =
@@ -44,13 +49,23 @@ export async function registerAction(
 
   const { name, email, password, teamNumber, accessCode, registrationNote } = parsed.data;
 
-  const existing = await prisma.user.findUnique({ where: { email } });
+  // 5 sign-ups per hour from one address (also limits pending-team spam)
+  if (!await rateLimit(`register:ip:${await clientIp()}`, 5, 60 * 60)) return { success: false, error: TOO_MANY };
+
+  const existing = await prisma.user.findFirst({ where: { email: { equals: email, mode: "insensitive" } }, select: { id: true } });
   if (existing) {
     return { success: false, error: "An account with this email already exists." };
   }
 
   const hashed = await bcrypt.hash(password, 12);
-  return joinTeamOnRegistration({ name, teamNumber, accessCode, registrationNote, create: { email, password: hashed } });
+  const result = await joinTeamOnRegistration({ name, teamNumber, accessCode, registrationNote, create: { email, password: hashed } });
+
+  // Ask them to confirm the address (needed before Google/Discord can link to this account)
+  if (result.success) {
+    const created = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+    if (created) after(() => sendVerificationEmail(created.id).then(() => undefined));
+  }
+  return result;
 }
 
 /**
@@ -81,8 +96,12 @@ async function joinTeamOnRegistration(opts: {
     return { success: false, error: `Team ${teamNumber} can't be registered on FRC Manager. Contact the FRC Manager admins if you think this is a mistake.` };
   }
 
-  // Access code check: auto-approve as TEAM_MEMBER
-  const codeMatch = !!(accessCode && team.accessCode && accessCode === team.accessCode);
+  // Access code check: auto-approve as TEAM_MEMBER. Guesses are limited per team and caller.
+  let codeMatch = false;
+  if (accessCode && team.accessCode) {
+    if (!await rateLimit(`accesscode:${team.id}:${await clientIp()}`, 10, 60 * 60)) return { success: false, error: TOO_MANY };
+    codeMatch = safeEqual(accessCode, team.accessCode);
+  }
   const data = {
     name,
     teamId: team.id,

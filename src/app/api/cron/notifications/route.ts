@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { runReminders } from "@/lib/notify/scheduler";
+import { safeEqual } from "@/lib/security/crypto";
+import { pruneRateLimits } from "@/lib/security/rate-limit";
+import { pruneAuthTokens } from "@/lib/security/auth-tokens";
 
 // Hourly reminder job. Called by Vercel Cron or the GitHub Actions schedule with
 // `Authorization: Bearer $CRON_SECRET`. Safe to call more often — reminders are deduplicated.
@@ -9,11 +12,13 @@ export const maxDuration = 300;
 
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;
-  if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
+  if (!secret || !safeEqual(request.headers.get("authorization") ?? "", `Bearer ${secret}`)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const started = Date.now();
   const result = await runReminders();
-  return NextResponse.json({ ...result, ms: Date.now() - started });
+  // Housekeeping: expired rate-limit counters and one-time email links
+  const [rateLimitsCleared, tokensCleared] = await Promise.all([pruneRateLimits(), pruneAuthTokens()]).catch(() => [0, 0]);
+  return NextResponse.json({ ...result, rateLimitsCleared, tokensCleared, ms: Date.now() - started });
 }

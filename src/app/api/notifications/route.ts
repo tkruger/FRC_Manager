@@ -1,6 +1,9 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { z } from "zod";
+
+const MarkRead = z.object({ ids: z.array(z.string().max(64)).max(200) });
 
 export async function GET() {
   const session = await auth();
@@ -19,9 +22,10 @@ export async function POST(req: Request) {
   const session = await auth();
   if (!session) return new NextResponse("Unauthorized", { status: 401 });
 
-  const { ids } = await req.json();
+  const parsed = MarkRead.safeParse(await req.json().catch(() => null));
+  if (!parsed.success) return NextResponse.json({ error: "Send { ids: string[] }" }, { status: 400 });
   await prisma.notification.updateMany({
-    where: { userId: session.user.id, id: { in: ids ?? [] } },
+    where: { userId: session.user.id, id: { in: parsed.data.ids } },
     data: { read: true },
   });
 

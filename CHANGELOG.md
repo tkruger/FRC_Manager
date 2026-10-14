@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+**Security**
+- Upgraded Next.js (16.4.1) and Auth.js (5.0.0-beta.32) for published security fixes
+- Email confirmation: new accounts get a confirmation link; Google/Discord only sign in to a password account whose email is confirmed (or that connects them from Profile)
+- Forgot password and reset links; change password, change email (confirmed from the new address) and "Sign out of all devices" in Profile → Account & security
+- Rate limits on sign-in, registration, team access codes, invites, password resets and photo uploads; team access codes need 12+ characters (Generate makes one)
+- Security headers (Content-Security-Policy, no framing, referrer and permissions policies)
+- Exports can no longer carry spreadsheet formulas; tool photos must be real JPEG/PNG/WebP files; tool names are escaped when printing barcodes
+- Platform tools (environment check, Discord command registration) are for super admins only
+
 ## 1.1.1 — 2026-10-14
 
 - Sign in and sign up with Discord. A matching verified email signs into your existing account, and Discord sign-in also connects you for the bot. Google sign-in also matches an existing account by verified email. People who sign up with Google or Discord now pick their team on a "Finish signing up" step

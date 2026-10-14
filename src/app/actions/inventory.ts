@@ -8,23 +8,23 @@ import type { ItemCategory, ItemType, UnitOfMeasure } from "@/generated/prisma";
 import { maybeQueueReorder } from "@/lib/workflow/reorder";
 
 const BaseItemSchema = z.object({
-  name:               z.string().min(1),
-  partNumber:         z.string().optional(),
-  category:           z.string().default("MECHANICAL"),
-  itemType:           z.string().default("DISCRETE"),
-  description:        z.string().optional(),
-  unitOfMeasure:      z.string().default("EACH"),
+  name:               z.string().max(300).min(1),
+  partNumber:         z.string().max(300).optional(),
+  category:           z.string().max(300).default("MECHANICAL"),
+  itemType:           z.string().max(300).default("DISCRETE"),
+  description:        z.string().max(5000).optional(),
+  unitOfMeasure:      z.string().max(300).default("EACH"),
   currentStock:       z.coerce.number().min(0).default(0),
   minStockThreshold:  z.coerce.number().min(0).default(0),
   reorderQuantity:    z.coerce.number().min(0).default(1),
-  preferredSupplier:  z.string().optional(),
+  preferredSupplier:  z.string().max(300).optional(),
   supplierLeadDays:   z.coerce.number().int().optional(),
   unitCost:           z.coerce.number().min(0).optional(),
   fairMarketValue:    z.coerce.number().min(0).optional(),
-  storageLocation:    z.string().optional(),
+  storageLocation:    z.string().max(300).optional(),
   isKopItem:          z.coerce.boolean().optional(),
   isFirstChoiceItem:  z.coerce.boolean().optional(),
-  notes:              z.string().optional(),
+  notes:              z.string().max(5000).optional(),
 });
 
 export type InventoryActionState = { success: boolean; error?: string };
@@ -164,10 +164,10 @@ export async function updateBaseItemAction(
 
 const AcquireSchema = z.object({
   quantity:    z.coerce.number().positive(),
-  robotId:     z.string().optional(),
-  location:    z.string().optional(),
-  subsystem:   z.string().optional(),
-  notes:       z.string().optional(),
+  robotId:     z.string().max(300).optional(),
+  location:    z.string().max(300).optional(),
+  subsystem:   z.string().max(300).optional(),
+  notes:       z.string().max(5000).optional(),
 });
 
 export async function acquireItemAction(

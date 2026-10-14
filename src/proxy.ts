@@ -6,25 +6,34 @@ import { NextResponse } from "next/server";
 
 const { auth } = NextAuth(authConfig);
 
-const PUBLIC_PATHS = [
-  "/login", "/register", "/pending",
-  "/api/auth",
-  "/api/calendar",    // iCal feed — must be accessible without auth for calendar apps
-  "/public/schedule", // Public team schedule page
-  "/api/cron",        // Scheduled jobs — authenticated with CRON_SECRET instead
-  "/api/discord/interactions", // Called by Discord — authenticated by its Ed25519 signature instead
-  "/sw.js",           // Service worker (push notifications)
+// Pages and routes that work signed out. Exact paths only — a new route under one of
+// these doesn't become public by accident. Each still does its own checks.
+const PUBLIC_EXACT = new Set([
+  "/login", "/register", "/register/finish", "/pending",
+  "/forgot-password",
+  "/terms", "/privacy",          // Legal pages — linked from Discord and the sign-in screens
+  "/sw.js",                      // Service worker (push notifications)
   "/manifest.webmanifest",
-  "/api/manifest",      // Web app manifest (chosen home-screen icon)
-  "/app-icons",
-  "/terms", "/privacy", // Legal pages — linked from Discord and the sign-in screens
-  "/invite",            // Invite links — people open them before they have an account
+  "/api/manifest",               // Web app manifest (chosen home-screen icon)
+  "/api/discord/interactions",   // Called by Discord — authenticated by its Ed25519 signature instead
+]);
+
+// Whole subtrees that are public (matched with the trailing slash)
+const PUBLIC_PREFIXES = [
+  "/api/auth/",
+  "/api/calendar/",    // iCal feed — must be accessible without auth for calendar apps
+  "/public/schedule/", // Public team schedule page
+  "/api/cron/",        // Scheduled jobs — authenticated with CRON_SECRET instead
+  "/invite/",          // Invite links — people open them before they have an account
+  "/reset-password/",  // Emailed password-reset links
+  "/verify-email/",    // Emailed confirmation links
+  "/app-icons/",
 ];
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
 
-  const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
+  const isPublic = PUBLIC_EXACT.has(pathname) || PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));
   if (isPublic) return NextResponse.next();
 
   // CSV exports opened in Safari from the iPhone app carry a signed, short-lived

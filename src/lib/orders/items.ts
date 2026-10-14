@@ -6,6 +6,7 @@ import type { ItemCategory, OrderItemStatus, Prisma } from "@/generated/prisma";
 import { definitionFor, resolveCurrentStep, performCurrentStepAction, type Actor } from "@/lib/workflow/engine";
 import { itemRef } from "./constants";
 import { assignItemNumbers } from "./numbers";
+import { csvCell } from "@/lib/csv";
 
 type Tx = Prisma.TransactionClient;
 
@@ -199,10 +200,6 @@ export async function syncOrders(requestIds: string[], actor: Actor) {
 
 // ── CSV for the Team Admin ──────────────────────────────────────────────────
 
-function csvCell(v: unknown): string {
-  const s = String(v ?? "");
-  return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-}
 
 /** Fields needed for one CSV row */
 export const CSV_ITEM_SELECT = {

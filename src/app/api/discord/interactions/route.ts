@@ -56,6 +56,12 @@ export async function POST(req: NextRequest) {
     return new NextResponse("Invalid request signature", { status: 401 });
   }
 
+  // The signature covers the timestamp: refuse old requests so a captured one can't be replayed
+  const sentAt = Number(timestamp);
+  if (!Number.isFinite(sentAt) || Math.abs(Date.now() / 1000 - sentAt) > 5 * 60) {
+    return new NextResponse("Stale request", { status: 401 });
+  }
+
   let body: any;
   try {
     body = JSON.parse(rawBody);

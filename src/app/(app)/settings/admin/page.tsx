@@ -21,7 +21,7 @@ export default async function AdminPage() {
       orderBy: { createdAt: "asc" },
       select:  {
         id: true, teamNumber: true, name: true, createdAt: true,
-        users: { orderBy: { createdAt: "asc" }, select: { id: true, name: true, email: true, registrationNote: true, createdAt: true } },
+        users: { orderBy: { createdAt: "asc" }, select: { id: true, name: true, email: true, emailVerified: true, registrationNote: true, createdAt: true } },
       },
     }),
     prisma.team.findMany({
@@ -77,7 +77,12 @@ export default async function AdminPage() {
                       <span className="font-medium">{founder.name}</span>
                       <span className="text-(--color-text-secondary) break-all"> · {founder.email}</span>
                     </p>
-                    <p className="text-small text-(--color-text-secondary)">Becomes Head Mentor when approved</p>
+                    <p className="text-small text-(--color-text-secondary)">
+                      {founder.emailVerified
+                        ? "Email confirmed"
+                        : <span className="text-(--color-warning)">Email not confirmed yet — anyone can type any address when registering</span>}
+                      {" · "}Becomes Head Mentor when approved
+                    </p>
                     {founder.registrationNote && (
                       <p className="text-small italic text-(--color-text-primary) pt-1">&ldquo;{founder.registrationNote}&rdquo;</p>
                     )}

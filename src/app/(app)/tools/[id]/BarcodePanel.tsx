@@ -1,6 +1,7 @@
 "use client";
 
 import QRCode from "react-qr-code";
+import { escapeHtml } from "@/lib/html";
 
 interface Props {
   toolId:   string;
@@ -15,12 +16,15 @@ export function BarcodePanel({ toolId, toolName, assetTag }: Props) {
   function printBarcode() {
     const win = window.open("", "_blank", "width=400,height=500");
     if (!win) return;
+    // The QR code is our own SVG; the name and code are escaped (they're user-editable)
     const svg = document.getElementById("tool-qr-svg")?.outerHTML ?? "";
+    const name = escapeHtml(toolName);
+    const code = escapeHtml(codeValue);
     win.document.write(`<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8"/>
-  <title>Barcode — ${toolName}</title>
+  <title>Barcode — ${name}</title>
   <style>
     body { margin: 0; display: flex; flex-direction: column; align-items: center;
            justify-content: center; min-height: 100vh; font-family: sans-serif; padding: 24px; }
@@ -34,8 +38,8 @@ export function BarcodePanel({ toolId, toolName, assetTag }: Props) {
 </head>
 <body>
   ${svg}
-  <h1>${toolName}</h1>
-  <p>${codeValue}</p>
+  <h1>${name}</h1>
+  <p>${code}</p>
   <script>window.onload = () => { window.print(); window.close(); }</script>
 </body>
 </html>`);
@@ -49,7 +53,7 @@ export function BarcodePanel({ toolId, toolName, assetTag }: Props) {
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement("a");
     a.href     = url;
-    a.download = `tool-${codeValue}.svg`;
+    a.download = `tool-${codeValue.replace(/[^A-Za-z0-9-]+/g, "_")}.svg`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -57,17 +61,17 @@ export function BarcodePanel({ toolId, toolName, assetTag }: Props) {
   return (
     <div className="card space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-h3 text-[--color-text-primary]">Barcode</h2>
+        <h2 className="text-h3 text-(--color-text-primary)">Barcode</h2>
         <div className="flex gap-2">
           <button
             onClick={downloadSvg}
-            className="text-sm text-[--color-text-secondary] hover:text-[--color-text-primary] transition-colors px-2 py-1 rounded hover:bg-[--color-surface-overlay]"
+            className="text-sm text-(--color-text-secondary) hover:text-(--color-text-primary) transition-colors px-2 py-1 rounded hover:bg-(--color-surface-overlay)"
           >
             Download SVG
           </button>
           <button
             onClick={printBarcode}
-            className="text-sm font-medium px-3 py-1.5 rounded-lg border border-[--color-border] hover:border-[--color-border-strong] text-[--color-text-secondary] hover:text-[--color-text-primary] transition-colors"
+            className="text-sm font-medium px-3 py-1.5 rounded-lg border border-(--color-border) hover:border-(--color-border-strong) text-(--color-text-secondary) hover:text-(--color-text-primary) transition-colors"
           >
             Print barcode
           </button>
@@ -84,8 +88,8 @@ export function BarcodePanel({ toolId, toolName, assetTag }: Props) {
           />
         </div>
         <div className="text-center">
-          <p className="text-mono text-sm text-[--color-text-primary]">{codeValue}</p>
-          <p className="text-small text-[--color-text-secondary] mt-0.5">
+          <p className="text-mono text-sm text-(--color-text-primary)">{codeValue}</p>
+          <p className="text-small text-(--color-text-secondary) mt-0.5">
             Scan to check in / out
           </p>
         </div>

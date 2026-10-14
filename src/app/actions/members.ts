@@ -1,5 +1,6 @@
 "use server";
 
+import { newAccessCode } from "@/lib/security/crypto";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
@@ -8,12 +9,13 @@ import { createNotification } from "@/lib/notifications";
 import { sendApprovalEmail } from "@/lib/notify/approval-email";
 import { after } from "next/server";
 import { LEADERSHIP_ROLES } from "@/lib/rbac";
+import { ActionError, userMessage } from "@/lib/action-error";
 
 async function requireAdmin() {
   const session = await auth();
-  if (!session?.user?.teamId) throw new Error("Not authenticated.");
+  if (!session?.user?.teamId) throw new ActionError("Not authenticated.");
   const isAdmin = session.user.roles.some((r) => LEADERSHIP_ROLES.includes(r as any));
-  if (!isAdmin) throw new Error("Only Head Mentors, Mentors and Team Leadership can manage team members.");
+  if (!isAdmin) throw new ActionError("Only Head Mentors, Mentors and Team Leadership can manage team members.");
   return session;
 }
 
@@ -84,8 +86,8 @@ export async function approveMemberAction(
 
     revalidatePath("/settings/members");
     return { success: true };
-  } catch (e: any) {
-    return { success: false, error: e.message };
+  } catch (e) {
+    return { success: false, error: userMessage(e) };
   }
 }
 
@@ -105,8 +107,8 @@ export async function denyMemberAction(
 
     revalidatePath("/settings/members");
     return { success: true };
-  } catch (e: any) {
-    return { success: false, error: e.message };
+  } catch (e) {
+    return { success: false, error: userMessage(e) };
   }
 }
 
@@ -127,8 +129,8 @@ export async function updateMemberRolesAction(
 
     revalidatePath("/settings/members");
     return { success: true };
-  } catch (e: any) {
-    return { success: false, error: e.message };
+  } catch (e) {
+    return { success: false, error: userMessage(e) };
   }
 }
 
@@ -154,8 +156,8 @@ export async function suspendMemberAction(userId: string): Promise<{ success: bo
     });
     revalidatePath("/settings/members");
     return { success: true };
-  } catch (e: any) {
-    return { success: false, error: e.message };
+  } catch (e) {
+    return { success: false, error: userMessage(e) };
   }
 }
 
@@ -221,23 +223,32 @@ export async function deleteMemberAction(userId: string): Promise<{ success: boo
 
     revalidatePath("/settings/members");
     return { success: true, erased: hasHistory };
-  } catch (e: any) {
-    return { success: false, error: e.message };
+  } catch (e) {
+    return { success: false, error: userMessage(e) };
   }
 }
 
+/**
+ * Set the team access code (anyone who enters it joins as an approved Team Member).
+ * `generate` makes a random one; a code you type must be at least 12 characters so it
+ * can't be guessed. Blank turns it off.
+ */
 export async function updateTeamAccessCodeAction(
-  code: string
-): Promise<{ success: boolean; error?: string }> {
+  code: string,
+  generate = false,
+): Promise<{ success: boolean; error?: string; code?: string | null }> {
   try {
     const session = await requireAdmin();
+    const value = generate ? newAccessCode() : code.trim();
+    if (value && value.length < 12) return { success: false, error: "Use at least 12 characters, or tap Generate for a random code." };
+    if (value.length > 64) return { success: false, error: "Keep the code under 64 characters." };
     await prisma.team.update({
       where: { id: session.user.teamId },
-      data: { accessCode: code || null },
+      data: { accessCode: value || null },
     });
     revalidatePath("/settings/members");
-    return { success: true };
-  } catch (e: any) {
-    return { success: false, error: e.message };
+    return { success: true, code: value || null };
+  } catch (e) {
+    return { success: false, error: userMessage(e) };
   }
 }

@@ -1,6 +1,6 @@
 // Full auth — Node.js runtime only (API routes, server components).
 // Middleware uses auth.config.ts instead to avoid the Edge crypto restriction.
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
@@ -10,6 +10,16 @@ import { prisma } from "@/lib/prisma";
 import { authConfig } from "@/lib/auth.config";
 import { withImpliedRoles } from "@/lib/rbac";
 import type { Role } from "@/generated/prisma";
+import { rateLimitAll, clearRateLimit } from "@/lib/security/rate-limit";
+import { ipFrom } from "@/lib/security/request";
+
+/** Too many password attempts — the sign-in form shows a "wait a few minutes" message */
+class TooManyAttempts extends CredentialsSignin {
+  code = "rate_limited";
+}
+
+/** Compared against when the email has no account, so a miss takes as long as a wrong password */
+const DUMMY_HASH = "$2b$12$y3eYX2Vhqe.Hn5I1MhZis.UuI.aMu.semPoBen352uE.f5ppW11G6";
 
 /** Discord sign-in uses the bot's application (DISCORD_APPLICATION_ID) plus its OAuth2 client secret */
 const DISCORD_CLIENT_ID     = process.env.DISCORD_CLIENT_ID ?? process.env.DISCORD_APPLICATION_ID;
@@ -53,11 +63,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return linkDiscordForBot(user.id, account.providerAccountId, username);
       }
     },
+    // Google and Discord have already verified the email of an account they create
+    async createUser({ user }) {
+      if (user.id) await prisma.user.update({ where: { id: user.id }, data: { emailVerified: new Date() } }).catch(() => {});
+    },
     // One line in the server logs per sign-in: which database and deployment served it
     // (Vercel → project → Logs). Helps confirm each environment uses its own database.
+    // The user id, not their email, so logs hold no personal details.
     signIn({ user, account }) {
       console.info(
-        `[auth] sign-in ${user.email ?? user.id ?? "unknown"} via ${account?.provider ?? "?"} ` +
+        `[auth] sign-in user ${user.id ?? "unknown"} via ${account?.provider ?? "?"} ` +
         `— database ${databaseHost()} — ${process.env.VERCEL_ENV ?? "local"}` +
         (process.env.VERCEL_TARGET_ENV && process.env.VERCEL_TARGET_ENV !== process.env.VERCEL_ENV ? ` (${process.env.VERCEL_TARGET_ENV})` : "") +
         (process.env.VERCEL_GIT_COMMIT_REF ? ` @ ${process.env.VERCEL_GIT_COMMIT_REF}` : ""),
@@ -77,6 +92,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const p = profile as { email?: string | null; email_verified?: boolean } | undefined;
         if (!p?.email || p.email_verified === false) return "/login?error=GoogleEmail";
       }
+      if (account && account.type !== "credentials" && profile?.email) {
+        // Matching by email links this Google/Discord account into an existing FRC Manager
+        // account. Only allow that when the existing account has proven it owns the email
+        // (otherwise someone could register the address first and capture the real owner's
+        // sign-ins). Already-linked accounts and signed-in users connecting from Profile are
+        // fine: Auth.js links those to the account itself, not by email.
+        const linked = await prisma.account.findUnique({
+          where:  { provider_providerAccountId: { provider: account.provider, providerAccountId: account.providerAccountId } },
+          select: { id: true },
+        });
+        if (!linked && !(await auth())?.user?.id) {
+          const existing = await prisma.user.findFirst({
+            where:  { email: { equals: profile.email, mode: "insensitive" } },
+            select: { password: true, emailVerified: true },
+          });
+          if (existing?.password && !existing.emailVerified) return "/login?error=LinkNeedsVerify";
+        }
+      }
       return true;
     },
     // Roles, team and status used to be frozen into the JWT at sign-in, so a suspended
@@ -88,9 +121,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (!token?.id) return token;
       const user = await prisma.user.findUnique({
         where:  { id: token.id as string },
-        select: { status: true, teamId: true, isSuperAdmin: true, roles: { select: { role: true } } },
+        select: { status: true, teamId: true, isSuperAdmin: true, sessionVersion: true, roles: { select: { role: true } } },
       });
       if (!user || user.status === "SUSPENDED" || user.status === "DENIED") return null;
+      // Password changes, resets and "sign out everywhere" bump sessionVersion: sessions
+      // from before that stop working. (Sessions from before this check count as version 0.)
+      if (params.user) token.sv = user.sessionVersion;
+      else if ((token.sv ?? 0) !== user.sessionVersion) return null;
       token.teamId = user.teamId ?? undefined;
       token.status = user.status;
       // Mentor counts as Team Leadership (withImpliedRoles) for every permission check
@@ -131,22 +168,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+      async authorize(credentials, request) {
+        const email    = typeof credentials?.email === "string" ? credentials.email.trim().slice(0, 254) : "";
+        const password = typeof credentials?.password === "string" ? credentials.password.slice(0, 200) : "";
+        if (!email || !password) return null;
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string },
+        // 10 tries per email and 50 per IP every 15 minutes
+        const emailKey = `login:email:${email.toLowerCase()}`;
+        const allowed = await rateLimitAll([
+          [emailKey, 10, 15 * 60],
+          [`login:ip:${ipFrom(request.headers)}`, 50, 15 * 60],
+        ]);
+        if (!allowed) throw new TooManyAttempts();
+
+        const user = await prisma.user.findFirst({
+          where: { email: { equals: email, mode: "insensitive" } },
           include: { roles: true },
         });
 
-        if (!user || !user.password) return null;
+        const valid = await bcrypt.compare(password, user?.password ?? DUMMY_HASH);
+        if (!user || !user.password || !valid) return null;
         if (user.status !== "ACTIVE") return null;
-
-        const valid = await bcrypt.compare(
-          credentials.password as string,
-          user.password
-        );
-        if (!valid) return null;
+        await clearRateLimit(emailKey);
 
         return {
           id: user.id,

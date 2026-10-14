@@ -10,6 +10,10 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { auth, signIn } from "@/lib/auth";
 import { withImpliedRoles } from "@/lib/rbac";
+import { rateLimit, TOO_MANY } from "@/lib/security/rate-limit";
+import { clientIp } from "@/lib/security/request";
+import { sendVerificationEmail } from "@/lib/notify/auth-emails";
+import { after } from "next/server";
 import { sendEmail, escapeHtml } from "@/lib/email";
 import { sendChannelMessage, embed, COLORS, explainDiscordError } from "@/lib/discord";
 import {
@@ -52,6 +56,8 @@ export async function sendEmailInvitesAction(raw: string, pickedRoles: string[] 
   const emails = [...new Set(raw.split(/[\s,;]+/).map((e) => e.trim().toLowerCase()).filter(Boolean))];
   if (emails.length === 0) return { success: false, error: "Enter at least one email address." };
   if (emails.length > 50) return { success: false, error: "Up to 50 addresses at a time." };
+  // 4 batches an hour per person keeps a compromised account from spamming through us
+  if (!await rateLimit(`invites:user:${session.user.id}`, 4, 60 * 60)) return { success: false, error: TOO_MANY };
 
   const team = await prisma.team.findUnique({ where: { id: teamId }, select: { teamNumber: true, name: true } });
   if (!team) return { success: false, error: "Team not found." };
@@ -154,13 +160,14 @@ export async function revokeInviteAction(inviteId: string): Promise<{ success: t
 // ── Accepting ───────────────────────────────────────────────────────────────
 
 const NewAccountSchema = z.object({
-  name:     z.string().trim().min(2, "Enter your name."),
-  email:    z.string().trim().email("Enter a valid email address."),
-  password: z.string().min(8, "Password must be at least 8 characters."),
+  name:     z.string().trim().min(2, "Enter your name.").max(100, "That name is too long."),
+  email:    z.string().trim().toLowerCase().email("Enter a valid email address.").max(254),
+  password: z.string().min(8, "Password must be at least 8 characters.").max(200, "That password is too long."),
 });
 
 /** New to FRC Manager: create an account from the invite — approved, on the team — and sign in. */
 export async function acceptInviteWithNewAccountAction(token: string, input: unknown): Promise<{ success: true } | Fail> {
+  if (!await rateLimit(`invite-join:ip:${await clientIp()}`, 10, 60 * 60)) return { success: false, error: TOO_MANY };
   const usable = await findUsableInvite(token);
   if (!usable.ok) return { success: false, error: usable.reason };
 
@@ -173,9 +180,13 @@ export async function acceptInviteWithNewAccountAction(token: string, input: unk
   const existing = await prisma.user.findFirst({ where: { email: { equals: email, mode: "insensitive" } }, select: { id: true } });
   if (existing) return { success: false, error: "There's already an account with that email — sign in instead, then open the invite again." };
 
-  await prisma.user.create({
+  // An emailed invite's token reached this address, so the address is confirmed
+  const emailed = usable.invite.kind === "EMAIL" && !!usable.invite.email;
+  const created = await prisma.user.create({
+    select: { id: true },
     data: {
       name, email,
+      emailVerified: emailed ? new Date() : null,
       password:   await bcrypt.hash(password, 12),
       teamId:     usable.team.id,
       status:     "ACTIVE",
@@ -186,6 +197,7 @@ export async function acceptInviteWithNewAccountAction(token: string, input: unk
   });
   await markInviteUsed(usable.invite.id);
   revalidatePath("/settings/members");
+  if (!emailed) after(() => sendVerificationEmail(created.id).then(() => undefined));
 
   try {
     await signIn("credentials", { email, password, redirect: false });

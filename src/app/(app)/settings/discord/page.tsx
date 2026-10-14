@@ -65,7 +65,8 @@ export default async function DiscordSettingsPage() {
         {config?.active && (
           <div className="flex flex-wrap items-center gap-2">
             <TestServerButton />
-            <RegisterCommandsButton />
+            {/* Slash commands belong to the shared bot, so only platform admins re-register them */}
+            {session.user.isSuperAdmin && <RegisterCommandsButton />}
           </div>
         )}
 

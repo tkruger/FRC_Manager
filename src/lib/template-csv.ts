@@ -1,6 +1,7 @@
 // CSV utilities for task templates
 
 import { TASK_ANCHORS, STAGE_INFO, isCompetitionAnchor, legacyAnchor, type TaskAnchor } from "@/lib/competition";
+import { csvCell } from "@/lib/csv";
 
 export const CSV_HEADERS = [
   "name",
@@ -32,14 +33,6 @@ export type CsvRow = {
   anchorNumber:         string;
 };
 
-function escapeCell(v: unknown): string {
-  const s = String(v ?? "");
-  if (s.includes(",") || s.includes('"') || s.includes("\n")) {
-    return `"${s.replace(/"/g, '""')}"`;
-  }
-  return s;
-}
-
 export function tasksToCSV(tasks: {
   name:                 string;
   description?:         string | null;
@@ -67,7 +60,7 @@ export function tasksToCSV(tasks: {
     (t.prerequisiteNames ?? []).join("|"),
     t.anchor ?? legacyAnchor(t.startOffset),
     t.anchorNumber != null ? String(t.anchorNumber) : "",
-  ].map(escapeCell).join(","));
+  ].map(csvCell).join(","));
 
   return [CSV_HEADERS.join(","), ...rows].join("\n");
 }
@@ -130,7 +123,8 @@ function parseCSVLine(line: string): string[] {
     }
   }
   cells.push(cur);
-  return cells;
+  // Undo the ' that exports put in front of formula-like text (see csvCell)
+  return cells.map((c) => (/^'[=+\-@\t\r]/.test(c) ? c.slice(1) : c));
 }
 
 export function parseCSV(content: string): ParseResult {

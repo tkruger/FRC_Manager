@@ -6,14 +6,15 @@ import { regenerateFutureMeetings } from "@/lib/season-meetings";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import * as notify from "@/lib/notify/events";
+import { ActionError, userMessage } from "@/lib/action-error";
 
 const LEADERSHIP = ["HEAD_MENTOR", "TEAM_LEADERSHIP", "BUILD_LEAD"] as const;
 
 async function requireLeadership() {
   const session = await auth();
-  if (!session?.user?.teamId) throw new Error("Not authenticated.");
+  if (!session?.user?.teamId) throw new ActionError("Not authenticated.");
   if (!session.user.roles.some((r) => LEADERSHIP.includes(r as any)))
-    throw new Error("Only Head Mentors, Team Leadership, and Build Leads can manage meetings.");
+    throw new ActionError("Only Head Mentors, Team Leadership, and Build Leads can manage meetings.");
   return session;
 }
 
@@ -30,7 +31,7 @@ export async function generateMeetingsAction(
   seasonId: string
 ): Promise<{ success: boolean; error?: string; count?: number }> {
   let session;
-  try { session = await requireLeadership(); } catch (e: any) { return { success: false, error: e.message }; }
+  try { session = await requireLeadership(); } catch (e) { return { success: false, error: userMessage(e) }; }
 
   const season = await prisma.season.findFirst({
     where: { id: seasonId, teamId: session.user.teamId },
@@ -57,7 +58,7 @@ export async function updateMeetingAction(
   }
 ): Promise<{ success: boolean; error?: string }> {
   let session;
-  try { session = await requireLeadership(); } catch (e: any) { return { success: false, error: e.message }; }
+  try { session = await requireLeadership(); } catch (e) { return { success: false, error: userMessage(e) }; }
 
   const before = await findTeamMeeting(meetingId, session.user.teamId!);
   if (!before) return { success: false, error: "Meeting not found." };
@@ -106,7 +107,7 @@ export async function cancelMeetingAction(
   reason?: string
 ): Promise<{ success: boolean; error?: string }> {
   let session;
-  try { session = await requireLeadership(); } catch (e: any) { return { success: false, error: e.message }; }
+  try { session = await requireLeadership(); } catch (e) { return { success: false, error: userMessage(e) }; }
   if (!await findTeamMeeting(meetingId, session.user.teamId!)) return { success: false, error: "Meeting not found." };
 
   await prisma.meeting.update({
@@ -134,7 +135,7 @@ export async function addMeetingAction(
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
   let session;
-  try { session = await requireLeadership(); } catch (e: any) { return { success: false, error: e.message }; }
+  try { session = await requireLeadership(); } catch (e) { return { success: false, error: userMessage(e) }; }
 
   const season = await prisma.season.findFirst({ where: { id: seasonId, teamId: session.user.teamId } });
   if (!season) return { success: false, error: "Season not found." };
@@ -162,7 +163,7 @@ export async function generateCalendarTokenAction(
 ): Promise<{ success: boolean; token?: string; error?: string }> {
   // Regenerating the token breaks everyone's existing calendar subscriptions
   let session;
-  try { session = await requireLeadership(); } catch (e: any) { return { success: false, error: e.message }; }
+  try { session = await requireLeadership(); } catch (e) { return { success: false, error: userMessage(e) }; }
 
   const crypto = await import("crypto");
   const token  = crypto.randomBytes(16).toString("hex");

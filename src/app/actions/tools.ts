@@ -10,20 +10,31 @@ import type { ToolType, ToolSpace, ToolCondition } from "@/generated/prisma";
 // name, each with its own asset tag, condition, checkouts and barcode.
 
 const ToolSchema = z.object({
-  name:                    z.string().trim().min(1),
-  toolType:                z.string().default("OTHER"),
-  manufacturer:            z.string().optional(),
-  model:                   z.string().optional(),
-  assetTag:                z.string().trim().max(40).optional(),
-  homeLocation:            z.string().optional(),
-  space:                   z.string().default("SHOP_ONLY"),
-  condition:               z.string().default("GOOD"),
+  name:                    z.string().trim().max(300).min(1),
+  toolType:                z.string().max(300).default("OTHER"),
+  manufacturer:            z.string().max(300).optional(),
+  model:                   z.string().max(300).optional(),
+  assetTag:                z.string().trim().max(300).max(40).optional(),
+  homeLocation:            z.string().max(300).optional(),
+  space:                   z.string().max(300).default("SHOP_ONLY"),
+  condition:               z.string().max(300).default("GOOD"),
   requiresCertification:   z.coerce.boolean().optional(),
-  certificationName:       z.string().optional(),
+  certificationName:       z.string().max(300).optional(),
   maintenanceIntervalDays: z.coerce.number().int().optional(),
   replacementCost:         z.coerce.number().optional(),
-  notes:                   z.string().optional(),
+  notes:                   z.string().max(5000).optional(),
 });
+
+/** Tool photos must be ones uploaded to our Vercel Blob store (not any URL on the internet) */
+function blobImageUrl(v: unknown): string | null {
+  if (typeof v !== "string" || !v) return null;
+  try {
+    const u = new URL(v);
+    return u.protocol === "https:" && u.hostname.endsWith(".public.blob.vercel-storage.com") ? u.toString() : null;
+  } catch {
+    return null;
+  }
+}
 
 const TOOL_EDIT_ROLES = ["INVENTORY_ADMIN", "BUILD_LEAD", "TEAM_LEADERSHIP", "HEAD_MENTOR"];
 const TOOL_CONDITIONS = ["EXCELLENT", "GOOD", "FAIR", "NEEDS_REPAIR", "OUT_OF_SERVICE", "OUT_FOR_MAINTENANCE"] as const;
@@ -102,7 +113,7 @@ export async function createToolAction(
     tags = await allocateToolTags(teamId, count);
   }
 
-  const imageUrl = (formData.get("imageUrl") as string) || null;
+  const imageUrl = blobImageUrl(formData.get("imageUrl"));
   await prisma.tool.createMany({
     data: tags.map((assetTag) => ({
       teamId,
@@ -134,9 +145,12 @@ export async function updateToolImageAction(
   const session = await auth();
   if (!session?.user?.teamId) return { success: false };
 
+  const image = blobImageUrl(imageUrl);
+  if (imageUrl && !image) return { success: false };
+
   await prisma.tool.update({
     where: { id: toolId, teamId: session.user.teamId },
-    data:  { image: imageUrl },
+    data:  { image },
   });
 
   revalidatePath(`/tools/${toolId}`);

@@ -8,12 +8,13 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
 import { STAGE_INFO, designation } from "@/lib/competition";
+import { ActionError, userMessage } from "@/lib/action-error";
 
 async function requireHeadMentor() {
   const session = await auth();
-  if (!session?.user?.teamId) throw new Error("Not authenticated.");
+  if (!session?.user?.teamId) throw new ActionError("Not authenticated.");
   if (!session.user.roles.includes("HEAD_MENTOR" as any))
-    throw new Error("Only Head Mentors can manage seasons.");
+    throw new ActionError("Only Head Mentors can manage seasons.");
   return session;
 }
 
@@ -53,11 +54,11 @@ async function checkSeasonOverlap(
 }
 
 const SeasonSchema = z.object({
-  name:               z.string().min(1),
+  name:               z.string().max(300).min(1),
   year:               z.coerce.number().int().min(2000).max(2100),
-  kickoffDate:        z.string().min(1),
-  endDate:            z.string().min(1),
-  meetingDays:        z.array(z.string()).min(1),
+  kickoffDate:        z.string().max(300).min(1),
+  endDate:            z.string().max(300).min(1),
+  meetingDays:        z.array(z.string().max(100)).max(200).min(1),
   expectedAttendance: z.coerce.number().int().min(1).default(10),
 }).refine((d) => new Date(d.endDate) > new Date(d.kickoffDate), { message: "The season has to end after it starts." });
 
@@ -96,7 +97,7 @@ export async function createSeasonAction(
   formData: FormData
 ): Promise<SeasonActionState> {
   let session;
-  try { session = await requireHeadMentor(); } catch (e: any) { return { success: false, error: e.message }; }
+  try { session = await requireHeadMentor(); } catch (e) { return { success: false, error: userMessage(e) }; }
 
   const days = formData.getAll("meetingDays") as string[];
   const parsed = SeasonSchema.safeParse({
@@ -153,7 +154,7 @@ export async function updateSeasonAction(
   formData: FormData
 ): Promise<SeasonActionState> {
   let session;
-  try { session = await requireHeadMentor(); } catch (e: any) { return { success: false, error: e.message }; }
+  try { session = await requireHeadMentor(); } catch (e) { return { success: false, error: userMessage(e) }; }
 
   const days = formData.getAll("meetingDays") as string[];
   const parsed = SeasonSchema.safeParse({
@@ -230,10 +231,10 @@ export async function updateSeasonAction(
 }
 
 const RobotSchema = z.object({
-  name:         z.string().min(1),
+  name:         z.string().max(300).min(1),
   role:         z.enum(["COMPETITION", "PRACTICE", "DEMO", "OTHER"]),
   weightTarget: z.coerce.number().optional(),
-  description:  z.string().optional(),
+  description:  z.string().max(5000).optional(),
 });
 
 export async function createRobotAction(
@@ -241,7 +242,7 @@ export async function createRobotAction(
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
   let session;
-  try { session = await requireHeadMentor(); } catch (e: any) { return { success: false, error: e.message }; }
+  try { session = await requireHeadMentor(); } catch (e) { return { success: false, error: userMessage(e) }; }
 
   const season = await prisma.season.findFirst({
     where: { id: seasonId, teamId: session.user.teamId },
@@ -279,10 +280,10 @@ export async function createRobotAction(
 const CompetitionSchema = z.object({
   stage:       z.enum(["PRACTICE", "WEEK", "PLAYOFF", "WORLDS", "OFFSEASON"]),
   stageNumber: z.coerce.number().int().min(0).max(99).optional(),
-  name:        z.string().trim().min(1, "Enter the event name.").max(120),
-  location:    z.string().trim().max(160).optional(),
-  startDate:   z.string().min(1, "Choose a start date."),
-  endDate:     z.string().optional(),
+  name:        z.string().trim().max(300).min(1, "Enter the event name.").max(120),
+  location:    z.string().trim().max(300).max(160).optional(),
+  startDate:   z.string().max(300).min(1, "Choose a start date."),
+  endDate:     z.string().max(300).optional(),
 });
 
 type CompetitionResult = { success: boolean; error?: string };
@@ -293,7 +294,7 @@ async function saveCompetition(
   formData: FormData,
 ): Promise<CompetitionResult> {
   let session;
-  try { session = await requireHeadMentor(); } catch (e: any) { return { success: false, error: e.message }; }
+  try { session = await requireHeadMentor(); } catch (e) { return { success: false, error: userMessage(e) }; }
 
   const season = await prisma.season.findFirst({ where: { id: seasonId, teamId: session.user.teamId }, select: { id: true } });
   if (!season) return { success: false, error: "Season not found." };
@@ -351,7 +352,7 @@ export async function updateCompetitionAction(seasonId: string, competitionId: s
 
 export async function deleteCompetitionAction(competitionId: string): Promise<CompetitionResult> {
   let session;
-  try { session = await requireHeadMentor(); } catch (e: any) { return { success: false, error: e.message }; }
+  try { session = await requireHeadMentor(); } catch (e) { return { success: false, error: userMessage(e) }; }
   const deleted = await prisma.competitionEvent.deleteMany({
     where: { id: competitionId, season: { teamId: session.user.teamId } },
   });

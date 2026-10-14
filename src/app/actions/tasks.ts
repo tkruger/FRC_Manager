@@ -8,19 +8,19 @@ import * as notify from "@/lib/notify/events";
 import type { TaskStatus, TaskPriority, SubTeam, DesignReviewStatus } from "@/generated/prisma";
 
 const TaskSchema = z.object({
-  name:                 z.string().min(1),
-  description:          z.string().optional(),
-  subTeam:              z.string().optional(),
-  robotId:              z.string().optional(),
-  startDate:            z.string().optional(),
-  dueDate:              z.string().optional(),
+  name:                 z.string().max(300).min(1),
+  description:          z.string().max(5000).optional(),
+  subTeam:              z.string().max(300).optional(),
+  robotId:              z.string().max(300).optional(),
+  startDate:            z.string().max(300).optional(),
+  dueDate:              z.string().max(300).optional(),
   estimatedHours:       z.coerce.number().min(0).optional(),
   priority:             z.enum(["CRITICAL", "HIGH", "MEDIUM", "LOW"]).default("MEDIUM"),
   isMilestone:          z.coerce.boolean().optional(),
   designReviewRequired: z.coerce.boolean().optional(),
-  blockersNotes:        z.string().optional(),
-  assigneeIds:          z.array(z.string()).optional(),
-  prerequisiteIds:      z.array(z.string()).optional(),
+  blockersNotes:        z.string().max(5000).optional(),
+  assigneeIds:          z.array(z.string().max(100)).max(200).optional(),
+  prerequisiteIds:      z.array(z.string().max(100)).max(200).optional(),
 });
 
 /** The task if it belongs to the caller's team. */

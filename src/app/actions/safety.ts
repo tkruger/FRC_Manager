@@ -8,13 +8,13 @@ import { safetyIncidentFiled } from "@/lib/notify/events";
 import type { IncidentSeverity, CertStatus } from "@/generated/prisma";
 
 const IncidentSchema = z.object({
-  incidentDate:    z.string().min(1),
-  description:     z.string().min(1),
+  incidentDate:    z.string().max(300).min(1),
+  description:     z.string().max(5000).min(1),
   severity:        z.enum(["NEAR_MISS", "MINOR_INJURY", "SIGNIFICANT_INJURY"]),
-  toolOrMaterial:  z.string().optional(),
-  peopleInvolved:  z.string().optional(),
-  immediateAction: z.string().optional(),
-  correctiveAction:z.string().optional(),
+  toolOrMaterial:  z.string().max(300).optional(),
+  peopleInvolved:  z.string().max(5000).optional(),
+  immediateAction: z.string().max(5000).optional(),
+  correctiveAction:z.string().max(5000).optional(),
 });
 
 export async function fileIncidentAction(
@@ -61,12 +61,12 @@ function canManageCerts(roles: string[]) {
 }
 
 const CertSchema = z.object({
-  userId:       z.string().min(1),
-  certName:     z.string().min(1),
-  certifiedById:z.string().optional(),
-  certifiedAt:  z.string().min(1),
-  expiresAt:    z.string().optional(),
-  notes:        z.string().optional(),
+  userId:       z.string().max(300).min(1),
+  certName:     z.string().max(300).min(1),
+  certifiedById:z.string().max(300).optional(),
+  certifiedAt:  z.string().max(300).min(1),
+  expiresAt:    z.string().max(300).optional(),
+  notes:        z.string().max(5000).optional(),
 });
 
 export async function awardCertificationAction(

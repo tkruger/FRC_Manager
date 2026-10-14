@@ -5,9 +5,9 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+// Email changes go through changeEmailAction (confirmed from the new address)
 const ProfileSchema = z.object({
-  name:  z.string().min(1).max(100),
-  email: z.string().email(),
+  name: z.string().trim().min(1).max(100),
 });
 
 export type ProfileActionState =
@@ -21,21 +21,12 @@ export async function updateProfileAction(
   const session = await auth();
   if (!session?.user?.id) return { success: false, error: "Not authenticated." };
 
-  const parsed = ProfileSchema.safeParse({
-    name:  formData.get("name"),
-    email: formData.get("email"),
-  });
-
-  if (!parsed.success) return { success: false, error: "Please enter a valid name and email." };
-
-  const existing = await prisma.user.findFirst({
-    where: { email: parsed.data.email, NOT: { id: session.user.id } },
-  });
-  if (existing) return { success: false, error: "That email is already in use by another account." };
+  const parsed = ProfileSchema.safeParse({ name: formData.get("name") });
+  if (!parsed.success) return { success: false, error: "Please enter your name (up to 100 characters)." };
 
   await prisma.user.update({
     where: { id: session.user.id },
-    data: { name: parsed.data.name, email: parsed.data.email },
+    data: { name: parsed.data.name },
   });
 
   revalidatePath("/settings/profile");

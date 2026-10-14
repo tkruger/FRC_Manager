@@ -10,7 +10,6 @@ import { useKanbanStyle, STICKY_COLORS, type KanbanCardStyle } from "@/lib/kanba
 
 interface Props {
   initialName: string;
-  initialEmail: string;
 }
 
 const BG_MODES: { id: BgMode; label: string; desc: string }[] = [
@@ -19,7 +18,7 @@ const BG_MODES: { id: BgMode; label: string; desc: string }[] = [
   { id: "custom", label: "Custom orbs",    desc: "Animated orbs with your own two colors" },
 ];
 
-export function ProfileForm({ initialName, initialEmail }: Props) {
+export function ProfileForm({ initialName }: Props) {
   const {
     colorTheme, setColorTheme,
     mode, setMode,
@@ -76,7 +75,6 @@ export function ProfileForm({ initialName, initialEmail }: Props) {
 
         <form action={action} className="space-y-4">
           <Field label="Display name"  name="name"  required defaultValue={initialName} />
-          <Field label="Email address" name="email" type="email" required defaultValue={initialEmail} />
           <Button type="submit" isLoading={isPending}>Save changes</Button>
         </form>
       </div>

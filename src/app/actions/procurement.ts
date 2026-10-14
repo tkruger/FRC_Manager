@@ -24,13 +24,13 @@ function actorFrom(session: Session): Actor {
 const Importance = z.enum(["ROUTINE", "URGENT", "EMERGENCY"]).default("ROUTINE");
 
 const LineItemSchema = z.object({
-  name:             z.string().trim().min(1),
-  partNumber:       z.string().optional(),
-  vendorProductUrl: z.string().optional(),
-  vendorName:       z.string().optional(),
+  name:             z.string().trim().max(300).min(1),
+  partNumber:       z.string().max(300).optional(),
+  vendorProductUrl: z.string().max(2000).optional(),
+  vendorName:       z.string().max(300).optional(),
   quantity:         z.coerce.number().positive(),
   unitCost:         z.coerce.number().min(0).optional(),
-  baseItemId:       z.string().optional(),
+  baseItemId:       z.string().max(300).optional(),
 });
 
 /** Order an inventory item (Low stock / Order queue "Order" button). */
@@ -76,16 +76,16 @@ export async function createPurchaseRequestAction(
 }
 
 const NewItemSchema = z.object({
-  name:              z.string().trim().min(1, "Enter what you need ordered.").max(120),
-  partNumber:        z.string().trim().max(80).optional(),
+  name:              z.string().trim().max(300).min(1, "Enter what you need ordered.").max(120),
+  partNumber:        z.string().trim().max(300).max(80).optional(),
   category:          z.enum(["MECHANICAL", "ELECTRICAL", "PNEUMATICS", "HARDWARE", "FASTENERS", "RAW_STOCK", "CONSUMABLES", "SAFETY", "ELECTRONICS", "SENSORS"]).default("HARDWARE"),
   unitOfMeasure:     z.enum(["EACH", "PACK", "FOOT", "METER", "INCH", "SHEET", "POUND", "GALLON", "SPOOL", "ROLL"]).default("EACH"),
   quantity:          z.coerce.number().positive("Enter how many you need."),
   unitCost:          z.coerce.number().min(0).optional(),
-  preferredSupplier: z.string().trim().max(120).optional(),
-  vendorProductUrl:  z.string().trim().url("Enter a full product link (https://…), or leave it blank.").optional(),
+  preferredSupplier: z.string().trim().max(300).max(120).optional(),
+  vendorProductUrl:  z.string().trim().max(2000).url("Enter a full product link (https://…), or leave it blank.").optional(),
   priority:          Importance,
-  justification:     z.string().trim().max(2000).optional(),
+  justification:     z.string().trim().max(300).max(2000).optional(),
 });
 
 /**

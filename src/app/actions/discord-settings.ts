@@ -6,27 +6,28 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { LEADERSHIP_ROLES } from "@/lib/rbac";
 import { explainDiscordError } from "@/lib/discord";
+import { ActionError, userMessage } from "@/lib/action-error";
 
 async function requireAdmin() {
   const session = await auth();
-  if (!session?.user?.teamId) throw new Error("Not authenticated.");
+  if (!session?.user?.teamId) throw new ActionError("Not authenticated.");
   if (!session.user.roles.some((r) => LEADERSHIP_ROLES.includes(r as any)))
-    throw new Error("Only Head Mentors and Team Leadership can manage Discord settings.");
+    throw new ActionError("Only Head Mentors and Team Leadership can manage Discord settings.");
   return session;
 }
 
 const ConfigSchema = z.object({
-  guildId:              z.string().min(1),
-  channelBuildAlerts:   z.string().optional(),
-  channelOrders:        z.string().optional(),
-  channelInventory:     z.string().optional(),
-  channelTasks:         z.string().optional(),
-  channelSafety:        z.string().optional(),
-  channelGeneral:       z.string().optional(),
-  channelMilestones:    z.string().optional(),
+  guildId:              z.string().max(300).min(1),
+  channelBuildAlerts:   z.string().max(300).optional(),
+  channelOrders:        z.string().max(300).optional(),
+  channelInventory:     z.string().max(300).optional(),
+  channelTasks:         z.string().max(300).optional(),
+  channelSafety:        z.string().max(300).optional(),
+  channelGeneral:       z.string().max(300).optional(),
+  channelMilestones:    z.string().max(300).optional(),
   dailySummaryEnabled:  z.coerce.boolean().optional(),
-  dailySummaryChannel:  z.string().optional(),
-  dailySummaryTime:     z.string().optional(),
+  dailySummaryChannel:  z.string().max(300).optional(),
+  dailySummaryTime:     z.string().max(300).optional(),
   publicReadEnabled:    z.coerce.boolean().optional(),
 });
 
@@ -35,7 +36,7 @@ export async function saveDiscordConfigAction(
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
   let session;
-  try { session = await requireAdmin(); } catch (e: any) { return { success: false, error: e.message }; }
+  try { session = await requireAdmin(); } catch (e) { return { success: false, error: userMessage(e) }; }
 
   const parsed = ConfigSchema.safeParse({
     guildId:             formData.get("guildId"),
@@ -101,7 +102,7 @@ const TEST_MESSAGE = "Thank you for installing the FRC Manager, this message mea
  */
 export async function sendDiscordTestAction(): Promise<{ success: true; channel: string } | { success: false; error: string }> {
   let session;
-  try { session = await requireAdmin(); } catch (e: any) { return { success: false, error: e.message }; }
+  try { session = await requireAdmin(); } catch (e) { return { success: false, error: userMessage(e) }; }
 
   const config = await prisma.discordConfig.findUnique({ where: { teamId: session.user.teamId! } });
   if (!config) return { success: false, error: "Connect a Discord server first." };
@@ -120,7 +121,7 @@ export async function sendDiscordTestAction(): Promise<{ success: true; channel:
     await sendChannelMessage(channelId, TEST_MESSAGE);
     const channel = await discordRequest(`/channels/${channelId}`).catch(() => null);
     return { success: true, channel: channel?.name ? `#${channel.name}` : `channel ${channelId}` };
-  } catch (e: any) {
-    return { success: false, error: explainDiscordError(String(e?.message ?? e)) };
+  } catch (e) {
+    return { success: false, error: explainDiscordError(e instanceof Error ? e.message : String(e)) };
   }
 }

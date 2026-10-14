@@ -18,6 +18,7 @@ function returnTo(): string {
 const OAUTH_ERRORS: Record<string, string> = {
   DiscordEmail: "Your Discord account needs a verified email address to sign in. Verify it in Discord (User Settings → My Account), then try again.",
   GoogleEmail: "Your Google account's email address isn't verified, so it can't be used to sign in.",
+  LinkNeedsVerify: "That email already has an FRC Manager account with a password. Sign in with your password, then use Profile → Connect to add this sign-in method.",
   OAuthAccountNotLinked: "That email already has an FRC Manager account. Sign in with your password, or the way you signed in before.",
   AccessDenied: "Sign-in was cancelled or isn't allowed for this account.",
   OAuthCallbackError: "Sign-in didn't finish. Please try again.",
@@ -46,7 +47,9 @@ export function LoginForm({ providers, oauthError }: { providers: OAuthProvider[
     });
 
     setLoading(false);
-    if (result?.error) {
+    if (result?.code === "rate_limited") {
+      setError("Too many sign-in attempts. Please wait a few minutes and try again.");
+    } else if (result?.error) {
       setError("Invalid email or password.");
     } else {
       router.push(returnTo());
@@ -81,6 +84,9 @@ export function LoginForm({ providers, oauthError }: { providers: OAuthProvider[
           required
           placeholder="••••••••"
         />
+        <div className="-mt-2 text-right">
+          <Link href="/forgot-password" className="text-small text-(--color-secondary) hover:underline">Forgot password?</Link>
+        </div>
         <Button type="submit" className="w-full" isLoading={loading}>
           Sign in
         </Button>

@@ -11,22 +11,23 @@ import {
   type TaskAnchor, type SeasonDates,
 } from "@/lib/competition";
 import type { Prisma, TaskPriority, SubTeam } from "@/generated/prisma";
+import { ActionError, userMessage } from "@/lib/action-error";
 
 const MENTOR_ROLES = ["HEAD_MENTOR", "BUILD_LEAD", "INVENTORY_ADMIN"] as const;
 
 async function requireMentor() {
   const session = await auth();
-  if (!session?.user?.teamId) throw new Error("Not authenticated.");
+  if (!session?.user?.teamId) throw new ActionError("Not authenticated.");
   if (!session.user.roles.some((r) => MENTOR_ROLES.includes(r as any)))
-    throw new Error("Only mentors and build leads can manage templates.");
+    throw new ActionError("Only mentors and build leads can manage templates.");
   return session;
 }
 
 async function requireHeadMentor() {
   const session = await auth();
-  if (!session?.user?.teamId) throw new Error("Not authenticated.");
+  if (!session?.user?.teamId) throw new ActionError("Not authenticated.");
   if (!session.user.roles.includes("HEAD_MENTOR" as any))
-    throw new Error("Only Head Mentors can apply templates to an active season.");
+    throw new ActionError("Only Head Mentors can apply templates to an active season.");
   return session;
 }
 
@@ -37,7 +38,7 @@ export async function createTemplateAction(
   formData: FormData
 ): Promise<{ success: boolean; error?: string; id?: string }> {
   let session;
-  try { session = await requireMentor(); } catch (e: any) { return { success: false, error: e.message }; }
+  try { session = await requireMentor(); } catch (e) { return { success: false, error: userMessage(e) }; }
 
   const name = (formData.get("name") as string)?.trim();
   if (!name) return { success: false, error: "Template name is required." };
@@ -59,7 +60,7 @@ export async function updateTemplateAction(
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
   let session;
-  try { session = await requireMentor(); } catch (e: any) { return { success: false, error: e.message }; }
+  try { session = await requireMentor(); } catch (e) { return { success: false, error: userMessage(e) }; }
   if (!await findTeamTemplate(templateId, session.user.teamId!)) return { success: false, error: "Template not found." };
 
   await prisma.seasonTemplate.update({
@@ -77,7 +78,7 @@ export async function updateTemplateAction(
 
 export async function deleteTemplateAction(templateId: string): Promise<{ success: boolean; error?: string }> {
   let session;
-  try { session = await requireMentor(); } catch (e: any) { return { success: false, error: e.message }; }
+  try { session = await requireMentor(); } catch (e) { return { success: false, error: userMessage(e) }; }
   if (!await findTeamTemplate(templateId, session.user.teamId!)) return { success: false, error: "Template not found." };
   await prisma.seasonTemplate.delete({ where: { id: templateId } });
   revalidatePath("/tasks/templates");
@@ -87,15 +88,15 @@ export async function deleteTemplateAction(templateId: string): Promise<{ succes
 // ─── Template tasks ─────────────────────────────────────────────────────────
 
 const TemplateTaskSchema = z.object({
-  name:                 z.string().min(1),
-  subTeam:              z.string().optional(),
+  name:                 z.string().max(300).min(1),
+  subTeam:              z.string().max(300).optional(),
   startOffset:          z.coerce.number().int(),        // days before (−) / after (+) the anchor
   durationBuildDays:    z.coerce.number().int().min(1).default(1),
   priority:             z.enum(["CRITICAL","HIGH","MEDIUM","LOW"]).default("MEDIUM"),
   estimatedHours:       z.coerce.number().optional(),
   isMilestone:          z.coerce.boolean().optional(),
   designReviewRequired: z.coerce.boolean().optional(),
-  description:          z.string().optional(),
+  description:          z.string().max(5000).optional(),
   anchor:               z.enum(TASK_ANCHORS).optional(),
   anchorNumber:         z.coerce.number().int().min(0).max(99).optional(),
 });
@@ -141,7 +142,7 @@ export async function addTemplateTaskAction(
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
   let session;
-  try { session = await requireMentor(); } catch (e: any) { return { success: false, error: e.message }; }
+  try { session = await requireMentor(); } catch (e) { return { success: false, error: userMessage(e) }; }
   if (!await findTeamTemplate(templateId, session.user.teamId!)) return { success: false, error: "Template not found." };
 
   const data = parseTemplateTaskForm(formData);
@@ -158,7 +159,7 @@ export async function updateTemplateTaskAction(
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
   let session;
-  try { session = await requireMentor(); } catch (e: any) { return { success: false, error: e.message }; }
+  try { session = await requireMentor(); } catch (e) { return { success: false, error: userMessage(e) }; }
   const task = await findTeamTemplateTask(taskId, session.user.teamId!);
   if (!task) return { success: false, error: "Task not found." };
 
@@ -188,7 +189,7 @@ export async function saveSeasonAsTemplateAction(
   description?: string
 ): Promise<{ success: boolean; error?: string; id?: string }> {
   let session;
-  try { session = await requireMentor(); } catch (e: any) { return { success: false, error: e.message }; }
+  try { session = await requireMentor(); } catch (e) { return { success: false, error: userMessage(e) }; }
 
   const activeSeason = await prisma.season.findFirst({
     where:   { teamId: session.user.teamId, isActive: true },
@@ -325,7 +326,7 @@ async function applyToActiveSeason(teamId: string, userId: string, tasks: Applic
 
 export async function applyCustomTemplateAction(templateId: string): Promise<ApplyTemplateResult> {
   let session;
-  try { session = await requireHeadMentor(); } catch (e: any) { return { success: false, error: e.message }; }
+  try { session = await requireHeadMentor(); } catch (e) { return { success: false, error: userMessage(e) }; }
 
   if (!await findTeamTemplate(templateId, session.user.teamId!)) return { success: false, error: "Template not found." };
   const tasks = await prisma.templateTask.findMany({ where: { templateId } });
@@ -334,7 +335,7 @@ export async function applyCustomTemplateAction(templateId: string): Promise<App
 
 export async function applyStandardTemplateAction(): Promise<ApplyTemplateResult> {
   let session;
-  try { session = await requireHeadMentor(); } catch (e: any) { return { success: false, error: e.message }; }
+  try { session = await requireHeadMentor(); } catch (e) { return { success: false, error: userMessage(e) }; }
 
   return applyToActiveSeason(session.user.teamId!, session.user.id, STANDARD_TASKS.map((t) => ({
     ...t,
@@ -362,7 +363,7 @@ export async function importTemplateTasksAction(
   }[]
 ): Promise<{ success: boolean; error?: string; count?: number }> {
   let session;
-  try { session = await requireMentor(); } catch (e: any) { return { success: false, error: e.message }; }
+  try { session = await requireMentor(); } catch (e) { return { success: false, error: userMessage(e) }; }
 
   if (!tasks.length) return { success: false, error: "No tasks to import." };
 
@@ -395,7 +396,7 @@ export async function importTemplateTasksAction(
 export async function clearAllTasksAction(): Promise<{ success: boolean; error?: string }> {
   // Deletes every task in the season — previously open to any team member
   let session;
-  try { session = await requireHeadMentor(); } catch (e: any) { return { success: false, error: e.message }; }
+  try { session = await requireHeadMentor(); } catch (e) { return { success: false, error: userMessage(e) }; }
 
   const activeSeason = await prisma.season.findFirst({
     where: { teamId: session.user.teamId, isActive: true },

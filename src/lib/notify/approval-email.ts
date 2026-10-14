@@ -35,7 +35,7 @@ export async function sendApprovalEmail(userId: string, opts: { newTeam?: boolea
         <p style="font-size:13px;color:#555">If the button doesn't work, open: ${url}</p>
       </div>`,
     });
-    if (!res.sent) console.warn(`[email] Approval email to ${user.email} not sent: ${res.error}`);
+    if (!res.sent) console.warn(`[email] Approval email to user ${userId} not sent: ${res.error}`);
   } catch (e) {
     console.error("[email] Approval email failed:", e);
   }
