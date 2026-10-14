@@ -14,7 +14,7 @@ export default function PrivacyPage() {
 
       <h2>Information we store</h2>
       <ul>
-        <li><b>Your account:</b> your name, email address, and either a securely hashed password or, if you sign in with Google, your Google account identifier. Also your team, your roles, account status, and the note you add when registering.</li>
+        <li><b>Your account:</b> your name, email address, and a securely hashed password if you use one, and your Google or Discord account identifier if you sign in with Google or Discord. Also your team, your roles, account status, and the note you add when registering.</li>
         <li><b>Team records you create or update:</b> tasks, task templates, meetings, robots, tools and checkouts, certifications, inventory, orders and order items (including vendor links and tracking links), budgets and expenses, inspection checklists and safety incident reports. Each record may note who created or changed it and when.</li>
         <li><b>Photos you upload</b>, such as tool photos.</li>
         <li><b>Notification settings:</b> which notifications you want, your quiet hours and time zone, and — if you turn on push notifications — the push address and keys your browser gives us for each device.</li>

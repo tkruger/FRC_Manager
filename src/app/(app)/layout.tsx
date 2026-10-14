@@ -11,6 +11,8 @@ import { Toaster } from "@/components/ui/toast";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   if (!session) redirect("/login");
+  // Signed up with Google or Discord: choose a team first, then wait to be approved
+  if (session.user.status === "PENDING") redirect(session.user.teamId ? "/pending" : "/register/finish");
 
   let robots: { id: string; displayName: string; status: string }[] = [];
   let pendingMemberCount = 0;

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { auth } from "@/lib/auth";
+import { auth, oauthProviders } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { findUsableInvite } from "@/lib/invites";
@@ -57,7 +57,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
           </div>
         )
       ) : (
-        <InviteSignup token={token} email={invite.email} teamNumber={team.teamNumber} />
+        <InviteSignup token={token} email={invite.email} teamNumber={team.teamNumber} providers={oauthProviders()} />
       )}
     </div>
   );

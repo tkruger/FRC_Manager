@@ -303,6 +303,7 @@ export default function HelpPage() {
       <Section id="discord" title="Discord">
         <ul className="list">
           <li>Team Leadership connects the team&apos;s Discord server in <b>Settings → Discord</b>.</li>
+          <li>You can sign in and sign up with <b>Continue with Discord</b>. If your Discord email matches your FRC Manager account, it signs you into that account, and it also connects you for the bot — no <code>/link</code> needed.</li>
           <li>Run <code>/link</code> in Discord to connect your account, then use commands such as <code>/tasks mine</code>, <code>/task done</code>, <code>/milestone next</code>, <code>/tool checkout</code>, <code>/stock check</code> and <code>/order request</code>. <code>/help</code> lists them all.</li>
           <li>Orders follow the same workflow and permissions in Discord as in the app.</li>
         </ul>

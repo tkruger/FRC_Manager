@@ -3,13 +3,13 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
+import { OAuthButtons, type OAuthProvider } from "@/components/auth/OAuthButtons";
 import { acceptInviteAsCurrentUserAction, acceptInviteWithNewAccountAction } from "@/app/actions/invites";
 
 /** Signed out: create an account from the invite (or sign in to an existing one). */
-export function InviteSignup({ token, email, teamNumber }: { token: string; email: string | null; teamNumber: number }) {
+export function InviteSignup({ token, email, teamNumber, providers }: { token: string; email: string | null; teamNumber: number; providers: OAuthProvider[] }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -45,9 +45,7 @@ export function InviteSignup({ token, email, teamNumber }: { token: string; emai
         <p className="text-small text-(--color-text-secondary)">Already have an account?</p>
         <div className="flex flex-col gap-2">
           <Link href={`/login?callbackUrl=${encodeURIComponent(back)}`}><Button variant="outline" className="w-full">Sign in</Button></Link>
-          <Button type="button" variant="outline" className="w-full" onClick={() => signIn("google", { callbackUrl: back })}>
-            Continue with Google
-          </Button>
+          <OAuthButtons providers={providers} callbackUrl={back} />
         </div>
       </div>
     </div>

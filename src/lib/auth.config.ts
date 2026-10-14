@@ -32,6 +32,7 @@ export const authConfig = {
         session.user.roles = (token.roles as Role[]) ?? [];
         session.user.displayMode = token.displayMode as string | undefined;
         session.user.isSuperAdmin = token.isSuperAdmin === true;
+        session.user.status = token.status as string | undefined;
       }
       return session;
     },

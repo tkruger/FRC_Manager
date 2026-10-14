@@ -1,9 +1,24 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { auth, signOut } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 export default async function PendingPage({ searchParams }: { searchParams: Promise<{ team?: string }> }) {
+  // Signed up with Google or Discord: they're signed in while they wait
+  const session = await auth();
+  if (session?.user?.status === "ACTIVE") redirect("/dashboard");
+  if (session?.user && !session.user.teamId) redirect("/register/finish");
+  const team = session?.user?.teamId
+    ? await prisma.team.findUnique({ where: { id: session.user.teamId }, select: { status: true } })
+    : null;
   // A team that's new to FRC Manager is approved by the FRC Manager admins first
-  const newTeam = (await searchParams).team === "new";
+  const newTeam = (await searchParams).team === "new" || team?.status === "PENDING";
+
+  async function signOutAction() {
+    "use server";
+    await signOut({ redirectTo: "/login" });
+  }
 
   return (
     <div className="card text-center">
@@ -38,9 +53,15 @@ export default async function PendingPage({ searchParams }: { searchParams: Prom
           )}
         </ol>
       </div>
-      <Link href="/login">
-        <Button variant="outline" className="w-full">Back to sign in</Button>
-      </Link>
+      {session?.user ? (
+        <form action={signOutAction}>
+          <Button type="submit" variant="outline" className="w-full">Sign out</Button>
+        </form>
+      ) : (
+        <Link href="/login">
+          <Button variant="outline" className="w-full">Back to sign in</Button>
+        </Link>
+      )}
     </div>
   );
 }

@@ -12,6 +12,8 @@ declare module "next-auth" {
       displayMode?: string;
       /** Platform admin: approves new teams */
       isSuperAdmin?: boolean;
+      /** PENDING until approved (people who sign up with Google or Discord get a session right away) */
+      status?: string;
     };
   }
 }
@@ -23,5 +25,6 @@ declare module "next-auth/jwt" {
     roles: Role[];
     displayMode?: string;
     isSuperAdmin?: boolean;
+    status?: string;
   }
 }
