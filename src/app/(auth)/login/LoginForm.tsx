@@ -40,6 +40,9 @@ export function LoginForm({ providers, oauthError }: { providers: OAuthProvider[
       email: data.get("email"),
       password: data.get("password"),
       redirect: false,
+      // Without this the result URL is this page, and a leftover ?error= from an earlier
+      // Google/Discord attempt would read as a failed sign-in
+      redirectTo: returnTo(),
     });
 
     setLoading(false);
