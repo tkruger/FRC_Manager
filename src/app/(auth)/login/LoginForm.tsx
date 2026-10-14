@@ -17,6 +17,7 @@ function returnTo(): string {
 /** Why an OAuth sign-in bounced back here (?error=) */
 const OAUTH_ERRORS: Record<string, string> = {
   DiscordEmail: "Your Discord account needs a verified email address to sign in. Verify it in Discord (User Settings → My Account), then try again.",
+  GoogleEmail: "Your Google account's email address isn't verified, so it can't be used to sign in.",
   OAuthAccountNotLinked: "That email already has an FRC Manager account. Sign in with your password, or the way you signed in before.",
   AccessDenied: "Sign-in was cancelled or isn't allowed for this account.",
   OAuthCallbackError: "Sign-in didn't finish. Please try again.",

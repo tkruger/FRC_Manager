@@ -66,12 +66,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   callbacks: {
     ...authConfig.callbacks,
-    // Discord accounts sign in (and match an existing account by email) only with an
-    // email address Discord has verified
+    // Google and Discord accounts sign in (and match an existing account by email) only
+    // with an email address the provider has verified
     async signIn({ account, profile }) {
       if (account?.provider === "discord") {
         const p = profile as { email?: string | null; verified?: boolean } | undefined;
         if (!p?.email || !p.verified) return "/login?error=DiscordEmail";
+      }
+      if (account?.provider === "google") {
+        const p = profile as { email?: string | null; email_verified?: boolean } | undefined;
+        if (!p?.email || p.email_verified === false) return "/login?error=GoogleEmail";
       }
       return true;
     },
@@ -100,7 +104,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     // Only include Google if both credentials are present — avoids the
     // "Missing required parameter: client_id" error when env vars aren't set.
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
-      ? [Google({ clientId: process.env.GOOGLE_CLIENT_ID, clientSecret: process.env.GOOGLE_CLIENT_SECRET })]
+      ? [Google({
+          clientId: process.env.GOOGLE_CLIENT_ID,
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          // Google verifies email addresses (checked in signIn above), so an existing
+          // FRC Manager account with the same email signs in with Google too
+          allowDangerousEmailAccountLinking: true,
+        })]
       : []),
     ...(DISCORD_CLIENT_ID && DISCORD_CLIENT_SECRET
       ? [Discord({
