@@ -106,6 +106,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       ? [Discord({
           clientId: DISCORD_CLIENT_ID,
           clientSecret: DISCORD_CLIENT_SECRET,
+          // Discord now adds iss=https://discord.com to its callback (RFC 9207). Without this,
+          // Auth.js checks it against its placeholder issuer and rejects the sign-in.
+          issuer: "https://discord.com",
           // Discord verifies email addresses (checked in signIn above), so an existing
           // FRC Manager account with the same email signs in with Discord too
           allowDangerousEmailAccountLinking: true,

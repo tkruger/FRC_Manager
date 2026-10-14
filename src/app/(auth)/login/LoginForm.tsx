@@ -21,6 +21,7 @@ const OAUTH_ERRORS: Record<string, string> = {
   AccessDenied: "Sign-in was cancelled or isn't allowed for this account.",
   OAuthCallbackError: "Sign-in didn't finish. Please try again.",
   Callback: "Sign-in didn't finish. Please try again.",
+  Configuration: "Sign-in with that service isn't working right now. Use your email and password, or try again later.",
 };
 
 export function LoginForm({ providers, oauthError }: { providers: OAuthProvider[]; oauthError?: string }) {
