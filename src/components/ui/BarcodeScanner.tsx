@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import jsQR from "jsqr";
 import { Button } from "@/components/ui/button";
+import { acquireCamera, releaseCamera } from "@/lib/camera";
 
 interface BarcodeScannerProps {
   onScan: (code: string) => void;
@@ -28,69 +29,69 @@ export function BarcodeScanner({ onScan, onClose, continuous = false, closeLabel
   const lastRef    = useRef<{ code: string; at: number } | null>(null);
   useEffect(() => { onScanRef.current = onScan; }, [onScan]);
 
+  // Hand the camera back to the shared stream (paused, kept for the next scan — see lib/camera)
   const stopCamera = useCallback(() => {
     cancelAnimationFrame(rafRef.current);
-    streamRef.current?.getTracks().forEach((t) => t.stop());
+    if (streamRef.current) releaseCamera();
     streamRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
     setActive(false);
   }, []);
-
-  const tick = useCallback(() => {
-    const video  = videoRef.current;
-    const canvas = canvasRef.current;
-    if (!video || !canvas || video.readyState !== video.HAVE_ENOUGH_DATA) {
-      rafRef.current = requestAnimationFrame(tick);
-      return;
-    }
-
-    canvas.width  = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
-    if (!ctx) { rafRef.current = requestAnimationFrame(tick); return; }
-
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const code = jsQR(imageData.data, imageData.width, imageData.height, {
-      inversionAttempts: "dontInvert",
-    });
-
-    if (code?.data) {
-      if (!continuous) {
-        stopCamera();
-        onScanRef.current(code.data);
-        return;
-      }
-      const now = Date.now();
-      const last = lastRef.current;
-      if (!last || last.code !== code.data || now - last.at > REPEAT_MS) {
-        onScanRef.current(code.data);
-        navigator.vibrate?.(60);
-      }
-      lastRef.current = { code: code.data, at: now };
-    }
-
-    rafRef.current = requestAnimationFrame(tick);
-  }, [continuous, stopCamera]);
 
   useEffect(() => {
     let mounted = true;
 
+    function tick() {
+      const video  = videoRef.current;
+      const canvas = canvasRef.current;
+      if (!video || !canvas || video.readyState !== video.HAVE_ENOUGH_DATA) {
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
+
+      canvas.width  = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      if (!ctx) { rafRef.current = requestAnimationFrame(tick); return; }
+
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height, {
+        inversionAttempts: "dontInvert",
+      });
+
+      if (code?.data) {
+        if (!continuous) {
+          stopCamera();
+          onScanRef.current(code.data);
+          return;
+        }
+        const now = Date.now();
+        const last = lastRef.current;
+        if (!last || last.code !== code.data || now - last.at > REPEAT_MS) {
+          onScanRef.current(code.data);
+          navigator.vibrate?.(60);
+        }
+        lastRef.current = { code: code.data, at: now };
+      }
+
+      rafRef.current = requestAnimationFrame(tick);
+    }
+
     async function startCamera() {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
-        });
-        if (!mounted) { stream.getTracks().forEach((t) => t.stop()); return; }
+        const stream = await acquireCamera();
+        if (!mounted) { releaseCamera(); return; }
         streamRef.current = stream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
-          videoRef.current.play();
+          videoRef.current.play().catch(() => {});
         }
         setActive(true);
         rafRef.current = requestAnimationFrame(tick);
-      } catch (e: any) {
+      } catch (e) {
         setError(
-          e?.name === "NotAllowedError"
+          (e as { name?: string })?.name === "NotAllowedError"
             ? "Camera permission denied. Allow camera access and try again."
             : "Camera not available on this device."
         );
@@ -102,7 +103,7 @@ export function BarcodeScanner({ onScan, onClose, continuous = false, closeLabel
       mounted = false;
       stopCamera();
     };
-  }, [tick, stopCamera]);
+  }, [continuous, stopCamera]);
 
   return (
     <div className="flex flex-col items-center gap-4">
