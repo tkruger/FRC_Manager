@@ -2,6 +2,7 @@
 // between steps. Server-only: imported by server actions and server components.
 // Pure step/permission rules live in ./rules.
 
+import { syncOrderSpend } from "@/lib/orders/spend";
 import { prisma } from "@/lib/prisma";
 import type { Prisma, PurchaseStatus, Role, NotificationType } from "@/generated/prisma";
 import { notifyTeam, createNotification } from "@/lib/notifications";
@@ -467,18 +468,12 @@ async function addStock(tx: Tx, requestId: string, step: WorkflowStep, actorId: 
 
 /**
  * Committed spend is logged when the order is placed and converted to an actual
- * expense on delivery, so the budget shows money that is already spoken for.
+ * expense on delivery, so the budget shows money that is already spoken for. Each item
+ * counts toward its budget category (or the order's) — see lib/orders/spend.
  */
 async function recordSpend(tx: Tx, r: RequestState, step: WorkflowStep, actorId: string, amount: number, commitment: boolean) {
-  const request = await tx.purchaseRequest.findUniqueOrThrow({
-    where:  { id: r.id },
-    select: { seasonId: true, preferredVendor: { select: { name: true } } },
-  });
-  const budget = await tx.budget.findUnique({
-    where:   { seasonId: request.seasonId },
-    include: { categories: { select: { id: true, type: true } } },
-  });
-  if (!budget) {
+  const res = await syncOrderSpend(tx, r.id, { commitment, amount });
+  if (!res.budget) {
     await logEvent(tx, r.id, {
       step, action: "effect", actorId,
       note: "No budget is set up for this season, so the spend was not recorded.",
@@ -486,28 +481,12 @@ async function recordSpend(tx: Tx, r: RequestState, step: WorkflowStep, actorId:
     });
     return;
   }
-
-  const categoryId = budget.categories.find((c) => c.type === r.budgetCategory)?.id ?? null;
-  const existing = await tx.expense.findFirst({ where: { purchaseRequestId: r.id, budgetId: budget.id } });
-  const data = {
-    amount,
-    isCommitment: commitment,
-    date:         new Date(),
-    vendor:       request.preferredVendor?.name ?? null,
-    description:  `Purchase: ${r.title}`,
-    categoryId,
-  };
-
-  if (existing) {
-    await tx.expense.update({ where: { id: existing.id }, data });
-  } else {
-    await tx.expense.create({ data: { ...data, budgetId: budget.id, purchaseRequestId: r.id } });
-  }
+  const where = res.expenses > 1 ? ` across ${res.expenses} budget categories` : "";
   await logEvent(tx, r.id, {
     step, action: "effect", actorId,
     note: commitment
-      ? `$${amount.toFixed(2)} logged as committed spend in the budget.`
-      : `$${amount.toFixed(2)} recorded as an expense in the budget.`,
+      ? `$${amount.toFixed(2)} logged as committed spend in the budget${where}.`
+      : `$${amount.toFixed(2)} recorded as an expense in the budget${where}.`,
     data: { effect: commitment ? "recordCommitment" : "recordExpense", amount },
   });
 }

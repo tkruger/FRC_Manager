@@ -2,7 +2,8 @@
 // and Discord /order request, so every path assigns item IDs and queue entries the same way.
 
 import { prisma } from "@/lib/prisma";
-import type { RequestPriority, SubTeam } from "@/generated/prisma";
+import type { BudgetCategoryType, RequestPriority, SubTeam } from "@/generated/prisma";
+import { budgetCategoryForItem } from "@/lib/budget-categories";
 import { startWorkflow, describeRequestState, type Actor } from "@/lib/workflow/engine";
 import { highestImportance, type Importance } from "./constants";
 
@@ -19,6 +20,8 @@ export interface NewItem {
   notes?:      string | null;
   /** Restocks this inventory item when it arrives */
   baseItemId?: string | null;
+  /** Charge this item to a different budget category than the order's */
+  budgetCategory?: BudgetCategoryType | null;
 }
 
 export type CreateOrderResult =
@@ -30,6 +33,12 @@ export async function createOrder(input: {
   seasonId: string;
   name:     string;
   items:    NewItem[];
+  /**
+   * The order's budget category (items without their own count toward it). The order form
+   * always sends one; other paths (inventory buttons, Discord) leave it to be worked out
+   * from the linked inventory items, falling back to Other.
+   */
+  budgetCategory?: BudgetCategoryType | null;
 }): Promise<CreateOrderResult> {
   const { actor, seasonId, name } = input;
   const items = input.items.filter((i) => i.name.trim() && i.quantity > 0);
@@ -61,6 +70,14 @@ export async function createOrder(input: {
     }
   }
 
+  // Budget category: as given, else what the linked inventory items suggest, else Other
+  let budgetCategory = input.budgetCategory ?? null;
+  if (!budgetCategory && validItemIds.size > 0) {
+    const linked = await prisma.baseInventoryItem.findMany({ where: { id: { in: [...validItemIds] } }, select: { category: true } });
+    budgetCategory = linked.map((b) => budgetCategoryForItem(b.category)).find(Boolean) ?? null;
+  }
+  budgetCategory ??= "OTHER";
+
   const importance = items.map((i) => i.importance ?? "ROUTINE");
   const subTeams   = [...new Set(items.map((i) => i.subTeam ?? null))];
   const total      = items.reduce((sum, i) => sum + (i.unitCost ?? 0) * i.quantity, 0);
@@ -75,6 +92,7 @@ export async function createOrder(input: {
       subTeam:        subTeams.length === 1 ? subTeams[0] : null,
       justification:  items.length === 1 ? items[0].reasoning ?? null : null,
       estimatedTotal: total,
+      budgetCategory,
       status:         "SUBMITTED",
       lineItems: {
         // No item IDs yet — they're drafts until the order is approved (see numbers.ts)
@@ -91,6 +109,8 @@ export async function createOrder(input: {
           reasoning:        i.reasoning?.trim() || null,
           notes:            i.notes?.trim() || null,
           baseItemId:       i.baseItemId && validItemIds.has(i.baseItemId) ? i.baseItemId : null,
+          // Only stored when it differs from the order's
+          budgetCategory:   i.budgetCategory && i.budgetCategory !== budgetCategory ? i.budgetCategory : null,
         })),
       },
     },

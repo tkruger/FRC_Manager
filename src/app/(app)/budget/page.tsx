@@ -67,6 +67,16 @@ export default async function BudgetDashboard() {
   const totalSpent = budget.expenses.reduce((s, e) => s + e.amount, 0);
   const remaining = totalAllocated - totalSpent;
 
+  // Spend with no category (orders placed before categories were required, or expenses
+  // logged without one) — and the orders to fix
+  const uncategorized = budget.expenses.filter((e) => !e.categoryId);
+  const uncategorizedTotal = uncategorized.reduce((s, e) => s + e.amount, 0);
+  const uncategorizedOrderIds = [...new Set(uncategorized.map((e) => e.purchaseRequestId).filter((id): id is string => !!id))];
+  const ordersToFix = uncategorizedOrderIds.length
+    ? await prisma.purchaseRequest.findMany({ where: { id: { in: uncategorizedOrderIds } }, select: { id: true, title: true }, orderBy: { submittedAt: "desc" }, take: 10 })
+    : [];
+  const spentIn = (categoryId: string) => budget.expenses.filter((e) => e.categoryId === categoryId).reduce((s, e) => s + e.amount, 0);
+
   const budgetHealth: "success" | "warning" | "danger" =
     totalSpent > totalAllocated ? "danger"
     : totalSpent > totalAllocated * 0.85 ? "warning"
@@ -145,9 +155,7 @@ export default async function BudgetDashboard() {
         <h2 className="text-h2 text-[--color-text-primary] mb-3">By category</h2>
         <div className="card space-y-4">
           {budget.categories.filter((c) => c.allocation > 0).map((cat) => {
-            const catSpent = budget.expenses
-              .filter((e) => e.categoryId === cat.id)
-              .reduce((s, e) => s + e.amount, 0);
+            const catSpent = spentIn(cat.id);
             return (
               <div key={cat.id}>
                 <ProgressBar
@@ -161,6 +169,32 @@ export default async function BudgetDashboard() {
               </div>
             );
           })}
+          {/* Spend in categories with nothing allocated (e.g. Other) */}
+          {budget.categories.filter((c) => c.allocation <= 0 && spentIn(c.id) > 0).map((cat) => (
+            <div key={cat.id} className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
+              <span className="text-(--color-text-primary)">{cat.label}</span>
+              <span className="text-(--color-text-secondary)">
+                {formatCurrency(spentIn(cat.id))} <span className="text-(--color-warning)">· nothing allocated</span>
+              </span>
+            </div>
+          ))}
+          {uncategorizedTotal > 0 && (
+            <div className="rounded-md bg-(--color-warning)/10 border border-(--color-warning)/20 px-3 py-2.5 space-y-1.5">
+              <div className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
+                <span className="font-medium text-(--color-text-primary)">Uncategorized</span>
+                <span className="text-(--color-text-primary)">{formatCurrency(uncategorizedTotal)}</span>
+              </div>
+              {ordersToFix.length > 0 && (
+                <p className="text-small text-(--color-text-secondary)">
+                  Set a budget category on {ordersToFix.length === 1 ? "this order" : "these orders"} to count {ordersToFix.length === 1 ? "it" : "them"} above:{" "}
+                  {ordersToFix.map((o, i) => (
+                    <span key={o.id}>{i > 0 && ", "}<Link href={`/procurement/requests/${o.id}`} className="text-(--color-secondary) hover:underline">{o.title}</Link></span>
+                  ))}
+                  {uncategorizedOrderIds.length > ordersToFix.length && ` and ${uncategorizedOrderIds.length - ordersToFix.length} more`}
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

@@ -179,7 +179,7 @@ export default function HelpPage() {
         </p>
         <H3>Placing an order</H3>
         <Steps>
-          <li>Go to <b>Orders → + New order</b> and give it a name.</li>
+          <li>Go to <b>Orders → + New order</b>, give it a name, and pick its <b>Budget category</b> (Robot Parts — Mechanical, Tools &amp; Equipment, …). That&apos;s where its spend shows on the budget. An item that belongs somewhere else can have its own category.</li>
           <li>For each item, paste the product <b>link</b> — for most FRC vendors (REV, AndyMark, WCP and other Shopify stores) the vendor, name, part number and price fill in automatically. Some sites (McMaster-Carr, Amazon) block this; just type the details.</li>
           <li>Set the quantity, sub-team, importance (Routine, Urgent or Emergency), why it&apos;s needed, and any notes for the Buyer.</li>
           <li>Paste a product link to fill in the item. If the page sells several products (a WCP parts page, or a product with sizes), you&apos;ll get a list to pick from: tick one or more and each becomes its own item. Amazon links fill in the name, price and ASIN.</li>
@@ -223,7 +223,8 @@ export default function HelpPage() {
       <Section id="budget" title="Budget">
         <ul className="list">
           <li>Treasurers and Head Mentors set up the season budget by category, record funding sources and log expenses.</li>
-          <li>Purchases update the budget automatically: when ordered they appear as <b>Committed — on order</b>, and become a regular expense once received.</li>
+          <li>Purchases update the budget automatically: when ordered they appear as <b>Committed — on order</b>, and become a regular expense once received. Each item counts toward its order&apos;s budget category (or its own), so one order can show in several categories.</li>
+          <li>Spend without a category shows as <b>Uncategorized</b> with links to the orders. Open one and use <b>Budget → Change</b> to fix it. That works at any stage, even after the items arrive, and moves the spend already recorded. The person who placed the order, its approvers, the Buyer, the Treasurer, Team Leadership and Head Mentors can change it.</li>
         </ul>
       </Section>
 

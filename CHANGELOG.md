@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+**Budget**
+- Every order has a required budget category, and items can be charged to a different one. Spend is split across categories by item cost, so orders now count toward Robot Parts, Tools and the rest instead of nowhere
+- The order page has a Budget card to change categories at any stage (even after arrival); spend already recorded moves with it
+- The budget page shows spend in categories with nothing allocated, and an Uncategorized line linking to the orders that still need a category
+
 **Roles**
 - Team Admin is now **Buyer**: places approved orders, exports the purchasing spreadsheet, adds tracking and sets item statuses. Buyers can no longer invite people. The Buyer page moved to Orders → Buyer
 - Budget Manager is now **Treasurer** (same access)

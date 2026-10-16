@@ -19,7 +19,7 @@ export default async function NewOrderPage({ searchParams }: { searchParams: Pro
     }),
     // Carrying on with a saved draft (only your own)
     draftId
-      ? prisma.orderDraft.findFirst({ where: { id: draftId, userId: session.user.id }, select: { id: true, name: true, items: true } })
+      ? prisma.orderDraft.findFirst({ where: { id: draftId, userId: session.user.id }, select: { id: true, name: true, items: true, budgetCategory: true } })
       : null,
   ]);
   if (!activeSeason) redirect("/settings/season");
@@ -39,7 +39,7 @@ export default async function NewOrderPage({ searchParams }: { searchParams: Pro
       <OrderForm
         key={draft?.id ?? "new"}
         vendors={vendors.map((v) => v.name)}
-        draft={draft ? { id: draft.id, name: draft.name, items: (Array.isArray(draft.items) ? draft.items : []) as DraftItem[] } : undefined}
+        draft={draft ? { id: draft.id, name: draft.name, budgetCategory: draft.budgetCategory, items: (Array.isArray(draft.items) ? draft.items : []) as DraftItem[] } : undefined}
       />
     </div>
   );

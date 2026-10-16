@@ -4,7 +4,9 @@
 // locked — their stock is already counted — so they can't be changed or removed.
 
 import { prisma } from "@/lib/prisma";
-import type { RequestPriority, SubTeam } from "@/generated/prisma";
+import type { BudgetCategoryType, RequestPriority, SubTeam } from "@/generated/prisma";
+import { BUDGET_CATEGORY_LABELS } from "@/lib/budget-categories";
+import { syncOrderSpend } from "./spend";
 import { definitionFor, canEditOrder, type Actor } from "@/lib/workflow/engine";
 import { highestImportance, itemRef, type Importance } from "./constants";
 import { assignItemNumbers } from "./numbers";
@@ -13,23 +15,25 @@ import type { NewItem } from "./create";
 
 export type EditedItem = NewItem & { id?: string };
 
-const EDITABLE_FIELDS = ["name", "vendorName", "partNumber", "vendorProductUrl", "unitCost", "quantity", "subTeam", "importance", "reasoning", "notes"] as const;
+const EDITABLE_FIELDS = ["name", "vendorName", "partNumber", "vendorProductUrl", "unitCost", "quantity", "subTeam", "importance", "reasoning", "notes", "budgetCategory"] as const;
 
 export async function editOrder(input: {
   actor:     Actor;
   requestId: string;
   name:      string;
   items:     EditedItem[];
+  /** The order's budget category */
+  budgetCategory: BudgetCategoryType;
 }): Promise<{ success: true } | { success: false; error: string }> {
   const { actor, requestId } = input;
 
   const order = await prisma.purchaseRequest.findFirst({
     where:  { id: requestId, season: { teamId: actor.teamId } },
     select: {
-      id: true, title: true, status: true, currentStepKey: true, workflowDefinitionId: true,
+      id: true, title: true, status: true, currentStepKey: true, workflowDefinitionId: true, budgetCategory: true,
       lineItems: { select: { id: true, orderNumber: true, status: true, name: true, vendorName: true, partNumber: true,
         vendorProductUrl: true, unitCost: true, quantity: true, subTeam: true, importance: true, reasoning: true,
-        notes: true, baseItemId: true } },
+        notes: true, baseItemId: true, budgetCategory: true } },
     },
   });
   if (!order) return { success: false, error: "Order not found." };
@@ -55,6 +59,8 @@ export async function editOrder(input: {
 
   const changes: string[] = [];
   if (name !== order.title) changes.push(`renamed it to "${name}"`);
+  const budgetCategory = input.budgetCategory;
+  if (budgetCategory !== order.budgetCategory) changes.push(`charged it to ${BUDGET_CATEGORY_LABELS[budgetCategory]}`);
 
   await prisma.$transaction(async (tx) => {
     for (const r of removed) {
@@ -84,6 +90,8 @@ export async function editOrder(input: {
         importance:       (i.importance ?? "ROUTINE") as RequestPriority,
         reasoning:        i.reasoning?.trim() || null,
         notes:            i.notes?.trim() || null,
+        // Only stored when it differs from the order's
+        budgetCategory:   (i.budgetCategory && i.budgetCategory !== budgetCategory ? i.budgetCategory : null) as BudgetCategoryType | null,
       };
       if (i.id) {
         const before = existing.get(i.id)!;
@@ -117,14 +125,18 @@ export async function editOrder(input: {
       where: { id: order.id },
       data: {
         title:          name || order.title,
+        budgetCategory,
         estimatedTotal: total,
         priority:       highestImportance(all.map((l) => l.importance as Importance)) as RequestPriority,
         subTeam:        subTeams.length === 1 ? subTeams[0] : null,
         justification:  all.length === 1 ? all[0].reasoning ?? null : null,
       },
     });
-    // Money already committed in the budget follows the new total until it's spent
-    await tx.expense.updateMany({ where: { purchaseRequestId: order.id, isCommitment: true }, data: { amount: total } });
+    // Recorded spend follows the items' categories; money only committed (not yet spent)
+    // also follows the new total
+    const recorded = await tx.expense.findMany({ where: { purchaseRequestId: order.id }, select: { isCommitment: true } });
+    const committedOnly = recorded.length > 0 && recorded.every((e) => e.isCommitment);
+    await syncOrderSpend(tx, order.id, committedOnly ? { amount: total } : {});
 
     if (changes.length) {
       await tx.purchaseRequestEvent.create({

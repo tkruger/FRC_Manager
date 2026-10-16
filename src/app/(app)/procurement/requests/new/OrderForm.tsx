@@ -10,6 +10,7 @@ import { ProductPicker } from "./ProductPicker";
 import { toast } from "@/components/ui/toast";
 import { IMPORTANCE_OPTIONS } from "@/lib/orders/constants";
 import { SUBTEAM_OPTIONS } from "@/lib/schedule-helpers";
+import { ORDER_BUDGET_OPTIONS, BUDGET_CATEGORY_LABELS } from "@/lib/budget-categories";
 
 interface Item {
   key:        number;
@@ -27,6 +28,8 @@ interface Item {
   importance: string;
   reasoning:  string;
   notes:      string;
+  /** "" = same as the order */
+  budgetCategory: string;
   lookup:     "idle" | "loading" | "done" | "failed";
 }
 
@@ -45,7 +48,7 @@ let nextKey = 1;
 function blankItem(defaults?: Partial<Item>): Item {
   return {
     key: nextKey++, link: "", vendorName: "", name: "", partNumber: "", unitCost: "", quantity: "1",
-    subTeam: defaults?.subTeam ?? "", importance: "ROUTINE", reasoning: "", notes: "", lookup: "idle",
+    subTeam: defaults?.subTeam ?? "", importance: "ROUTINE", reasoning: "", notes: "", budgetCategory: "", lookup: "idle",
   };
 }
 
@@ -56,6 +59,7 @@ export type DraftItem = Omit<Item, "key" | "lookup" | "id" | "ref">;
 export interface OrderFormEdit {
   requestId: string;
   name:      string;
+  budgetCategory: string;
   items:     Omit<Item, "key" | "lookup">[];
   /** Arrived items: shown, but can't be changed or removed */
   locked:    { ref: string; name: string; quantity: number }[];
@@ -65,14 +69,16 @@ export function OrderForm({ vendors, edit, draft }: {
   vendors: string[];
   edit?:   OrderFormEdit;
   /** A saved draft to carry on with (new orders only) */
-  draft?:  { id: string; name: string; items: DraftItem[] };
+  draft?:  { id: string; name: string; budgetCategory: string | null; items: DraftItem[] };
 }) {
   const router = useRouter();
   const [name, setName]   = useState(edit?.name ?? draft?.name ?? "");
+  // The order's budget category — required; items can override it
+  const [category, setCategory] = useState(edit?.budgetCategory ?? draft?.budgetCategory ?? "");
   const [items, setItems] = useState<Item[]>(() => {
     const start = edit?.items ?? draft?.items;
     // Saved items keep their looked-up details, so don't look them up again on blur
-    return start?.length ? start.map((i) => ({ ...i, key: nextKey++, lookup: i.link ? "done" as const : "idle" as const })) : [blankItem()];
+    return start?.length ? start.map((i) => ({ ...i, budgetCategory: i.budgetCategory ?? "", key: nextKey++, lookup: i.link ? "done" as const : "idle" as const })) : [blankItem()];
   });
   const [draftId, setDraftId]   = useState(draft?.id ?? null);
   const [savingDraft, setSaving] = useState(false);
@@ -117,6 +123,7 @@ export function OrderForm({ vendors, edit, draft }: {
     const filled: Item[] = picked.map((c, idx) => ({
       ...(idx === 0 ? target : blankItem({ subTeam: target.subTeam })),
       importance: target.importance,
+      budgetCategory: target.budgetCategory,
       reasoning:  target.reasoning,
       link:       c.url,
       vendorName: target.vendorName || picker.vendorName || "",
@@ -137,9 +144,11 @@ export function OrderForm({ vendors, edit, draft }: {
     const res = await saveOrderDraftAction({
       draftId,
       name,
+      budgetCategory: category || null,
       items: items.map((i): DraftItem => ({
         link: i.link, vendorName: i.vendorName, name: i.name, partNumber: i.partNumber, unitCost: i.unitCost,
         quantity: i.quantity, subTeam: i.subTeam, importance: i.importance, reasoning: i.reasoning, notes: i.notes,
+        budgetCategory: i.budgetCategory,
       })),
     });
     setSaving(false);
@@ -155,8 +164,10 @@ export function OrderForm({ vendors, edit, draft }: {
   function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!category) { setError("Choose a budget category for the order."); return; }
     const payload = {
       name,
+      budgetCategory: category,
       items: items.map((i) => ({
         id:         i.id,
         name:       i.name,
@@ -169,6 +180,7 @@ export function OrderForm({ vendors, edit, draft }: {
         importance: i.importance,
         reasoning:  i.reasoning || undefined,
         notes:      i.notes || undefined,
+        budgetCategory: i.budgetCategory || null,
       })),
     };
     start(async () => {
@@ -197,6 +209,15 @@ export function OrderForm({ vendors, edit, draft }: {
         <span className="block text-sm font-medium text-(--color-text-primary)">Order name <span className="text-(--color-danger)">*</span></span>
         <input className={inputCls} required maxLength={120} value={name} onChange={(e) => setName(e.target.value)}
           placeholder="e.g. Intake prototype parts" />
+      </label>
+
+      <label className="block space-y-1.5">
+        <span className="block text-sm font-medium text-(--color-text-primary)">Budget category <span className="text-(--color-danger)">*</span></span>
+        <select className={inputCls} required value={category} onChange={(e) => setCategory(e.target.value)}>
+          <option value="" disabled>Choose what this order is for…</option>
+          {ORDER_BUDGET_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+        <span className="block text-small text-(--color-text-secondary)">Where the spend shows on the budget. Items can be charged somewhere else below.</span>
       </label>
 
       {locked.length > 0 && (
@@ -289,6 +310,12 @@ export function OrderForm({ vendors, edit, draft }: {
             <Labeled label="Importance">
               <select className={inputCls} value={item.importance} onChange={(e) => update(item.key, { importance: e.target.value })}>
                 {IMPORTANCE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </Labeled>
+            <Labeled label="Budget category">
+              <select className={inputCls} value={item.budgetCategory} onChange={(e) => update(item.key, { budgetCategory: e.target.value })}>
+                <option value="">Same as order{category ? ` (${BUDGET_CATEGORY_LABELS[category as keyof typeof BUDGET_CATEGORY_LABELS]})` : ""}</option>
+                {ORDER_BUDGET_OPTIONS.filter((o) => o.value !== category).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </Labeled>
           </div>

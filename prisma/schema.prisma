@@ -878,6 +878,8 @@ model PurchaseLineItem {
   lineTotal        Float?
   baseItemId       String?
   baseItem         BaseInventoryItem? @relation(fields: [baseItemId], references: [id])
+  /// Budget category for this item; null = the order's category
+  budgetCategory   BudgetCategoryType?
   goesOnRobotBom   Boolean        @default(false)
   isKopSource      Boolean        @default(false)
   qtyReceived      Float?
@@ -1469,6 +1471,8 @@ model OrderDraft {
   name      String
   /// The order form's items, as typed
   items     Json
+  /// The order's budget category, if picked yet
+  budgetCategory BudgetCategoryType?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

@@ -11,6 +11,17 @@ import { addTracking, setItemStatus, markArrived, toOrderCsv } from "@/lib/order
 import { lookupProduct, type ProductInfo } from "@/lib/orders/lookup";
 import { ORDER_ADMIN_ROLES, STATUS_OVERRIDE_ROLES } from "@/lib/orders/constants";
 import { createExportToken } from "@/lib/orders/export-token";
+import { syncOrderSpend, canSetOrderBudget } from "@/lib/orders/spend";
+import { definitionFor, canEditOrder } from "@/lib/workflow/engine";
+import { BUDGET_CATEGORY_LABELS } from "@/lib/budget-categories";
+import { ORDER_BUDGET_CATEGORIES } from "@/lib/budget-categories";
+import type { BudgetCategoryType } from "@/generated/prisma";
+
+const CATEGORIES = ORDER_BUDGET_CATEGORIES as [BudgetCategoryType, ...BudgetCategoryType[]];
+/** An order's budget category (required) */
+const OrderBudgetCategory = z.enum(CATEGORIES, { error: "Choose a budget category for the order." });
+/** An item's own budget category (optional) */
+const BudgetCategory = z.enum(CATEGORIES);
 
 type Result<T = object> = ({ success: true } & T) | { success: false; error: string };
 
@@ -40,10 +51,13 @@ const ItemSchema = z.object({
   importance: z.enum(["ROUTINE", "URGENT", "EMERGENCY"]).default("ROUTINE"),
   reasoning:  z.string().trim().max(5000).max(2000).optional(),
   notes:      z.string().trim().max(5000).max(2000).optional(),
+  /** Charge this item to another budget category than the order's */
+  budgetCategory: BudgetCategory.nullable().optional(),
 });
 
 const OrderSchema = z.object({
   name:    z.string().trim().max(300).min(1, "Give the order a name.").max(120),
+  budgetCategory: OrderBudgetCategory,
   items:   z.array(ItemSchema).min(1, "Add at least one item.").max(100),
   /** Submitting a saved draft removes it */
   draftId: z.string().max(300).nullable().optional(),
@@ -59,7 +73,7 @@ export async function createOrderAction(input: unknown): Promise<Result<{ reques
   const season = await prisma.season.findFirst({ where: { teamId: who.teamId, isActive: true }, select: { id: true } });
   if (!season) return { success: false, error: "No active season. Set up a season first." };
 
-  const res = await createOrder({ actor: who, seasonId: season.id, name: parsed.data.name, items: parsed.data.items });
+  const res = await createOrder({ actor: who, seasonId: season.id, name: parsed.data.name, items: parsed.data.items, budgetCategory: parsed.data.budgetCategory });
   if (res.success) {
     if (parsed.data.draftId) await prisma.orderDraft.deleteMany({ where: { id: parsed.data.draftId, userId: who.id } });
     refresh([res.requestId]);
@@ -73,10 +87,12 @@ export async function createOrderAction(input: unknown): Promise<Result<{ reques
 const DraftSchema = z.object({
   draftId: z.string().max(300).nullable().optional(),
   name:    z.string().max(120),
+  budgetCategory: BudgetCategory.nullable().optional(),
   items:   z.array(z.object({
     link: z.string().max(2000), vendorName: z.string().max(120), name: z.string().max(200), partNumber: z.string().max(120),
     unitCost: z.string().max(20), quantity: z.string().max(20), subTeam: z.string().max(40), importance: z.string().max(20),
     reasoning: z.string().max(2000), notes: z.string().max(2000),
+    budgetCategory: z.string().max(40).optional(),
   })).max(100),
 });
 
@@ -88,13 +104,14 @@ export async function saveOrderDraftAction(input: unknown): Promise<Result<{ dra
   if (!parsed.success) return { success: false, error: "Couldn't save this draft." };
 
   const { draftId, items } = parsed.data;
+  const budgetCategory = parsed.data.budgetCategory ?? null;
   const name = parsed.data.name.trim() || "Untitled order";
   if (draftId) {
-    const updated = await prisma.orderDraft.updateMany({ where: { id: draftId, userId: who.id }, data: { name, items } });
+    const updated = await prisma.orderDraft.updateMany({ where: { id: draftId, userId: who.id }, data: { name, items, budgetCategory } });
     if (updated.count === 1) { revalidatePath("/procurement"); return { success: true, draftId }; }
     // Deleted meanwhile (or someone else's id) — save as a new draft instead
   }
-  const created = await prisma.orderDraft.create({ data: { teamId: who.teamId, userId: who.id, name, items } });
+  const created = await prisma.orderDraft.create({ data: { teamId: who.teamId, userId: who.id, name, items, budgetCategory } });
   revalidatePath("/procurement");
   return { success: true, draftId: created.id };
 }
@@ -111,6 +128,7 @@ export async function deleteOrderDraftAction(draftId: string): Promise<Result> {
 
 const EditOrderSchema = z.object({
   requestId: z.string().max(300).min(1),
+  budgetCategory: OrderBudgetCategory,
   name:      z.string().trim().max(300).min(1, "Give the order a name.").max(120),
   // Arrived items aren't sent (they're locked), so an order may come back with none here
   items:     z.array(ItemSchema.extend({ id: z.string().optional() })).max(100),
@@ -213,4 +231,57 @@ export async function createOrderExportLinkAction(scope: { order?: string; view?
   }
   const token = createExportToken({ userId: who.id, teamId: who.teamId, ...(scope.order ? { order: scope.order } : { view }) });
   return { success: true, path: `/api/orders/csv?token=${encodeURIComponent(token)}` };
+}
+
+// ── Budget categories ──────────────────────────────────────────────────────
+
+const OrderBudgetSchema = z.object({
+  requestId:      z.string().min(1).max(64),
+  budgetCategory: OrderBudgetCategory,
+  /** Each item's own category, or null to use the order's */
+  items: z.array(z.object({ id: z.string().min(1).max(64), budgetCategory: BudgetCategory.nullable() })).max(200),
+});
+
+/**
+ * Change what an order (and each of its items) is charged to in the budget — at any stage,
+ * so orders placed before categories existed can be fixed. Spend already in the budget is
+ * re-split to match.
+ */
+export async function setOrderBudgetAction(input: unknown): Promise<Result> {
+  const who = await actor();
+  if (!who) return { success: false, error: "Not authenticated." };
+  const parsed = OrderBudgetSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Please check the categories." };
+  const { requestId, budgetCategory, items } = parsed.data;
+
+  const order = await prisma.purchaseRequest.findFirst({
+    where:  { id: requestId, season: { teamId: who.teamId } },
+    select: {
+      id: true, status: true, currentStepKey: true, workflowDefinitionId: true, requestedById: true, budgetCategory: true,
+      lineItems: { select: { id: true, budgetCategory: true } },
+    },
+  });
+  if (!order) return { success: false, error: "Order not found." };
+  const def = await definitionFor(order.workflowDefinitionId);
+  if (!canSetOrderBudget(who.roles, who.id, order, canEditOrder(def, order, who.roles))) {
+    return { success: false, error: "Only whoever placed the order, its approvers, the Buyer, the Treasurer, Team Leadership and Head Mentors can change its budget category." };
+  }
+
+  const own = new Set(order.lineItems.map((l) => l.id));
+  if (items.some((i) => !own.has(i.id))) return { success: false, error: "An item no longer belongs to this order. Refresh and try again." };
+
+  await prisma.$transaction(async (tx) => {
+    await tx.purchaseRequest.update({ where: { id: order.id }, data: { budgetCategory } });
+    for (const i of items) {
+      // Only stored when it differs from the order's
+      const value = i.budgetCategory && i.budgetCategory !== budgetCategory ? i.budgetCategory : null;
+      await tx.purchaseLineItem.update({ where: { id: i.id }, data: { budgetCategory: value } });
+    }
+    await syncOrderSpend(tx, order.id);
+    await tx.purchaseRequestEvent.create({
+      data: { requestId: order.id, action: "effect", actorId: who.id, note: `${who.name} set the budget category to ${BUDGET_CATEGORY_LABELS[budgetCategory]}${items.some((i) => i.budgetCategory && i.budgetCategory !== budgetCategory) ? " (some items charged elsewhere)" : ""}.` },
+    });
+  });
+  refresh([order.id]);
+  return { success: true };
 }

@@ -15,6 +15,9 @@ import { PageHeader } from "@/components/PageHeader";
 import { RequestActions } from "./RequestActions";
 import { RequestTimeline, type TimelineEntry } from "./RequestTimeline";
 import { ExportCsvButton } from "@/components/orders/ExportCsvButton";
+import { itemRef } from "@/lib/orders/constants";
+import { canSetOrderBudget } from "@/lib/orders/spend";
+import { OrderBudgetCard } from "./OrderBudgetCard";
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -36,6 +39,20 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   const currentStep = resolveCurrentStep(def, order);
   const actions     = availableActions(def, order, { id: session.user.id, roles });
   const canEdit     = canEditOrder(def, order, roles);
+
+  // Budget: each item's category and what's recorded in the budget for this order
+  const [budgetLines, expenses] = await Promise.all([
+    prisma.purchaseLineItem.findMany({
+      where:   { requestId: order.id },
+      orderBy: [{ orderNumber: "asc" }, { id: "asc" }],
+      select:  { id: true, orderNumber: true, name: true, unitCost: true, quantity: true, budgetCategory: true },
+    }),
+    prisma.expense.findMany({
+      where:   { purchaseRequestId: order.id },
+      orderBy: { amount: "desc" },
+      select:  { amount: true, isCommitment: true, category: { select: { label: true } } },
+    }),
+  ]);
 
   // Steps still ahead of the current one, and whether they'll apply to this order
   const currentIndex = currentStep ? def.steps.findIndex((s) => s.key === currentStep.key) : -1;
@@ -120,6 +137,16 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           canOverride={!closed && roles.some((r) => STATUS_OVERRIDE_ROLES.includes(r))}
         />
       </section>
+
+      <OrderBudgetCard
+        requestId={order.id}
+        budgetCategory={order.budgetCategory}
+        items={budgetLines.map((l) => ({
+          id: l.id, ref: itemRef(l), name: l.name, total: (l.unitCost ?? 0) * l.quantity, budgetCategory: l.budgetCategory,
+        }))}
+        recorded={expenses.map((e) => ({ label: e.category?.label ?? "Uncategorized", amount: e.amount, committed: e.isCommitment }))}
+        canChange={canSetOrderBudget(roles, session.user.id, order, canEdit)}
+      />
 
       <section className="space-y-3">
         <h2 className="text-h2 text-(--color-text-primary)">Progress</h2>

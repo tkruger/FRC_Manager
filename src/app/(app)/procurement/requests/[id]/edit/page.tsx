@@ -16,11 +16,11 @@ export default async function EditOrderPage({ params }: { params: Promise<{ id: 
     prisma.purchaseRequest.findFirst({
       where:  { id, season: { teamId: session.user.teamId } },
       select: {
-        id: true, title: true, status: true, currentStepKey: true, workflowDefinitionId: true,
+        id: true, title: true, status: true, currentStepKey: true, workflowDefinitionId: true, budgetCategory: true,
         lineItems: {
           orderBy: [{ orderNumber: "asc" }, { id: "asc" }],
           select: { id: true, orderNumber: true, status: true, name: true, vendorName: true, partNumber: true,
-            vendorProductUrl: true, unitCost: true, quantity: true, subTeam: true, importance: true, reasoning: true, notes: true },
+            vendorProductUrl: true, unitCost: true, quantity: true, subTeam: true, importance: true, reasoning: true, notes: true, budgetCategory: true },
         },
       },
     }),
@@ -58,6 +58,8 @@ export default async function EditOrderPage({ params }: { params: Promise<{ id: 
         edit={{
           requestId: order.id,
           name:      order.title,
+          // Older orders have none yet — the form asks for one
+          budgetCategory: order.budgetCategory ?? "",
           items: open.map((l) => ({
             id:         l.id,
             ref:        itemRef(l),
@@ -71,6 +73,7 @@ export default async function EditOrderPage({ params }: { params: Promise<{ id: 
             importance: l.importance,
             reasoning:  l.reasoning ?? "",
             notes:      l.notes ?? "",
+            budgetCategory: l.budgetCategory ?? "",
           })),
           locked: locked.map((l) => ({ ref: itemRef(l), name: l.name, quantity: l.quantity })),
         }}
