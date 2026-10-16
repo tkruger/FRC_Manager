@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.2.0 — 2026-10-16
 
 **Budget**
 - Every order has a required budget category, and items can be charged to a different one. Spend is split across categories by item cost, so orders now count toward Robot Parts, Tools and the rest instead of nowhere
@@ -20,6 +20,9 @@
 - Security headers (Content-Security-Policy, no framing, referrer and permissions policies)
 - Exports can no longer carry spreadsheet formulas; tool photos must be real JPEG/PNG/WebP files; tool names are escaped when printing barcodes
 - Platform tools (environment check, Discord command registration) are for super admins only
+
+**Fixes**
+- Scanning several tools in a row no longer asks for camera permission each time (the camera pauses between scans instead of switching off)
 
 ## 1.1.1 — 2026-10-14
 
