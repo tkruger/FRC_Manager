@@ -160,7 +160,7 @@ async function enterNextStep(tx: Tx, r: RequestState, def: WorkflowDef, fromInde
     await syncReorders(tx, r.id, status);
     await logEvent(tx, r.id, { step, action: "entered" });
 
-    // Approved: queued items move to the Team Admin's "To order" list
+    // Approved: queued items move to the Buyer's "To order" list
     if (step.type === "order") {
       await tx.purchaseLineItem.updateMany({ where: { requestId: r.id, status: "QUEUED" }, data: { status: "TO_ORDER" } });
       // The order is final now: its draft items get their item IDs

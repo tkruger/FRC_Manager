@@ -58,7 +58,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
   const canManageSeason   = roles.includes("HEAD_MENTOR" as any);
   const canManageDiscord  = roles.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP"].includes(r));
   const isSuperAdmin      = session?.user?.isSuperAdmin === true;
-  const canInvite         = roles.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP", "TEAM_ADMIN"].includes(r));
+  const canInvite         = roles.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP"].includes(r)); // same as INVITE_ROLES in lib/invites
   const canManageTemplates = roles.some((r) => ["HEAD_MENTOR", "BUILD_LEAD", "INVENTORY_ADMIN"].includes(r));
   const [moreOpen, setMoreOpen] = useState(false);
 

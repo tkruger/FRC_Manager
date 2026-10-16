@@ -38,6 +38,12 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      // The Team Admin page is now the Buyer page
+      { source: "/procurement/admin", destination: "/procurement/buyer", permanent: true },
+    ];
+  },
   async headers() {
     return [
       {

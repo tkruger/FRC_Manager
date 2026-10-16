@@ -1,6 +1,6 @@
 // Final item IDs (0401, 0402, …). Server-only.
 //
-// Items are drafts until their order is finalized (approved and sent to the Team Admin),
+// Items are drafts until their order is finalized (approved and sent to the Buyer),
 // so denied or canceled orders never use up numbers. Until then they show a draft ID.
 
 import type { Prisma } from "@/generated/prisma";

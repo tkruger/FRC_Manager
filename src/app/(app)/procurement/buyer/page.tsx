@@ -8,7 +8,7 @@ import { ItemsTable } from "@/components/orders/ItemsTable";
 import { PageTitle } from "@/components/PageHeader";
 import { CsvExport } from "./CsvExport";
 
-// Team Admin workspace: approved items to purchase, tracking links, deliveries.
+// Buyer workspace: approved items to purchase, tracking links, deliveries.
 export default async function OrderAdminPage() {
   const session = await auth();
   if (!session?.user?.teamId) redirect("/dashboard");
@@ -35,9 +35,9 @@ export default async function OrderAdminPage() {
       <div>
         <nav className="text-small text-(--color-text-secondary) mb-1">
           <Link href="/procurement" className="hover:text-(--color-primary)">Orders</Link>
-          <span className="mx-2">›</span>Team Admin
+          <span className="mx-2">›</span>Buyer
         </nav>
-        <PageTitle help="purchasing">Team Admin</PageTitle>
+        <PageTitle help="purchasing">Buyer</PageTitle>
         <p className="text-body text-(--color-text-secondary) mt-1">
           Approved items to purchase. Add a tracking link to mark items ordered — one link can cover several items that ship together.
         </p>

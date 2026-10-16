@@ -149,7 +149,7 @@ export async function handleWhoami(link: DiscordLink | null): Promise<Response> 
 
   const roleLabels: Record<string, string> = {
     TEAM_MEMBER: "Team Member", BUILD_LEAD: "Build Lead",
-    INVENTORY_ADMIN: "Inventory Admin", BUDGET_MANAGER: "Budget Manager", TEAM_ADMIN: "Team Admin",
+    INVENTORY_ADMIN: "Inventory Admin", TREASURER: "Treasurer", BUYER: "Buyer",
     SAFETY_CAPTAIN: "Safety Captain", HEAD_MENTOR: "Head Mentor",
   };
 

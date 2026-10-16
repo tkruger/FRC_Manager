@@ -181,7 +181,7 @@ export default function HelpPage() {
         <Steps>
           <li>Go to <b>Orders → + New order</b> and give it a name.</li>
           <li>For each item, paste the product <b>link</b> — for most FRC vendors (REV, AndyMark, WCP and other Shopify stores) the vendor, name, part number and price fill in automatically. Some sites (McMaster-Carr, Amazon) block this; just type the details.</li>
-          <li>Set the quantity, sub-team, importance (Routine, Urgent or Emergency), why it&apos;s needed, and any notes for the Team Admin.</li>
+          <li>Set the quantity, sub-team, importance (Routine, Urgent or Emergency), why it&apos;s needed, and any notes for the Buyer.</li>
           <li>Paste a product link to fill in the item. If the page sells several products (a WCP parts page, or a product with sizes), you&apos;ll get a list to pick from: tick one or more and each becomes its own item. Amazon links fill in the name, price and ASIN.</li>
           <li>Not ready to submit? Tap <b>Save draft</b>. Your drafts are under <b>Orders → My drafts</b>, only visible to you, until you submit or delete them.</li>
           <li>Submit. Items show a draft ID (like DRAFT-7K2Q) until the order is approved; then each gets its permanent 4-digit item ID (0415, 0416, …). Denied or canceled orders never use up item IDs.</li>
@@ -193,21 +193,21 @@ export default function HelpPage() {
           head={["Status", "Meaning"]}
           rows={[
             ["Queued", "The order is waiting for approval."],
-            ["To order", "Approved and sent to the Team Admin to purchase."],
-            ["Ordered", "The Team Admin added a tracking link."],
+            ["To order", "Approved and sent to the Buyer to purchase."],
+            ["Ordered", "The Buyer added a tracking link."],
             ["Arrived", "Someone marked it arrived — it's been added to inventory."],
           ]}
         />
         <H3>What happens next</H3>
         <Steps>
-          <li><b>Approval</b> — Budget Managers or Head Mentors approve or deny the order. Routine orders of $50 or less are approved automatically; emergencies always need approval. Approved items become <b>To order</b>.</li>
-          <li><b>Team Admin orders</b> — on <b>Orders → Team Admin</b>, the Team Admin copies or downloads the to-order items as CSV for the purchasing spreadsheet (no header; grouped by vendor; columns #XXXX item ID, Vendor, Part Name, Link, Unit Price, Qty, Order Notes, Order Date), places the orders, then selects the items that shipped together and adds one <b>tracking link</b> — they become <b>Ordered</b>.</li>
+          <li><b>Approval</b> — Treasurers or Head Mentors approve or deny the order. Routine orders of $50 or less are approved automatically; emergencies always need approval. Approved items become <b>To order</b>.</li>
+          <li><b>Buyer orders</b> — on <b>Orders → Buyer</b>, the Buyer copies or downloads the to-order items as CSV for the purchasing spreadsheet (no header; grouped by vendor; columns #XXXX item ID, Vendor, Part Name, Link, Unit Price, Qty, Order Notes, Order Date), places the orders, then selects the items that shipped together and adds one <b>tracking link</b> — they become <b>Ordered</b>.</li>
           <li><b>Arrival</b> — when a box shows up, anyone can tick the items and tap <b>Mark arrived</b>. Each item is added to inventory (matched by its inventory link, part number or name, or created new) and becomes <b>Arrived</b>.</li>
         </Steps>
         <ul className="list">
           <li><b>Export CSV</b> on an order, or on the Orders list (for every order on the tab you&apos;re viewing), downloads the items in the same spreadsheet format (no header row). In the iPhone app it opens in Safari so you can save the file.</li>
           <li>The order moves along by itself: it&apos;s ordered once every item is ordered, and complete once every item has arrived.</li>
-          <li>Captains (Team Leadership) and the Team Admin can set any item&apos;s status by hand. Arrived items can&apos;t be changed back, because their stock has already been added.</li>
+          <li>Captains (Team Leadership) and the Buyer can set any item&apos;s status by hand. Arrived items can&apos;t be changed back, because their stock has already been added.</li>
           <li>Each order page shows a <b>Waiting on</b> banner and a timeline of who did what and when.</li>
           <li>Whoever an order is waiting on is reminded until they act — daily for routine orders, every 3 hours for urgent and emergency ones.</li>
         </ul>
@@ -222,7 +222,7 @@ export default function HelpPage() {
 
       <Section id="budget" title="Budget">
         <ul className="list">
-          <li>Budget Managers and Head Mentors set up the season budget by category, record funding sources and log expenses.</li>
+          <li>Treasurers and Head Mentors set up the season budget by category, record funding sources and log expenses.</li>
           <li>Purchases update the budget automatically: when ordered they appear as <b>Committed — on order</b>, and become a regular expense once received.</li>
         </ul>
       </Section>
@@ -289,17 +289,17 @@ export default function HelpPage() {
 
       <Section id="roles" title="Roles & permissions">
         <p>Head Mentors and Team Leadership approve new members and assign roles. <b>Mentor</b> has the same access as Team Member — give a mentor Team Leadership (or other roles) for more. A member can have several roles. <Link href="/settings/roles" className="link">Roles explained</Link> has the full list of who can do what.</p>
-        <p><b>Inviting people:</b> Head Mentors, Team Leadership and Team Admins can invite people from <b>Settings → Invite people</b> — by email (separate addresses with commas) or with a join link the bot posts in a Discord channel. Pick the roles they'll get (Team Member by default — you can give roles up to your own; only Head Mentors can invite Head Mentors). Anyone who accepts joins the team straight away with those roles.</p>
+        <p><b>Inviting people:</b> Head Mentors and Team Leadership can invite people from <b>Settings → Invite people</b> — by email (separate addresses with commas) or with a join link the bot posts in a Discord channel. Pick the roles they'll get (Team Member by default — you can give roles up to your own; only Head Mentors can invite Head Mentors). Anyone who accepts joins the team straight away with those roles.</p>
         <Table
           head={["Role", "Can also…"]}
           rows={[
             ["Team Member", "Use tasks, tools, inventory and the calendar; place orders and mark items arrived; report incidents."],
             ["Build Lead", "Manage meetings and task templates, edit robots and tools."],
             ["Inventory Admin", "Manage inventory and tools, manage task templates, award certifications."],
-            ["Budget Manager", "Manage the budget and approve orders."],
+            ["Treasurer", "Manage the budget and approve orders."],
             ["Safety Captain", "Award and revoke certifications; notified of safety incidents."],
-            ["Team Admin", "Get approved items to order, export the purchasing CSV, add tracking links and set item statuses."],
-            ["Team Leadership", "Approve members and assign roles (except Head Mentor), invite people, manage meetings, Discord and the team time zone; act as captains on orders (Team Admin page, item statuses); view the purchase workflow."],
+            ["Buyer", "Get approved items to order, export the purchasing CSV, add tracking links and set item statuses."],
+            ["Team Leadership", "Approve members and assign roles (except Head Mentor), invite people, manage meetings, Discord and the team time zone; act as captains on orders (Buyer page, item statuses); view the purchase workflow."],
             ["Mentor", "The same as Team Leadership."],
             ["Head Mentor", "Everything: seasons, robots, applying templates, editing the purchase workflow, and acting on any purchase step. Only Head Mentors can grant or remove the Head Mentor role."],
           ]}

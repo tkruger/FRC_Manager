@@ -10,7 +10,7 @@ Last updated: 2026-05-20
 | **Team Member** | General student — base access |
 | **Build Lead** | Student sub-team captain or build season manager |
 | **Inventory Admin** | Mentor or senior student managing inventory, tools & vendors |
-| **Budget Manager** | Mentor responsible for team finances |
+| **Treasurer** | Mentor responsible for team finances |
 | **Safety Captain** | Designated student or mentor safety officer |
 | **Team Leadership** | Senior leadership — can manage members and Discord |
 | **Head Mentor** | Overall platform owner — full access |
@@ -19,7 +19,7 @@ Last updated: 2026-05-20
 
 ## Capability Matrix
 
-| Capability | Team Member | Build Lead | Inventory Admin | Budget Manager | Safety Captain | Team Leadership | Head Mentor |
+| Capability | Team Member | Build Lead | Inventory Admin | Treasurer | Safety Captain | Team Leadership | Head Mentor |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 | **General** |
 | View dashboard, schedules, all read-only pages | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |

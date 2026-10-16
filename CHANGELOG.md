@@ -3,6 +3,8 @@
 ## Unreleased
 
 **Roles**
+- Team Admin is now **Buyer**: places approved orders, exports the purchasing spreadsheet, adds tracking and sets item statuses. Buyers can no longer invite people. The Buyer page moved to Orders → Buyer
+- Budget Manager is now **Treasurer** (same access)
 - Mentor now has the same access as Team Member. Give mentors Team Leadership (or other roles) for more; existing Mentors keep only Team Member access until a Head Mentor adds roles
 
 **Security**

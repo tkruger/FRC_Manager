@@ -115,14 +115,14 @@ enum Role {
   TEAM_MEMBER
   BUILD_LEAD
   INVENTORY_ADMIN
-  BUDGET_MANAGER
+  TREASURER
   SAFETY_CAPTAIN
   TEAM_LEADERSHIP
   /// Can see and manage everything Team Leadership can (it implies TEAM_LEADERSHIP)
   MENTOR
   HEAD_MENTOR
   /// Places approved orders, exports them to the purchasing spreadsheet, adds tracking links
-  TEAM_ADMIN
+  BUYER
 }
 
 model Account {
@@ -893,14 +893,14 @@ model PurchaseLineItem {
   status           OrderItemStatus @default(QUEUED)
   trackingId       String?
   tracking         Tracking?       @relation(fields: [trackingId], references: [id], onDelete: SetNull)
-  /// Last time this item was included in a Team Admin CSV export
+  /// Last time this item was included in a Buyer CSV export
   exportedAt       DateTime?
   orderedAt        DateTime?
   arrivedAt        DateTime?
   arrivedById      String?
 }
 
-/// Queued → To order (approved, sent to Team Admin) → Ordered (tracking added) → Arrived (stocked)
+/// Queued → To order (approved, sent to Buyer) → Ordered (tracking added) → Arrived (stocked)
 enum OrderItemStatus {
   QUEUED
   TO_ORDER

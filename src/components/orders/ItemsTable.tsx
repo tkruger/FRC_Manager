@@ -31,11 +31,11 @@ export interface OrderItemRow {
 
 interface Props {
   items:       OrderItemRow[];
-  /** Team Admin / captains: add tracking links */
+  /** Buyer / captains: add tracking links */
   canTrack:    boolean;
-  /** Team Admin / captains: set any status */
+  /** Buyer / captains: set any status */
   canOverride: boolean;
-  /** Show which order each item belongs to (Team Admin page) */
+  /** Show which order each item belongs to (Buyer page) */
   showOrder?:  boolean;
   emptyText?:  string;
 }

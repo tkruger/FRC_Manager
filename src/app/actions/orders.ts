@@ -154,7 +154,7 @@ async function requestIdsFor(itemIds: string[]) {
 export async function addTrackingAction(itemIds: string[], url: string, label?: string): Promise<Result<{ count: number }>> {
   const who = await actor();
   if (!who) return { success: false, error: "Not authenticated." };
-  if (!who.roles.some((r) => ORDER_ADMIN_ROLES.includes(r))) return { success: false, error: "Only the Team Admin or captains can add tracking links." };
+  if (!who.roles.some((r) => ORDER_ADMIN_ROLES.includes(r))) return { success: false, error: "Only the Buyer or captains can add tracking links." };
   if (!Ids.safeParse(itemIds).success) return { success: false, error: "Choose at least one item." };
 
   const res = await addTracking(who.teamId, who, itemIds, url, label);
@@ -165,7 +165,7 @@ export async function addTrackingAction(itemIds: string[], url: string, label?: 
 export async function setItemStatusAction(itemIds: string[], status: string): Promise<Result<{ count: number }>> {
   const who = await actor();
   if (!who) return { success: false, error: "Not authenticated." };
-  if (!who.roles.some((r) => STATUS_OVERRIDE_ROLES.includes(r))) return { success: false, error: "Only the Team Admin or captains can change an item's status." };
+  if (!who.roles.some((r) => STATUS_OVERRIDE_ROLES.includes(r))) return { success: false, error: "Only the Buyer or captains can change an item's status." };
   if (!Ids.safeParse(itemIds).success) return { success: false, error: "Choose at least one item." };
   const s = z.enum(["QUEUED", "TO_ORDER", "ORDERED", "ARRIVED"]).safeParse(status);
   if (!s.success) return { success: false, error: "Unknown status." };
@@ -189,7 +189,7 @@ export async function markArrivedAction(itemIds: string[]): Promise<Result<{ cou
 export async function exportToOrderCsvAction(opts: { itemIds?: string[]; onlyNew?: boolean }): Promise<Result<{ csv: string; count: number }>> {
   const who = await actor();
   if (!who) return { success: false, error: "Not authenticated." };
-  if (!who.roles.some((r) => ORDER_ADMIN_ROLES.includes(r))) return { success: false, error: "Only the Team Admin or captains can export orders." };
+  if (!who.roles.some((r) => ORDER_ADMIN_ROLES.includes(r))) return { success: false, error: "Only the Buyer or captains can export orders." };
 
   const res = await toOrderCsv(who.teamId, { itemIds: opts.itemIds, onlyNew: opts.onlyNew, markExported: true });
   refresh();

@@ -68,7 +68,7 @@ export async function addTracking(teamId: string, actor: Actor, itemIds: string[
 // ── Status changes ──────────────────────────────────────────────────────────
 
 /**
- * Manual status change (captains / Team Admin). Setting Arrived stocks the item.
+ * Manual status change (captains / Buyer). Setting Arrived stocks the item.
  * Arrived items stay arrived — their stock has already been added.
  */
 export async function setItemStatus(teamId: string, actor: Actor, itemIds: string[], status: OrderItemStatus) {
@@ -198,7 +198,7 @@ export async function syncOrders(requestIds: string[], actor: Actor) {
   }
 }
 
-// ── CSV for the Team Admin ──────────────────────────────────────────────────
+// ── CSV for the Buyer ──────────────────────────────────────────────────
 
 
 /** Fields needed for one CSV row */
@@ -213,7 +213,7 @@ type CsvItem = Prisma.PurchaseLineItemGetPayload<{ select: typeof CSV_ITEM_SELEC
  * The purchasing spreadsheet's format — no header row, one item per line, grouped by vendor:
  * #XXXX (item ID), Vendor, Part Name, Link, Unit Price, Qty, Order Notes, Order Date.
  * Items on orders that aren't approved yet have a draft ID (DRAFT-7K2Q) instead.
- * Used by the Team Admin export and the order exports, so they always match.
+ * Used by the Buyer export and the order exports, so they always match.
  */
 export function itemsToCsv(items: CsvItem[]): string {
   return [...items].sort(byVendor).map((i) => [
@@ -237,7 +237,7 @@ function byVendor(a: CsvItem, b: CsvItem): number {
     || a.id.localeCompare(b.id);
 }
 
-/** "To order" items for the Team Admin, in the spreadsheet format above. */
+/** "To order" items for the Buyer, in the spreadsheet format above. */
 export async function toOrderCsv(teamId: string, opts: { itemIds?: string[]; onlyNew?: boolean; markExported?: boolean }) {
   const items = await prisma.purchaseLineItem.findMany({
     where: {

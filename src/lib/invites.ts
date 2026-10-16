@@ -7,7 +7,7 @@ import type { Role } from "@/generated/prisma";
 import { grantableRoles } from "@/lib/rbac";
 
 /** Who can invite people (Mentors count as Team Leadership) */
-export const INVITE_ROLES: Role[] = ["HEAD_MENTOR", "TEAM_LEADERSHIP", "TEAM_ADMIN"];
+export const INVITE_ROLES: Role[] = ["HEAD_MENTOR", "TEAM_LEADERSHIP"];
 
 export const EMAIL_INVITE_DAYS = 14;
 export const LINK_INVITE_DAYS  = 7;

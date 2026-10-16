@@ -33,7 +33,7 @@ export default async function NewOrderPage({ searchParams }: { searchParams: Pro
         </nav>
         <PageTitle help="purchasing">{draft ? "Finish your order" : "New order"}</PageTitle>
         <p className="text-body text-(--color-text-secondary) mt-1">
-          One order can hold items from several vendors and sub-teams. Once approved, the items go to the Team Admin to purchase.
+          One order can hold items from several vendors and sub-teams. Once approved, the items go to the Buyer to purchase.
         </p>
       </div>
       <OrderForm

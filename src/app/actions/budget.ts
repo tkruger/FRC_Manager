@@ -7,13 +7,13 @@ import { revalidatePath } from "next/cache";
 import type { BudgetCategoryType, FundingType } from "@/generated/prisma";
 import { ActionError, userMessage } from "@/lib/action-error";
 
-const BUDGET_ROLES = ["HEAD_MENTOR", "BUDGET_MANAGER"] as const;
+const BUDGET_ROLES = ["HEAD_MENTOR", "TREASURER"] as const;
 
 async function requireBudgetRole() {
   const session = await auth();
   if (!session?.user?.teamId) throw new ActionError("Not authenticated.");
   if (!session.user.roles.some((r) => BUDGET_ROLES.includes(r as any)))
-    throw new ActionError("Only Head Mentors and Budget Managers can modify the budget.");
+    throw new ActionError("Only Head Mentors and Treasurers can modify the budget.");
   return session;
 }
 

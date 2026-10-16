@@ -92,7 +92,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         help="purchasing"
         subtitle={activeSeason.name}
         actions={<>
-          {isAdmin && <Link href="/procurement/admin"><Button variant="secondary" size="sm">Team Admin</Button></Link>}
+          {isAdmin && <Link href="/procurement/buyer"><Button variant="secondary" size="sm">Buyer</Button></Link>}
           <ExportCsvButton view={view} title="Every order on this tab, one item per line" />
           <Link href="/procurement/vendors"><Button variant="outline" size="sm">Vendors</Button></Link>
           <Link href="/procurement/requests/new"><Button size="sm">+ New order</Button></Link>

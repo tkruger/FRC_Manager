@@ -298,7 +298,7 @@ export function OrderForm({ vendors, edit, draft }: {
           </Labeled>
           <Labeled label="Notes">
             <input className={inputCls} value={item.notes} onChange={(e) => update(item.key, { notes: e.target.value })}
-              placeholder="Variant, color, anything the Team Admin should know" />
+              placeholder="Variant, color, anything the Buyer should know" />
           </Labeled>
         </fieldset>
       ))}

@@ -50,7 +50,7 @@ export default async function EditOrderPage({ params }: { params: Promise<{ id: 
         </nav>
         <PageTitle help="purchasing">Edit order</PageTitle>
         <p className="text-body text-(--color-text-secondary) mt-1">
-          Change, add or remove items. New items {order.status === "SUBMITTED" ? "wait for approval with the rest of the order" : "go straight to the Team Admin's To order list"}.
+          Change, add or remove items. New items {order.status === "SUBMITTED" ? "wait for approval with the rest of the order" : "go straight to the Buyer's To order list"}.
         </p>
       </div>
       <OrderForm
