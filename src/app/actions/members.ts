@@ -15,7 +15,7 @@ async function requireAdmin() {
   const session = await auth();
   if (!session?.user?.teamId) throw new ActionError("Not authenticated.");
   const isAdmin = session.user.roles.some((r) => LEADERSHIP_ROLES.includes(r as any));
-  if (!isAdmin) throw new ActionError("Only Head Mentors, Mentors and Team Leadership can manage team members.");
+  if (!isAdmin) throw new ActionError("Only Head Mentors and Team Leadership can manage team members.");
   return session;
 }
 

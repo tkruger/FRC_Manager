@@ -43,7 +43,7 @@ export default async function AuditLogPage({ searchParams }: { searchParams: Pro
     return (
       <div className="max-w-xl mx-auto px-4 py-16 text-center space-y-3">
         <h1 className="text-h2 text-(--color-text-primary)">Audit log</h1>
-        <p className="text-body text-(--color-text-secondary)">Only Mentors, Team Leadership, Head Mentors and the Safety Captain can see the audit log.</p>
+        <p className="text-body text-(--color-text-secondary)">Only Team Leadership, Head Mentors and the Safety Captain can see the audit log.</p>
       </div>
     );
   }

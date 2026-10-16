@@ -130,7 +130,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       else if ((token.sv ?? 0) !== user.sessionVersion) return null;
       token.teamId = user.teamId ?? undefined;
       token.status = user.status;
-      // Mentor counts as Team Leadership (withImpliedRoles) for every permission check
+      // Effective roles (withImpliedRoles — no role implies another right now)
       token.roles  = user.status === "ACTIVE" ? withImpliedRoles(user.roles.map((r) => r.role)) : [];
       token.isSuperAdmin = user.status === "ACTIVE" && user.isSuperAdmin;
       return token;

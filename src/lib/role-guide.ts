@@ -1,6 +1,6 @@
 // What each team role is for and what it can do — shown on Settings → Roles explained.
 // Keep in step with the permission checks in the app (rbac.ts, actions, pages). Head
-// Mentors can do everything; Mentor counts as Team Leadership (see withImpliedRoles).
+// Mentors can do everything; Mentor has Team Member access unless given other roles.
 
 import type { Role } from "@/generated/prisma";
 
@@ -17,7 +17,7 @@ export const ROLE_SUMMARY: Record<Role, { who: string; summary: string }> = {
   SAFETY_CAPTAIN:  { who: "Safety lead",                    summary: "Keeps the shop safe: awards and revokes certifications and hears about every safety incident." },
   TEAM_ADMIN:      { who: "Whoever places the orders",      summary: "Buys what's approved: works the To order list, exports the purchasing spreadsheet, adds tracking links, invites people." },
   TEAM_LEADERSHIP: { who: "Captains and student leaders",   summary: "Runs the team: approves members and assigns roles, invites people, manages meetings, Discord and the team time zone, and acts as captain on orders." },
-  MENTOR:          { who: "Mentors",                        summary: "Same access as Team Leadership: approves members, assigns roles, invites people, manages meetings, Discord and orders." },
+  MENTOR:          { who: "Mentors",                        summary: "Marks someone as a mentor. Same access as Team Member — add Team Leadership or other roles for more." },
   HEAD_MENTOR:     { who: "The lead mentor (one or more)",  summary: "Everything, including seasons, robots, the purchase workflow and granting the Head Mentor role." },
 };
 
@@ -30,18 +30,18 @@ export const CAPABILITIES: { area: string; items: { action: string; who: Who }[]
     items: [
       { action: "Create, edit and update tasks; move cards on the board", who: "everyone" },
       { action: "Manage task templates",                                 who: ["BUILD_LEAD", "INVENTORY_ADMIN"] },
-      { action: "Add, change and cancel meetings",                       who: ["BUILD_LEAD", "TEAM_LEADERSHIP", "MENTOR"] },
+      { action: "Add, change and cancel meetings",                       who: ["BUILD_LEAD", "TEAM_LEADERSHIP"] },
     ],
   },
   {
     area: "Inventory & tools",
     items: [
       { action: "See inventory, order items, check tools in and out",    who: "everyone" },
-      { action: "See low stock and the order queue",                     who: ["BUILD_LEAD", "INVENTORY_ADMIN", "TEAM_LEADERSHIP", "MENTOR"] },
+      { action: "See low stock and the order queue",                     who: ["BUILD_LEAD", "INVENTORY_ADMIN", "TEAM_LEADERSHIP"] },
       { action: "Add, edit and retire inventory items",                  who: ["INVENTORY_ADMIN"] },
-      { action: "Add and edit tools and tool locations",                 who: ["BUILD_LEAD", "INVENTORY_ADMIN", "TEAM_LEADERSHIP", "MENTOR"] },
+      { action: "Add and edit tools and tool locations",                 who: ["BUILD_LEAD", "INVENTORY_ADMIN", "TEAM_LEADERSHIP"] },
       { action: "Help pack for competitions, scan tools into locations", who: "everyone" },
-      { action: "Edit the competition pack list, start and finish packing", who: ["TEAM_LEADERSHIP", "MENTOR"] },
+      { action: "Edit the competition pack list, start and finish packing", who: ["TEAM_LEADERSHIP"] },
       { action: "Manage vendors",                                        who: ["INVENTORY_ADMIN", "BUDGET_MANAGER"] },
     ],
   },
@@ -51,8 +51,8 @@ export const CAPABILITIES: { area: string; items: { action: string; who: Who }[]
       { action: "Place orders and mark items arrived",                   who: "everyone" },
       { action: "Approve or deny orders (default workflow)",             who: ["BUDGET_MANAGER"] },
       { action: "Edit open orders",                                      who: ["BUDGET_MANAGER", "TEAM_ADMIN"] },
-      { action: "Team Admin page: to-order list, CSV export, tracking",  who: ["TEAM_ADMIN", "TEAM_LEADERSHIP", "MENTOR"] },
-      { action: "Set any item's status by hand",                         who: ["TEAM_ADMIN", "TEAM_LEADERSHIP", "MENTOR"] },
+      { action: "Team Admin page: to-order list, CSV export, tracking",  who: ["TEAM_ADMIN", "TEAM_LEADERSHIP"] },
+      { action: "Set any item's status by hand",                         who: ["TEAM_ADMIN", "TEAM_LEADERSHIP"] },
       { action: "Set up the budget and log expenses",                    who: ["BUDGET_MANAGER"] },
     ],
   },
@@ -61,17 +61,17 @@ export const CAPABILITIES: { area: string; items: { action: string; who: Who }[]
     items: [
       { action: "Report incidents, run PRECHECK and inspections",        who: "everyone" },
       { action: "Award and revoke certifications",                       who: ["SAFETY_CAPTAIN", "INVENTORY_ADMIN"] },
-      { action: "See and print the audit log (tool check-outs and safety reports)", who: ["SAFETY_CAPTAIN", "TEAM_LEADERSHIP", "MENTOR"] },
+      { action: "See and print the audit log (tool check-outs and safety reports)", who: ["SAFETY_CAPTAIN", "TEAM_LEADERSHIP"] },
     ],
   },
   {
     area: "Team & settings",
     items: [
-      { action: "Invite people by email or Discord",                     who: ["TEAM_ADMIN", "TEAM_LEADERSHIP", "MENTOR"] },
-      { action: "Approve new members and assign roles",                  who: ["TEAM_LEADERSHIP", "MENTOR"] },
-      { action: "Edit robots",                                           who: ["BUILD_LEAD", "TEAM_LEADERSHIP", "MENTOR"] },
-      { action: "Connect Discord, set the team time zone",               who: ["TEAM_LEADERSHIP", "MENTOR"] },
-      { action: "See the purchase workflow",                             who: ["TEAM_LEADERSHIP", "MENTOR"] },
+      { action: "Invite people by email or Discord",                     who: ["TEAM_ADMIN", "TEAM_LEADERSHIP"] },
+      { action: "Approve new members and assign roles",                  who: ["TEAM_LEADERSHIP"] },
+      { action: "Edit robots",                                           who: ["BUILD_LEAD", "TEAM_LEADERSHIP"] },
+      { action: "Connect Discord, set the team time zone",               who: ["TEAM_LEADERSHIP"] },
+      { action: "See the purchase workflow",                             who: ["TEAM_LEADERSHIP"] },
       { action: "Seasons, competitions, adding robots, editing the purchase workflow, granting Head Mentor", who: [] },
     ],
   },

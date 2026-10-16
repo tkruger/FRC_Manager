@@ -46,7 +46,7 @@ export interface EmailInviteResult {
 /** Invite a comma-separated list of addresses. Each gets a personal, single-use invite. */
 export async function sendEmailInvitesAction(raw: string, pickedRoles: string[] = ["TEAM_MEMBER"]): Promise<{ success: true; results: EmailInviteResult[] } | Fail> {
   const session = await requireInviter();
-  if (!session) return { success: false, error: "Only Head Mentors, Mentors, Team Leadership and Team Admins can invite people." };
+  if (!session) return { success: false, error: "Only Head Mentors, Team Leadership and Team Admins can invite people." };
   const teamId = session.user.teamId!;
   // Roles they'll get on accepting — only ones the inviter may give
   const roleCheck = checkInviteRoles(withImpliedRoles(session.user.roles), pickedRoles);
@@ -111,7 +111,7 @@ export async function sendEmailInvitesAction(raw: string, pickedRoles: string[] 
 /** Post a team join link to a Discord channel. Anyone with it can join until it expires. */
 export async function postDiscordInviteAction(channelId: string, pickedRoles: string[] = ["TEAM_MEMBER"]): Promise<{ success: true; url: string } | Fail> {
   const session = await requireInviter();
-  if (!session) return { success: false, error: "Only Head Mentors, Mentors, Team Leadership and Team Admins can invite people." };
+  if (!session) return { success: false, error: "Only Head Mentors, Team Leadership and Team Admins can invite people." };
   const teamId = session.user.teamId!;
   const roleCheck = checkInviteRoles(withImpliedRoles(session.user.roles), pickedRoles);
   if (!roleCheck.ok) return { success: false, error: roleCheck.error };

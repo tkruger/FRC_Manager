@@ -2,7 +2,7 @@
 
 import type { Role } from "@/generated/prisma";
 
-/** Who manages the master pack list and starts/finishes packing (Mentor implies Team Leadership) */
+/** Who manages the master pack list and starts/finishes packing */
 export const PACK_MANAGE_ROLES: Role[] = ["HEAD_MENTOR", "TEAM_LEADERSHIP"];
 /** Who adds, renames and deletes tool locations (same people who edit tools) */
 export const LOCATION_EDIT_ROLES: Role[] = ["HEAD_MENTOR", "TEAM_LEADERSHIP", "BUILD_LEAD", "INVENTORY_ADMIN"];

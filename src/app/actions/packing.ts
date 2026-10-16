@@ -50,7 +50,7 @@ function cleanItem(input: PackItemInput) {
 
 export async function addPackItemAction(input: PackItemInput): Promise<Result> {
   const me = await manager();
-  if (!me) return { success: false, error: "Only Team Leadership, Mentors and Head Mentors can change the pack list." };
+  if (!me) return { success: false, error: "Only Team Leadership and Head Mentors can change the pack list." };
   const data = cleanItem(input);
   if (!data.toolName && !data.label) return { success: false, error: "Pick a tool group or name the item." };
 
@@ -62,7 +62,7 @@ export async function addPackItemAction(input: PackItemInput): Promise<Result> {
 
 export async function updatePackItemAction(id: string, input: PackItemInput): Promise<Result> {
   const me = await manager();
-  if (!me) return { success: false, error: "Only Team Leadership, Mentors and Head Mentors can change the pack list." };
+  if (!me) return { success: false, error: "Only Team Leadership and Head Mentors can change the pack list." };
   const data = cleanItem(input);
   if (!data.toolName && !data.label) return { success: false, error: "Pick a tool group or name the item." };
   const { count } = await prisma.packListItem.updateMany({ where: { id, teamId: me.teamId }, data });
@@ -73,7 +73,7 @@ export async function updatePackItemAction(id: string, input: PackItemInput): Pr
 
 export async function deletePackItemAction(id: string): Promise<Result> {
   const me = await manager();
-  if (!me) return { success: false, error: "Only Team Leadership, Mentors and Head Mentors can change the pack list." };
+  if (!me) return { success: false, error: "Only Team Leadership and Head Mentors can change the pack list." };
   await prisma.packListItem.deleteMany({ where: { id, teamId: me.teamId } });
   refresh();
   return { success: true };
@@ -82,7 +82,7 @@ export async function deletePackItemAction(id: string): Promise<Result> {
 /** Move an item up or down the list */
 export async function movePackItemAction(id: string, direction: "up" | "down"): Promise<Result> {
   const me = await manager();
-  if (!me) return { success: false, error: "Only Team Leadership, Mentors and Head Mentors can change the pack list." };
+  if (!me) return { success: false, error: "Only Team Leadership and Head Mentors can change the pack list." };
   const items = await prisma.packListItem.findMany({
     where: { teamId: me.teamId }, orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }], select: { id: true },
   });
@@ -99,7 +99,7 @@ export async function movePackItemAction(id: string, direction: "up" | "down"): 
 
 export async function startPackingAction(competitionId: string): Promise<{ success: true; sessionId: string } | { success: false; error: string }> {
   const me = await manager();
-  if (!me) return { success: false, error: "Only Team Leadership, Mentors and Head Mentors can start packing." };
+  if (!me) return { success: false, error: "Only Team Leadership and Head Mentors can start packing." };
 
   const comp = await prisma.competitionEvent.findFirst({
     where:  { id: competitionId, season: { teamId: me.teamId } },
@@ -118,7 +118,7 @@ export async function startPackingAction(competitionId: string): Promise<{ succe
 
 export async function finishPackingAction(sessionId: string, finished: boolean): Promise<Result> {
   const me = await manager();
-  if (!me) return { success: false, error: "Only Team Leadership, Mentors and Head Mentors can finish packing." };
+  if (!me) return { success: false, error: "Only Team Leadership and Head Mentors can finish packing." };
   const { count } = await prisma.packSession.updateMany({
     where: { id: sessionId, teamId: me.teamId },
     data:  { finishedAt: finished ? new Date() : null },
@@ -130,7 +130,7 @@ export async function finishPackingAction(sessionId: string, finished: boolean):
 
 export async function deletePackSessionAction(sessionId: string): Promise<Result> {
   const me = await manager();
-  if (!me) return { success: false, error: "Only Team Leadership, Mentors and Head Mentors can delete packing." };
+  if (!me) return { success: false, error: "Only Team Leadership and Head Mentors can delete packing." };
   await prisma.packSession.deleteMany({ where: { id: sessionId, teamId: me.teamId } });
   refresh();
   return { success: true };

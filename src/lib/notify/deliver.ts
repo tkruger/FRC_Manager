@@ -94,7 +94,7 @@ export async function notifyRoles(
     where: {
       teamId,
       status: "ACTIVE",
-      // Mentors receive whatever Team Leadership receives
+      // Counts roles that imply the ones asked for (none do right now)
       ...(roles === "all" ? {} : { roles: { some: { role: { in: rolesThatImply(roles) } } } }),
       ...(opts.exclude?.length ? { id: { notIn: opts.exclude } } : {}),
     },

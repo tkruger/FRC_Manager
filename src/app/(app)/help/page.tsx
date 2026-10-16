@@ -236,9 +236,9 @@ export default function HelpPage() {
           <li><b>Add tool</b> can add several identical tools at once; each gets its own tag.</li>
           <li>Some tools need a <b>certification</b> before you can check them out — ask a Safety Captain, Inventory Admin or Head Mentor.</li>
           <li><b>Scan</b> reads a tool&apos;s QR code or asset tag to check it in or out quickly — or to move it: scan the tool, then <b>Scan where it&apos;s going</b> and scan a location.</li>
-          <li><b>Locations</b> are the shelves, cabinets, totes and cases tools live in. Each has its own barcode (LOC-0001, …) to print and stick on. Scan a location to see what&apos;s there, or to scan tools into it one after another. Build Leads, Inventory Admins, Team Leadership, Mentors and Head Mentors add and rename locations.</li>
-          <li><b>Pack lists</b>: Team Leadership, Mentors and Head Mentors keep a master list of what comes to every competition — tool groups (&ldquo;Drill × 2&rdquo;; any drills count) and other items (&ldquo;Battery cart&rdquo;) — and <b>start packing</b> for an event. While packing, a banner on the Tools page lets anyone help: scan a tote or case, then every tool going into it, and tick off the other items. Packing is a checklist only; it doesn&apos;t check tools out. Print it to see what&apos;s in each tote at the event.</li>
-          <li><b>Audit log</b> (Mentors, Team Leadership, Head Mentors and the Safety Captain): every tool check-out and check-in plus every safety report between two dates, ready to print. Find it on the Tools and Safety pages.</li>
+          <li><b>Locations</b> are the shelves, cabinets, totes and cases tools live in. Each has its own barcode (LOC-0001, …) to print and stick on. Scan a location to see what&apos;s there, or to scan tools into it one after another. Build Leads, Inventory Admins, Team Leadership and Head Mentors add and rename locations.</li>
+          <li><b>Pack lists</b>: Team Leadership and Head Mentors keep a master list of what comes to every competition — tool groups (&ldquo;Drill × 2&rdquo;; any drills count) and other items (&ldquo;Battery cart&rdquo;) — and <b>start packing</b> for an event. While packing, a banner on the Tools page lets anyone help: scan a tote or case, then every tool going into it, and tick off the other items. Packing is a checklist only; it doesn&apos;t check tools out. Print it to see what&apos;s in each tote at the event.</li>
+          <li><b>Audit log</b> (Team Leadership, Head Mentors and the Safety Captain): every tool check-out and check-in plus every safety report between two dates, ready to print. Find it on the Tools and Safety pages.</li>
           <li>You&apos;ll get a reminder when a tool is due back today and each day it&apos;s overdue.</li>
         </ul>
       </Section>
@@ -288,8 +288,8 @@ export default function HelpPage() {
       </Section>
 
       <Section id="roles" title="Roles & permissions">
-        <p>Head Mentors, Mentors and Team Leadership approve new members and assign roles. A member can have several roles. <Link href="/settings/roles" className="link">Roles explained</Link> has the full list of who can do what.</p>
-        <p><b>Inviting people:</b> Head Mentors, Mentors, Team Leadership and Team Admins can invite people from <b>Settings → Invite people</b> — by email (separate addresses with commas) or with a join link the bot posts in a Discord channel. Pick the roles they'll get (Team Member by default — you can give roles up to your own; only Head Mentors can invite Head Mentors). Anyone who accepts joins the team straight away with those roles.</p>
+        <p>Head Mentors and Team Leadership approve new members and assign roles. <b>Mentor</b> has the same access as Team Member — give a mentor Team Leadership (or other roles) for more. A member can have several roles. <Link href="/settings/roles" className="link">Roles explained</Link> has the full list of who can do what.</p>
+        <p><b>Inviting people:</b> Head Mentors, Team Leadership and Team Admins can invite people from <b>Settings → Invite people</b> — by email (separate addresses with commas) or with a join link the bot posts in a Discord channel. Pick the roles they'll get (Team Member by default — you can give roles up to your own; only Head Mentors can invite Head Mentors). Anyone who accepts joins the team straight away with those roles.</p>
         <Table
           head={["Role", "Can also…"]}
           rows={[

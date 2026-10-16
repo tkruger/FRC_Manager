@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+**Roles**
+- Mentor now has the same access as Team Member. Give mentors Team Leadership (or other roles) for more; existing Mentors keep only Team Member access until a Head Mentor adds roles
+
 **Security**
 - Upgraded Next.js (16.4.1) and Auth.js (5.0.0-beta.32) for published security fixes
 - Email confirmation: new accounts get a confirmation link; Google/Discord only sign in to a password account whose email is confirmed (or that connects them from Profile)

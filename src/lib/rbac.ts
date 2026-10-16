@@ -8,7 +8,7 @@ const ROLE_RANK: Record<Role, number> = {
   SAFETY_CAPTAIN: 3,
   TEAM_ADMIN:     5,
   TEAM_LEADERSHIP:8,
-  MENTOR:         8,
+  MENTOR:         1, // same access as Team Member (add other roles for more)
   HEAD_MENTOR:    10,
 };
 
@@ -40,23 +40,29 @@ export const ROLE_LABELS: Record<Role, string> = {
 };
 
 // Roles that can manage team members and Discord
-export const LEADERSHIP_ROLES: Role[] = ["HEAD_MENTOR", "TEAM_LEADERSHIP", "MENTOR"];
+export const LEADERSHIP_ROLES: Role[] = ["HEAD_MENTOR", "TEAM_LEADERSHIP"];
 
 /**
- * Roles a member effectively has. A Mentor can see and manage everything Team Leadership
- * can, so Mentor also counts as TEAM_LEADERSHIP — every permission check that names Team
- * Leadership (pages, actions, workflow steps, notifications) then covers Mentors too.
+ * Roles that carry another role's access with them. Empty for now: Mentor has the same
+ * access as Team Member, and gets more only from the other roles a member holds. To make a
+ * role include another's access everywhere (pages, actions, workflow steps, notifications),
+ * add it here, e.g. { MENTOR: ["TEAM_LEADERSHIP"] }.
  */
+const IMPLIED: Partial<Record<Role, Role[]>> = {};
+
+/** Roles a member effectively has (their own plus any implied ones) */
 export function withImpliedRoles<T extends string>(roles: T[]): T[] {
   const out = new Set<string>(roles);
-  if (out.has("MENTOR")) out.add("TEAM_LEADERSHIP");
+  for (const r of roles) for (const extra of IMPLIED[r as Role] ?? []) out.add(extra);
   return [...out] as T[];
 }
 
 /** For database queries that look people up by role: who holds `roles`, counting implied ones */
 export function rolesThatImply<T extends string>(roles: T[]): T[] {
   const out = new Set<string>(roles);
-  if (out.has("TEAM_LEADERSHIP")) out.add("MENTOR");
+  for (const [holder, extras] of Object.entries(IMPLIED)) {
+    if (extras?.some((e) => out.has(e))) out.add(holder);
+  }
   return [...out] as T[];
 }
 
