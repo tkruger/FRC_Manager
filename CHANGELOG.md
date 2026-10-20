@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Tasks have a **Details** section for longer notes — steps, links, checklists — written in Markdown with formatting buttons (bold, italic, heading, lists, checklist, link, code, quote) and a Preview tab. Details only show when a task is opened (and on its create/edit forms), never on cards or lists. Template tasks have details too, copied to the real task when the template is applied (and kept by Save season as template and Clone)
 - Week 0 is the week before the Week 1 events: the season's Week0 event, else 7 days before Week 1 — worked out from its Week events or, with none, the typical FRC schedule (about seven weeks after kickoff). Template tasks and milestones tied to Week 0 are always added, never skipped
 - Template Clone buttons match Edit (outlined)
 - Template pages: hover a milestone or task for its full details (timing in words, example dates, hours, prerequisites, description), and **Clone** any of them to add a similar one quickly

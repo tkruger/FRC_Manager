@@ -80,6 +80,7 @@ export default function HelpPage() {
           <li><b>My tasks / All tasks</b> switches between tasks assigned to you and the whole team. Your choice is remembered.</li>
           <li>Filter by sub-team, priority, assignee or due date (next 7, 14 or 30 days, or a custom range).</li>
           <li>Tap a task to edit it, assign people, add prerequisites or change its status.</li>
+          <li><b>Description</b> is a short summary shown on cards and lists. <b>Details</b> holds longer notes — steps, links, checklists — and only shows when the task is opened. It&apos;s written in Markdown: use the buttons (bold, italic, heading, lists, checklist, link, code, quote) or type it (<code>**bold**</code>, <code>- [ ] to do</code>), and check it on the <b>Preview</b> tab.</li>
           <li>Marking a task <b>Blocked</b> notifies its assignees, Build Leads and Head Mentors.</li>
           <li>The progress card at the top shows how far through the build season you are and how each sub-team is doing. Tap it to collapse it.</li>
         </ul>
@@ -122,6 +123,7 @@ export default function HelpPage() {
           <li>If the season doesn&apos;t have a matching competition yet, that task is <b>skipped</b> and listed in the result. Add the competition in <Link href="/settings/season" className="link">Season settings</Link> and apply again.</li>
           <li>Applying again never duplicates tasks — only tasks that don&apos;t exist yet (for example, for a newly added competition) are created.</li>
           <li>On a template, hover a milestone or task to see everything about it, or tap <b>Clone</b> to start a new one from a copy — change what&apos;s different and save.</li>
+          <li>A template task&apos;s <b>Details</b> (longer Markdown notes — steps, links, checklists) are copied to the real task when the template is applied.</li>
           <li><b>Save season as template</b> turns the current season&apos;s tasks into a new template.</li>
           <li><b>▶ Present</b> (on a template) opens full-screen slides to walk the team through it: the whole timeline as a Gantt chart, the milestones, each phase up close, who&apos;s busy when, and a checklist of what might be missing. Dates are drawn on an example season for illustration (kickoff on the second Sunday of January, Week 2 and Week 4 events, a regional playoff three weeks before Worlds in April, with competitions on weekends), and weekends are shaded. Long timelines scroll on their slide (↑/↓, the mouse wheel or a swipe) while the dates stay at the top. Use ←/→, space or a click to move on, <b>F</b> for full screen and <b>Esc</b> to leave. On a phone or tablet, swipe.</li>
         </ul>

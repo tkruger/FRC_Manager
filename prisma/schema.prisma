@@ -1092,6 +1092,8 @@ model Task {
   createdBy            User?              @relation("TaskCreator", fields: [createdById], references: [id])
   name                 String
   description          String?
+  /// Longer notes in Markdown — shown when the task is opened, not on cards or lists
+  details              String?
   subTeam              SubTeam?
   startDate            DateTime?
   dueDate              DateTime?
@@ -1178,6 +1180,8 @@ model TemplateTask {
   template             SeasonTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
   name                 String
   description          String?
+  /// Longer notes in Markdown, copied to the task when the template is applied
+  details              String?
   subTeam              SubTeam?
   startOffset          Int
   durationBuildDays    Int            @default(1)

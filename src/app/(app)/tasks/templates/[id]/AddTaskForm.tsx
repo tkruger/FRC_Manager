@@ -8,6 +8,7 @@ import { Field } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
 import { SUBTEAM_OPTIONS, PRIORITY_OPTIONS } from "@/lib/schedule-helpers";
 import { TaskTimingFields, type SeasonPreview } from "./TaskTimingFields";
+import { MarkdownEditor } from "@/components/markdown/MarkdownEditor";
 
 export function AddTaskForm({ templateId, season }: { templateId: string; season: SeasonPreview | null }) {
   const router = useRouter();
@@ -39,6 +40,10 @@ export function AddTaskForm({ templateId, season }: { templateId: string; season
       </div>
 
       <TaskTimingFields key={timingKey} season={season} />
+
+      {/* Keyed with the timing fields so it clears after each add */}
+      <MarkdownEditor key={`details-${timingKey}`} name="details" rows={4}
+        hint="Copied to the task when the template is applied. Only shown when the task is opened." />
 
       <div className="flex flex-wrap items-end gap-6">
         <label className="flex items-center gap-2 cursor-pointer">

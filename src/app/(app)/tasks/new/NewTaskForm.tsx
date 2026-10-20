@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { MarkdownEditor } from "@/components/markdown/MarkdownEditor";
 import { SUBTEAM_OPTIONS, STATUS_OPTIONS, PRIORITY_OPTIONS } from "@/lib/schedule-helpers";
 
 interface Props {
@@ -57,7 +58,8 @@ export function NewTaskForm({ robots, members, existingTasks, kickoffDate, endDa
       <div className="card space-y-4">
         <h2 className="text-h3 text-[--color-text-primary]">Task details</h2>
         <Field label="Task name" name="name" required placeholder="e.g. Drivetrain Assembly" />
-        <Textarea label="Description" name="description" rows={3} placeholder="What needs to be done, acceptance criteria, resources needed..." />
+        <Textarea label="Description" name="description" rows={2} placeholder="A short summary — shown on the board and in lists" />
+        <MarkdownEditor name="details" label="Details" hint="Steps, acceptance criteria, links and checklists. Only shown when the task is opened." />
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Select label="Sub-team"  name="subTeam"  placeholder="Select sub-team" options={SUBTEAM_OPTIONS} />
           <Select label="Priority"  name="priority" options={PRIORITY_OPTIONS} defaultValue="MEDIUM" />

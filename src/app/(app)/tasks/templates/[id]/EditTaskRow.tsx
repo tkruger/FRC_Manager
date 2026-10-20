@@ -11,6 +11,7 @@ import { SUBTEAM_OPTIONS, PRIORITY_OPTIONS } from "@/lib/schedule-helpers";
 import type { TemplateTask } from "@/generated/prisma";
 import { TaskTimingFields, type SeasonPreview } from "./TaskTimingFields";
 import { toast } from "@/components/ui/toast";
+import { MarkdownEditor } from "@/components/markdown/MarkdownEditor";
 
 /**
  * Edit a template task or milestone — or, with `clone`, start a new one from a copy of it:
@@ -60,6 +61,8 @@ export function EditTaskRow({ task, season, clone = false }: { task: TemplateTas
             anchor: task.anchor, anchorNumber: task.anchorNumber, startOffset: task.startOffset,
             durationBuildDays: task.durationBuildDays, isMilestone: task.isMilestone,
           }} />
+          <MarkdownEditor name="details" defaultValue={task.details ?? ""} rows={5}
+            hint="Copied to the task when the template is applied. Only shown when the task is opened." />
           <div className="flex items-center gap-4">
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" name="designReviewRequired" defaultChecked={task.designReviewRequired} className="rounded" />

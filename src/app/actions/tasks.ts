@@ -58,6 +58,14 @@ export type TaskActionState =
   | { success: true; taskId: string }
   | { success: false; error: string };
 
+/** Markdown details from a form: trimmed, "" → null (clears), missing field → undefined (unchanged) */
+function detailsFrom(formData: FormData): string | null | undefined {
+  const v = formData.get("details");
+  if (typeof v !== "string") return undefined;
+  // Browsers submit textarea line breaks as \r\n
+  return v.replace(/\r\n?/g, "\n").trim().slice(0, 20000) || null;
+}
+
 export async function createTaskAction(
   _prev: TaskActionState | null,
   formData: FormData
@@ -99,6 +107,7 @@ export async function createTaskAction(
       createdById:          session.user.id,
       name:                 d.name,
       description:          d.description,
+      details:              detailsFrom(formData),
       subTeam:              (d.subTeam as SubTeam) || null,
       robotId:              refs.robotId,
       startDate:            d.startDate ? new Date(d.startDate) : null,
@@ -190,6 +199,7 @@ export async function updateTaskAction(
     data: {
       name:                 d.name,
       description:          d.description,
+      details:              detailsFrom(formData),
       subTeam:              (d.subTeam as SubTeam) || null,
       robotId:              refs.robotId,
       startDate:            d.startDate ? new Date(d.startDate) : null,

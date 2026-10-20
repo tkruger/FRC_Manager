@@ -93,6 +93,7 @@ export default async function SchedulePage({
     id:                   t.id,
     name:                 t.name,
     description:          t.description,
+    details:              t.details,
     status:               t.status,
     priority:             t.priority,
     subTeam:              t.subTeam,

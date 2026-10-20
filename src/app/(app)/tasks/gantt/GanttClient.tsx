@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { SUBTEAM_COLORS, SUBTEAM_OPTIONS, STATUS_CONFIG, PRIORITY_CONFIG } from "@/lib/schedule-helpers";
 import { formatDate } from "@/lib/utils";
+import { Markdown } from "@/components/markdown/Markdown";
 
 // The season's tasks on a timeline. Looks like the template presentation's Gantt: rows in
 // the order things happen with sub-team color dots, shaded weekends, day ticks (taller at
@@ -25,6 +26,7 @@ export interface GanttTask {
   dueDate: string;
   isMilestone: boolean;
   description: string | null;
+  details: string | null;
   blockersNotes: string | null;
   estimatedHours: number | null;
   actualHours: number | null;
@@ -333,6 +335,14 @@ export function GanttClient({ tasks, kickoffDate, endDate, seasonName, markers }
                 <div>
                   <p className="text-label text-(--color-text-secondary) mb-1">Description</p>
                   <p className="text-sm text-(--color-text-primary) whitespace-pre-wrap">{modalTask.description}</p>
+                </div>
+              )}
+              {modalTask.details && (
+                <div>
+                  <p className="text-label text-(--color-text-secondary) mb-1">Details</p>
+                  <div className="rounded-md border border-(--color-border) px-3 py-2.5 max-h-80 overflow-y-auto">
+                    <Markdown>{modalTask.details}</Markdown>
+                  </div>
                 </div>
               )}
               {modalTask.blockersNotes && (

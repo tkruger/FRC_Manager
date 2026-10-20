@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
+import { Markdown } from "@/components/markdown/Markdown";
+import { MarkdownEditor } from "@/components/markdown/MarkdownEditor";
 import { Select } from "@/components/ui/select";
 import { updateTaskAction, updateTaskStatusAction, deleteTaskAction } from "@/app/actions/tasks";
 import { STATUS_CONFIG, PRIORITY_CONFIG, SUBTEAM_COLORS, SUBTEAM_OPTIONS, PRIORITY_OPTIONS, STATUS_OPTIONS, shortDate, isOverdue } from "@/lib/schedule-helpers";
@@ -18,6 +20,8 @@ export interface TaskModalData {
   id: string;
   name: string;
   description: string | null;
+  /** Longer Markdown notes — only shown here, never on cards or lists */
+  details: string | null;
   status: string;
   priority: string;
   subTeam: string | null;
@@ -135,6 +139,16 @@ export function TaskModal({ task, allTasks = [], allMembers = [], allRobots = []
                 <div>
                   <p className="text-label text-[--color-text-secondary] mb-1">Description</p>
                   <p className="text-sm text-[--color-text-primary] whitespace-pre-wrap">{task.description}</p>
+                </div>
+              )}
+
+              {/* Details (Markdown) */}
+              {task.details && (
+                <div>
+                  <p className="text-label text-(--color-text-secondary) mb-1">Details</p>
+                  <div className="rounded-md border border-(--color-border) px-3 py-2.5">
+                    <Markdown>{task.details}</Markdown>
+                  </div>
                 </div>
               )}
 
@@ -294,7 +308,8 @@ function EditTaskForm({ task, allTasks, allMembers, allRobots, kickoffDate, endD
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && <div className="text-sm text-[--color-danger] bg-[--color-danger]/10 rounded px-3 py-2">{error}</div>}
       <Field label="Task name" name="name" required defaultValue={task.name} />
-      <Textarea label="Description" name="description" rows={3} defaultValue={task.description ?? ""} />
+      <Textarea label="Description" name="description" rows={2} defaultValue={task.description ?? ""} />
+      <MarkdownEditor name="details" label="Details" defaultValue={task.details ?? ""} rows={6} />
 
       <div className="grid grid-cols-2 gap-4 [&>*]:min-w-0">
         <Select label="Status" name="status" options={STATUS_OPTIONS} defaultValue={task.status} />
