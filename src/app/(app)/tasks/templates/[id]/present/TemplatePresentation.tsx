@@ -351,19 +351,7 @@ function buildSlides(name: string, description: string | null, teamNumber: numbe
     return slides;
   }
 
-  // 2. The whole timeline (split if it's long)
-  const overview = [items];
-  const range = rangeOf(items);
-  overview.forEach((page, i) => {
-    slides.push(
-      <Slide compact key={`overview-${i}`} kicker="The whole plan" title={overview.length > 1 ? `Timeline (${i + 1} of ${overview.length})` : "Timeline"}
-        footer={<div style={{ display: "flex", flexDirection: "column", gap: 4 }}><TeamKey teams={keyTeams} size={13} /><Legend estimated={anyEstimated} /></div>}>
-        <Gantt items={page} range={range} markers={markers} labels={labels} height={ganttH} />
-      </Slide>,
-    );
-  });
-
-  // 3. Milestones, top to bottom, with the key dates they fall around
+  // 2. Milestones first — the dates the plan works toward — top to bottom, with the key dates they fall around
   const ms = items.filter((i) => i.isMilestone);
   if (ms.length) {
     type Row = { kind: "milestone"; m: TimelineItem; gap: number | null } | { kind: "marker"; mk: TimelineMarker };
@@ -423,6 +411,18 @@ function buildSlides(name: string, description: string | null, teamNumber: numbe
       );
     });
   }
+
+  // 3. The whole timeline (split if it's long)
+  const overview = [items];
+  const range = rangeOf(items);
+  overview.forEach((page, i) => {
+    slides.push(
+      <Slide compact key={`overview-${i}`} kicker="The whole plan" title={overview.length > 1 ? `Timeline (${i + 1} of ${overview.length})` : "Timeline"}
+        footer={<div style={{ display: "flex", flexDirection: "column", gap: 4 }}><TeamKey teams={keyTeams} size={13} /><Legend estimated={anyEstimated} /></div>}>
+        <Gantt items={page} range={range} markers={markers} labels={labels} height={ganttH} />
+      </Slide>,
+    );
+  });
 
   // 4. Each phase, zoomed in
   for (const phase of PHASES) {

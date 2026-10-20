@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Presentation: the Milestones slide now comes before the whole-plan Timeline
 - Presentation Gantt slides: smaller text, a one-line title and slimmer margins, so about twice as many rows fit and the chart gets most of the slide
 - Presentation example season: the district playoffs are in Week 6 (they landed in Week 5 before), with Worlds on the third Saturday of April
 - Task card: the Edit/Delete/Close and Save/Cancel buttons stay pinned to the bottom of the card while long details and forms scroll behind them
