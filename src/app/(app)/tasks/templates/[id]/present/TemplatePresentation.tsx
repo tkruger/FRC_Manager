@@ -18,6 +18,11 @@ const H = 900;
 const PAD = 64;
 const LABEL_W = 400;
 const CHART_W = W - PAD * 2 - LABEL_W;
+// Gantt slides use smaller text and margins so the chart gets most of the slide
+const G_PAD = 36;
+const G_LABEL_W = 300;
+const G_ROW_W = W - G_PAD * 2;
+const G_CHART_W = G_ROW_W - G_LABEL_W;
 
 const C = {
   bg: "#ffffff", text: "#0f172a", muted: "#64748b", faint: "#94a3b8", grid: "#e2e8f0", band: "#f8fafc",
@@ -56,17 +61,18 @@ function rangeOf(items: TimelineItem[], pad = 3): [number, number] {
 
 // ── Building blocks ─────────────────────────────────────────────────────────
 
-function Slide({ title, kicker, children, footer }: { title?: string; kicker?: string; children: React.ReactNode; footer?: React.ReactNode }) {
+/** `compact` (Gantt slides): a one-line title and small margins, leaving the room to the chart */
+function Slide({ title, kicker, children, footer, compact = false }: { title?: string; kicker?: string; children: React.ReactNode; footer?: React.ReactNode; compact?: boolean }) {
   return (
-    <div style={{ position: "relative", width: W, height: H, background: C.bg, color: C.text, padding: PAD, display: "flex", flexDirection: "column", fontFamily: "var(--font-inter), system-ui, sans-serif" }}>
+    <div style={{ position: "relative", width: W, height: H, background: C.bg, color: C.text, padding: compact ? `28px ${G_PAD}px` : PAD, display: "flex", flexDirection: "column", fontFamily: "var(--font-inter), system-ui, sans-serif" }}>
       {title && (
-        <div style={{ marginBottom: 28 }}>
-          {kicker && <div style={{ fontSize: 22, fontWeight: 600, color: C.accent, letterSpacing: 0.5, textTransform: "uppercase" }}>{kicker}</div>}
-          <div style={{ fontSize: 52, fontWeight: 800, lineHeight: 1.1 }}>{title}</div>
+        <div style={{ marginBottom: compact ? 12 : 28, ...(compact ? { display: "flex", alignItems: "baseline", gap: 14 } : {}) }}>
+          {kicker && <div style={{ fontSize: compact ? 14 : 22, fontWeight: 600, color: C.accent, letterSpacing: 0.5, textTransform: "uppercase", ...(compact ? { order: 1 } : {}) }}>{kicker}</div>}
+          <div style={{ fontSize: compact ? 28 : 52, fontWeight: 800, lineHeight: 1.1 }}>{title}</div>
         </div>
       )}
       <div style={{ flex: 1, minHeight: 0, position: "relative" }}>{children}</div>
-      {footer && <div style={{ marginTop: 16, fontSize: 18, color: C.muted }}>{footer}</div>}
+      {footer && <div style={{ marginTop: compact ? 8 : 16, fontSize: compact ? 13 : 18, color: C.muted }}>{footer}</div>}
       <div style={{ position: "absolute", right: 24, bottom: 14, fontSize: 14, color: C.faint }}>Example dates for illustration</div>
     </div>
   );
@@ -88,14 +94,14 @@ function TeamKey({ teams, size = 18 }: { teams: (string | null)[]; size?: number
 
 function Legend({ estimated }: { estimated: boolean }) {
   const item = (el: React.ReactNode, text: string) => (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 8, marginRight: 28 }}>{el}{text}</span>
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, marginRight: 22 }}>{el}{text}</span>
   );
   return (
     <span>
-      {item(<span style={{ width: 40, height: 12, borderRadius: 6, background: C.secondary, display: "inline-block" }} />, "Task: start → due")}
-      {item(<span style={{ width: 14, height: 14, background: C.milestone, transform: "rotate(45deg)", display: "inline-block" }} />, "Milestone")}
-      {item(<span style={{ width: 0, height: 20, borderLeft: `2px solid ${C.faint}`, display: "inline-block" }} />, "Key dates")}
-      {estimated && item(<span style={{ width: 40, height: 12, borderRadius: 6, border: `2px dashed ${C.secondary}`, display: "inline-block" }} />, "Estimated (not in the season yet)")}
+      {item(<span style={{ width: 28, height: 9, borderRadius: 5, background: C.secondary, display: "inline-block" }} />, "Task: start → due")}
+      {item(<span style={{ width: 9, height: 9, background: C.milestone, transform: "rotate(45deg)", display: "inline-block" }} />, "Milestone")}
+      {item(<span style={{ width: 0, height: 14, borderLeft: `2px solid ${C.faint}`, display: "inline-block" }} />, "Key dates")}
+      {estimated && item(<span style={{ width: 28, height: 9, borderRadius: 5, border: `2px dashed ${C.secondary}`, display: "inline-block" }} />, "Estimated (not in the season yet)")}
     </span>
   );
 }
@@ -113,7 +119,7 @@ function Gantt({ items, range, markers, labels, height }: {
   items: TimelineItem[]; range: [number, number]; markers: TimelineMarker[]; labels: Labels; height: number;
 }) {
   const [lo, hi] = range;
-  const x = (d: number) => ((d - lo) / (hi - lo)) * CHART_W;
+  const x = (d: number) => ((d - lo) / (hi - lo)) * G_CHART_W;
   const shown = markers.filter((m) => m.day >= lo && m.day <= hi);
   // The row under the mouse (for its hover card) and how far the rows are scrolled
   const [hover, setHover] = useState<number | null>(null);
@@ -124,27 +130,27 @@ function Gantt({ items, range, markers, labels, height }: {
   const lastX = [-Infinity, -Infinity, -Infinity, -Infinity];
   for (const m of shown) {
     const mx = x(m.day);
-    const free = lastX.findIndex((lx) => mx - lx >= 10 + m.label.length * 8.5);
+    const free = lastX.findIndex((lx) => mx - lx >= 10 + m.label.length * 7);
     const row = free === -1 ? lastX.indexOf(Math.min(...lastX)) : free;
     markerRow.push(row);
     lastX[row] = mx;
   }
   const markerRows = shown.length ? Math.max(...markerRow) + 1 : 0;
-  const tickH = 30;
-  const axisH = tickH + markerRows * 22 + 6;
+  const tickH = 22;
+  const axisH = tickH + markerRows * 17 + 6;
   // Rows keep a readable height; when they don't all fit, the rows scroll under the
   // date header (which stays put) instead of spilling onto another slide
   const viewH = height - axisH;
-  const rowH = Math.max(40, Math.min(46, Math.floor(viewH / Math.max(1, items.length))));
+  const rowH = Math.max(26, Math.min(32, Math.floor(viewH / Math.max(1, items.length))));
   const scrolls = items.length * rowH > viewH;
   // Room at the end so the last row clears the fade
   const innerH = Math.max(viewH, items.length * rowH + (scrolls ? 36 : 0));
-  const font = 20;
+  const font = 15;
 
   // Day ticks along the bottom of each row, with a taller tick where each week starts
   // (weeks counted from kickoff, matching the date axis). Drawn as repeating gradients so
   // long ranges stay cheap; day ticks are left out when days get too narrow to see.
-  const dayW = CHART_W / (hi - lo);
+  const dayW = G_CHART_W / (hi - lo);
   const firstDay = Math.ceil(lo);
   const firstWeek = Math.ceil(lo / 7) * 7;
   // Weekends (Saturday + Sunday) get a light shade — kickoff and competitions fall on them
@@ -169,13 +175,13 @@ function Gantt({ items, range, markers, labels, height }: {
   return (
     <div style={{ position: "relative", height }}>
       {/* Date ticks */}
-      <div style={{ position: "absolute", left: LABEL_W, top: 0, width: CHART_W, height: axisH, borderBottom: `2px solid ${C.grid}` }}>
+      <div style={{ position: "absolute", left: G_LABEL_W, top: 0, width: G_CHART_W, height: axisH, borderBottom: `2px solid ${C.grid}` }}>
         {ticksFor(lo, hi).map((d) => (
-          <div key={d} style={{ position: "absolute", left: x(d), top: 4, transform: "translateX(-50%)", fontSize: 16, color: C.muted, whiteSpace: "nowrap" }}>{labels.tick(d)}</div>
+          <div key={d} style={{ position: "absolute", left: x(d), top: 3, transform: "translateX(-50%)", fontSize: 13, color: C.muted, whiteSpace: "nowrap" }}>{labels.tick(d)}</div>
         ))}
         {/* Key-date labels */}
         {shown.map((m, i) => (
-          <div key={`${m.label}-${i}`} style={{ position: "absolute", left: x(m.day), top: tickH + markerRow[i] * 22, transform: x(m.day) > CHART_W - 120 ? "translateX(-100%)" : "translateX(-2px)", fontSize: 14, fontWeight: 700, color: m.kind === "week0" ? C.accent : C.secondary, whiteSpace: "nowrap", padding: "0 4px", borderLeft: x(m.day) > CHART_W - 120 ? "none" : `2px ${m.estimated ? "dashed" : "solid"} ${m.kind === "week0" ? C.accent : C.faint}`, borderRight: x(m.day) > CHART_W - 120 ? `2px ${m.estimated ? "dashed" : "solid"} ${m.kind === "week0" ? C.accent : C.faint}` : "none" }}>
+          <div key={`${m.label}-${i}`} style={{ position: "absolute", left: x(m.day), top: tickH + markerRow[i] * 17, transform: x(m.day) > G_CHART_W - 120 ? "translateX(-100%)" : "translateX(-2px)", fontSize: 12, fontWeight: 700, color: m.kind === "week0" ? C.accent : C.secondary, whiteSpace: "nowrap", padding: "0 4px", borderLeft: x(m.day) > G_CHART_W - 120 ? "none" : `2px ${m.estimated ? "dashed" : "solid"} ${m.kind === "week0" ? C.accent : C.faint}`, borderRight: x(m.day) > G_CHART_W - 120 ? `2px ${m.estimated ? "dashed" : "solid"} ${m.kind === "week0" ? C.accent : C.faint}` : "none" }}>
             {m.label}
           </div>
         ))}
@@ -185,7 +191,7 @@ function Gantt({ items, range, markers, labels, height }: {
         style={{ position: "absolute", left: 0, right: 0, top: axisH, height: viewH, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain" }}>
       <div style={{ position: "relative", height: innerH }}>
       {/* Grid and key-date lines */}
-      <div style={{ position: "absolute", left: LABEL_W, top: 0, width: CHART_W, height: innerH }}>
+      <div style={{ position: "absolute", left: G_LABEL_W, top: 0, width: G_CHART_W, height: innerH }}>
         {weekends && <div style={weekends} />}
         {ticksFor(lo, hi).map((d) => <div key={d} style={{ position: "absolute", left: x(d), top: 0, bottom: 0, borderLeft: `1px solid ${C.grid}` }} />)}
         {shown.map((m, i) => (
@@ -199,19 +205,19 @@ function Gantt({ items, range, markers, labels, height }: {
         const x1 = x(it.start), x2 = x(it.due);
         const barW = Math.max(6, x2 - x1);
         const tag = it.isMilestone ? labels.date(it.due) : `${it.due - it.start}d · due ${labels.date(it.due)}`;
-        const tagRight = x2 + 12 + 150 < CHART_W;
+        const tagRight = x2 + 12 + 120 < G_CHART_W;
         // Clear of the diamond (or the bar end)
         const gap = it.isMilestone ? rowH * 0.4 + 8 : 12;
         return (
           <div key={it.key} onMouseEnter={() => setHover(r)}
-            style={{ position: "absolute", left: 0, top, width: W - PAD * 2, height: rowH, background: hover === r ? "rgba(29,58,138,.08)" : r % 2 ? "rgba(15,23,42,.025)" : "transparent" }}>
-            <div style={{ position: "absolute", left: 0, width: LABEL_W - 16, top: 0, height: rowH, display: "flex", alignItems: "center", gap: 10, fontSize: font }}>
-              <span style={{ width: 10, height: 10, borderRadius: 5, background: color, flex: "none" }} />
+            style={{ position: "absolute", left: 0, top, width: G_ROW_W, height: rowH, background: hover === r ? "rgba(29,58,138,.08)" : r % 2 ? "rgba(15,23,42,.025)" : "transparent" }}>
+            <div style={{ position: "absolute", left: 0, width: G_LABEL_W - 16, top: 0, height: rowH, display: "flex", alignItems: "center", gap: 8, fontSize: font }}>
+              <span style={{ width: 8, height: 8, borderRadius: 4, background: color, flex: "none" }} />
               <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: it.isMilestone ? 700 : 500 }}>
                 {it.isMilestone ? "◆ " : ""}{it.name}{it.suffix ? <span style={{ color: C.muted }}> — {it.suffix}</span> : null}
               </span>
             </div>
-            <div style={{ position: "absolute", left: LABEL_W, top: 0, width: CHART_W, height: rowH }}>
+            <div style={{ position: "absolute", left: G_LABEL_W, top: 0, width: G_CHART_W, height: rowH }}>
               {dayW >= 4 && <div style={dayTicks} />}
               <div style={weekTicks} />
               {it.isMilestone ? (
@@ -223,7 +229,7 @@ function Gantt({ items, range, markers, labels, height }: {
                   border: it.estimated ? `2px dashed ${color}` : "none",
                 }} />
               )}
-              <div style={{ position: "absolute", top: 0, height: rowH, display: "flex", alignItems: "center", fontSize: font - 3, color: C.muted, whiteSpace: "nowrap", ...(tagRight ? { left: x2 + gap } : { right: CHART_W - (it.isMilestone ? x2 : x1) + gap }) }}>{tag}</div>
+              <div style={{ position: "absolute", top: 0, height: rowH, display: "flex", alignItems: "center", fontSize: font - 2, color: C.muted, whiteSpace: "nowrap", ...(tagRight ? { left: x2 + gap } : { right: G_CHART_W - (it.isMilestone ? x2 : x1) + gap }) }}>{tag}</div>
             </div>
           </div>
         );
@@ -235,7 +241,7 @@ function Gantt({ items, range, markers, labels, height }: {
       {hover != null && items[hover] && (
         <HoverCard item={items[hover]} labels={labels}
           rowTop={axisH + hover * rowH - scrollTop} rowH={rowH} height={height}
-          left={Math.max(0, Math.min(W - PAD * 2 - 460, LABEL_W + x(items[hover].start) - 24))} />
+          left={Math.max(0, Math.min(G_ROW_W - 460, G_LABEL_W + x(items[hover].start) - 24))} />
       )}
     </div>
   );
@@ -313,7 +319,8 @@ function buildSlides(name: string, description: string | null, teamNumber: numbe
     ...(tasks.some((t) => !t.subTeam) ? [null] : []),
   ];
   // Gantt slides carry two footer lines: the color key and the chart legend
-  const ganttH = H - PAD * 2 - 196;
+  // Compact slide: 28px margins, ~43px title row, ~48px footer (team key + legend)
+  const ganttH = H - 56 - 43 - 56;
   slides.push(
     <Slide key="title">
       <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%" }}>
@@ -349,8 +356,8 @@ function buildSlides(name: string, description: string | null, teamNumber: numbe
   const range = rangeOf(items);
   overview.forEach((page, i) => {
     slides.push(
-      <Slide key={`overview-${i}`} kicker="The whole plan" title={overview.length > 1 ? `Timeline (${i + 1} of ${overview.length})` : "Timeline"}
-        footer={<div style={{ display: "flex", flexDirection: "column", gap: 8 }}><TeamKey teams={keyTeams} /><Legend estimated={anyEstimated} /></div>}>
+      <Slide compact key={`overview-${i}`} kicker="The whole plan" title={overview.length > 1 ? `Timeline (${i + 1} of ${overview.length})` : "Timeline"}
+        footer={<div style={{ display: "flex", flexDirection: "column", gap: 4 }}><TeamKey teams={keyTeams} size={13} /><Legend estimated={anyEstimated} /></div>}>
         <Gantt items={page} range={range} markers={markers} labels={labels} height={ganttH} />
       </Slide>,
     );
@@ -424,9 +431,9 @@ function buildSlides(name: string, description: string | null, teamNumber: numbe
     const pr = rangeOf(phaseItems);
     [phaseItems].forEach((page, p, all) => {
       slides.push(
-        <Slide key={`${phase.key}-${p}`} kicker={phase.subtitle} title={all.length > 1 ? `${phase.title} (${p + 1} of ${all.length})` : phase.title}
-          footer={<div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <TeamKey teams={keyTeams.filter((t) => page.some((i) => i.subTeam === t))} />
+        <Slide compact key={`${phase.key}-${p}`} kicker={phase.subtitle} title={all.length > 1 ? `${phase.title} (${p + 1} of ${all.length})` : phase.title}
+          footer={<div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <TeamKey teams={keyTeams.filter((t) => page.some((i) => i.subTeam === t))} size={13} />
             <span>{page.filter((i) => !i.isMilestone).length} tasks · {page.filter((i) => i.isMilestone).length} milestones — each row shows its length and due date</span>
           </div>}>
           <Gantt items={page} range={pr} markers={markers} labels={labels} height={ganttH} />
