@@ -42,6 +42,8 @@ function makeLabels(kickoff: string | null) {
     date: (day: number) => (k != null ? fmt(day, { month: "short", day: "numeric" }) : day === 0 ? "Kickoff" : `${day > 0 ? "Day " : "Day −"}${Math.abs(day)}`),
     long: (day: number) => (k != null ? fmt(day, { weekday: "short", month: "short", day: "numeric" }) : day === 0 ? "Kickoff" : `${Math.abs(day)} days ${day > 0 ? "after" : "before"} kickoff`),
     tick: (day: number) => (k != null ? fmt(day, { month: "short", day: "numeric" }) : day === 0 ? "Kickoff" : `${day > 0 ? "+" : "−"}${Math.abs(day / 7)}w`),
+    /** Day of the week (0 = Sunday … 6 = Saturday), when the dates are known */
+    weekday: (day: number) => (k != null ? new Date(k + day * DAY).getUTCDay() : null),
   };
 }
 type Labels = ReturnType<typeof makeLabels>;
@@ -143,6 +145,14 @@ function Gantt({ items, range, markers, labels, height }: {
   const dayW = CHART_W / (hi - lo);
   const firstDay = Math.ceil(lo);
   const firstWeek = Math.ceil(lo / 7) * 7;
+  // Weekends (Saturday + Sunday) get a light shade — kickoff and competitions fall on them
+  let firstSat: number | null = null;
+  for (let d = Math.ceil(lo) - 7; d <= Math.ceil(lo); d++) if (labels.weekday(d) === 6) firstSat = d;
+  const weekends: React.CSSProperties | null = firstSat == null ? null : {
+    position: "absolute", inset: 0, pointerEvents: "none",
+    backgroundImage: `repeating-linear-gradient(to right, rgba(15,23,42,.05) 0 ${dayW * 2}px, transparent ${dayW * 2}px ${dayW * 7}px)`,
+    backgroundPositionX: x(firstSat),
+  };
   const dayTicks: React.CSSProperties = {
     position: "absolute", left: 0, right: 0, bottom: 0, height: 5, pointerEvents: "none",
     backgroundImage: `repeating-linear-gradient(to right, ${C.faint} 0 1px, transparent 1px ${dayW}px)`,
@@ -173,6 +183,7 @@ function Gantt({ items, range, markers, labels, height }: {
       <div style={{ position: "relative", height: innerH }}>
       {/* Grid and key-date lines */}
       <div style={{ position: "absolute", left: LABEL_W, top: 0, width: CHART_W, height: innerH }}>
+        {weekends && <div style={weekends} />}
         {ticksFor(lo, hi).map((d) => <div key={d} style={{ position: "absolute", left: x(d), top: 0, bottom: 0, borderLeft: `1px solid ${C.grid}` }} />)}
         {shown.map((m, i) => (
           <div key={`${m.label}-${i}`} style={{ position: "absolute", left: x(m.day), top: 0, bottom: 0, borderLeft: `2px ${m.estimated ? "dashed" : "solid"} ${m.kind === "week0" ? C.accent : C.faint}` }} />
@@ -189,7 +200,7 @@ function Gantt({ items, range, markers, labels, height }: {
         // Clear of the diamond (or the bar end)
         const gap = it.isMilestone ? rowH * 0.4 + 8 : 12;
         return (
-          <div key={it.key} style={{ position: "absolute", left: 0, top, width: W - PAD * 2, height: rowH, background: r % 2 ? C.band : "transparent" }}>
+          <div key={it.key} style={{ position: "absolute", left: 0, top, width: W - PAD * 2, height: rowH, background: r % 2 ? "rgba(15,23,42,.025)" : "transparent" }}>
             <div style={{ position: "absolute", left: 0, width: LABEL_W - 16, top: 0, height: rowH, display: "flex", alignItems: "center", gap: 10, fontSize: font }}>
               <span style={{ width: 10, height: 10, borderRadius: 5, background: color, flex: "none" }} />
               <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: it.isMilestone ? 700 : 500 }}>

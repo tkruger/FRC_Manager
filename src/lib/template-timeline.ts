@@ -37,19 +37,21 @@ export interface TimelineSeason {
 
 /**
  * The example season the presentation is drawn on (for illustration — real seasons differ):
- * kickoff the first Sunday after New Year's of next year, Week 2 and Week 4 events, a
- * regional playoff three weeks before Worlds in mid-April, and the season ending a week
- * after Worlds. Events start on Fridays; FRC's Week 1 opens about 7 weeks after kickoff.
+ * kickoff on the first Saturday after New Year's of next year (kickoff is always a
+ * Saturday), Week 2 and Week 4 events, a regional playoff three weeks before Worlds in
+ * mid-April, and the season ending a week after Worlds. Competitions are Saturday–Sunday,
+ * so each is dated on its Saturday; FRC's Week 1 is about 7 weeks after kickoff.
  */
 export function illustrativeSeason(today = new Date()): TimelineSeason {
   const year = today.getUTCFullYear() + 1;
   const utc = (m: number, d: number) => new Date(Date.UTC(year, m, d));
   const plus = (d: Date, n: number) => new Date(d.getTime() + n * DAY);
+  const SAT = 6;
   const jan1 = utc(0, 1);
-  const kickoff = plus(jan1, 7 - jan1.getUTCDay() || 7);          // first Sunday after Jan 1
-  const week = (n: number) => plus(kickoff, 47 + 7 * (n - 1));     // Friday of FRC week n
+  const kickoff = plus(jan1, (SAT - jan1.getUTCDay() + 7) % 7 || 7);      // first Saturday after Jan 1
+  const week = (n: number) => plus(kickoff, 49 + 7 * (n - 1));             // Saturday of FRC week n
   const apr1 = utc(3, 1);
-  const worlds = plus(apr1, ((3 - apr1.getUTCDay() + 7) % 7) + 14); // third Wednesday of April
+  const worlds = plus(apr1, ((SAT - apr1.getUTCDay() + 7) % 7) + 14);      // third Saturday of April
   const iso = (d: Date) => d.toISOString();
   return {
     name: `Example ${year} season`,
