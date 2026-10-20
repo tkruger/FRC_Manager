@@ -37,8 +37,8 @@ export interface TimelineSeason {
 
 /**
  * The example season the presentation is drawn on (for illustration — real seasons differ):
- * kickoff on the second Sunday of next year, Week 2 and Week 4 events, a regional playoff
- * three weeks before Worlds in mid-April, and the season ending a week after Worlds.
+ * kickoff on the second Sunday of next year, Week 2 and Week 4 events, district playoffs
+ * in Week 6, Worlds on the third Saturday of April, and the season ending a week after Worlds.
  * Competitions are Saturday–Sunday, so each is dated on its Saturday; FRC's Week 1 is
  * about 7 weeks after kickoff.
  */
@@ -61,7 +61,7 @@ export function illustrativeSeason(today = new Date()): TimelineSeason {
     competitions: [
       { name: "Week 2 event", stage: "WEEK", stageNumber: 2, startDate: iso(week(2)) },
       { name: "Week 4 event", stage: "WEEK", stageNumber: 4, startDate: iso(week(4)) },
-      { name: "Regional playoff", stage: "PLAYOFF", stageNumber: 1, startDate: iso(plus(worlds, -21)) },
+      { name: "District playoffs", stage: "PLAYOFF", stageNumber: 1, startDate: iso(week(6)) },
       { name: "Worlds", stage: "WORLDS", stageNumber: null, startDate: iso(worlds) },
     ],
   };

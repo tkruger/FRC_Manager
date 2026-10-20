@@ -295,7 +295,7 @@ function buildSlides(name: string, description: string | null, teamNumber: numbe
   const { items, markers } = tl;
   const anyEstimated = items.some((i) => i.estimated) || markers.some((m) => m.estimated);
   const seasonNote = tl.illustrative
-    ? `For illustration: an example season with kickoff ${labels.long(0)}, Week 2 and Week 4 events, a regional playoff and Worlds in April. Your real dates will differ.`
+    ? `For illustration: an example season with kickoff ${labels.long(0)}, Week 2 and Week 4 events, district playoffs in Week 6 and Worlds in April. Your real dates will differ.`
     : tl.seasonName
     ? `Dates shown for ${tl.seasonName}${anyEstimated ? " — dashed items aren't in the season yet, so their dates are estimates" : ""}.`
     : "No active season — dates are counted from kickoff and competitions are estimated.";

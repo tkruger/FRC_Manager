@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Presentation example season: the district playoffs are in Week 6 (they landed in Week 5 before), with Worlds on the third Saturday of April
 - Task card: the Edit/Delete/Close and Save/Cancel buttons stay pinned to the bottom of the card while long details and forms scroll behind them
 - Tasks have a **Details** section for longer notes — steps, links, checklists — written in Markdown with formatting buttons (bold, italic, heading, lists, checklist, link, code, quote) and a Preview tab. Details only show when a task is opened (and on its create/edit forms), never on cards or lists. Template tasks have details too, copied to the real task when the template is applied (and kept by Save season as template and Clone)
 - Week 0 is the week before the Week 1 events: the season's Week0 event, else 7 days before Week 1 — worked out from its Week events or, with none, the typical FRC schedule (about seven weeks after kickoff). Template tasks and milestones tied to Week 0 are always added, never skipped
