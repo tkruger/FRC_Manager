@@ -63,7 +63,7 @@ function pages<T>(list: T[], size: number): T[][] {
 
 function Slide({ title, kicker, children, footer }: { title?: string; kicker?: string; children: React.ReactNode; footer?: React.ReactNode }) {
   return (
-    <div style={{ width: W, height: H, background: C.bg, color: C.text, padding: PAD, display: "flex", flexDirection: "column", fontFamily: "var(--font-inter), system-ui, sans-serif" }}>
+    <div style={{ position: "relative", width: W, height: H, background: C.bg, color: C.text, padding: PAD, display: "flex", flexDirection: "column", fontFamily: "var(--font-inter), system-ui, sans-serif" }}>
       {title && (
         <div style={{ marginBottom: 28 }}>
           {kicker && <div style={{ fontSize: 22, fontWeight: 600, color: C.accent, letterSpacing: 0.5, textTransform: "uppercase" }}>{kicker}</div>}
@@ -72,6 +72,7 @@ function Slide({ title, kicker, children, footer }: { title?: string; kicker?: s
       )}
       <div style={{ flex: 1, minHeight: 0, position: "relative" }}>{children}</div>
       {footer && <div style={{ marginTop: 16, fontSize: 18, color: C.muted }}>{footer}</div>}
+      <div style={{ position: "absolute", right: 24, bottom: 14, fontSize: 14, color: C.faint }}>Example dates for illustration</div>
     </div>
   );
 }
@@ -195,7 +196,9 @@ function buildSlides(name: string, description: string | null, teamNumber: numbe
   const labels = makeLabels(tl.kickoff);
   const { items, markers } = tl;
   const anyEstimated = items.some((i) => i.estimated) || markers.some((m) => m.estimated);
-  const seasonNote = tl.seasonName
+  const seasonNote = tl.illustrative
+    ? `For illustration: an example season with kickoff ${labels.long(0)}, Week 2 and Week 4 events, a regional playoff and Worlds in April. Your real dates will differ.`
+    : tl.seasonName
     ? `Dates shown for ${tl.seasonName}${anyEstimated ? " — dashed items aren't in the season yet, so their dates are estimates" : ""}.`
     : "No active season — dates are counted from kickoff and competitions are estimated.";
   const slides: React.ReactNode[] = [];

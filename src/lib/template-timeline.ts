@@ -28,9 +28,41 @@ export interface TimelineTask {
 
 export interface TimelineSeason {
   name: string;
+  /** An example season for showing the template, not the team's real one */
+  illustrative?: boolean;
   kickoffDate: string;
   endDate: string;
   competitions: { name: string; stage: CompetitionStage; stageNumber: number | null; startDate: string }[];
+}
+
+/**
+ * The example season the presentation is drawn on (for illustration — real seasons differ):
+ * kickoff the first Sunday after New Year's of next year, Week 2 and Week 4 events, a
+ * regional playoff three weeks before Worlds in mid-April, and the season ending a week
+ * after Worlds. Events start on Fridays; FRC's Week 1 opens about 7 weeks after kickoff.
+ */
+export function illustrativeSeason(today = new Date()): TimelineSeason {
+  const year = today.getUTCFullYear() + 1;
+  const utc = (m: number, d: number) => new Date(Date.UTC(year, m, d));
+  const plus = (d: Date, n: number) => new Date(d.getTime() + n * DAY);
+  const jan1 = utc(0, 1);
+  const kickoff = plus(jan1, 7 - jan1.getUTCDay() || 7);          // first Sunday after Jan 1
+  const week = (n: number) => plus(kickoff, 47 + 7 * (n - 1));     // Friday of FRC week n
+  const apr1 = utc(3, 1);
+  const worlds = plus(apr1, ((3 - apr1.getUTCDay() + 7) % 7) + 14); // third Wednesday of April
+  const iso = (d: Date) => d.toISOString();
+  return {
+    name: `Example ${year} season`,
+    illustrative: true,
+    kickoffDate: iso(kickoff),
+    endDate: iso(plus(worlds, 7)),
+    competitions: [
+      { name: "Week 2 event", stage: "WEEK", stageNumber: 2, startDate: iso(week(2)) },
+      { name: "Week 4 event", stage: "WEEK", stageNumber: 4, startDate: iso(week(4)) },
+      { name: "Regional playoff", stage: "PLAYOFF", stageNumber: 1, startDate: iso(plus(worlds, -21)) },
+      { name: "Worlds", stage: "WORLDS", stageNumber: null, startDate: iso(worlds) },
+    ],
+  };
 }
 
 export interface TimelineItem {
@@ -67,6 +99,7 @@ export interface Timeline {
   /** Kickoff as an ISO date when there's an active season (for real date labels) */
   kickoff: string | null;
   seasonName: string | null;
+  illustrative: boolean;
   /** Template tasks the active season can't place (they'd be skipped when applied) */
   skipped: string[];
 }
@@ -146,7 +179,7 @@ export function buildTimeline(tasks: TimelineTask[], season: TimelineSeason | nu
   }
   markers.sort((a, b) => a.day - b.day);
 
-  return { items, markers, kickoff: season?.kickoffDate ?? null, seasonName: season?.name ?? null, skipped: [...new Set(skipped)] };
+  return { items, markers, kickoff: season?.kickoffDate ?? null, seasonName: season?.name ?? null, illustrative: !!season?.illustrative, skipped: [...new Set(skipped)] };
 }
 
 /** Which part of the season a task belongs to (one slide per phase) */
@@ -207,7 +240,9 @@ export function templateChecks(tasks: TimelineTask[], timeline: Timeline, subTea
   const missingPrereqs = [...new Set(tasks.flatMap((t) => t.prerequisiteNames).filter((p) => !names.has(p.trim().toLowerCase())))];
   if (missingPrereqs.length) checks.push({ ok: false, title: `${missingPrereqs.length} prerequisite${missingPrereqs.length === 1 ? "" : "s"} not in this template`, detail: missingPrereqs.slice(0, 4).join(", ") });
 
-  if (timeline.seasonName) {
+  if (timeline.seasonName && timeline.illustrative) {
+    if (timeline.skipped.length) checks.push({ ok: false, title: `${timeline.skipped.length} need events the example season doesn't have`, detail: `Shown with estimated dates: ${timeline.skipped.slice(0, 4).join(", ")}${timeline.skipped.length > 4 ? "…" : ""}. They're skipped if your season has no matching event.` });
+  } else if (timeline.seasonName) {
     checks.push(timeline.skipped.length
       ? { ok: false, title: `${timeline.skipped.length} would be skipped in ${timeline.seasonName}`, detail: `No matching date yet: ${timeline.skipped.slice(0, 4).join(", ")}${timeline.skipped.length > 4 ? "…" : ""}` }
       : { ok: true, title: `Everything has a date in ${timeline.seasonName}` });

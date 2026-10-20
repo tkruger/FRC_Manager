@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { findTeamTemplate } from "@/lib/template-access";
-import type { TimelineSeason, TimelineTask } from "@/lib/template-timeline";
+import { illustrativeSeason, type TimelineTask } from "@/lib/template-timeline";
 import { TemplatePresentation } from "./TemplatePresentation";
 
 /** Full-screen slides that walk people through a template (Templates → Present) */
@@ -11,13 +11,9 @@ export default async function PresentTemplatePage({ params }: { params: Promise<
   const session = await auth();
   if (!session?.user?.teamId) redirect("/dashboard");
 
-  const [template, tasks, season, team] = await Promise.all([
+  const [template, tasks, team] = await Promise.all([
     findTeamTemplate(id, session.user.teamId),
     prisma.templateTask.findMany({ where: { templateId: id } }),
-    prisma.season.findFirst({
-      where:  { teamId: session.user.teamId, isActive: true },
-      select: { name: true, kickoffDate: true, endDate: true, competitionEvents: { select: { name: true, stage: true, stageNumber: true, startDate: true } } },
-    }),
     prisma.team.findUnique({ where: { id: session.user.teamId }, select: { teamNumber: true } }),
   ]);
   if (!template) notFound();
@@ -28,12 +24,8 @@ export default async function PresentTemplatePage({ params }: { params: Promise<
     estimatedHours: t.estimatedHours, designReviewRequired: t.designReviewRequired,
     prerequisiteNames: t.prerequisiteNames, description: t.description,
   }));
-  const timelineSeason: TimelineSeason | null = season && {
-    name:         season.name,
-    kickoffDate:  season.kickoffDate.toISOString(),
-    endDate:      season.endDate.toISOString(),
-    competitions: season.competitionEvents.map((c) => ({ ...c, startDate: c.startDate.toISOString() })),
-  };
+  // Always drawn on the same example season, so it reads the same whenever it's presented
+  const timelineSeason = illustrativeSeason();
 
   return (
     <TemplatePresentation

@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- **Present** a template: full-screen 16:9 slides with the whole plan as a Gantt chart, the milestones, each phase up close, who's busy when, and a checklist of what might be missing. Keyboard, click or swipe to move through it
+- **Present** a template: full-screen 16:9 slides with the whole plan as a Gantt chart, the milestones, each phase up close, who's busy when, and a checklist of what might be missing. Shown on an example season (kickoff the first Sunday of January, Week 2 and Week 4, a regional playoff and Worlds in April) for illustration. Keyboard, click or swipe to move through it
 - Template tasks: the form now asks when a task is **due** (days before, on or after kickoff, Week 0, a competition…) and how long it **takes**, and spells out when it starts with this season's real dates. Milestones are just a due date, with no length
 
 ## 1.2.0 — 2026-10-16
