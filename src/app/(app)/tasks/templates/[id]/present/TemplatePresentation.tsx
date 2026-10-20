@@ -53,12 +53,6 @@ function rangeOf(items: TimelineItem[], pad = 3): [number, number] {
   return [Math.min(lo, hi - 7) - pad, Math.max(hi, lo + 7) + pad];
 }
 
-function pages<T>(list: T[], size: number): T[][] {
-  const out: T[][] = [];
-  for (let i = 0; i < list.length; i += size) out.push(list.slice(i, i + size));
-  return out.length ? out : [[]];
-}
-
 // ── Building blocks ─────────────────────────────────────────────────────────
 
 function Slide({ title, kicker, children, footer }: { title?: string; kicker?: string; children: React.ReactNode; footer?: React.ReactNode }) {
@@ -74,6 +68,20 @@ function Slide({ title, kicker, children, footer }: { title?: string; kicker?: s
       {footer && <div style={{ marginTop: 16, fontSize: 18, color: C.muted }}>{footer}</div>}
       <div style={{ position: "absolute", right: 24, bottom: 14, fontSize: 14, color: C.faint }}>Example dates for illustration</div>
     </div>
+  );
+}
+
+/** Which color is which sub-team — only the ones this template uses */
+function TeamKey({ teams, size = 18 }: { teams: (string | null)[]; size?: number }) {
+  return (
+    <span style={{ display: "inline-flex", flexWrap: "wrap", gap: "6px 22px", fontSize: size }}>
+      {teams.map((t) => (
+        <span key={t ?? "none"} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+          <span style={{ width: size * 0.7, height: size * 0.7, borderRadius: size, background: teamColor(t) }} />
+          {teamLabel(t)}
+        </span>
+      ))}
+    </span>
   );
 }
 
@@ -129,6 +137,23 @@ function Gantt({ items, range, markers, labels, height }: {
   const innerH = Math.max(viewH, items.length * rowH + (scrolls ? 36 : 0));
   const font = 20;
 
+  // Day ticks along the bottom of each row, with a taller tick where each week starts
+  // (weeks counted from kickoff, matching the date axis). Drawn as repeating gradients so
+  // long ranges stay cheap; day ticks are left out when days get too narrow to see.
+  const dayW = CHART_W / (hi - lo);
+  const firstDay = Math.ceil(lo);
+  const firstWeek = Math.ceil(lo / 7) * 7;
+  const dayTicks: React.CSSProperties = {
+    position: "absolute", left: 0, right: 0, bottom: 0, height: 5, pointerEvents: "none",
+    backgroundImage: `repeating-linear-gradient(to right, ${C.faint} 0 1px, transparent 1px ${dayW}px)`,
+    backgroundPositionX: x(firstDay),
+  };
+  const weekTicks: React.CSSProperties = {
+    position: "absolute", left: 0, right: 0, bottom: 0, height: 10, pointerEvents: "none",
+    backgroundImage: `repeating-linear-gradient(to right, ${C.muted} 0 1.5px, transparent 1.5px ${dayW * 7}px)`,
+    backgroundPositionX: x(firstWeek),
+  };
+
   return (
     <div style={{ position: "relative", height }}>
       {/* Date ticks */}
@@ -172,6 +197,8 @@ function Gantt({ items, range, markers, labels, height }: {
               </span>
             </div>
             <div style={{ position: "absolute", left: LABEL_W, top: 0, width: CHART_W, height: rowH }}>
+              {dayW >= 4 && <div style={dayTicks} />}
+              <div style={weekTicks} />
               {it.isMilestone ? (
                 <div style={{ position: "absolute", left: x2 - rowH * 0.25, top: rowH * 0.25, width: rowH * 0.5, height: rowH * 0.5, background: it.estimated ? "transparent" : C.accent, border: `2px ${it.estimated ? "dashed" : "solid"} ${C.accent}`, transform: "rotate(45deg)" }} />
               ) : (
@@ -221,6 +248,14 @@ function buildSlides(name: string, description: string | null, teamNumber: numbe
   const tasksOnly = tasks.filter((t) => !t.isMilestone);
   const hours = tasksOnly.reduce((s, t) => s + (t.estimatedHours ?? 0), 0);
   const teams = new Set(tasks.map((t) => t.subTeam).filter(Boolean));
+  // The sub-teams in this template, in the usual order (plus "No sub-team" if any), for
+  // the color key shown from the first slide on
+  const keyTeams: (string | null)[] = [
+    ...SUBTEAM_OPTIONS.map((o) => o.value).filter((v) => teams.has(v)),
+    ...(tasks.some((t) => !t.subTeam) ? [null] : []),
+  ];
+  // Gantt slides carry two footer lines: the color key and the chart legend
+  const ganttH = H - PAD * 2 - 196;
   slides.push(
     <Slide key="title">
       <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%" }}>
@@ -236,7 +271,12 @@ function buildSlides(name: string, description: string | null, teamNumber: numbe
           <Stat value={teams.size} label="sub-teams involved" />
           {hours > 0 && <Stat value={Math.round(hours)} label="estimated hours" />}
         </div>
-        <div style={{ fontSize: 20, color: C.muted, marginTop: 40 }}>{seasonNote}</div>
+        {keyTeams.length > 0 && (
+          <div style={{ marginTop: 36, color: C.text }}>
+            <TeamKey teams={keyTeams} size={22} />
+          </div>
+        )}
+        <div style={{ fontSize: 20, color: C.muted, marginTop: 28 }}>{seasonNote}</div>
       </div>
     </Slide>,
   );
@@ -252,8 +292,8 @@ function buildSlides(name: string, description: string | null, teamNumber: numbe
   overview.forEach((page, i) => {
     slides.push(
       <Slide key={`overview-${i}`} kicker="The whole plan" title={overview.length > 1 ? `Timeline (${i + 1} of ${overview.length})` : "Timeline"}
-        footer={<Legend estimated={anyEstimated} />}>
-        <Gantt items={page} range={range} markers={markers} labels={labels} height={H - PAD * 2 - 160} />
+        footer={<div style={{ display: "flex", flexDirection: "column", gap: 8 }}><TeamKey teams={keyTeams} /><Legend estimated={anyEstimated} /></div>}>
+        <Gantt items={page} range={range} markers={markers} labels={labels} height={ganttH} />
       </Slide>,
     );
   });
@@ -270,10 +310,14 @@ function buildSlides(name: string, description: string | null, teamNumber: numbe
       }
       rows.push({ kind: "milestone", m, gap: prev ? m.due - prev.due : null });
     });
-    pages(rows, 7).forEach((page, p, all) => {
+    // One slide; a long list scrolls (like the Gantt slides) instead of spilling over
+    [rows].forEach((page, p, all) => {
+      const listH = page.length * 78 + 24;
       slides.push(
         <Slide key={`ms-${p}`} kicker="Checkpoints" title={all.length > 1 ? `Milestones (${p + 1} of ${all.length})` : "Milestones"} footer="The dates the team is working toward.">
-          <div style={{ position: "absolute", left: 284, top: 0, bottom: 0, borderLeft: `4px solid ${C.grid}` }} />
+          <div data-scroll style={{ position: "absolute", inset: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain" }}>
+          <div style={{ position: "relative", height: listH }}>
+          <div style={{ position: "absolute", left: 284, top: 0, height: listH, borderLeft: `4px solid ${C.grid}` }} />
           {page.map((row, i) => {
             const top = i * 78;
             if (row.kind === "marker") {
@@ -298,14 +342,18 @@ function buildSlides(name: string, description: string | null, teamNumber: numbe
                   <div style={{ fontSize: 28, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                     {m.name}{m.suffix ? <span style={{ color: C.muted, fontWeight: 500 }}> — {m.suffix}</span> : null}
                   </div>
-                  <div style={{ fontSize: 18, color: C.muted, marginTop: 2 }}>
-                    {teamLabel(m.subTeam)} · due {m.rule}{m.estimated ? " · estimated date" : ""}
+                  <div style={{ fontSize: 18, color: C.muted, marginTop: 2, display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ width: 12, height: 12, borderRadius: 6, background: teamColor(m.subTeam), flex: "none" }} />
+                    <span>{teamLabel(m.subTeam)} · due {m.rule}{m.estimated ? " · estimated date" : ""}</span>
                   </div>
                 </div>
                 {gap != null && <div style={{ width: 190, textAlign: "right", fontSize: 18, color: gap >= 14 ? C.warn : C.muted }}>{gap === 0 ? "same day" : `+${gap} day${gap === 1 ? "" : "s"}`}</div>}
               </div>
             );
           })}
+          </div>
+          </div>
+          {listH > 560 && <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 36, background: "linear-gradient(rgba(255,255,255,0), #fff)", pointerEvents: "none" }} />}
         </Slide>,
       );
     });
@@ -319,8 +367,11 @@ function buildSlides(name: string, description: string | null, teamNumber: numbe
     [phaseItems].forEach((page, p, all) => {
       slides.push(
         <Slide key={`${phase.key}-${p}`} kicker={phase.subtitle} title={all.length > 1 ? `${phase.title} (${p + 1} of ${all.length})` : phase.title}
-          footer={<span>{page.filter((i) => !i.isMilestone).length} tasks · {page.filter((i) => i.isMilestone).length} milestones — each row shows its length and due date</span>}>
-          <Gantt items={page} range={pr} markers={markers} labels={labels} height={H - PAD * 2 - 160} />
+          footer={<div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <TeamKey teams={keyTeams.filter((t) => page.some((i) => i.subTeam === t))} />
+            <span>{page.filter((i) => !i.isMilestone).length} tasks · {page.filter((i) => i.isMilestone).length} milestones — each row shows its length and due date</span>
+          </div>}>
+          <Gantt items={page} range={pr} markers={markers} labels={labels} height={ganttH} />
         </Slide>,
       );
     });

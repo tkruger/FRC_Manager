@@ -160,7 +160,10 @@ export function buildTimeline(tasks: TimelineTask[], season: TimelineSeason | nu
       });
     }
   }
-  items.sort((a, b) => a.start - b.start || a.due - b.due || a.name.localeCompare(b.name));
+  // Order of execution: tasks by when they start, milestones by when they're due (older
+  // milestones can carry a length, and their start isn't when they happen)
+  const when = (i: TimelineItem) => (i.isMilestone ? i.due : i.start);
+  items.sort((a, b) => when(a) - when(b) || a.due - b.due || a.name.localeCompare(b.name));
 
   // Reference lines: kickoff, Week 0, the season's competitions and its end
   const markers: TimelineMarker[] = [{ day: 0, label: "Kickoff", kind: "kickoff", estimated: !season }];
