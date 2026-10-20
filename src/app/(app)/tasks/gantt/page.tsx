@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { competitionCountdown } from "@/lib/competition";
+import { competitionCountdown, designation, week0Competition } from "@/lib/competition";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -59,6 +59,20 @@ export default async function GanttPage({ searchParams }: { searchParams: Promis
     actualHours:    t.actualHours,
     assignees:      t.assignees,
   }));
+
+  // Key dates drawn as lines on the chart (days from kickoff): kickoff, each competition
+  // (Week 0 highlighted) and the season's end
+  const DAY = 86_400_000;
+  const dayOf = (d: Date) => Math.round((d.getTime() - activeSeason.kickoffDate.getTime()) / DAY);
+  const week0 = week0Competition(activeSeason.competitionEvents);
+  const markers = [
+    { day: 0, label: "Kickoff", kind: "kickoff" as const },
+    ...activeSeason.competitionEvents.map((c) => {
+      const isWeek0 = week0 === c;
+      return { day: dayOf(c.startDate), label: isWeek0 ? `Week 0 · ${designation(c.stage, c.stageNumber)}` : designation(c.stage, c.stageNumber), kind: isWeek0 ? "week0" as const : "competition" as const };
+    }),
+    { day: dayOf(activeSeason.endDate), label: "Season end", kind: "end" as const },
+  ].sort((a, b) => a.day - b.day);
 
   const totalDays = Math.round(
     (activeSeason.endDate.getTime() - activeSeason.kickoffDate.getTime()) / 86_400_000
@@ -124,8 +138,8 @@ export default async function GanttPage({ searchParams }: { searchParams: Promis
           tasks={ganttTasks}
           kickoffDate={activeSeason.kickoffDate.toISOString()}
           endDate={activeSeason.endDate.toISOString()}
-          meetingDays={activeSeason.meetingDays}
           seasonName={activeSeason.name}
+          markers={markers}
         />
       )}
     </div>

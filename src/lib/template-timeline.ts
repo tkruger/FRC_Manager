@@ -86,6 +86,7 @@ export interface TimelineItem {
   rule: string;
   hours: number | null;
   designReview: boolean;
+  description: string | null;
 }
 
 export interface TimelineMarker {
@@ -158,7 +159,7 @@ export function buildTimeline(tasks: TimelineTask[], season: TimelineSeason | nu
         subTeam: t.subTeam, priority: t.priority, isMilestone: t.isMilestone,
         start: target.day + t.startOffset, due: target.day + due,
         estimated: target.estimated, anchor: t.anchor, rule,
-        hours: t.estimatedHours, designReview: t.designReviewRequired,
+        hours: t.estimatedHours, designReview: t.designReviewRequired, description: t.description,
       });
     }
   }

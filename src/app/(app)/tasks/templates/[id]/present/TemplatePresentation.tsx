@@ -7,7 +7,7 @@ import {
   buildTimeline, templateChecks, PHASES,
   type Timeline, type TimelineItem, type TimelineMarker, type TimelineSeason, type TimelineTask,
 } from "@/lib/template-timeline";
-import { SUBTEAM_OPTIONS } from "@/lib/schedule-helpers";
+import { SUBTEAM_OPTIONS, SUBTEAM_COLORS } from "@/lib/schedule-helpers";
 
 // Slides are laid out on a fixed 1600×900 (16:9) canvas and scaled to fit the screen,
 // letterboxed on black — like a slide deck's presentation mode. Light slides read best on
@@ -22,13 +22,12 @@ const CHART_W = W - PAD * 2 - LABEL_W;
 const C = {
   bg: "#ffffff", text: "#0f172a", muted: "#64748b", faint: "#94a3b8", grid: "#e2e8f0", band: "#f8fafc",
   accent: "#C1121F", secondary: "#1D3A8A", ok: "#16a34a", warn: "#d97706",
+  /** Milestones are dark diamonds — no sub-team uses that color */
+  milestone: "#0f172a",
 };
 
-const TEAM_COLORS: Record<string, string> = {
-  MECHANICAL: "#2563eb", ELECTRICAL: "#f59e0b", PROGRAMMING: "#10b981", DRIVE_TEAM: "#ef4444",
-  STRATEGY: "#8b5cf6", DESIGN: "#ec4899", OUTREACH: "#14b8a6", OPERATIONS: "#475569",
-};
-const teamColor = (t: string | null) => (t ? TEAM_COLORS[t] ?? "#64748b" : "#94a3b8");
+// The same sub-team colors as the rest of the app (task board, Gantt, calendar)
+const teamColor = (t: string | null) => (t ? SUBTEAM_COLORS[t] ?? "#64748b" : "#94a3b8");
 const teamLabel = (t: string | null) => SUBTEAM_OPTIONS.find((o) => o.value === t)?.label ?? "No sub-team";
 
 const DAY = 86_400_000;
@@ -94,7 +93,7 @@ function Legend({ estimated }: { estimated: boolean }) {
   return (
     <span>
       {item(<span style={{ width: 40, height: 12, borderRadius: 6, background: C.secondary, display: "inline-block" }} />, "Task: start → due")}
-      {item(<span style={{ width: 14, height: 14, background: C.accent, transform: "rotate(45deg)", display: "inline-block" }} />, "Milestone")}
+      {item(<span style={{ width: 14, height: 14, background: C.milestone, transform: "rotate(45deg)", display: "inline-block" }} />, "Milestone")}
       {item(<span style={{ width: 0, height: 20, borderLeft: `2px solid ${C.faint}`, display: "inline-block" }} />, "Key dates")}
       {estimated && item(<span style={{ width: 40, height: 12, borderRadius: 6, border: `2px dashed ${C.secondary}`, display: "inline-block" }} />, "Estimated (not in the season yet)")}
     </span>
@@ -116,6 +115,9 @@ function Gantt({ items, range, markers, labels, height }: {
   const [lo, hi] = range;
   const x = (d: number) => ((d - lo) / (hi - lo)) * CHART_W;
   const shown = markers.filter((m) => m.day >= lo && m.day <= hi);
+  // The row under the mouse (for its hover card) and how far the rows are scrolled
+  const [hover, setHover] = useState<number | null>(null);
+  const [scrollTop, setScrollTop] = useState(0);
   // Key-date labels get their own band under the date ticks; labels too close to the one
   // before drop to a second line so they never overlap
   const markerRow: number[] = [];
@@ -179,7 +181,8 @@ function Gantt({ items, range, markers, labels, height }: {
         ))}
       </div>
       {/* Scrolling rows */}
-      <div data-scroll style={{ position: "absolute", left: 0, right: 0, top: axisH, height: viewH, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain" }}>
+      <div data-scroll onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)} onMouseLeave={() => setHover(null)}
+        style={{ position: "absolute", left: 0, right: 0, top: axisH, height: viewH, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain" }}>
       <div style={{ position: "relative", height: innerH }}>
       {/* Grid and key-date lines */}
       <div style={{ position: "absolute", left: LABEL_W, top: 0, width: CHART_W, height: innerH }}>
@@ -200,7 +203,8 @@ function Gantt({ items, range, markers, labels, height }: {
         // Clear of the diamond (or the bar end)
         const gap = it.isMilestone ? rowH * 0.4 + 8 : 12;
         return (
-          <div key={it.key} style={{ position: "absolute", left: 0, top, width: W - PAD * 2, height: rowH, background: r % 2 ? "rgba(15,23,42,.025)" : "transparent" }}>
+          <div key={it.key} onMouseEnter={() => setHover(r)}
+            style={{ position: "absolute", left: 0, top, width: W - PAD * 2, height: rowH, background: hover === r ? "rgba(29,58,138,.08)" : r % 2 ? "rgba(15,23,42,.025)" : "transparent" }}>
             <div style={{ position: "absolute", left: 0, width: LABEL_W - 16, top: 0, height: rowH, display: "flex", alignItems: "center", gap: 10, fontSize: font }}>
               <span style={{ width: 10, height: 10, borderRadius: 5, background: color, flex: "none" }} />
               <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: it.isMilestone ? 700 : 500 }}>
@@ -211,7 +215,7 @@ function Gantt({ items, range, markers, labels, height }: {
               {dayW >= 4 && <div style={dayTicks} />}
               <div style={weekTicks} />
               {it.isMilestone ? (
-                <div style={{ position: "absolute", left: x2 - rowH * 0.25, top: rowH * 0.25, width: rowH * 0.5, height: rowH * 0.5, background: it.estimated ? "transparent" : C.accent, border: `2px ${it.estimated ? "dashed" : "solid"} ${C.accent}`, transform: "rotate(45deg)" }} />
+                <div style={{ position: "absolute", left: x2 - rowH * 0.25, top: rowH * 0.25, width: rowH * 0.5, height: rowH * 0.5, background: it.estimated ? "transparent" : C.milestone, border: `2px ${it.estimated ? "dashed" : "solid"} ${C.milestone}`, transform: "rotate(45deg)" }} />
               ) : (
                 <div style={{
                   position: "absolute", left: x1, width: barW, top: rowH * 0.22, height: rowH * 0.56, borderRadius: rowH * 0.28,
@@ -228,6 +232,49 @@ function Gantt({ items, range, markers, labels, height }: {
       </div>
       {/* A soft fade says there's more below */}
       {scrolls && <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 36, background: "linear-gradient(rgba(255,255,255,0), #fff)", pointerEvents: "none" }} />}
+      {hover != null && items[hover] && (
+        <HoverCard item={items[hover]} labels={labels}
+          rowTop={axisH + hover * rowH - scrollTop} rowH={rowH} height={height}
+          left={Math.max(0, Math.min(W - PAD * 2 - 460, LABEL_W + x(items[hover].start) - 24))} />
+      )}
+    </div>
+  );
+}
+
+/** Everything about one Gantt row — full name (even when the row cuts it off), dates, rule */
+function HoverCard({ item: it, labels, rowTop, rowH, height, left }: {
+  item: TimelineItem; labels: Labels; rowTop: number; rowH: number; height: number; left: number;
+}) {
+  // Below the row, or above it in the lower half so it stays on the slide
+  const above = rowTop > height / 2;
+  const line = (label: string, value: React.ReactNode) => (
+    <div style={{ display: "flex", gap: 10 }}>
+      <span style={{ color: "#94a3b8", width: 84, flex: "none" }}>{label}</span>
+      <span>{value}</span>
+    </div>
+  );
+  return (
+    <div style={{
+      position: "absolute", left, width: 460, zIndex: 5, pointerEvents: "none",
+      ...(above ? { bottom: height - rowTop + 8 } : { top: rowTop + rowH + 8 }),
+      background: "#0f172a", color: "#fff", borderRadius: 14, padding: "16px 20px",
+      boxShadow: "0 12px 32px rgba(15,23,42,.35)", fontSize: 18, lineHeight: 1.45,
+    }}>
+      <div style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.25, marginBottom: 8 }}>
+        {it.isMilestone ? "◆ " : ""}{it.name}{it.suffix ? <span style={{ color: "#cbd5e1", fontWeight: 500 }}> — {it.suffix}</span> : null}
+      </div>
+      {line("Sub-team", <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><span style={{ width: 12, height: 12, borderRadius: 6, background: teamColor(it.subTeam) }} />{teamLabel(it.subTeam)}</span>)}
+      {it.isMilestone
+        ? line("Due", labels.long(it.due))
+        : <>
+            {line("Starts", labels.long(it.start))}
+            {line("Due", `${labels.long(it.due)} · ${it.due - it.start} day${it.due - it.start === 1 ? "" : "s"} of work`)}
+          </>}
+      {line("Rule", `due ${it.rule}`)}
+      {it.hours != null && !it.isMilestone && line("Effort", `${it.hours} hour${it.hours === 1 ? "" : "s"} estimated`)}
+      {it.designReview && line("Review", "Design review required")}
+      {it.estimated && line("Note", "No matching event in the example season — date estimated")}
+      {it.description && <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,.15)", color: "#e2e8f0" }}>{it.description}</div>}
     </div>
   );
 }
@@ -347,10 +394,10 @@ function buildSlides(name: string, description: string | null, teamNumber: numbe
               <div key={m.key} style={{ position: "absolute", top, left: 0, right: 0, height: 78, display: "flex", alignItems: "center" }}>
                 <div style={{ width: 250, textAlign: "right", fontSize: 22, fontWeight: 600 }}>{labels.long(m.due)}</div>
                 <div style={{ width: 68, display: "flex", justifyContent: "center" }}>
-                  <div style={{ width: 26, height: 26, background: m.estimated ? "#fff" : C.accent, border: `3px ${m.estimated ? "dashed" : "solid"} ${C.accent}`, transform: "rotate(45deg)" }} />
+                  <div style={{ width: 26, height: 26, background: m.estimated ? "#fff" : C.milestone, border: `3px ${m.estimated ? "dashed" : "solid"} ${C.milestone}`, transform: "rotate(45deg)" }} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 28, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  <div title={`${m.name}${m.suffix ? ` — ${m.suffix}` : ""}`} style={{ fontSize: 28, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                     {m.name}{m.suffix ? <span style={{ color: C.muted, fontWeight: 500 }}> — {m.suffix}</span> : null}
                   </div>
                   <div style={{ fontSize: 18, color: C.muted, marginTop: 2, display: "flex", alignItems: "center", gap: 8 }}>
@@ -412,7 +459,7 @@ function buildSlides(name: string, description: string | null, teamNumber: numbe
                 </div>
                 <div style={{ position: "absolute", left: LABEL_W, width: CHART_W, top: 0, height: laneH }}>
                   {laneItems.map((it) => it.isMilestone ? (
-                    <div key={it.key} style={{ position: "absolute", left: x(it.due) - 7, top: laneH / 2 - 7, width: 14, height: 14, background: C.accent, transform: "rotate(45deg)" }} />
+                    <div key={it.key} style={{ position: "absolute", left: x(it.due) - 7, top: laneH / 2 - 7, width: 14, height: 14, background: C.milestone, transform: "rotate(45deg)" }} />
                   ) : (
                     <div key={it.key} style={{ position: "absolute", left: x(it.start), width: Math.max(4, x(it.due) - x(it.start)), top: laneH * 0.2, height: laneH * 0.6, borderRadius: 6, background: teamColor(lane), opacity: 0.3 }} />
                   ))}
