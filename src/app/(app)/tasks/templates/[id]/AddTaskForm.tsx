@@ -7,21 +7,21 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
 import { SUBTEAM_OPTIONS, PRIORITY_OPTIONS } from "@/lib/schedule-helpers";
-import { AnchorFields } from "./AnchorFields";
+import { TaskTimingFields, type SeasonPreview } from "./TaskTimingFields";
 
-export function AddTaskForm({ templateId }: { templateId: string }) {
+export function AddTaskForm({ templateId, season }: { templateId: string; season: SeasonPreview | null }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   // bind(null, templateId) pre-fills the first arg so useActionState sees (_prev, formData)
   const boundAction = addTemplateTaskAction.bind(null, templateId);
   const [state, formAction, pending] = useActionState(boundAction, null);
-  // Bumped after each add so the (controlled) anchor fields reset with the form
-  const [anchorKey, setAnchorKey] = useState(0);
+  // Bumped after each add so the (controlled) timing fields reset with the form
+  const [timingKey, setTimingKey] = useState(0);
 
   useEffect(() => {
     if (state?.success) {
       formRef.current?.reset();
-      setAnchorKey((k) => k + 1); // eslint-disable-line react-hooks/set-state-in-effect
+      setTimingKey((k) => k + 1); // eslint-disable-line react-hooks/set-state-in-effect
       router.refresh();
     }
   }, [state, router]);
@@ -38,25 +38,9 @@ export function AddTaskForm({ templateId }: { templateId: string }) {
         <Select label="Priority" name="priority" options={PRIORITY_OPTIONS} defaultValue="MEDIUM" />
       </div>
 
-      <AnchorFields key={anchorKey} />
+      <TaskTimingFields key={timingKey} season={season} />
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Field
-          label="Duration (build days)"
-          name="durationBuildDays"
-          type="number"
-          min="1"
-          required
-          defaultValue={1}
-          className="sm:col-span-2"
-        />
-      </div>
-
-      <div className="flex items-center gap-6">
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input type="checkbox" name="isMilestone" className="rounded" />
-          <span className="text-sm text-[--color-text-primary]">Milestone ◆</span>
-        </label>
+      <div className="flex flex-wrap items-end gap-6">
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" name="designReviewRequired" className="rounded" />
           <span className="text-sm text-[--color-text-primary]">Design review required</span>
@@ -64,7 +48,7 @@ export function AddTaskForm({ templateId }: { templateId: string }) {
         <Field label="Est. hours" name="estimatedHours" type="number" min="0" step="0.5" placeholder="—" className="w-28" />
       </div>
 
-      <Button type="submit" size="sm" isLoading={pending}>Add task</Button>
+      <Button type="submit" size="sm" isLoading={pending}>Add to template</Button>
     </form>
   );
 }

@@ -90,26 +90,31 @@ export default function HelpPage() {
           A template is a reusable list of tasks — like your standard build-season plan — that can be added to the
           current season in one click. Head Mentors, Build Leads and Inventory Admins can create and edit templates; Head Mentors apply them.
         </p>
-        <H3>When does each task start?</H3>
-        <p>Every template task starts a number of days <b>before</b> (negative) or <b>after</b> (positive) a date in the season:</p>
+        <H3>When is each task due?</H3>
+        <p>When adding a template task, choose <b>Task</b> or <b>Milestone</b>, then say when it&apos;s <b>due</b> — some days <b>before</b>, <b>on</b>, or <b>after</b> a date in the season:</p>
+        <ul className="list">
+          <li><b>Tasks</b> also say how long they <b>take</b> (days). They start that many days before they&apos;re due — e.g. “due 3 days before Week 0, takes 5 days” starts 8 days before Week 0.</li>
+          <li><b>Milestones</b> are just a date — no length.</li>
+          <li>The form spells it out and shows the dates it would get in your current season, e.g. “Starts Sat, Feb 7 → due Thu, Feb 12”.</li>
+        </ul>
         <Table
-          head={["Starts relative to", "Uses", "Example"]}
+          head={["Relative to", "Uses", "Example"]}
           rows={[
-            ["Kickoff", "The season's kickoff date", "+3 → 3 days after kickoff"],
-            ["Week 0", "Your Week0 competition — or the first week competition if there&apos;s no Week0", "−5 → 5 days before Week 0"],
-            ["Season end", "The season's end date, set in Season settings", "−7 → a week before the season ends"],
-            ["Practice match", "Competitions designated PracticeMatch1, PracticeMatch2, …", "−1 → day before each practice match"],
-            ["Week competition", "Competitions designated Week0, Week1, Week2, …", "−2 → pack the robot 2 days before each event"],
-            ["Playoff", "Competitions designated Playoff0, Playoff1, …", "0 → on the day of each playoff"],
-            ["Worlds", "The competition designated Worlds", "−14 → two weeks before Worlds"],
-            ["Offseason competition", "Competitions designated Offseason1, Offseason2, …", "+1 → day after each offseason event"],
+            ["Kickoff", "The season's kickoff date", "Due 3 days after kickoff"],
+            ["Week 0", "Your Week0 competition — or the first week competition if there's no Week0", "Due 5 days before Week 0"],
+            ["Season end", "The season's end date, set in Season settings", "Due a week before the season ends"],
+            ["Practice match", "Competitions designated PracticeMatch1, PracticeMatch2, …", "Due the day before each practice match"],
+            ["Week competition", "Competitions designated Week0, Week1, Week2, …", "Robot packed 2 days before each event"],
+            ["Playoff", "Competitions designated Playoff0, Playoff1, …", "Due on the day of each playoff"],
+            ["Worlds", "The competition designated Worlds", "Due two weeks before Worlds"],
+            ["Offseason competition", "Competitions designated Offseason1, Offseason2, …", "Due the day after each offseason event"],
           ]}
         />
         <H3>One competition, or every one</H3>
         <ul className="list">
-          <li>Leave the <b>#</b> blank to create the task once <b>for each</b> matching competition. Each copy is named after its event, e.g. “Pack robot — Week1”, “Pack robot — Week2”.</li>
+          <li>Leave <b>Which one</b> blank to create the task once <b>for each</b> matching competition. Each copy is named after its event, e.g. “Pack robot — Week1”, “Pack robot — Week2”.</li>
           <li>Enter a number to target just that event — e.g. Week competition <b>1</b> means only Week1.</li>
-          <li>The form shows a preview such as “Starts: 2d before each week competition”.</li>
+
         </ul>
         <H3>Applying a template</H3>
         <ul className="list">
@@ -121,7 +126,7 @@ export default function HelpPage() {
         <H3>Import &amp; export (CSV)</H3>
         <ul className="list">
           <li><b>Download CSV</b> exports a template; <b>Import CSV</b> adds tasks from a spreadsheet, with a preview first. The empty CSV includes an example and notes on every column.</li>
-          <li>Columns <code>anchor</code> (KICKOFF, SEASON_WEEK0, SEASON_END, PRACTICE, WEEK, PLAYOFF, WORLDS, OFFSEASON) and <code>anchorNumber</code> (blank = each) set the start, with <code>startOffset</code> as the days before/after. Older CSVs without an anchor still work: positive offsets count from kickoff, negative ones back from Week 0.</li>
+          <li>Columns <code>anchor</code> (KICKOFF, SEASON_WEEK0, SEASON_END, PRACTICE, WEEK, PLAYOFF, WORLDS, OFFSEASON) and <code>anchorNumber</code> (blank = each) set the anchor; <code>startOffset</code> is when the task <b>starts</b> (days before/after it) and <code>durationBuildDays</code> how long it takes, so it&apos;s due at start + length. Milestones can use a length of 0. Older CSVs without an anchor still work: positive offsets count from kickoff, negative ones back from Week 0.</li>
           <li><code>prerequisiteNames</code> lists other task names separated by <code>|</code>.</li>
         </ul>
       </Section>

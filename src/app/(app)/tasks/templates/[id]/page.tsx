@@ -4,6 +4,7 @@ import { findTeamTemplate } from "@/lib/template-access";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { describeAnchor } from "@/lib/competition";
+import type { SeasonPreview } from "./TaskTimingFields";
 import { HelpLink } from "@/components/HelpLink";
 import { Badge } from "@/components/ui/badge";
 import { SUBTEAM_OPTIONS, PRIORITY_OPTIONS } from "@/lib/schedule-helpers";
@@ -23,10 +24,24 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
 
   const isMentor = session.user.roles.some((r) => MENTOR_ROLES.includes(r));
 
-  const [template, tasks] = await Promise.all([
+  const [template, tasks, activeSeason] = await Promise.all([
     findTeamTemplate(id, session.user.teamId),
     prisma.templateTask.findMany({ where: { templateId: id }, orderBy: { startOffset: "asc" } }),
+    // Real dates for the add/edit preview
+    prisma.season.findFirst({
+      where:  { teamId: session.user.teamId, isActive: true },
+      select: { name: true, kickoffDate: true, endDate: true, competitionEvents: { select: { name: true, stage: true, stageNumber: true, startDate: true } } },
+    }),
   ]);
+  const season: SeasonPreview | null = activeSeason && {
+    name:         activeSeason.name,
+    kickoffDate:  activeSeason.kickoffDate.toISOString(),
+    endDate:      activeSeason.endDate.toISOString(),
+    competitions: activeSeason.competitionEvents.map((c) => ({ ...c, startDate: c.startDate.toISOString() })),
+  };
+  /** "Due 3d before Week 0" — the due date is the start plus the length */
+  const due = (t: { anchor: Parameters<typeof describeAnchor>[0]; anchorNumber: number | null; startOffset: number; durationBuildDays: number }) =>
+    `Due ${describeAnchor(t.anchor, t.anchorNumber, t.startOffset + t.durationBuildDays).replace(/^On /, "on ")}`;
 
   if (!template) notFound();
 
@@ -77,7 +92,7 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
       {isMentor && (
         <div className="card">
           <h2 className="text-h3 text-[--color-text-primary] mb-4">Add task</h2>
-          <AddTaskForm templateId={id} />
+          <AddTaskForm templateId={id} season={season} />
         </div>
       )}
 
@@ -97,11 +112,10 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {t.subTeam && <Badge variant="neutral">{t.subTeam.replace(/_/g, " ")}</Badge>}
-                  <span className="text-small text-(--color-text-secondary) w-40 sm:w-56 text-right">{describeAnchor(t.anchor, t.anchorNumber, t.startOffset)}</span>
-                  <span className="text-small text-[--color-text-disabled] w-14 text-right">{t.durationBuildDays}d</span>
+                  <span className="text-small text-(--color-text-secondary) w-40 sm:w-56 text-right">{due(t)}</span>
                   {isMentor && (
                     <div className="flex gap-1">
-                      <EditTaskRow task={t} />
+                      <EditTaskRow task={t} season={season} />
                       <DeleteTaskButton taskId={t.id} />
                     </div>
                   )}
@@ -130,11 +144,11 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
                   <Badge variant={t.priority === "CRITICAL" ? "danger" : t.priority === "HIGH" ? "warning" : "neutral"}>
                     {t.priority}
                   </Badge>
-                  <span className="text-small text-(--color-text-secondary) w-40 sm:w-56 text-right">{describeAnchor(t.anchor, t.anchorNumber, t.startOffset)}</span>
-                  <span className="text-small text-[--color-text-disabled] w-14 text-right">{t.durationBuildDays}d</span>
+                  <span className="text-small text-(--color-text-secondary) w-40 sm:w-56 text-right">{due(t)}</span>
+                  <span className="text-small text-(--color-text-disabled) w-14 text-right" title="Days of work">{t.durationBuildDays}d</span>
                   {isMentor && (
                     <div className="flex gap-1">
-                      <EditTaskRow task={t} />
+                      <EditTaskRow task={t} season={season} />
                       <DeleteTaskButton taskId={t.id} />
                     </div>
                   )}

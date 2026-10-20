@@ -9,10 +9,10 @@ import { Field } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
 import { SUBTEAM_OPTIONS, PRIORITY_OPTIONS } from "@/lib/schedule-helpers";
 import type { TemplateTask } from "@/generated/prisma";
-import { AnchorFields } from "./AnchorFields";
+import { TaskTimingFields, type SeasonPreview } from "./TaskTimingFields";
 import { toast } from "@/components/ui/toast";
 
-export function EditTaskRow({ task }: { task: TemplateTask }) {
+export function EditTaskRow({ task, season }: { task: TemplateTask; season: SeasonPreview | null }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,13 +43,11 @@ export function EditTaskRow({ task }: { task: TemplateTask }) {
             <Select label="Sub-team" name="subTeam" placeholder="Any" options={SUBTEAM_OPTIONS} defaultValue={task.subTeam ?? ""} />
             <Select label="Priority" name="priority" options={PRIORITY_OPTIONS} defaultValue={task.priority} />
           </div>
-          <AnchorFields anchor={task.anchor} anchorNumber={task.anchorNumber} startOffset={task.startOffset} />
-          <Field label="Duration (build days)" name="durationBuildDays" type="number" min="1" required defaultValue={task.durationBuildDays} />
+          <TaskTimingFields season={season} initial={{
+            anchor: task.anchor, anchorNumber: task.anchorNumber, startOffset: task.startOffset,
+            durationBuildDays: task.durationBuildDays, isMilestone: task.isMilestone,
+          }} />
           <div className="flex items-center gap-4">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" name="isMilestone" defaultChecked={task.isMilestone} className="rounded" />
-              <span className="text-sm text-[--color-text-primary]">Milestone</span>
-            </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" name="designReviewRequired" defaultChecked={task.designReviewRequired} className="rounded" />
               <span className="text-sm text-[--color-text-primary]">Design review</span>

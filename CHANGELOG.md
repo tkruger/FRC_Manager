@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Template tasks: the form now asks when a task is **due** (days before, on or after kickoff, Week 0, a competition…) and how long it **takes**, and spells out when it starts with this season's real dates. Milestones are just a due date, with no length
+
 ## 1.2.0 — 2026-10-16
 
 **Budget**

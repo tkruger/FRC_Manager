@@ -90,8 +90,8 @@ export async function deleteTemplateAction(templateId: string): Promise<{ succes
 const TemplateTaskSchema = z.object({
   name:                 z.string().max(300).min(1),
   subTeam:              z.string().max(300).optional(),
-  startOffset:          z.coerce.number().int(),        // days before (−) / after (+) the anchor
-  durationBuildDays:    z.coerce.number().int().min(1).default(1),
+  startOffset:          z.coerce.number().int().min(-730).max(730), // start: days before (−) / after (+) the anchor
+  durationBuildDays:    z.coerce.number().int().min(0).max(365).default(1), // due = start + this; milestones use 0
   priority:             z.enum(["CRITICAL","HIGH","MEDIUM","LOW"]).default("MEDIUM"),
   estimatedHours:       z.coerce.number().optional(),
   isMilestone:          z.coerce.boolean().optional(),
@@ -107,7 +107,7 @@ function parseTemplateTaskForm(formData: FormData) {
     name:                 formData.get("name"),
     subTeam:              formData.get("subTeam") || undefined,
     startOffset:          formData.get("startOffset"),
-    durationBuildDays:    formData.get("durationBuildDays") || 1,
+    durationBuildDays:    formData.get("durationBuildDays") ?? 1,
     priority:             formData.get("priority") || "MEDIUM",
     estimatedHours:       formData.get("estimatedHours") || undefined,
     isMilestone:          formData.get("isMilestone") === "on",
@@ -125,7 +125,8 @@ function parseTemplateTaskForm(formData: FormData) {
     name:                 d.name,
     subTeam:              (d.subTeam as SubTeam) || null,
     startOffset:          d.startOffset,
-    durationBuildDays:    d.durationBuildDays,
+    // Milestones are a single date (length 0); tasks take at least a day
+    durationBuildDays:    d.isMilestone ? d.durationBuildDays : Math.max(1, d.durationBuildDays),
     priority:             d.priority as TaskPriority,
     estimatedHours:       d.estimatedHours,
     isMilestone:          d.isMilestone ?? false,

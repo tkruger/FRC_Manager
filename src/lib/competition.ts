@@ -44,7 +44,8 @@ export const ANCHOR_OPTIONS: { value: TaskAnchor; label: string }[] = [
   { value: "OFFSEASON",    label: "Offseason competition (Offseason#)" },
 ];
 
-function anchorName(anchor: TaskAnchor, n: number | null | undefined): string {
+/** "kickoff", "Week 0", "Week1", "each week competition" */
+export function anchorName(anchor: TaskAnchor, n: number | null | undefined): string {
   if (anchor === "KICKOFF") return "kickoff";
   if (anchor === "SEASON_WEEK0") return "Week 0";
   if (anchor === "SEASON_END") return "season end";
