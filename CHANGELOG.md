@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Template pages: hover a milestone or task for its full details (timing in words, example dates, hours, prerequisites, description), and **Clone** any of them to add a similar one quickly
 - Presentation: hover any Gantt row for its full name, dates, rule and description; sub-team colors now match the rest of the app, and milestones are dark diamonds
 - Tasks → Gantt matches the presentation: rows in the order things happen with sub-team color dots, shaded weekends, day and week ticks, kickoff / Week 0 / competition / season-end lines, length and due date beside each bar, and a hover card with the full details
 - Presentation: milestones in true date order, a sub-team color key from the first slide (and on every Gantt slide), day and week ticks and shaded weekends on Gantt rows, and long lists scroll on one slide instead of splitting

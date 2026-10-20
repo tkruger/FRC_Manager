@@ -121,6 +121,7 @@ export default function HelpPage() {
           <li>On <b>Tasks → Templates</b>, a Head Mentor taps <b>Apply</b>. Tasks are added to the active season with real dates.</li>
           <li>If the season doesn&apos;t have a matching competition yet, that task is <b>skipped</b> and listed in the result. Add the competition in <Link href="/settings/season" className="link">Season settings</Link> and apply again.</li>
           <li>Applying again never duplicates tasks — only tasks that don&apos;t exist yet (for example, for a newly added competition) are created.</li>
+          <li>On a template, hover a milestone or task to see everything about it, or tap <b>Clone</b> to start a new one from a copy — change what&apos;s different and save.</li>
           <li><b>Save season as template</b> turns the current season&apos;s tasks into a new template.</li>
           <li><b>▶ Present</b> (on a template) opens full-screen slides to walk the team through it: the whole timeline as a Gantt chart, the milestones, each phase up close, who&apos;s busy when, and a checklist of what might be missing. Dates are drawn on an example season for illustration (kickoff on the second Sunday of January, Week 2 and Week 4 events, a regional playoff three weeks before Worlds in April, with competitions on weekends), and weekends are shaded. Long timelines scroll on their slide (↑/↓, the mouse wheel or a swipe) while the dates stay at the top. Use ←/→, space or a click to move on, <b>F</b> for full screen and <b>Esc</b> to leave. On a phone or tablet, swipe.</li>
         </ul>

@@ -3,12 +3,13 @@ import { prisma } from "@/lib/prisma";
 import { findTeamTemplate } from "@/lib/template-access";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { describeAnchor } from "@/lib/competition";
+import { describeAnchor, isCompetitionAnchor, STAGE_INFO } from "@/lib/competition";
 import type { SeasonPreview } from "./TaskTimingFields";
-import { buildTimeline, illustrativeSeason } from "@/lib/template-timeline";
+import { buildTimeline, illustrativeSeason, ruleText } from "@/lib/template-timeline";
+import { HoverDetails, type HoverDetail } from "@/components/HoverDetails";
 import { HelpLink } from "@/components/HelpLink";
 import { Badge } from "@/components/ui/badge";
-import { SUBTEAM_OPTIONS, PRIORITY_OPTIONS } from "@/lib/schedule-helpers";
+import { SUBTEAM_OPTIONS, PRIORITY_OPTIONS, SUBTEAM_COLORS } from "@/lib/schedule-helpers";
 import { AddTaskForm } from "./AddTaskForm";
 import { EditTaskRow } from "./EditTaskRow";
 import { DeleteTaskButton } from "./DeleteTaskButton";
@@ -64,6 +65,31 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
     if (!prev || it.start < prev.start) when.set(it.taskId, { start: it.start, due: it.due });
   }
   const at = (id: string) => when.get(id) ?? { start: 0, due: 0 };
+
+  // Hover card for each row: everything about it, with dates in the example season
+  const example = illustrativeSeason();
+  const exampleDay = (day: number) => new Date(new Date(example.kickoffDate).getTime() + day * 86_400_000)
+    .toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
+  const detail = (t: (typeof tasks)[number]): HoverDetail => {
+    const len = t.durationBuildDays;
+    const w = at(t.id);
+    const each = isCompetitionAnchor(t.anchor) && STAGE_INFO[t.anchor].numbered && t.anchorNumber == null;
+    return {
+      title: `${t.isMilestone ? "◆ " : ""}${t.name}`,
+      lines: [
+        { label: "Sub-team", value: SUBTEAM_OPTIONS.find((o) => o.value === t.subTeam)?.label ?? "No sub-team", dot: t.subTeam ? SUBTEAM_COLORS[t.subTeam] : "#94A3B8" },
+        { label: "Type", value: t.isMilestone ? "Milestone" : `Task · ${len} day${len === 1 ? "" : "s"} of work` },
+        { label: "Due", value: ruleText(t.anchor, t.anchorNumber, t.startOffset + len) },
+        ...(t.isMilestone ? [] : [{ label: "Starts", value: ruleText(t.anchor, t.anchorNumber, t.startOffset) }]),
+        { label: "Example", value: `${t.isMilestone ? "" : `${exampleDay(w.start)} → `}${exampleDay(w.due)}${each ? " (first event; one per event)" : ""}` },
+        { label: "Priority", value: PRIORITY_OPTIONS.find((o) => o.value === t.priority)?.label ?? t.priority },
+        ...(t.estimatedHours != null ? [{ label: "Hours", value: `${t.estimatedHours} estimated` }] : []),
+        ...(t.designReviewRequired ? [{ label: "Review", value: "Design review required" }] : []),
+        ...(t.prerequisiteNames.length ? [{ label: "After", value: t.prerequisiteNames.join(", ") }] : []),
+      ],
+      note: t.description,
+    };
+  };
   const milestones = tasks.filter((t) => t.isMilestone)
     .sort((a, b) => at(a.id).due - at(b.id).due || a.name.localeCompare(b.name));
   const regular    = tasks.filter((t) => !t.isMilestone)
@@ -126,7 +152,7 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
           </h2>
           <div className="card divide-y divide-[--color-border] p-0 overflow-hidden">
             {milestones.map((t) => (
-              <div key={t.id} className="flex items-center gap-3 px-4 py-3">
+              <HoverDetails key={t.id} detail={detail(t)} className="flex items-center gap-3 px-4 py-3">
                 <span className="text-[--color-primary] text-xs shrink-0">◆</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-[--color-text-primary] truncate">{t.name}</p>
@@ -138,11 +164,12 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
                   {isMentor && (
                     <div className="flex gap-1">
                       <EditTaskRow task={t} season={season} />
+                      <EditTaskRow task={t} season={season} clone />
                       <DeleteTaskButton taskId={t.id} />
                     </div>
                   )}
                 </div>
-              </div>
+              </HoverDetails>
             ))}
           </div>
         </section>
@@ -156,7 +183,7 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
           </h2>
           <div className="card divide-y divide-[--color-border] p-0 overflow-hidden">
             {regular.map((t) => (
-              <div key={t.id} className="flex items-center gap-3 px-4 py-3">
+              <HoverDetails key={t.id} detail={detail(t)} className="flex items-center gap-3 px-4 py-3">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-[--color-text-primary] truncate">{t.name}</p>
                   {t.description && <p className="text-small text-[--color-text-secondary] truncate">{t.description}</p>}
@@ -171,11 +198,12 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
                   {isMentor && (
                     <div className="flex gap-1">
                       <EditTaskRow task={t} season={season} />
+                      <EditTaskRow task={t} season={season} clone />
                       <DeleteTaskButton taskId={t.id} />
                     </div>
                   )}
                 </div>
-              </div>
+              </HoverDetails>
             ))}
           </div>
         </section>

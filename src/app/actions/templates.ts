@@ -121,7 +121,14 @@ function parseTemplateTaskForm(formData: FormData) {
   const anchor: TaskAnchor = d.anchor ?? legacyAnchor(d.startOffset);
   // A number only means something for numbered competition types ("Week1"); none = each one
   const anchorNumber = isCompetitionAnchor(anchor) && STAGE_INFO[anchor].numbered ? d.anchorNumber ?? null : null;
+  // Prerequisites only come with a cloned task ("|"-separated names); left out otherwise so
+  // editing a task keeps the ones it has
+  const prereqRaw = formData.get("prerequisiteNames");
+  const prerequisiteNames = typeof prereqRaw === "string"
+    ? prereqRaw.split("|").map((n) => n.trim().slice(0, 200)).filter(Boolean).slice(0, 50)
+    : undefined;
   return {
+    prerequisiteNames,
     name:                 d.name,
     subTeam:              (d.subTeam as SubTeam) || null,
     startOffset:          d.startOffset,
