@@ -93,7 +93,8 @@ export function TaskModal({ task, allTasks = [], allMembers = [], allRobots = []
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent title={task.name} className="sm:max-w-2xl">
-        <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+        {/* The dialog body scrolls; the action buttons stick to its bottom */}
+        <div className="space-y-4">
 
           {!editing ? (
             <>
@@ -226,8 +227,8 @@ export function TaskModal({ task, allTasks = [], allMembers = [], allRobots = []
                 </div>
               )}
 
-              {/* Actions */}
-              <div className="flex gap-2 pt-2 border-t border-[--color-border]">
+              {/* Actions — pinned to the bottom of the card while the rest scrolls behind */}
+              <div className="sticky -bottom-5 z-10 -mx-5 -mb-5 px-5 py-3 flex gap-2 border-t border-(--color-border) bg-(--color-surface)">
                 <Button size="sm" onClick={() => setEditing(true)}>Edit task</Button>
                 <Button variant="danger" size="sm" onClick={handleDelete} isLoading={isPending}>Delete</Button>
                 <DialogClose asChild>
@@ -422,7 +423,8 @@ function EditTaskForm({ task, allTasks, allMembers, allRobots, kickoffDate, endD
 
       <Textarea label="Blockers / notes" name="blockersNotes" rows={2} defaultValue={task.blockersNotes ?? ""} />
 
-      <div className="flex gap-2">
+      {/* Pinned to the bottom of the card while the form scrolls behind */}
+      <div className="sticky -bottom-5 z-10 -mx-5 -mb-5 px-5 py-3 flex gap-2 border-t border-(--color-border) bg-(--color-surface)">
         <Button type="submit" isLoading={isPending}>Save changes</Button>
         <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
       </div>
