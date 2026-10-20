@@ -10,7 +10,7 @@ import { HoverDetails, type HoverDetail } from "@/components/HoverDetails";
 import { HelpLink } from "@/components/HelpLink";
 import { Badge } from "@/components/ui/badge";
 import { SUBTEAM_OPTIONS, PRIORITY_OPTIONS, SUBTEAM_COLORS } from "@/lib/schedule-helpers";
-import { AddTaskForm } from "./AddTaskForm";
+import { AddTaskDialog } from "./AddTaskForm";
 import { EditTaskRow } from "./EditTaskRow";
 import { DeleteTaskButton } from "./DeleteTaskButton";
 import { RenameTemplateForm } from "./RenameTemplateForm";
@@ -18,6 +18,13 @@ import { TemplateCSVImport } from "@/app/(app)/tasks/templates/TemplateCSVImport
 import { Button } from "@/components/ui/button";
 
 const MENTOR_ROLES = ["HEAD_MENTOR", "BUILD_LEAD", "INVENTORY_ADMIN"];
+
+// Rows: one line on wider screens; on phones the name gets the full width and the
+// badges, timing and buttons wrap underneath
+const ROW = "flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:gap-3";
+const META = "flex flex-wrap items-center gap-x-2 gap-y-1.5 sm:flex-nowrap sm:shrink-0";
+const DUE = "text-small text-(--color-text-secondary) sm:w-44 sm:text-right";
+const ACTIONS = "flex gap-1 ml-auto sm:ml-0";
 
 export default async function TemplateDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -96,7 +103,7 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
     .sort((a, b) => at(a.id).start - at(b.id).start || at(a.id).due - at(b.id).due || a.name.localeCompare(b.name));
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Breadcrumb */}
       <nav className="text-small text-[--color-text-secondary]">
         <Link href="/tasks" className="hover:text-[--color-primary]">Tasks</Link>
@@ -110,9 +117,10 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
       <div className="space-y-3">
         {/* CSV tools */}
         <div className="flex flex-wrap gap-2">
+          {isMentor && <AddTaskDialog templateId={id} season={season} />}
           {tasks.length > 0 && (
             <Link href={`/tasks/templates/${id}/present`}>
-              <Button size="sm">▶ Present</Button>
+              <Button size="sm" variant="outline">▶ Present</Button>
             </Link>
           )}
           <a href={`/api/templates/${id}/csv`} download>
@@ -136,14 +144,6 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
         </p>
       </div>
 
-      {/* Add task form (mentors only) */}
-      {isMentor && (
-        <div className="card">
-          <h2 className="text-h3 text-[--color-text-primary] mb-4">Add task</h2>
-          <AddTaskForm templateId={id} season={season} />
-        </div>
-      )}
-
       {/* Milestones */}
       {milestones.length > 0 && (
         <section>
@@ -152,17 +152,19 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
           </h2>
           <div className="card divide-y divide-[--color-border] p-0 overflow-hidden">
             {milestones.map((t) => (
-              <HoverDetails key={t.id} detail={detail(t)} className="flex items-center gap-3 px-4 py-3">
-                <span className="text-[--color-primary] text-xs shrink-0">◆</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[--color-text-primary] truncate">{t.name}</p>
-                  {t.description && <p className="text-small text-[--color-text-secondary] truncate">{t.description}</p>}
+              <HoverDetails key={t.id} detail={detail(t)} className={ROW}>
+                <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0">
+                  <span className="text-[--color-primary] text-xs shrink-0 mt-1 sm:mt-0">◆</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-[--color-text-primary] line-clamp-2 sm:line-clamp-none sm:truncate">{t.name}</p>
+                    {t.description && <p className="text-small text-[--color-text-secondary] truncate">{t.description}</p>}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className={META + " pl-6 sm:pl-0"}>
                   {t.subTeam && <Badge variant="neutral">{t.subTeam.replace(/_/g, " ")}</Badge>}
-                  <span className="text-small text-(--color-text-secondary) w-40 sm:w-56 text-right">{due(t)}</span>
+                  <span className={DUE}>{due(t)}</span>
                   {isMentor && (
-                    <div className="flex gap-1">
+                    <div className={ACTIONS}>
                       <EditTaskRow task={t} season={season} />
                       <EditTaskRow task={t} season={season} clone />
                       <DeleteTaskButton taskId={t.id} />
@@ -183,20 +185,20 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
           </h2>
           <div className="card divide-y divide-[--color-border] p-0 overflow-hidden">
             {regular.map((t) => (
-              <HoverDetails key={t.id} detail={detail(t)} className="flex items-center gap-3 px-4 py-3">
+              <HoverDetails key={t.id} detail={detail(t)} className={ROW}>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-[--color-text-primary] truncate">{t.name}</p>
+                  <p className="text-sm text-[--color-text-primary] line-clamp-2 sm:line-clamp-none sm:truncate">{t.name}</p>
                   {t.description && <p className="text-small text-[--color-text-secondary] truncate">{t.description}</p>}
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className={META}>
                   {t.subTeam && <Badge variant="neutral">{t.subTeam.replace(/_/g, " ")}</Badge>}
                   <Badge variant={t.priority === "CRITICAL" ? "danger" : t.priority === "HIGH" ? "warning" : "neutral"}>
                     {t.priority}
                   </Badge>
-                  <span className="text-small text-(--color-text-secondary) w-40 sm:w-56 text-right">{due(t)}</span>
-                  <span className="text-small text-(--color-text-disabled) w-14 text-right" title="Days of work">{t.durationBuildDays}d</span>
+                  <span className={DUE}>{due(t)}</span>
+                  <span className="text-small text-(--color-text-disabled) sm:w-14 sm:text-right" title="Days of work">{t.durationBuildDays}d</span>
                   {isMentor && (
-                    <div className="flex gap-1">
+                    <div className={ACTIONS}>
                       <EditTaskRow task={t} season={season} />
                       <EditTaskRow task={t} season={season} clone />
                       <DeleteTaskButton taskId={t.id} />
@@ -212,7 +214,7 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
       {tasks.length === 0 && (
         <div className="card text-center py-12">
           <p className="text-body text-[--color-text-secondary]">
-            No tasks yet. {isMentor ? "Use the form above to add your first task." : "A mentor can add tasks to this template."}
+            No tasks yet. {isMentor ? "Tap + Add task to add your first one." : "A mentor can add tasks to this template."}
           </p>
         </div>
       )}

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Template pages: **+ Add task** opens the add form in a dialog instead of a form at the top of the page. On phones each row shows the full name with its sub-team, priority, timing and Edit / Clone / Delete underneath, instead of squeezing everything onto one line
 - Template Edit and Clone dialogs: Save/Add copy and Cancel stay pinned to the bottom while the form scrolls behind them (like the task card)
 - Presentation: the Milestones slide now comes before the whole-plan Timeline
 - Presentation Gantt slides: smaller text, a one-line title and slimmer margins, so about twice as many rows fit and the chart gets most of the slide
