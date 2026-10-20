@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { updateTemplateTaskAction, addTemplateTaskAction } from "@/app/actions/templates";
-import { Dialog, DialogContent, DialogTrigger, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger, DialogClose, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
@@ -69,10 +69,10 @@ export function EditTaskRow({ task, season, clone = false }: { task: TemplateTas
               <span className="text-sm text-[--color-text-primary]">Design review</span>
             </label>
           </div>
-          <div className="flex gap-2 pt-2">
+          <DialogFooter>
             <Button type="submit" isLoading={isPending}>{clone ? "Add copy" : "Save"}</Button>
             <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

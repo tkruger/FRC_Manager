@@ -67,3 +67,16 @@ export function DialogContent({ children, title, description, className }: Dialo
     </RadixDialog.Portal>
   );
 }
+
+/**
+ * A dialog's action buttons, pinned to the bottom of the dialog while the rest scrolls
+ * behind them. Put it last inside DialogContent (or last in the form inside it); the
+ * negative margins line it up with the body's p-5 padding.
+ */
+export function DialogFooter({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={cn("sticky -bottom-5 z-10 -mx-5 -mb-5 px-5 py-3 flex gap-2 border-t border-(--color-border) bg-(--color-surface)", className)}>
+      {children}
+    </div>
+  );
+}

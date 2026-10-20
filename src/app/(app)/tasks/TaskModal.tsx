@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogClose, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
@@ -228,13 +228,13 @@ export function TaskModal({ task, allTasks = [], allMembers = [], allRobots = []
               )}
 
               {/* Actions — pinned to the bottom of the card while the rest scrolls behind */}
-              <div className="sticky -bottom-5 z-10 -mx-5 -mb-5 px-5 py-3 flex gap-2 border-t border-(--color-border) bg-(--color-surface)">
+              <DialogFooter>
                 <Button size="sm" onClick={() => setEditing(true)}>Edit task</Button>
                 <Button variant="danger" size="sm" onClick={handleDelete} isLoading={isPending}>Delete</Button>
                 <DialogClose asChild>
                   <Button variant="outline" size="sm">Close</Button>
                 </DialogClose>
-              </div>
+              </DialogFooter>
             </>
           ) : (
             <EditTaskForm
@@ -424,10 +424,10 @@ function EditTaskForm({ task, allTasks, allMembers, allRobots, kickoffDate, endD
       <Textarea label="Blockers / notes" name="blockersNotes" rows={2} defaultValue={task.blockersNotes ?? ""} />
 
       {/* Pinned to the bottom of the card while the form scrolls behind */}
-      <div className="sticky -bottom-5 z-10 -mx-5 -mb-5 px-5 py-3 flex gap-2 border-t border-(--color-border) bg-(--color-surface)">
+      <DialogFooter>
         <Button type="submit" isLoading={isPending}>Save changes</Button>
         <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
-      </div>
+      </DialogFooter>
     </form>
   );
 }
