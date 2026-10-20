@@ -101,7 +101,7 @@ export default function HelpPage() {
           head={["Relative to", "Uses", "Example"]}
           rows={[
             ["Kickoff", "The season's kickoff date", "Due 3 days after kickoff"],
-            ["Week 0", "Your Week0 competition — or the first week competition if there's no Week0", "Due 5 days before Week 0"],
+            ["Week 0", "The week before the Week 1 events: your Week0 event if you have one, else 7 days before Week 1 (worked out from your Week events, or the typical FRC schedule). Week 0 tasks are always added", "Due 5 days before Week 0"],
             ["Season end", "The season's end date, set in Season settings", "Due a week before the season ends"],
             ["Practice match", "Competitions designated PracticeMatch1, PracticeMatch2, …", "Due the day before each practice match"],
             ["Week competition", "Competitions designated Week0, Week1, Week2, …", "Robot packed 2 days before each event"],

@@ -6,7 +6,7 @@
 // is marked `estimated`, so the deck can still show the whole plan.
 
 import {
-  STAGE_INFO, anchorName, designation, isCompetitionAnchor, resolveAnchor, week0Competition,
+  STAGE_INFO, anchorName, designation, isCompetitionAnchor, resolveAnchor, week0Date,
   type CompetitionStage, type TaskAnchor,
 } from "@/lib/competition";
 
@@ -138,8 +138,11 @@ export function buildTimeline(tasks: TimelineTask[], season: TimelineSeason | nu
     competitions: season.competitions.map((c) => ({ ...c, startDate: new Date(c.startDate) })),
   };
 
-  const realWeek0 = dates ? week0Competition(dates.competitions) : null;
-  const week0 = realWeek0 ? dayOf(realWeek0.startDate) : 56; // ~8 weeks of build
+  // Week 0 always has a date: the season's Week0 event, else the week before Week 1 (worked
+  // out from its Week events, else the typical FRC schedule) — see week0Date
+  const w0 = dates ? week0Date(dates) : null;
+  const week0 = w0 ? dayOf(w0.date) : 42; // ~6 weeks of build, then Week 1
+  const week0Estimated = !w0 || w0.source === "estimate";
   const end   = dates ? dayOf(dates.endDate) : 120;
 
   const items: TimelineItem[] = [];
@@ -147,7 +150,9 @@ export function buildTimeline(tasks: TimelineTask[], season: TimelineSeason | nu
   for (const t of tasks) {
     const due = t.startOffset + t.durationBuildDays;
     const rule = ruleText(t.anchor, t.anchorNumber, due);
-    let targets = dates ? resolveAnchor(t.anchor, t.anchorNumber, dates).map((r) => ({ day: dayOf(r.date), suffix: r.suffix, estimated: false })) : [];
+    let targets = dates
+      ? resolveAnchor(t.anchor, t.anchorNumber, dates).map((r) => ({ day: dayOf(r.date), suffix: r.suffix, estimated: t.anchor === "SEASON_WEEK0" && week0Estimated }))
+      : [];
     if (targets.length === 0) {
       if (season) skipped.push(t.name);
       const each = isCompetitionAnchor(t.anchor) && STAGE_INFO[t.anchor].numbered && t.anchorNumber == null;
@@ -172,13 +177,14 @@ export function buildTimeline(tasks: TimelineTask[], season: TimelineSeason | nu
   const markers: TimelineMarker[] = [{ day: 0, label: "Kickoff", kind: "kickoff", estimated: !season }];
   if (dates) {
     for (const c of dates.competitions) {
-      const isWeek0 = realWeek0 && c.startDate.getTime() === realWeek0.startDate.getTime() && c.name === realWeek0.name;
-      markers.push({ day: dayOf(c.startDate), label: isWeek0 ? `Week 0 · ${designation(c.stage, c.stageNumber)}` : designation(c.stage, c.stageNumber), kind: isWeek0 ? "week0" : "competition", estimated: false });
+      const isWeek0 = c.stage === "WEEK" && c.stageNumber === 0;
+      markers.push({ day: dayOf(c.startDate), label: isWeek0 ? "Week 0" : designation(c.stage, c.stageNumber), kind: isWeek0 ? "week0" : "competition", estimated: false });
     }
     markers.push({ day: end, label: "Season end", kind: "end", estimated: false });
   }
-  if (!realWeek0 && items.some((i) => i.anchor === "SEASON_WEEK0" || i.anchor === "WEEK")) {
-    markers.push({ day: week0, label: "Week 0 (est.)", kind: "week0", estimated: true });
+  // Week 0 without its own event: a line the week before Week 1
+  if (w0?.source !== "event") {
+    markers.push({ day: week0, label: week0Estimated ? "Week 0 (est.)" : "Week 0", kind: "week0", estimated: week0Estimated });
   }
   if (!season && items.some((i) => i.anchor === "SEASON_END" || i.anchor === "OFFSEASON")) {
     markers.push({ day: end, label: "Season end (est.)", kind: "end", estimated: true });

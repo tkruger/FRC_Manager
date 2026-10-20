@@ -35,7 +35,7 @@ export function isCompetitionAnchor(a: TaskAnchor): a is CompetitionStage {
 
 export const ANCHOR_OPTIONS: { value: TaskAnchor; label: string }[] = [
   { value: "KICKOFF",      label: "Kickoff (season start)" },
-  { value: "SEASON_WEEK0", label: "Week 0 (Week0, or the first week competition)" },
+  { value: "SEASON_WEEK0", label: "Week 0 (the week before Week 1 events)" },
   { value: "SEASON_END",   label: "Season end" },
   { value: "PRACTICE",     label: "Practice match (PracticeMatch#)" },
   { value: "WEEK",         label: "Week competition (Week#)" },
@@ -87,11 +87,8 @@ export interface AnchorTarget {
 export function resolveAnchor(anchor: TaskAnchor, anchorNumber: number | null | undefined, season: SeasonDates): AnchorTarget[] {
   if (anchor === "KICKOFF")    return [{ date: season.kickoffDate, suffix: null }];
   if (anchor === "SEASON_END") return [{ date: season.endDate,     suffix: null }];
-  if (anchor === "SEASON_WEEK0") {
-    // Week 0 is the build deadline: the season's Week0 competition, else its first week competition
-    const w0 = week0Competition(season.competitions);
-    return w0 ? [{ date: w0.startDate, suffix: null }] : [];
-  }
+  // Week 0 always has a date (see week0Date), so its tasks are never skipped
+  if (anchor === "SEASON_WEEK0") return [{ date: week0Date(season).date, suffix: null }];
 
   const matches = season.competitions
     .filter((c) => c.stage === anchor && (anchorNumber == null || c.stageNumber === anchorNumber))
@@ -107,10 +104,43 @@ export function resolveAnchor(anchor: TaskAnchor, anchorNumber: number | null | 
   }));
 }
 
-/** The Week0 competition, or the first Week competition if there is no Week0 */
-export function week0Competition<T extends { stage: CompetitionStage; stageNumber: number | null; startDate: Date }>(competitions: T[]): T | null {
-  const weeks = competitions.filter((c) => c.stage === "WEEK").sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
-  return weeks.find((c) => c.stageNumber === 0) ?? weeks[0] ?? null;
+const DAY_MS = 86_400_000;
+
+/** What Week 0/1 are worked out from */
+type WeekDates = { kickoffDate: Date; competitions: { stage: CompetitionStage; stageNumber: number | null; startDate: Date }[] };
+
+/**
+ * Week 1 of the FRC season: the season's Week1 event, else worked back from its other
+ * numbered Week events (Week 3 − 2 weeks), else the typical FRC schedule — the Saturday
+ * about seven weeks after kickoff (events run Saturday–Sunday).
+ */
+export function week1Date(season: WeekDates): { date: Date; source: "event" | "derived" | "estimate" } {
+  const numbered = season.competitions
+    .filter((c) => c.stage === "WEEK" && c.stageNumber != null && c.stageNumber >= 1)
+    .sort((a, b) => a.stageNumber! - b.stageNumber! || a.startDate.getTime() - b.startDate.getTime());
+  const first = numbered[0];
+  if (first) {
+    return {
+      date: new Date(first.startDate.getTime() - (first.stageNumber! - 1) * 7 * DAY_MS),
+      source: first.stageNumber === 1 ? "event" : "derived",
+    };
+  }
+  const sevenWeeks = new Date(season.kickoffDate.getTime() + 49 * DAY_MS);
+  const backToSaturday = (sevenWeeks.getUTCDay() - 6 + 7) % 7;
+  return { date: new Date(sevenWeeks.getTime() - backToSaturday * DAY_MS), source: "estimate" };
+}
+
+/**
+ * Week 0 — the build deadline — is the week before the Week 1 events: the season's Week0
+ * event if it has one, else 7 days before Week 1 (see week1Date). Always has a date.
+ */
+export function week0Date(season: WeekDates): { date: Date; source: "event" | "derived" | "estimate" } {
+  const event = season.competitions
+    .filter((c) => c.stage === "WEEK" && c.stageNumber === 0)
+    .sort((a, b) => a.startDate.getTime() - b.startDate.getTime())[0];
+  if (event) return { date: event.startDate, source: "event" };
+  const w1 = week1Date(season);
+  return { date: new Date(w1.date.getTime() - 7 * DAY_MS), source: w1.source === "estimate" ? "estimate" : "derived" };
 }
 
 /** The next competition that hasn't finished yet (for countdowns) */

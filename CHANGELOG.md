@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Week 0 is the week before the Week 1 events: the season's Week0 event, else 7 days before Week 1 — worked out from its Week events or, with none, the typical FRC schedule (about seven weeks after kickoff). Template tasks and milestones tied to Week 0 are always added, never skipped
+- Template Clone buttons match Edit (outlined)
 - Template pages: hover a milestone or task for its full details (timing in words, example dates, hours, prerequisites, description), and **Clone** any of them to add a similar one quickly
 - Presentation: hover any Gantt row for its full name, dates, rule and description; sub-team colors now match the rest of the app, and milestones are dark diamonds
 - Tasks → Gantt matches the presentation: rows in the order things happen with sub-team color dots, shaded weekends, day and week ticks, kickoff / Week 0 / competition / season-end lines, length and due date beside each bar, and a hover card with the full details

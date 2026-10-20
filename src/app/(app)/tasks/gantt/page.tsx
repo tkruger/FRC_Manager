@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { competitionCountdown, designation, week0Competition } from "@/lib/competition";
+import { competitionCountdown, designation, week0Date } from "@/lib/competition";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -60,17 +60,18 @@ export default async function GanttPage({ searchParams }: { searchParams: Promis
     assignees:      t.assignees,
   }));
 
-  // Key dates drawn as lines on the chart (days from kickoff): kickoff, each competition
-  // (Week 0 highlighted) and the season's end
+  // Key dates drawn as lines on the chart (days from kickoff): kickoff, Week 0 (the week
+  // before Week 1 — its own event, or worked out), each competition and the season's end
   const DAY = 86_400_000;
   const dayOf = (d: Date) => Math.round((d.getTime() - activeSeason.kickoffDate.getTime()) / DAY);
-  const week0 = week0Competition(activeSeason.competitionEvents);
+  const week0 = week0Date({ kickoffDate: activeSeason.kickoffDate, competitions: activeSeason.competitionEvents });
   const markers = [
     { day: 0, label: "Kickoff", kind: "kickoff" as const },
     ...activeSeason.competitionEvents.map((c) => {
-      const isWeek0 = week0 === c;
-      return { day: dayOf(c.startDate), label: isWeek0 ? `Week 0 · ${designation(c.stage, c.stageNumber)}` : designation(c.stage, c.stageNumber), kind: isWeek0 ? "week0" as const : "competition" as const };
+      const isWeek0 = c.stage === "WEEK" && c.stageNumber === 0;
+      return { day: dayOf(c.startDate), label: isWeek0 ? "Week 0" : designation(c.stage, c.stageNumber), kind: isWeek0 ? "week0" as const : "competition" as const };
     }),
+    ...(week0.source === "event" ? [] : [{ day: dayOf(week0.date), label: week0.source === "estimate" ? "Week 0 (est.)" : "Week 0", kind: "week0" as const }]),
     { day: dayOf(activeSeason.endDate), label: "Season end", kind: "end" as const },
   ].sort((a, b) => a.day - b.day);
 

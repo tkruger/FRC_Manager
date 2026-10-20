@@ -7,7 +7,7 @@ import { z } from "zod";
 import { findTeamTemplate, findTeamTemplateTask } from "@/lib/template-access";
 import { STANDARD_TASKS } from "@/lib/standard-template";
 import {
-  TASK_ANCHORS, STAGE_INFO, isCompetitionAnchor, legacyAnchor, resolveAnchor, addDays, week0Competition,
+  TASK_ANCHORS, STAGE_INFO, isCompetitionAnchor, legacyAnchor, resolveAnchor, addDays, week0Date,
   type TaskAnchor, type SeasonDates,
 } from "@/lib/competition";
 import type { Prisma, TaskPriority, SubTeam } from "@/generated/prisma";
@@ -214,14 +214,14 @@ export async function saveSeasonAsTemplateAction(
   if (tasks.length === 0) return { success: false, error: "No tasks in the current season to save." };
 
   // Convert absolute dates to offsets from whichever season date is nearest:
-  // kickoff, Week 0 (the Week0 / first week competition) or the season end
+  // kickoff, Week 0 (the week before Week 1 — see week0Date) or the season end
   const DAY = 86400000;
   const kickoff = activeSeason.kickoffDate.getTime();
-  const week0   = week0Competition(activeSeason.competitionEvents);
+  const week0   = week0Date({ kickoffDate: activeSeason.kickoffDate, competitions: activeSeason.competitionEvents }).date;
   const anchors: { anchor: TaskAnchor; ms: number }[] = [
-    { anchor: "KICKOFF",    ms: kickoff },
-    ...(week0 ? [{ anchor: "SEASON_WEEK0" as TaskAnchor, ms: week0.startDate.getTime() }] : []),
-    { anchor: "SEASON_END", ms: activeSeason.endDate.getTime() },
+    { anchor: "KICKOFF",      ms: kickoff },
+    { anchor: "SEASON_WEEK0", ms: week0.getTime() },
+    { anchor: "SEASON_END",   ms: activeSeason.endDate.getTime() },
   ];
 
   const template = await prisma.seasonTemplate.create({

@@ -37,7 +37,7 @@ export function EditTaskRow({ task, season, clone = false }: { task: TemplateTas
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {clone
-          ? <Button variant="ghost" size="sm" title={`Make a copy of ${task.name}`}>Clone</Button>
+          ? <Button variant="outline" size="sm" title={`Make a copy of ${task.name}`}>Clone</Button>
           : <Button variant="outline" size="sm">Edit</Button>}
       </DialogTrigger>
       <DialogContent title={clone ? `Clone: ${task.name}` : `Edit: ${task.name}`}
