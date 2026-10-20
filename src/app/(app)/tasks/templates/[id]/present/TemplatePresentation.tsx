@@ -120,8 +120,14 @@ function Gantt({ items, range, markers, labels, height }: {
   const markerRows = shown.length ? Math.max(...markerRow) + 1 : 0;
   const tickH = 30;
   const axisH = tickH + markerRows * 22 + 6;
-  const rowH = Math.max(18, Math.min(46, Math.floor((height - axisH) / Math.max(1, items.length))));
-  const font = rowH >= 34 ? 20 : rowH >= 26 ? 17 : 14;
+  // Rows keep a readable height; when they don't all fit, the rows scroll under the
+  // date header (which stays put) instead of spilling onto another slide
+  const viewH = height - axisH;
+  const rowH = Math.max(40, Math.min(46, Math.floor(viewH / Math.max(1, items.length))));
+  const scrolls = items.length * rowH > viewH;
+  // Room at the end so the last row clears the fade
+  const innerH = Math.max(viewH, items.length * rowH + (scrolls ? 36 : 0));
+  const font = 20;
 
   return (
     <div style={{ position: "relative", height }}>
@@ -137,8 +143,11 @@ function Gantt({ items, range, markers, labels, height }: {
           </div>
         ))}
       </div>
+      {/* Scrolling rows */}
+      <div data-scroll style={{ position: "absolute", left: 0, right: 0, top: axisH, height: viewH, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain" }}>
+      <div style={{ position: "relative", height: innerH }}>
       {/* Grid and key-date lines */}
-      <div style={{ position: "absolute", left: LABEL_W, top: axisH, width: CHART_W, height: height - axisH }}>
+      <div style={{ position: "absolute", left: LABEL_W, top: 0, width: CHART_W, height: innerH }}>
         {ticksFor(lo, hi).map((d) => <div key={d} style={{ position: "absolute", left: x(d), top: 0, bottom: 0, borderLeft: `1px solid ${C.grid}` }} />)}
         {shown.map((m, i) => (
           <div key={`${m.label}-${i}`} style={{ position: "absolute", left: x(m.day), top: 0, bottom: 0, borderLeft: `2px ${m.estimated ? "dashed" : "solid"} ${m.kind === "week0" ? C.accent : C.faint}` }} />
@@ -146,7 +155,7 @@ function Gantt({ items, range, markers, labels, height }: {
       </div>
       {/* Rows */}
       {items.map((it, r) => {
-        const top = axisH + r * rowH;
+        const top = r * rowH;
         const color = teamColor(it.subTeam);
         const x1 = x(it.start), x2 = x(it.due);
         const barW = Math.max(6, x2 - x1);
@@ -177,6 +186,10 @@ function Gantt({ items, range, markers, labels, height }: {
           </div>
         );
       })}
+      </div>
+      </div>
+      {/* A soft fade says there's more below */}
+      {scrolls && <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 36, background: "linear-gradient(rgba(255,255,255,0), #fff)", pointerEvents: "none" }} />}
     </div>
   );
 }
@@ -234,7 +247,7 @@ function buildSlides(name: string, description: string | null, teamNumber: numbe
   }
 
   // 2. The whole timeline (split if it's long)
-  const overview = pages(items, 22);
+  const overview = [items];
   const range = rangeOf(items);
   overview.forEach((page, i) => {
     slides.push(
@@ -303,7 +316,7 @@ function buildSlides(name: string, description: string | null, teamNumber: numbe
     const phaseItems = items.filter((i) => phase.anchors.includes(i.anchor));
     if (!phaseItems.length) continue;
     const pr = rangeOf(phaseItems);
-    pages(phaseItems, 12).forEach((page, p, all) => {
+    [phaseItems].forEach((page, p, all) => {
       slides.push(
         <Slide key={`${phase.key}-${p}`} kicker={phase.subtitle} title={all.length > 1 ? `${phase.title} (${p + 1} of ${all.length})` : phase.title}
           footer={<span>{page.filter((i) => !i.isMilestone).length} tasks · {page.filter((i) => i.isMilestone).length} milestones — each row shows its length and due date</span>}>
@@ -407,7 +420,7 @@ export function TemplatePresentation({ templateId, name, description, teamNumber
   const [chrome, setChrome] = useState(true);
   const rootRef = useRef<HTMLDivElement>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const touchX = useRef<number | null>(null);
+  const touch = useRef<{ x: number; y: number } | null>(null);
   const exitHref = `/tasks/templates/${templateId}`;
   const router = useRouter();
 
@@ -438,6 +451,12 @@ export function TemplatePresentation({ templateId, name, description, teamNumber
   // Keyboard: arrows / space / page keys like a slide deck; F for full screen; Esc to leave
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
+      const list = document.querySelector<HTMLElement>("[data-scroll]");
+      if ((e.key === "ArrowDown" || e.key === "ArrowUp") && list && list.scrollHeight > list.clientHeight + 1) {
+        e.preventDefault();
+        list.scrollBy({ top: e.key === "ArrowDown" ? 160 : -160, behavior: "smooth" });
+        return;
+      }
       if (["ArrowRight", "ArrowDown", "PageDown", " ", "Enter"].includes(e.key)) { e.preventDefault(); go(1); }
       else if (["ArrowLeft", "ArrowUp", "PageUp", "Backspace"].includes(e.key)) { e.preventDefault(); go(-1); }
       else if (e.key === "Home") setIndex(0);
@@ -466,13 +485,18 @@ export function TemplatePresentation({ templateId, name, description, teamNumber
     <div
       ref={rootRef}
       onMouseMove={wake}
-      onClick={(e) => { if ((e.target as HTMLElement).closest("[data-controls]")) return; go(e.clientX < window.innerWidth * 0.3 ? -1 : 1); }}
-      onTouchStart={(e) => { touchX.current = e.touches[0].clientX; wake(); }}
+      onClick={(e) => {
+        if ((e.target as HTMLElement).closest("[data-controls]")) return;
+        const list = (e.target as HTMLElement).closest<HTMLElement>("[data-scroll]");
+        if (list && list.scrollHeight > list.clientHeight + 1) return; go(e.clientX < window.innerWidth * 0.3 ? -1 : 1); }}
+      onTouchStart={(e) => { touch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; wake(); }}
       onTouchEnd={(e) => {
-        const start = touchX.current; touchX.current = null;
-        if (start == null) return;
-        const dx = e.changedTouches[0].clientX - start;
-        if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
+        const start = touch.current; touch.current = null;
+        if (!start) return;
+        const dx = e.changedTouches[0].clientX - start.x;
+        const dy = e.changedTouches[0].clientY - start.y;
+        // Sideways swipes change slides; up/down swipes scroll a long list
+        if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) go(dx < 0 ? 1 : -1);
       }}
       style={{ position: "fixed", inset: 0, zIndex: 100, background: "#000", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", cursor: chrome ? "default" : "none", userSelect: "none" }}
     >
