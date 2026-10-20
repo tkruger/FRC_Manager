@@ -1,0 +1,216 @@
+// Lays a template out on one timeline (days from kickoff) for the presentation view.
+// Client-safe: no database access.
+//
+// Real dates come from the active season. Anything the season can't place yet (no Week 0,
+// no matching competition, or no active season at all) gets a typical-season estimate and
+// is marked `estimated`, so the deck can still show the whole plan.
+
+import {
+  STAGE_INFO, anchorName, designation, isCompetitionAnchor, resolveAnchor, week0Competition,
+  type CompetitionStage, type TaskAnchor,
+} from "@/lib/competition";
+
+export interface TimelineTask {
+  id: string;
+  name: string;
+  subTeam: string | null;
+  priority: string;
+  isMilestone: boolean;
+  anchor: TaskAnchor;
+  anchorNumber: number | null;
+  startOffset: number;
+  durationBuildDays: number;
+  estimatedHours: number | null;
+  designReviewRequired: boolean;
+  prerequisiteNames: string[];
+  description: string | null;
+}
+
+export interface TimelineSeason {
+  name: string;
+  kickoffDate: string;
+  endDate: string;
+  competitions: { name: string; stage: CompetitionStage; stageNumber: number | null; startDate: string }[];
+}
+
+export interface TimelineItem {
+  key: string;
+  taskId: string;
+  name: string;
+  /** "Week1" when one template task becomes one per competition */
+  suffix: string | null;
+  subTeam: string | null;
+  priority: string;
+  isMilestone: boolean;
+  /** Days from kickoff */
+  start: number;
+  due: number;
+  /** Placed by estimate, not a real season date */
+  estimated: boolean;
+  anchor: TaskAnchor;
+  /** "3 days before Week 0" */
+  rule: string;
+  hours: number | null;
+  designReview: boolean;
+}
+
+export interface TimelineMarker {
+  day: number;
+  label: string;
+  kind: "kickoff" | "week0" | "competition" | "end";
+  estimated: boolean;
+}
+
+export interface Timeline {
+  items: TimelineItem[];
+  markers: TimelineMarker[];
+  /** Kickoff as an ISO date when there's an active season (for real date labels) */
+  kickoff: string | null;
+  seasonName: string | null;
+  /** Template tasks the active season can't place (they'd be skipped when applied) */
+  skipped: string[];
+}
+
+const DAY = 86_400_000;
+const days = (n: number) => `${Math.abs(n)} day${Math.abs(n) === 1 ? "" : "s"}`;
+
+/** A typical season, for anchors the real season doesn't have (days from kickoff) */
+function estimateDay(anchor: TaskAnchor, n: number | null, week0: number, end: number): number {
+  switch (anchor) {
+    case "KICKOFF":      return 0;
+    case "SEASON_WEEK0": return week0;
+    case "SEASON_END":   return end;
+    case "PRACTICE":     return week0 - 10 + 3 * (n ?? 1);
+    case "WEEK":         return week0 + 7 * (n ?? 1);
+    case "PLAYOFF":      return week0 + 49 + 7 * (n ?? 0);
+    case "WORLDS":       return week0 + 63;
+    case "OFFSEASON":    return end + 21 + 21 * Math.max(0, (n ?? 1) - 1);
+  }
+}
+
+export function ruleText(anchor: TaskAnchor, anchorNumber: number | null, offset: number): string {
+  const what = anchorName(anchor, anchorNumber);
+  return offset === 0 ? `on ${what}` : `${days(offset)} ${offset < 0 ? "before" : "after"} ${what}`;
+}
+
+export function buildTimeline(tasks: TimelineTask[], season: TimelineSeason | null): Timeline {
+  const kickoff = season ? new Date(season.kickoffDate) : null;
+  const dayOf = (d: Date) => (kickoff ? Math.round((d.getTime() - kickoff.getTime()) / DAY) : 0);
+  const dates = season && {
+    kickoffDate:  new Date(season.kickoffDate),
+    endDate:      new Date(season.endDate),
+    competitions: season.competitions.map((c) => ({ ...c, startDate: new Date(c.startDate) })),
+  };
+
+  const realWeek0 = dates ? week0Competition(dates.competitions) : null;
+  const week0 = realWeek0 ? dayOf(realWeek0.startDate) : 56; // ~8 weeks of build
+  const end   = dates ? dayOf(dates.endDate) : 120;
+
+  const items: TimelineItem[] = [];
+  const skipped: string[] = [];
+  for (const t of tasks) {
+    const due = t.startOffset + t.durationBuildDays;
+    const rule = ruleText(t.anchor, t.anchorNumber, due);
+    let targets = dates ? resolveAnchor(t.anchor, t.anchorNumber, dates).map((r) => ({ day: dayOf(r.date), suffix: r.suffix, estimated: false })) : [];
+    if (targets.length === 0) {
+      if (season) skipped.push(t.name);
+      const each = isCompetitionAnchor(t.anchor) && STAGE_INFO[t.anchor].numbered && t.anchorNumber == null;
+      targets = [{ day: estimateDay(t.anchor, t.anchorNumber, week0, end), suffix: each ? `each ${STAGE_INFO[t.anchor as CompetitionStage].label.toLowerCase()}` : null, estimated: true }];
+    }
+    for (const [i, target] of targets.entries()) {
+      items.push({
+        key: `${t.id}-${i}`, taskId: t.id, name: t.name, suffix: target.suffix,
+        subTeam: t.subTeam, priority: t.priority, isMilestone: t.isMilestone,
+        start: target.day + t.startOffset, due: target.day + due,
+        estimated: target.estimated, anchor: t.anchor, rule,
+        hours: t.estimatedHours, designReview: t.designReviewRequired,
+      });
+    }
+  }
+  items.sort((a, b) => a.start - b.start || a.due - b.due || a.name.localeCompare(b.name));
+
+  // Reference lines: kickoff, Week 0, the season's competitions and its end
+  const markers: TimelineMarker[] = [{ day: 0, label: "Kickoff", kind: "kickoff", estimated: !season }];
+  if (dates) {
+    for (const c of dates.competitions) {
+      const isWeek0 = realWeek0 && c.startDate.getTime() === realWeek0.startDate.getTime() && c.name === realWeek0.name;
+      markers.push({ day: dayOf(c.startDate), label: isWeek0 ? `Week 0 · ${designation(c.stage, c.stageNumber)}` : designation(c.stage, c.stageNumber), kind: isWeek0 ? "week0" : "competition", estimated: false });
+    }
+    markers.push({ day: end, label: "Season end", kind: "end", estimated: false });
+  }
+  if (!realWeek0 && items.some((i) => i.anchor === "SEASON_WEEK0" || i.anchor === "WEEK")) {
+    markers.push({ day: week0, label: "Week 0 (est.)", kind: "week0", estimated: true });
+  }
+  if (!season && items.some((i) => i.anchor === "SEASON_END" || i.anchor === "OFFSEASON")) {
+    markers.push({ day: end, label: "Season end (est.)", kind: "end", estimated: true });
+  }
+  markers.sort((a, b) => a.day - b.day);
+
+  return { items, markers, kickoff: season?.kickoffDate ?? null, seasonName: season?.name ?? null, skipped: [...new Set(skipped)] };
+}
+
+/** Which part of the season a task belongs to (one slide per phase) */
+export const PHASES: { key: string; title: string; subtitle: string; anchors: TaskAnchor[] }[] = [
+  { key: "build",   title: "Kickoff & build",         subtitle: "Counted from kickoff",                anchors: ["KICKOFF"] },
+  { key: "week0",   title: "Road to Week 0",          subtitle: "Counted back from the build deadline", anchors: ["SEASON_WEEK0"] },
+  { key: "events",  title: "Competitions",            subtitle: "Around each event",                    anchors: ["PRACTICE", "WEEK", "PLAYOFF", "WORLDS"] },
+  { key: "end",     title: "Season end & offseason",  subtitle: "Wrapping up and beyond",               anchors: ["SEASON_END", "OFFSEASON"] },
+];
+
+export interface Check { ok: boolean; title: string; detail?: string }
+
+/** Plain checks that point at what a template might be missing */
+export function templateChecks(tasks: TimelineTask[], timeline: Timeline, subTeams: { value: string; label: string }[], dayLabel: (day: number) => string): Check[] {
+  const checks: Check[] = [];
+  const { items } = timeline;
+  const used = new Set(tasks.map((t) => t.subTeam).filter(Boolean));
+  const unused = subTeams.filter((s) => !used.has(s.value)).map((s) => s.label);
+  checks.push(unused.length
+    ? { ok: false, title: `No tasks for ${unused.join(", ")}`, detail: "Every sub-team usually has some work in the plan." }
+    : { ok: true, title: "Every sub-team has tasks" });
+
+  // Quiet stretches between kickoff and the last thing due
+  const dues = [...new Set(items.map((i) => i.due))].sort((a, b) => a - b);
+  const from = Math.min(0, dues[0] ?? 0);
+  const points = [from, ...dues];
+  const gaps: string[] = [];
+  for (let i = 1; i < points.length; i++) {
+    if (points[i] - points[i - 1] >= 14) gaps.push(`${dayLabel(points[i - 1])} → ${dayLabel(points[i])} (${points[i] - points[i - 1]} days)`);
+  }
+  checks.push(gaps.length
+    ? { ok: false, title: `${gaps.length} long stretch${gaps.length === 1 ? "" : "es"} with nothing due`, detail: gaps.slice(0, 3).join(" · ") }
+    : { ok: true, title: "Something is due at least every two weeks" });
+
+  const milestones = tasks.filter((t) => t.isMilestone);
+  checks.push(milestones.length === 0
+    ? { ok: false, title: "No milestones", detail: "Milestones give the team checkpoints to aim for." }
+    : { ok: true, title: `${milestones.length} milestone${milestones.length === 1 ? "" : "s"}` });
+
+  const nearWeek0 = items.some((i) => i.isMilestone && (i.anchor === "SEASON_WEEK0" || i.anchor === "KICKOFF"));
+  if (milestones.length) {
+    checks.push(nearWeek0
+      ? { ok: true, title: "Milestones lead up to the build deadline" }
+      : { ok: false, title: "No milestones before Week 0", detail: "Add checkpoints such as “Drivetrain driving” or “Robot complete”." });
+  }
+
+  const noTeam = tasks.filter((t) => !t.subTeam && !t.isMilestone).length;
+  checks.push(noTeam
+    ? { ok: false, title: `${noTeam} task${noTeam === 1 ? "" : "s"} without a sub-team`, detail: "Nobody will see these as theirs." }
+    : { ok: true, title: "Every task has a sub-team" });
+
+  const noHours = tasks.filter((t) => !t.isMilestone && t.estimatedHours == null).length;
+  checks.push(noHours
+    ? { ok: false, title: `${noHours} task${noHours === 1 ? "" : "s"} without an hours estimate`, detail: "Estimates help balance work across the build." }
+    : { ok: true, title: "Every task has an hours estimate" });
+
+  const names = new Set(tasks.map((t) => t.name.trim().toLowerCase()));
+  const missingPrereqs = [...new Set(tasks.flatMap((t) => t.prerequisiteNames).filter((p) => !names.has(p.trim().toLowerCase())))];
+  if (missingPrereqs.length) checks.push({ ok: false, title: `${missingPrereqs.length} prerequisite${missingPrereqs.length === 1 ? "" : "s"} not in this template`, detail: missingPrereqs.slice(0, 4).join(", ") });
+
+  if (timeline.seasonName) {
+    checks.push(timeline.skipped.length
+      ? { ok: false, title: `${timeline.skipped.length} would be skipped in ${timeline.seasonName}`, detail: `No matching date yet: ${timeline.skipped.slice(0, 4).join(", ")}${timeline.skipped.length > 4 ? "…" : ""}` }
+      : { ok: true, title: `Everything has a date in ${timeline.seasonName}` });
+  }
+  return checks;
+}

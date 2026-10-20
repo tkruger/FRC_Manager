@@ -67,6 +67,11 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
       <div className="space-y-3">
         {/* CSV tools */}
         <div className="flex flex-wrap gap-2">
+          {tasks.length > 0 && (
+            <Link href={`/tasks/templates/${id}/present`}>
+              <Button size="sm">▶ Present</Button>
+            </Link>
+          )}
           <a href={`/api/templates/${id}/csv`} download>
             <Button variant="outline" size="sm">Download CSV</Button>
           </a>
