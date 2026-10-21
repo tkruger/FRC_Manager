@@ -6,6 +6,7 @@
 
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { issueMessage } from "@/lib/validation";
 import { AuthError } from "next-auth";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
@@ -34,7 +35,7 @@ async function me() {
 /** Email a reset link. Always answers the same way, so it never reveals who has an account. */
 export async function requestPasswordResetAction(rawEmail: string): Promise<Result> {
   const parsed = Email.safeParse(rawEmail);
-  if (!parsed.success) return { success: false, error: parsed.error.issues[0].message };
+  if (!parsed.success) return { success: false, error: issueMessage(parsed.error) };
   const email = parsed.data;
 
   const allowed = await rateLimitAll([
@@ -55,7 +56,7 @@ export async function requestPasswordResetAction(rawEmail: string): Promise<Resu
 /** Set a new password from an emailed link. Signs out every other session. */
 export async function resetPasswordAction(token: string, newPassword: string): Promise<Result> {
   const parsed = Password.safeParse(newPassword);
-  if (!parsed.success) return { success: false, error: parsed.error.issues[0].message };
+  if (!parsed.success) return { success: false, error: issueMessage(parsed.error) };
   if (!await rateLimit(`reset-submit:ip:${await clientIp()}`, 20, 60 * 60)) return { success: false, error: TOO_MANY };
 
   const row = await consumeAuthToken(token, "PASSWORD_RESET");
@@ -85,7 +86,7 @@ export async function changePasswordAction(currentPassword: string, newPassword:
   const user = await me();
   if (!user) return { success: false, error: "Sign in first." };
   const parsed = Password.safeParse(newPassword);
-  if (!parsed.success) return { success: false, error: parsed.error.issues[0].message };
+  if (!parsed.success) return { success: false, error: issueMessage(parsed.error) };
   if (!await rateLimit(`pwchange:user:${user.id}`, 5, 15 * 60)) return { success: false, error: TOO_MANY };
 
   if (user.password && !(await bcrypt.compare(currentPassword.slice(0, 200), user.password))) {
@@ -130,7 +131,7 @@ export async function changeEmailAction(rawEmail: string, currentPassword: strin
   const user = await me();
   if (!user) return { success: false, error: "Sign in first." };
   const parsed = Email.safeParse(rawEmail);
-  if (!parsed.success) return { success: false, error: parsed.error.issues[0].message };
+  if (!parsed.success) return { success: false, error: issueMessage(parsed.error) };
   const email = parsed.data;
   if (email === user.email.toLowerCase()) return { success: false, error: "That's already your email." };
   if (!await rateLimit(`emailchange:user:${user.id}`, 5, 60 * 60)) return { success: false, error: TOO_MANY };

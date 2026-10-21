@@ -16,6 +16,7 @@ import { definitionFor, canEditOrder } from "@/lib/workflow/engine";
 import { BUDGET_CATEGORY_LABELS } from "@/lib/budget-categories";
 import { ORDER_BUDGET_CATEGORIES } from "@/lib/budget-categories";
 import type { BudgetCategoryType } from "@/generated/prisma";
+import { issueMessage } from "@/lib/validation";
 
 const CATEGORIES = ORDER_BUDGET_CATEGORIES as [BudgetCategoryType, ...BudgetCategoryType[]];
 /** An order's budget category (required) */
@@ -44,7 +45,7 @@ const ItemSchema = z.object({
   name:       z.string().trim().max(300).min(1, "Every item needs a name.").max(200),
   vendorName: z.string().trim().max(300).max(120).optional(),
   partNumber: z.string().trim().max(300).max(120).optional(),
-  link:       z.string().trim().max(300).max(2000).optional(),
+  link:       z.string().trim().max(2000).optional(),
   unitCost:   z.number().min(0).max(1_000_000).nullable().optional(),
   quantity:   z.number().positive("Quantity must be more than 0.").max(100_000),
   subTeam:    z.enum(["MECHANICAL", "ELECTRICAL", "PROGRAMMING", "DRIVE_TEAM", "STRATEGY", "DESIGN", "OUTREACH", "OPERATIONS"]).nullable().optional(),
@@ -63,12 +64,31 @@ const OrderSchema = z.object({
   draftId: z.string().max(300).nullable().optional(),
 });
 
+/** Field names in order errors: "Item 2 (“Swerve module”): Link" */
+const ITEM_FIELDS: Record<string, string> = {
+  name: "Name", vendorName: "Vendor", partNumber: "Part number", link: "Link", unitCost: "Unit cost",
+  quantity: "Quantity", subTeam: "Sub-team", importance: "Importance", reasoning: "Reasoning", notes: "Notes",
+  budgetCategory: "Budget category",
+};
+function orderLabel(input: unknown) {
+  return (path: PropertyKey[]): string | null => {
+    if (path[0] === "items" && typeof path[1] === "number") {
+      const item = (input as { items?: { name?: unknown }[] } | null)?.items?.[path[1]];
+      const itemName = typeof item?.name === "string" && item.name.trim() ? ` (“${item.name.trim().slice(0, 40)}”)` : "";
+      return `Item ${path[1] + 1}${itemName}: ${ITEM_FIELDS[String(path[2])] ?? "This field"}`;
+    }
+    if (path[0] === "name") return "Order name";
+    if (path[0] === "budgetCategory") return "Budget category";
+    return null;
+  };
+}
+
 export async function createOrderAction(input: unknown): Promise<Result<{ requestId: string; stage: string }>> {
   const who = await actor();
   if (!who) return { success: false, error: "Not authenticated." };
 
   const parsed = OrderSchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Please check the order." };
+  if (!parsed.success) return { success: false, error: issueMessage(parsed.error, orderLabel(input)) };
 
   const season = await prisma.season.findFirst({ where: { teamId: who.teamId, isActive: true }, select: { id: true } });
   if (!season) return { success: false, error: "No active season. Set up a season first." };
@@ -140,7 +160,7 @@ export async function editOrderAction(input: unknown): Promise<Result> {
   if (!who) return { success: false, error: "Not authenticated." };
 
   const parsed = EditOrderSchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Please check the order." };
+  if (!parsed.success) return { success: false, error: issueMessage(parsed.error, orderLabel(input)) };
 
   const res = await editOrder({ actor: who, ...parsed.data });
   if (res.success) refresh([parsed.data.requestId]);
@@ -251,7 +271,7 @@ export async function setOrderBudgetAction(input: unknown): Promise<Result> {
   const who = await actor();
   if (!who) return { success: false, error: "Not authenticated." };
   const parsed = OrderBudgetSchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Please check the categories." };
+  if (!parsed.success) return { success: false, error: issueMessage(parsed.error, orderLabel(input)) };
   const { requestId, budgetCategory, items } = parsed.data;
 
   const order = await prisma.purchaseRequest.findFirst({

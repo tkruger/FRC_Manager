@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { issueMessage } from "@/lib/validation";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
@@ -85,7 +86,7 @@ const NewItemSchema = z.object({
   preferredSupplier: z.string().trim().max(300).max(120).optional(),
   vendorProductUrl:  z.string().trim().max(2000).url("Enter a full product link (https://…), or leave it blank.").optional(),
   priority:          Importance,
-  justification:     z.string().trim().max(300).max(2000).optional(),
+  justification:     z.string().trim().max(2000).optional(),
 });
 
 /**
@@ -115,7 +116,7 @@ export async function orderNewItemAction(
     priority:          formData.get("priority") || undefined,
     justification:     formData.get("justification") || undefined,
   });
-  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Please check the form." };
+  if (!parsed.success) return { success: false, error: issueMessage(parsed.error) };
   const d = parsed.data;
 
   const item = await prisma.baseInventoryItem.findFirst({

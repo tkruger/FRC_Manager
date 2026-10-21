@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { issueMessage } from "@/lib/validation";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
@@ -32,7 +33,7 @@ export async function updateRobotAction(
     description:  formData.get("description") || undefined,
     weightTarget: formData.get("weightTarget") || undefined,
   });
-  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid data." };
+  if (!parsed.success) return { success: false, error: issueMessage(parsed.error) };
 
   const robot = await prisma.robot.findFirst({
     where: { id: robotId, season: { teamId: session.user.teamId } },

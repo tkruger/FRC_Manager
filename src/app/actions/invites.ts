@@ -4,6 +4,7 @@
 // an invite. Accepting makes the person an approved member with the invite's roles.
 
 import { z } from "zod";
+import { issueMessage } from "@/lib/validation";
 import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";
 import { revalidatePath } from "next/cache";
@@ -172,7 +173,7 @@ export async function acceptInviteWithNewAccountAction(token: string, input: unk
   if (!usable.ok) return { success: false, error: usable.reason };
 
   const parsed = NewAccountSchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Check the form." };
+  if (!parsed.success) return { success: false, error: issueMessage(parsed.error) };
   const { name, password } = parsed.data;
   // An email invite is for that address
   const email = (usable.invite.email ?? parsed.data.email).toLowerCase();

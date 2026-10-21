@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { WorkflowSchema, type WorkflowDef } from "@/lib/workflow/types";
 import { DEFAULT_PURCHASE_WORKFLOW } from "@/lib/workflow/default-purchase";
 import type { Prisma } from "@/generated/prisma";
+import { issueMessage } from "@/lib/validation";
 
 export type WorkflowSaveResult =
   | { success: true; version: number }
@@ -54,7 +55,7 @@ export async function saveWorkflowAction(def: unknown): Promise<WorkflowSaveResu
 
   const parsed = WorkflowSchema.safeParse(def);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Workflow is invalid." };
+    return { success: false, error: issueMessage(parsed.error) };
   }
 
   const version = await publish(who.teamId, who.userId, parsed.data);

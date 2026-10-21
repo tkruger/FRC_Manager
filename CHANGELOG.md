@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Orders: product links up to 2,000 characters work again (long links were rejected at 300), and so do longer purchase-request justifications
+- Clear form errors everywhere: instead of a bare “Invalid input”, they say which field (and which order item) is wrong and why — e.g. “Item 2 (“Swerve module”): Link is too long — 2,000 characters at most.”
+
 ## 1.4.1 — 2026-10-21
 
 **Tasks**

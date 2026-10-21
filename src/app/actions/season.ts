@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { issueMessage } from "@/lib/validation";
 import { prisma } from "@/lib/prisma";
 import { seasonStarted, syncSeasonMeetings } from "@/lib/season-meetings";
 import * as notify from "@/lib/notify/events";
@@ -307,7 +308,7 @@ async function saveCompetition(
     startDate:   formData.get("startDate"),
     endDate:     formData.get("endDate") || undefined,
   });
-  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Please check the form." };
+  if (!parsed.success) return { success: false, error: issueMessage(parsed.error) };
   const d = parsed.data;
 
   const info = STAGE_INFO[d.stage];
