@@ -70,7 +70,7 @@ export default async function SchedulePage({
     include: {
       assignees:     { select: { id: true, name: true } },
       prerequisites: { select: { id: true, name: true, status: true } },
-      dependents:    { select: { id: true, name: true, status: true } },
+      dependents:    { select: { id: true, name: true, status: true, autoSchedule: true } },
       robot:         { select: { id: true, displayName: true } },
     },
     orderBy: [{ priority: "asc" }, { dueDate: "asc" }],
@@ -98,6 +98,9 @@ export default async function SchedulePage({
     subTeam:              t.subTeam,
     startDate:            t.startDate?.toISOString() ?? null,
     dueDate:              t.dueDate?.toISOString() ?? null,
+    autoSchedule:         t.autoSchedule,
+    durationDays:         t.durationDays,
+    lagDays:              t.lagDays,
     estimatedHours:       t.estimatedHours,
     actualHours:          t.actualHours,
     isMilestone:          t.isMilestone,
@@ -111,9 +114,13 @@ export default async function SchedulePage({
     robot:                t.robot,
   }));
 
-  const allTasksLite = serializedTasks.map((t) => ({
-    id: t.id, name: t.name, status: t.status,
-  }));
+  // Every task in the season (not just the ones shown), for picking prerequisites and
+  // working out dates from them
+  const allTasksLite = (await prisma.task.findMany({
+    where:   { seasonId: activeSeason.id },
+    select:  { id: true, name: true, status: true, dueDate: true },
+    orderBy: { name: "asc" },
+  })).map((t) => ({ id: t.id, name: t.name, status: t.status, dueDate: t.dueDate?.toISOString() ?? null }));
 
   // Progress stats — always the whole season (ignores My tasks / robot filters) so the
   // header card is identical on the Kanban, List and Gantt views

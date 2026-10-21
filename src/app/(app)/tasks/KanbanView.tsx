@@ -25,7 +25,7 @@ interface KanbanTask extends TaskModalData {}
 
 interface Props {
   tasks:       KanbanTask[];
-  allTasks:    { id: string; name: string; status: string }[];
+  allTasks:    { id: string; name: string; status: string; dueDate?: string | null }[];
   allMembers:  { id: string; name: string }[];
   allRobots:   { id: string; displayName: string }[];
   kickoffDate?: string;

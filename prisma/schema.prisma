@@ -1096,6 +1096,11 @@ model Task {
   subTeam              SubTeam?
   startDate            DateTime?
   dueDate              DateTime?
+  /// Dates follow the prerequisites: starts lagDays after the last one is due and takes
+  /// durationDays (0 for milestones). Recalculated whenever a prerequisite's dates change.
+  autoSchedule         Boolean            @default(false)
+  durationDays         Int?
+  lagDays              Int                @default(0)
   startOffset          Int?
   durationBuildDays    Int?
   estimatedHours       Float?

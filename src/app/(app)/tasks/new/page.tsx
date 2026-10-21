@@ -22,7 +22,7 @@ export default async function NewTaskPage() {
     }),
     prisma.task.findMany({
       where: { seasonId: activeSeason.id },
-      select: { id: true, name: true, status: true },
+      select: { id: true, name: true, status: true, dueDate: true },
       orderBy: { name: "asc" },
     }),
   ]);
@@ -37,7 +37,7 @@ export default async function NewTaskPage() {
       <NewTaskForm
         robots={activeSeason.robots}
         members={members}
-        existingTasks={existingTasks}
+        existingTasks={existingTasks.map((t) => ({ ...t, dueDate: t.dueDate?.toISOString() ?? null }))}
         kickoffDate={activeSeason.kickoffDate.toISOString().split("T")[0]}
         endDate={activeSeason.endDate.toISOString().split("T")[0]}
       />

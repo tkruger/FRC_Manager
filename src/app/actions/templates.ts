@@ -12,6 +12,7 @@ import {
 } from "@/lib/competition";
 import type { Prisma, TaskPriority, SubTeam } from "@/generated/prisma";
 import { scheduleTemplate, wouldLoop, type EventTarget } from "@/lib/template-timeline";
+import { rescheduleAfter } from "@/lib/task-schedule";
 import { ActionError, userMessage } from "@/lib/action-error";
 
 const MENTOR_ROLES = ["HEAD_MENTOR", "BUILD_LEAD", "INVENTORY_ADMIN"] as const;
@@ -424,12 +425,18 @@ async function applyToActiveSeason(teamId: string, userId: string, tasks: Applic
       priority: t.priority, isMilestone: t.isMilestone, estimatedHours: t.estimatedHours ?? null,
       designReviewRequired: t.designReviewRequired,
       designReviewStatus: t.designReviewRequired ? "PENDING" : "NOT_REQUIRED",
+      // Timed from another task: in the season it follows its prerequisites, starting
+      // as long after them as it did after that task
+      ...(t.anchor === "TASK" ? { autoSchedule: true, durationDays: t.durationBuildDays, lagDays: t.startOffset } : {}),
     });
   }
 
   if (rows.length) {
     await prisma.task.createMany({ data: rows });
     await linkPrerequisites(season.id, placed, created, nameOf);
+    // With all their prerequisites linked, auto-scheduled tasks follow the latest one
+    const autoIds = (await prisma.task.findMany({ where: { seasonId: season.id, autoSchedule: true, name: { in: rows.map((r) => r.name) } }, select: { id: true } })).map((t) => t.id);
+    await rescheduleAfter(season.id, autoIds);
   }
   revalidatePath("/tasks");
   return { success: true, count: rows.length, skipped };

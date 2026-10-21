@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import * as notify from "@/lib/notify/events";
 import type { TaskStatus, TaskPriority, SubTeam, DesignReviewStatus } from "@/generated/prisma";
+import { rescheduleAfter } from "@/lib/task-schedule";
 
 const TaskSchema = z.object({
   name:                 z.string().max(300).min(1),
@@ -20,7 +21,38 @@ const TaskSchema = z.object({
   blockersNotes:        z.string().max(5000).optional(),
   assigneeIds:          z.array(z.string().max(100)).max(200).optional(),
   prerequisiteIds:      z.array(z.string().max(100)).max(200).optional(),
+  /** "auto": dates follow the prerequisites (see task-schedule) */
+  scheduleMode:         z.enum(["dates", "auto"]).default("dates"),
+  durationDays:         z.coerce.number().int().min(0).max(365).optional(),
+  lagDays:              z.coerce.number().int().min(-365).max(365).optional(),
 });
+
+/** The schedule fields a form submits (the same names on the create and edit forms) */
+const scheduleInput = (formData: FormData) => ({
+  scheduleMode: formData.get("scheduleMode") || undefined,
+  durationDays: formData.get("durationDays") || undefined,
+  lagDays:      formData.get("lagDays") || undefined,
+});
+
+/**
+ * How a task's dates are set: its own dates, or after its prerequisites. Auto-scheduled
+ * tasks need at least one prerequisite; their dates are filled in by rescheduleAfter.
+ */
+function scheduleData(d: z.infer<typeof TaskSchema>, prerequisiteCount: number) {
+  if (d.scheduleMode === "auto") {
+    if (!prerequisiteCount) return { error: "Pick at least one prerequisite to schedule this task after." } as const;
+    return {
+      data: { autoSchedule: true, durationDays: d.isMilestone ? 0 : Math.max(1, d.durationDays ?? 1), lagDays: d.lagDays ?? 0 },
+    } as const;
+  }
+  return {
+    data: {
+      autoSchedule: false,
+      startDate: d.startDate ? new Date(d.startDate) : null,
+      dueDate:   d.dueDate ? new Date(d.dueDate) : null,
+    },
+  } as const;
+}
 
 /** The task if it belongs to the caller's team. */
 async function findTeamTask(taskId: string, teamId: string) {
@@ -93,11 +125,14 @@ export async function createTaskAction(
     blockersNotes:        formData.get("blockersNotes") || undefined,
     assigneeIds,
     prerequisiteIds,
+    ...scheduleInput(formData),
   });
 
   if (!parsed.success) return { success: false, error: "Please fill in all required fields." };
   const d = parsed.data;
   const refs = await scopeTaskRefs(session.user.teamId, activeSeason.id, { assigneeIds, prerequisiteIds, robotId: d.robotId });
+  const schedule = scheduleData(d, refs.prerequisiteIds.length);
+  if ("error" in schedule) return { success: false, error: schedule.error! };
 
   const task = await prisma.task.create({
     data: {
@@ -107,8 +142,7 @@ export async function createTaskAction(
       details:              detailsFrom(formData),
       subTeam:              (d.subTeam as SubTeam) || null,
       robotId:              refs.robotId,
-      startDate:            d.startDate ? new Date(d.startDate) : null,
-      dueDate:              d.dueDate ? new Date(d.dueDate) : null,
+      ...schedule.data,
       estimatedHours:       d.estimatedHours,
       priority:             d.priority as TaskPriority,
       isMilestone:          d.isMilestone ?? false,
@@ -119,6 +153,8 @@ export async function createTaskAction(
       prerequisites:        refs.prerequisiteIds.length ? { connect: refs.prerequisiteIds.map((id) => ({ id })) } : undefined,
     },
   });
+  // Scheduled after its prerequisites: work out its dates now
+  if (task.autoSchedule) await rescheduleAfter(activeSeason.id, [task.id]);
 
   if (refs.assigneeIds.length) await notify.taskAssigned(task.id, refs.assigneeIds, session.user.id);
 
@@ -179,11 +215,18 @@ export async function updateTaskAction(
     isMilestone:          formData.get("isMilestone") === "on",
     designReviewRequired: formData.get("designReviewRequired") === "on",
     blockersNotes:        formData.get("blockersNotes") || undefined,
+    ...scheduleInput(formData),
   });
 
   if (!parsed.success) return { success: false, error: "Invalid data." };
   const d = parsed.data;
   const refs = await scopeTaskRefs(session.user.teamId, owned.seasonId, { assigneeIds, prerequisiteIds, robotId: d.robotId, selfId: taskId });
+  const schedule = scheduleData(d, refs.prerequisiteIds.length);
+  if ("error" in schedule) return { success: false, error: schedule.error! };
+  // A prerequisite that (through others) already comes after this task would be a loop
+  if (refs.prerequisiteIds.length && await comesAfter(taskId, refs.prerequisiteIds, owned.seasonId)) {
+    return { success: false, error: "One of those prerequisites already depends on this task, so that would be a loop." };
+  }
 
   const prev = await prisma.task.findUnique({
     where:  { id: taskId },
@@ -197,8 +240,7 @@ export async function updateTaskAction(
       details:              detailsFrom(formData),
       subTeam:              (d.subTeam as SubTeam) || null,
       robotId:              refs.robotId,
-      startDate:            d.startDate ? new Date(d.startDate) : null,
-      dueDate:              d.dueDate ? new Date(d.dueDate) : null,
+      ...schedule.data,
       estimatedHours:       d.estimatedHours,
       priority:             d.priority as TaskPriority,
       isMilestone:          d.isMilestone ?? false,
@@ -214,14 +256,16 @@ export async function updateTaskAction(
     },
   });
 
-  // Due date moved and "move what comes after" was ticked: shift every unfinished task that
-  // depends on this one (and the ones after those) by the same number of days
+  // Due date moved and "move what comes after" was ticked: shift the tasks after it that
+  // have their own dates by the same number of days. Then everything after it that's
+  // scheduled from its prerequisites is worked out again (this task too, if it is).
   let moved = 0;
   const newDue = d.dueDate ? new Date(d.dueDate) : null;
-  if (formData.get("shiftDependents") === "on" && prev?.dueDate && newDue) {
+  if (schedule.data.autoSchedule === false && formData.get("shiftDependents") === "on" && prev?.dueDate && newDue) {
     const shift = Math.round((newDue.getTime() - prev.dueDate.getTime()) / 86_400_000);
     if (shift !== 0) moved = await shiftDependents(taskId, owned.seasonId, shift);
   }
+  moved += await rescheduleAfter(owned.seasonId, [taskId]);
 
   const previousAssignees = new Set(prev?.assignees.map((a) => a.id));
   const added = refs.assigneeIds.filter((id) => !previousAssignees.has(id));
@@ -238,19 +282,21 @@ export async function updateTaskAction(
  * by `days`. Each moves once, even if it follows several of them. Returns how many moved.
  */
 async function shiftDependents(taskId: string, seasonId: string, days: number): Promise<number> {
+  // (moves only tasks with their own dates — see rescheduleAfter for the rest)
   const seen = new Set<string>([taskId]);
   const toMove: { id: string; startDate: Date | null; dueDate: Date | null }[] = [];
   for (let frontier = [taskId]; frontier.length; ) {
     const next = await prisma.task.findMany({
       where:  { seasonId, prerequisites: { some: { id: { in: frontier } } } },
-      select: { id: true, status: true, startDate: true, dueDate: true },
+      select: { id: true, status: true, autoSchedule: true, startDate: true, dueDate: true },
     });
     frontier = [];
     for (const t of next) {
       if (seen.has(t.id)) continue;
       seen.add(t.id);
       frontier.push(t.id);
-      if (t.status !== "COMPLETE") toMove.push(t);
+      // Auto-scheduled tasks are worked out from their prerequisites afterwards
+      if (t.status !== "COMPLETE" && !t.autoSchedule) toMove.push(t);
     }
   }
   const by = (d: Date | null) => (d ? new Date(d.getTime() + days * 86_400_000) : null);
@@ -260,11 +306,31 @@ async function shiftDependents(taskId: string, seasonId: string, days: number): 
   return toMove.length;
 }
 
+/** Whether any of `ids` depends (directly or through others) on `taskId` */
+async function comesAfter(taskId: string, ids: string[], seasonId: string): Promise<boolean> {
+  const seen = new Set<string>();
+  for (let frontier = [taskId]; frontier.length; ) {
+    const next = await prisma.task.findMany({ where: { seasonId, prerequisites: { some: { id: { in: frontier } } } }, select: { id: true } });
+    frontier = [];
+    for (const t of next) {
+      if (ids.includes(t.id)) return true;
+      if (!seen.has(t.id)) { seen.add(t.id); frontier.push(t.id); }
+    }
+  }
+  return false;
+}
+
 export async function deleteTaskAction(taskId: string): Promise<{ success: boolean }> {
   const session = await auth();
   if (!session?.user?.teamId) return { success: false };
+  const gone = await prisma.task.findFirst({
+    where:  { id: taskId, season: { teamId: session.user.teamId } },
+    select: { seasonId: true, dependents: { select: { id: true } } },
+  });
   const deleted = await prisma.task.deleteMany({ where: { id: taskId, season: { teamId: session.user.teamId } } });
-  if (deleted.count === 0) return { success: false };
+  if (deleted.count === 0 || !gone) return { success: false };
+  // Tasks scheduled after it now follow their other prerequisites (or keep their dates)
+  await rescheduleAfter(gone.seasonId, gone.dependents.map((t) => t.id));
   revalidatePath("/tasks");
   return { success: true };
 }
@@ -303,7 +369,7 @@ export async function scheduleTaskStartAction(taskId: string, startDate: string)
 
   const task = await prisma.task.findFirst({
     where:  { id: taskId, season: { teamId: session.user.teamId } },
-    select: { startDate: true, dueDate: true },
+    select: { seasonId: true, startDate: true, dueDate: true },
   });
   if (!task) return { success: false, error: "Task not found." };
 
@@ -315,8 +381,10 @@ export async function scheduleTaskStartAction(taskId: string, startDate: string)
 
   await prisma.task.update({
     where: { id: taskId },
-    data:  { status: "NOT_STARTED", completionDate: null, startDate: start, dueDate },
+    // A start date picked by hand: the task keeps its own dates from now on
+    data:  { status: "NOT_STARTED", completionDate: null, startDate: start, dueDate, autoSchedule: false },
   });
+  await rescheduleAfter(task.seasonId, [taskId]);
   revalidatePath("/tasks");
   revalidatePath(`/tasks/${taskId}`);
   return { success: true };

@@ -19,7 +19,7 @@ type SortKey = "name" | "status" | "priority" | "dueDate" | "subTeam";
 
 interface Props {
   tasks: TaskModalData[];
-  allTasks: { id: string; name: string; status: string }[];
+  allTasks: { id: string; name: string; status: string; dueDate?: string | null }[];
   allMembers: { id: string; name: string }[];
   allRobots: { id: string; displayName: string }[];
   kickoffDate?: string;

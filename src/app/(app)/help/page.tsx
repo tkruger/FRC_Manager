@@ -80,7 +80,8 @@ export default function HelpPage() {
           <li><b>My tasks / All tasks</b> switches between tasks assigned to you and the whole team. Your choice is remembered.</li>
           <li>Filter by sub-team, priority, assignee or due date (next 7, 14 or 30 days, or a custom range).</li>
           <li>Tap a task to edit it, assign people, add prerequisites or change its status.</li>
-          <li>Moving a task&apos;s <b>due date</b> when other tasks depend on it offers to <b>move what comes after it</b> by the same number of days — its dependents, theirs, and so on. Finished tasks stay put; untick the box to move just this one.</li>
+          <li>A task with prerequisites can be scheduled <b>After prerequisites</b> instead of having its own dates: say how many days it takes and how long after the last prerequisite is due it starts. Its dates are worked out — and when a prerequisite moves, it moves too, along with everything scheduled after it. Milestones just need the gap.</li>
+          <li>Moving the due date of a task with fixed-date tasks after it offers to <b>move what comes after it</b> by the same number of days. Finished tasks stay put; untick the box to move just this one.</li>
           <li><b>Details</b> holds a task's notes — steps, links, checklists — and shows when the task is opened (not on cards or lists, which stay short). It&apos;s written in Markdown: use the buttons (bold, italic, heading, lists, checklist, link, code, quote) or type it (<code>**bold**</code>, <code>- [ ] to do</code>), and check it on the <b>Preview</b> tab.</li>
           <li>Marking a task <b>Blocked</b> notifies its assignees, Build Leads and Head Mentors.</li>
           <li>The progress card at the top shows how far through the build season you are and how each sub-team is doing. Tap it to collapse it.</li>
@@ -119,7 +120,7 @@ export default function HelpPage() {
         </ul>
         <H3>After another task</H3>
         <ul className="list">
-          <li>Pick <b>Another task in this template…</b> to time a task from another one&apos;s <b>due date</b> — e.g. “Order remaining parts” due 1 day after “Design locked” is due. It moves with that task, and that task becomes a prerequisite.</li>
+          <li>Pick <b>Another task in this template…</b> to time a task from another one&apos;s <b>due date</b> — e.g. “Order remaining parts” due 1 day after “Design locked” is due. It moves with that task, and that task becomes a prerequisite. When the template is applied, it becomes a task scheduled <b>after its prerequisites</b>, so it keeps following them in the season.</li>
           <li>If the task it follows happens at every competition, it does too, paired by event: “Strategy debrief — Week1” follows “Event — Week1”.</li>
           <li><b>Prerequisites</b> on a template task list what has to be done first; they become real links when the template is applied.</li>
           <li>Renaming a task keeps everything that follows it pointed at it. Deleting one hands its timing to the tasks that followed it, so their dates don&apos;t change.</li>

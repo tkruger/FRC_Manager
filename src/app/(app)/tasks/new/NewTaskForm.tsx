@@ -9,11 +9,12 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { MarkdownEditor } from "@/components/markdown/MarkdownEditor";
 import { SUBTEAM_OPTIONS, STATUS_OPTIONS, PRIORITY_OPTIONS } from "@/lib/schedule-helpers";
+import { TaskScheduleFields } from "../TaskScheduleFields";
 
 interface Props {
   robots: { id: string; displayName: string }[];
   members: { id: string; name: string }[];
-  existingTasks: { id: string; name: string; status: string }[];
+  existingTasks: { id: string; name: string; status: string; dueDate: string | null }[];
   kickoffDate: string;
   endDate: string;
 }
@@ -71,18 +72,9 @@ export function NewTaskForm({ robots, members, existingTasks, kickoffDate, endDa
       {/* Dates */}
       <div className="card space-y-4">
         <h2 className="text-h3 text-(--color-text-primary)">Schedule</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field
-            label="Start date" name="startDate" type="date"
-            min={kickoffDate} max={endDate}
-            hint={`Kickoff: ${kickoffDate}`}
-          />
-          <Field
-            label="Due date" name="dueDate" type="date"
-            min={kickoffDate} max={endDate}
-            hint={`Season ends ${endDate}`}
-          />
-        </div>
+        <TaskScheduleFields kickoffDate={kickoffDate} endDate={endDate}
+          prereqDues={selectedPrereqs.map((id) => existingTasks.find((t) => t.id === id)?.dueDate ?? null)} />
+        <p className="text-small text-(--color-text-secondary)">Season: kickoff {kickoffDate} · ends {endDate}</p>
         <Field label="Estimated hours" name="estimatedHours" type="number" min="0" step="0.5" placeholder="e.g. 8" />
       </div>
 

@@ -9,6 +9,7 @@ import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { Markdown } from "@/components/markdown/Markdown";
 import { MarkdownEditor } from "@/components/markdown/MarkdownEditor";
+import { TaskScheduleFields } from "./TaskScheduleFields";
 import { Select } from "@/components/ui/select";
 import { updateTaskAction, updateTaskStatusAction, deleteTaskAction } from "@/app/actions/tasks";
 import { STATUS_CONFIG, PRIORITY_CONFIG, SUBTEAM_COLORS, SUBTEAM_OPTIONS, PRIORITY_OPTIONS, STATUS_OPTIONS, shortDate, isOverdue } from "@/lib/schedule-helpers";
@@ -26,6 +27,10 @@ export interface TaskModalData {
   subTeam: string | null;
   startDate: string | null;
   dueDate: string | null;
+  /** Dates follow the prerequisites (lagDays after the last is due, durationDays long) */
+  autoSchedule?: boolean;
+  durationDays?: number | null;
+  lagDays?: number;
   estimatedHours: number | null;
   actualHours: number | null;
   isMilestone: boolean;
@@ -35,7 +40,7 @@ export interface TaskModalData {
   completionDate: string | null;
   assignees: { id: string; name: string }[];
   prerequisites: { id: string; name: string; status: string }[];
-  dependents: { id: string; name: string; status: string }[];
+  dependents: { id: string; name: string; status: string; autoSchedule?: boolean }[];
   robot: { id: string; displayName: string } | null;
   kickoffDate?: string;
   endDate?: string;
@@ -43,7 +48,7 @@ export interface TaskModalData {
 
 interface Props {
   task: TaskModalData | null;
-  allTasks?: { id: string; name: string; status: string }[];
+  allTasks?: { id: string; name: string; status: string; dueDate?: string | null }[];
   allMembers?: { id: string; name: string }[];
   allRobots?: { id: string; displayName: string }[];
   kickoffDate?: string;
@@ -133,6 +138,12 @@ export function TaskModal({ task, allTasks = [], allMembers = [], allRobots = []
                   </div>
                 ))}
               </div>
+              {task.autoSchedule && (
+                <p className="text-small text-(--color-text-secondary)">
+                  ⏱ Scheduled after its prerequisites — {task.isMilestone ? "due" : `takes ${task.durationDays ?? 1} day${task.durationDays === 1 ? "" : "s"}, starting`}{" "}
+                  {task.lagDays ? `${Math.abs(task.lagDays)} day${Math.abs(task.lagDays) === 1 ? "" : "s"} ${task.lagDays > 0 ? "after" : "before"}` : "when"} the last one is due. Its dates move with them.
+                </p>
+              )}
 
               {/* Details (Markdown) */}
               {task.details && (
@@ -249,7 +260,7 @@ export function TaskModal({ task, allTasks = [], allMembers = [], allRobots = []
 
 function EditTaskForm({ task, allTasks, allMembers, allRobots, kickoffDate, endDate, onCancel, onSaved }: {
   task: TaskModalData;
-  allTasks: { id: string; name: string; status: string }[];
+  allTasks: { id: string; name: string; status: string; dueDate?: string | null }[];
   allMembers: { id: string; name: string }[];
   allRobots: { id: string; displayName: string }[];
   kickoffDate?: string;
@@ -284,7 +295,9 @@ function EditTaskForm({ task, allTasks, allMembers, allRobots, kickoffDate, endD
 
   // Moving the due date of a task others depend on: offer to move them by as many days
   const [due, setDue] = useState(toDateVal(task.dueDate));
-  const openAfter = task.dependents.filter((dep) => dep.status !== "COMPLETE");
+  // Tasks after it with their own dates (offered a move) / scheduled after it (always follow)
+  const openAfter = task.dependents.filter((dep) => dep.status !== "COMPLETE" && !dep.autoSchedule);
+  const autoAfter = task.dependents.filter((dep) => dep.status !== "COMPLETE" && dep.autoSchedule);
   const dueShift = task.dueDate && due
     ? Math.round((new Date(due).getTime() - new Date(toDateVal(task.dueDate)).getTime()) / 86_400_000)
     : 0;
@@ -322,11 +335,15 @@ function EditTaskForm({ task, allTasks, allMembers, allRobots, kickoffDate, endD
           <Select label="Robot" name="robotId" placeholder="Any / team-wide" options={robotOptions} defaultValue={task.robot?.id ?? ""} />
         )}
       </div>
-      <div className="grid grid-cols-2 gap-4 [&>*]:min-w-0">
-        <Field label="Start date" name="startDate" type="date" min={kickoffDate} max={endDate} defaultValue={toDateVal(task.startDate)} />
-        <Field label="Due date"   name="dueDate"   type="date" min={kickoffDate} max={endDate} value={due} onChange={(e) => setDue(e.target.value)} />
-      </div>
+      <TaskScheduleFields kickoffDate={kickoffDate} endDate={endDate} due={due} onDueChange={setDue}
+        initial={{ autoSchedule: task.autoSchedule, startDate: task.startDate, dueDate: task.dueDate, durationDays: task.durationDays, lagDays: task.lagDays }}
+        prereqDues={selectedPrereqs.map((id) => allTasks.find((t) => t.id === id)?.dueDate ?? null)} />
       {/* Due date moved: move the tasks that come after it too */}
+      {dueShift !== 0 && autoAfter.length > 0 && (
+        <p className="rounded-md bg-(--color-surface-overlay) px-3 py-2.5 text-small text-(--color-text-secondary)">
+          {autoAfter.length} task{autoAfter.length === 1 ? " is" : "s are"} scheduled after this one and will move with it ({autoAfter.slice(0, 3).map((dep) => dep.name).join(", ")}{autoAfter.length > 3 ? ", …" : ""}).
+        </p>
+      )}
       {dueShift !== 0 && openAfter.length > 0 && (
         <label className="flex items-start gap-2 rounded-md bg-(--color-surface-overlay) px-3 py-2.5 text-sm cursor-pointer">
           <input type="checkbox" name="shiftDependents" defaultChecked className="mt-0.5 rounded" />
