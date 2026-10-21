@@ -1,12 +1,16 @@
 # Changelog
 
-## Unreleased
+## 1.4.1 — 2026-10-21
 
-- Task links work: /tasks/<id> (and “Open in Tasks” on the Gantt and Fleet pages) opens the Tasks page with that task's card instead of a 404
+**Tasks**
 - Tasks can be scheduled **after their prerequisites**: give a length and a gap, and the dates are worked out from the last prerequisite's due date. When a prerequisite moves, the task and everything scheduled after it move too. Template tasks timed from another task become these when the template is applied
-- Colors fixed across the app: about 870 styles written in an older Tailwind syntax (`bg-[--color-surface]`) did nothing under Tailwind v4, so some backgrounds were see-through (e.g. the New Task buttons over the form), borders and dividers fell back to bright lines, and secondary text wasn't gray. They now use the theme colors as intended, in light and dark mode
-- Gantt: tasks with only a start or only a due date no longer break the page; they show on the one date they have
 - Tasks and template tasks have one notes field, **Details** (Markdown). The separate Description is gone: any existing description was moved to the top of the task's details, so nothing is lost. Template CSVs use a `details` column (multi-line Markdown works); older files with `description` still import
+- Task links work: /tasks/<id> (and “Open in Tasks” on the Gantt and Fleet pages) opens the Tasks page with that task's card instead of a 404
+
+**Fixes**
+- Gantt: tasks with only a start or only a due date no longer break the page; they show on the one date they have
+- Colors fixed across the app: about 870 styles written in an older Tailwind syntax (`bg-[--color-surface]`) did nothing under Tailwind v4, so some backgrounds were see-through (e.g. the New Task buttons over the form), borders and dividers fell back to bright lines, and secondary text wasn't gray. They now use the theme colors as intended, in light and dark mode
+- Database connections state their SSL mode (verify-full — unchanged behavior), which silences a warning in the server logs
 
 ## 1.4.0 — 2026-10-21
 
