@@ -1,14 +1,19 @@
 # Changelog
 
-## Unreleased
+## 1.4.0 — 2026-10-21
 
+**Task dependencies**
 - Templates: time a task from **another task in the template** (“due 1 day after Design locked is due”) as well as from events. It moves with that task, becomes its prerequisite, and repeats per competition when that task does (“Strategy debrief — Week1” follows “Event — Week1”). Renames and deletes keep the chain intact
 - Templates: pick a task's **prerequisites** in the Add / Edit / Clone dialogs; applying a template now links them on the real tasks (they were dropped before), and Save season as template keeps them
 - Tasks: moving a task's due date offers to **move what comes after it** — its dependents and theirs — by the same number of days (finished tasks stay put)
+- CSV: new `anchorTaskName` column for tasks timed from another task (anchor `TASK`)
+
+**Standard template**
 - New **Standard FRC season** template, built with input from a real team's plan: kickoff prep, game analysis, prototyping and “the purge”, dimensions and design lock, three purchasing waves, a practice drivetrain for early auto work, the build split by sub-team up to Week 0, durability testing and driver practice, Impact Award and pit materials, prep and debrief around each event, and season wrap-up — 16 milestones and 58 tasks
 - The standard template can be **presented** (▶ Present on Templates), and its milestone list is generated from the template itself
-- CSV: new `anchorTaskName` column for tasks timed from another task (anchor `TASK`)
-- Gantt charts (Tasks → Gantt and the presentation): milestones are marked with a diamond in the sub-team color instead of a dot plus ◆, so rows no longer look double-bulleted
+
+**Gantt**
+- Milestones are marked with a diamond in the sub-team color instead of a dot plus ◆, so rows no longer look double-bulleted (Tasks → Gantt and the presentation)
 
 ## 1.3.0 — 2026-10-21
 
