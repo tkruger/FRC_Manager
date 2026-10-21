@@ -11,6 +11,7 @@ import {
   type TaskAnchor, type SeasonDates,
 } from "@/lib/competition";
 import type { Prisma, TaskPriority, SubTeam } from "@/generated/prisma";
+import { scheduleTemplate, wouldLoop, type EventTarget } from "@/lib/template-timeline";
 import { ActionError, userMessage } from "@/lib/action-error";
 
 const MENTOR_ROLES = ["HEAD_MENTOR", "BUILD_LEAD", "INVENTORY_ADMIN"] as const;
@@ -100,6 +101,7 @@ const TemplateTaskSchema = z.object({
   details:              z.string().max(20000).optional(),
   anchor:               z.enum(TASK_ANCHORS).optional(),
   anchorNumber:         z.coerce.number().int().min(0).max(99).optional(),
+  anchorTaskName:       z.string().trim().max(300).optional(),
 });
 
 /** Reads a template-task form. Forms without an anchor fall back to the old sign rule. */
@@ -117,18 +119,25 @@ function parseTemplateTaskForm(formData: FormData) {
     details:              typeof formData.get("details") === "string" ? formData.get("details") : undefined,
     anchor:               formData.get("anchor") || undefined,
     anchorNumber:         formData.get("anchorNumber") || undefined,
+    anchorTaskName:       formData.get("anchorTaskName") || undefined,
   });
   if (!parsed.success) return null;
   const d = parsed.data;
   const anchor: TaskAnchor = d.anchor ?? legacyAnchor(d.startOffset);
   // A number only means something for numbered competition types ("Week1"); none = each one
   const anchorNumber = isCompetitionAnchor(anchor) && STAGE_INFO[anchor].numbered ? d.anchorNumber ?? null : null;
-  // Prerequisites only come with a cloned task ("|"-separated names); left out otherwise so
-  // editing a task keeps the ones it has
+  // Timed from another task: which one (by name, checked against the template on save)
+  const anchorTaskName = anchor === "TASK" ? d.anchorTaskName || null : null;
+  if (anchor === "TASK" && !anchorTaskName) return null;
+  // Prerequisites ("|"-separated names); left out (undefined) keeps the ones a task has.
+  // The task it's timed from is always one of them.
   const prereqRaw = formData.get("prerequisiteNames");
-  const prerequisiteNames = typeof prereqRaw === "string"
+  let prerequisiteNames = typeof prereqRaw === "string"
     ? prereqRaw.split("|").map((n) => n.trim().slice(0, 200)).filter(Boolean).slice(0, 50)
     : undefined;
+  if (prerequisiteNames && anchorTaskName && !prerequisiteNames.some((n) => n.toLowerCase() === anchorTaskName.toLowerCase())) {
+    prerequisiteNames = [...prerequisiteNames, anchorTaskName];
+  }
   return {
     prerequisiteNames,
     name:                 d.name,
@@ -144,8 +153,32 @@ function parseTemplateTaskForm(formData: FormData) {
     // Present (even empty) → set or cleared; absent → left as it is
     details:              d.details === undefined ? undefined : d.details.replace(/\r\n?/g, "\n").trim() || null,
     anchor,
-    anchorNumber,
+    anchorNumber: anchor === "TASK" ? null : anchorNumber,
+    anchorTaskName,
   };
+}
+
+type TemplateTaskData = NonNullable<ReturnType<typeof parseTemplateTaskForm>>;
+
+/**
+ * Checks a task timed from another task: that task must be in the template (it's saved
+ * with the template's spelling) and mustn't lead back to this one. Returns an error, or
+ * null when it's fine.
+ */
+async function checkTaskAnchor(templateId: string, data: TemplateTaskData, selfId: string | null, oldName: string | null): Promise<string | null> {
+  if (data.anchor !== "TASK" || !data.anchorTaskName) return null;
+  const others = await prisma.templateTask.findMany({
+    where:  { templateId, ...(selfId ? { id: { not: selfId } } : {}) },
+    select: { name: true, anchor: true, anchorTaskName: true },
+  });
+  const target = others.find((o) => o.name.trim().toLowerCase() === data.anchorTaskName!.trim().toLowerCase());
+  if (!target) return `“${data.anchorTaskName}” isn't in this template.`;
+  if (target.name.trim().toLowerCase() === data.name.trim().toLowerCase()) return "A task can't be timed from itself.";
+  data.anchorTaskName = target.name;
+  // Others timed from this task (by its old name, before a rename) count as timed from the new name
+  const chain = others.map((o) => (oldName && o.anchorTaskName?.trim().toLowerCase() === oldName.trim().toLowerCase() ? { ...o, anchorTaskName: data.name } : o));
+  if (wouldLoop(chain, data.name, target.name)) return `“${target.name}” is already timed from this one, so this would go round in a loop.`;
+  return null;
 }
 
 export async function addTemplateTaskAction(
@@ -159,8 +192,10 @@ export async function addTemplateTaskAction(
 
   const data = parseTemplateTaskForm(formData);
   if (!data) return { success: false, error: "Please fill in all required fields." };
+  const anchorError = await checkTaskAnchor(templateId, data, null, null);
+  if (anchorError) return { success: false, error: anchorError };
 
-  await prisma.templateTask.create({ data: { templateId, ...data } });
+  await prisma.templateTask.create({ data: { templateId, ...data, prerequisiteNames: data.prerequisiteNames ?? [] } });
 
   revalidatePath(`/tasks/templates/${templateId}`);
   return { success: true };
@@ -177,8 +212,19 @@ export async function updateTemplateTaskAction(
 
   const data = parseTemplateTaskForm(formData);
   if (!data) return { success: false, error: "Invalid data." };
+  const before = await prisma.templateTask.findUniqueOrThrow({ where: { id: taskId }, select: { name: true, prerequisiteNames: true } });
+  const anchorError = await checkTaskAnchor(task.templateId, data, taskId, before.name);
+  if (anchorError) return { success: false, error: anchorError };
+  // An older form without the prerequisites list: keep them, plus the task it's timed from
+  if (!data.prerequisiteNames && data.anchorTaskName && !before.prerequisiteNames.includes(data.anchorTaskName)) {
+    data.prerequisiteNames = [...before.prerequisiteNames, data.anchorTaskName];
+  }
 
-  await prisma.templateTask.update({ where: { id: taskId }, data });
+  await prisma.$transaction(async (tx) => {
+    await tx.templateTask.update({ where: { id: taskId }, data });
+    // Renamed: tasks that follow it or list it as a prerequisite keep pointing at it
+    if (before.name !== data.name) await renameReferences(tx, task.templateId, before.name, data.name);
+  });
 
   revalidatePath(`/tasks/templates/${task.templateId}`);
   return { success: true };
@@ -189,9 +235,52 @@ export async function deleteTemplateTaskAction(taskId: string): Promise<{ succes
   try { session = await requireMentor(); } catch { return { success: false }; }
   const task = await findTeamTemplateTask(taskId, session.user.teamId!);
   if (!task) return { success: false };
-  await prisma.templateTask.delete({ where: { id: taskId } });
+  const gone = await prisma.templateTask.findUniqueOrThrow({ where: { id: taskId } });
+  await prisma.$transaction(async (tx) => {
+    // Tasks timed from this one take over its timing, so their dates don't move:
+    // they now count from what it counted from, shifted by when it was due
+    const followers = await tx.templateTask.findMany({ where: { templateId: gone.templateId, anchor: "TASK", anchorTaskName: { equals: gone.name, mode: "insensitive" } } });
+    for (const f of followers) {
+      await tx.templateTask.update({
+        where: { id: f.id },
+        data: {
+          anchor: gone.anchor, anchorNumber: gone.anchorNumber, anchorTaskName: gone.anchorTaskName,
+          startOffset: f.startOffset + gone.startOffset + gone.durationBuildDays,
+          // …and need what it was timed from instead of it
+          prerequisiteNames: [...new Set([
+            ...f.prerequisiteNames.filter((n) => n.toLowerCase() !== gone.name.toLowerCase()),
+            ...(gone.anchor === "TASK" && gone.anchorTaskName ? [gone.anchorTaskName] : []),
+          ])],
+        },
+      });
+    }
+    // …and nothing lists it as a prerequisite any more
+    const listing = await tx.templateTask.findMany({ where: { templateId: gone.templateId, prerequisiteNames: { has: gone.name } } });
+    for (const l of listing) {
+      await tx.templateTask.update({ where: { id: l.id }, data: { prerequisiteNames: l.prerequisiteNames.filter((n) => n !== gone.name) } });
+    }
+    await tx.templateTask.delete({ where: { id: taskId } });
+  });
   revalidatePath(`/tasks/templates/${task.templateId}`);
   return { success: true };
+}
+
+/** After a rename: the template's other tasks follow / list the task by its new name */
+async function renameReferences(tx: Prisma.TransactionClient, templateId: string, from: string, to: string) {
+  const key = from.trim().toLowerCase();
+  const others = await tx.templateTask.findMany({ where: { templateId, NOT: { name: to } } });
+  for (const o of others) {
+    const follows = o.anchorTaskName?.trim().toLowerCase() === key;
+    const listed  = o.prerequisiteNames.some((n) => n.trim().toLowerCase() === key);
+    if (!follows && !listed) continue;
+    await tx.templateTask.update({
+      where: { id: o.id },
+      data: {
+        ...(follows ? { anchorTaskName: to } : {}),
+        ...(listed ? { prerequisiteNames: o.prerequisiteNames.map((n) => (n.trim().toLowerCase() === key ? to : n)) } : {}),
+      },
+    });
+  }
 }
 
 // ─── Save current season tasks as a template ───────────────────────────────
@@ -212,7 +301,8 @@ export async function saveSeasonAsTemplateAction(
   const tasks = await prisma.task.findMany({
     where: { seasonId: activeSeason.id },
     select: { name: true, subTeam: true, startDate: true, dueDate: true, priority: true,
-              isMilestone: true, estimatedHours: true, designReviewRequired: true, description: true, details: true },
+              isMilestone: true, estimatedHours: true, designReviewRequired: true, description: true, details: true,
+              prerequisites: { select: { name: true } } },
   });
 
   if (tasks.length === 0) return { success: false, error: "No tasks in the current season to save." };
@@ -255,6 +345,7 @@ export async function saveSeasonAsTemplateAction(
             designReviewRequired: t.designReviewRequired,
             description:          t.description,
             details:              t.details,
+            prerequisiteNames:    t.prerequisites.map((p) => p.name),
           };
         }),
       },
@@ -271,6 +362,8 @@ interface ApplicableTask {
   name:                 string;
   description?:         string | null;
   details?:             string | null;
+  prerequisiteNames:    string[];
+  anchorTaskName?:      string | null;
   subTeam:              SubTeam | null;
   startOffset:          number;
   durationBuildDays:    number;
@@ -312,30 +405,85 @@ async function applyToActiveSeason(teamId: string, userId: string, tasks: Applic
     (await prisma.task.findMany({ where: { seasonId: season.id }, select: { name: true } })).map((t) => t.name)
   );
 
+  // Place everything: events from the season's dates, then tasks timed from other tasks
+  // (days from kickoff; calendar dates are UTC midnight)
+  const kickoff = season.kickoffDate.getTime();
+  const DAY = 86_400_000;
+  const { placed, unplaced } = scheduleTemplate(tasks, (t): EventTarget[] =>
+    resolveAnchor(t.anchor, t.anchorNumber, dates).map((r) => ({ day: Math.round((r.date.getTime() - kickoff) / DAY), suffix: r.suffix, estimated: false })));
+  const skipped = unplaced.map((u) => u.task.name);
+  const nameOf = (p: { task: ApplicableTask; suffix: string | null }) => (p.suffix ? `${p.task.name} — ${p.suffix}` : p.task.name);
+
   const rows: Prisma.TaskCreateManyInput[] = [];
-  const skipped: string[] = [];
-  for (const t of tasks) {
-    const targets = resolveAnchor(t.anchor, t.anchorNumber, dates);
-    if (targets.length === 0) { skipped.push(t.name); continue; }
-    for (const target of targets) {
-      const name = target.suffix ? `${t.name} — ${target.suffix}` : t.name;
-      if (existing.has(name)) continue;
-      existing.add(name);
-      const startDate = addDays(target.date, t.startOffset);
-      rows.push({
-        seasonId: season.id, createdById: userId,
-        name, subTeam: t.subTeam, description: t.description ?? null, details: t.details ?? null,
-        startDate, dueDate: addDays(startDate, t.durationBuildDays),
-        priority: t.priority, isMilestone: t.isMilestone, estimatedHours: t.estimatedHours ?? null,
-        designReviewRequired: t.designReviewRequired,
-        designReviewStatus: t.designReviewRequired ? "PENDING" : "NOT_REQUIRED",
-      });
-    }
+  const created: typeof placed = [];
+  for (const p of placed) {
+    const t = p.task;
+    const name = nameOf(p);
+    if (existing.has(name)) continue;
+    existing.add(name);
+    created.push(p);
+    rows.push({
+      seasonId: season.id, createdById: userId,
+      name, subTeam: t.subTeam, description: t.description ?? null, details: t.details ?? null,
+      startDate: new Date(kickoff + p.start * DAY), dueDate: new Date(kickoff + p.due * DAY),
+      priority: t.priority, isMilestone: t.isMilestone, estimatedHours: t.estimatedHours ?? null,
+      designReviewRequired: t.designReviewRequired,
+      designReviewStatus: t.designReviewRequired ? "PENDING" : "NOT_REQUIRED",
+    });
   }
 
-  if (rows.length) await prisma.task.createMany({ data: rows });
+  if (rows.length) {
+    await prisma.task.createMany({ data: rows });
+    await linkPrerequisites(season.id, placed, created, nameOf);
+  }
   revalidatePath("/tasks");
   return { success: true, count: rows.length, skipped };
+}
+
+/**
+ * Turns the template's prerequisites (and the task each one is timed from) into real links
+ * between the new tasks. A prerequisite that happens once per competition links to the same
+ * competition's copy ("Adjust strategy — Week1" needs "Event — Week1"); a once-only task
+ * that needs a per-competition one needs all of them. Names not in the template link to a
+ * season task of that name, if there is one.
+ */
+async function linkPrerequisites<T extends ApplicableTask>(
+  seasonId: string,
+  placed: { task: T; suffix: string | null }[],
+  created: { task: T; suffix: string | null }[],
+  nameOf: (p: { task: T; suffix: string | null }) => string,
+) {
+  const key = (n: string) => n.trim().toLowerCase();
+  const ids = new Map(
+    (await prisma.task.findMany({ where: { seasonId }, select: { id: true, name: true } })).map((t) => [t.name, t.id]),
+  );
+  const copies = new Map<string, { task: T; suffix: string | null }[]>();
+  for (const p of placed) copies.set(key(p.task.name), [...(copies.get(key(p.task.name)) ?? []), p]);
+
+  const updates: Prisma.PrismaPromise<unknown>[] = [];
+  for (const p of created) {
+    const id = ids.get(nameOf(p));
+    if (!id) continue;
+    const wanted = new Set([...p.task.prerequisiteNames, ...(p.task.anchorTaskName ? [p.task.anchorTaskName] : [])].map(key));
+    const prereqIds = new Set<string>();
+    for (const w of wanted) {
+      if (w === key(p.task.name)) continue;
+      const of = copies.get(w);
+      if (!of) {
+        // Not in the template: an existing season task with that name
+        const match = [...ids.entries()].find(([n]) => key(n) === w);
+        if (match) prereqIds.add(match[1]);
+        continue;
+      }
+      const same = of.filter((c) => c.suffix === p.suffix);
+      const pick = same.length ? same : of.length === 1 || p.suffix == null ? of : [];
+      for (const c of pick) { const pid = ids.get(nameOf(c)); if (pid && pid !== id) prereqIds.add(pid); }
+    }
+    if (prereqIds.size) {
+      updates.push(prisma.task.update({ where: { id }, data: { prerequisites: { connect: [...prereqIds].map((pid) => ({ id: pid })) } } }));
+    }
+  }
+  if (updates.length) await prisma.$transaction(updates);
 }
 
 export async function applyCustomTemplateAction(templateId: string): Promise<ApplyTemplateResult> {
@@ -353,6 +501,7 @@ export async function applyStandardTemplateAction(): Promise<ApplyTemplateResult
 
   return applyToActiveSeason(session.user.teamId!, session.user.id, STANDARD_TASKS.map((t) => ({
     ...t,
+    anchorTaskName: t.anchorTaskName ?? null,
     subTeam:      t.subTeam as SubTeam | null,
     priority:     t.priority as TaskPriority,
     anchorNumber: t.anchorNumber ?? null,
@@ -374,6 +523,7 @@ export async function importTemplateTasksAction(
     prerequisiteNames: string[];
     anchor?: TaskAnchor | null;
     anchorNumber?: number | null;
+    anchorTaskName?: string | null;
   }[]
 ): Promise<{ success: boolean; error?: string; count?: number }> {
   let session;
@@ -398,7 +548,8 @@ export async function importTemplateTasksAction(
       designReviewRequired: t.designReviewRequired,
       prerequisiteNames:    t.prerequisiteNames,
       anchor:               t.anchor && (TASK_ANCHORS as readonly string[]).includes(t.anchor) ? t.anchor : legacyAnchor(t.startOffset),
-      anchorNumber:         t.anchorNumber ?? null,
+      anchorNumber:         t.anchor === "TASK" ? null : t.anchorNumber ?? null,
+      anchorTaskName:       t.anchor === "TASK" ? t.anchorTaskName?.trim().slice(0, 300) || null : null,
     })),
   });
 

@@ -20,7 +20,7 @@ export default async function PresentTemplatePage({ params }: { params: Promise<
 
   const timelineTasks: TimelineTask[] = tasks.map((t) => ({
     id: t.id, name: t.name, subTeam: t.subTeam, priority: t.priority, isMilestone: t.isMilestone,
-    anchor: t.anchor, anchorNumber: t.anchorNumber, startOffset: t.startOffset, durationBuildDays: t.durationBuildDays,
+    anchor: t.anchor, anchorNumber: t.anchorNumber, anchorTaskName: t.anchorTaskName, startOffset: t.startOffset, durationBuildDays: t.durationBuildDays,
     estimatedHours: t.estimatedHours, designReviewRequired: t.designReviewRequired,
     prerequisiteNames: t.prerequisiteNames, description: t.description,
   }));

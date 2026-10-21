@@ -281,12 +281,22 @@ function EditTaskForm({ task, allTasks, allMembers, allRobots, kickoffDate, endD
     const fd = new FormData(e.currentTarget);
     startTransition(async () => {
       const result = await boundAction(null, fd);
-      if (result.success) { toast.success("Task saved"); onSaved(); }
+      if (result.success) {
+        toast.success(result.moved ? `Task saved — moved ${result.moved} task${result.moved === 1 ? "" : "s"} after it` : "Task saved");
+        onSaved();
+      }
       else setError(result.error ?? "Save failed.");
     });
   }
 
   const toDateVal = (d: string | null) => d ? new Date(d).toISOString().split("T")[0] : "";
+
+  // Moving the due date of a task others depend on: offer to move them by as many days
+  const [due, setDue] = useState(toDateVal(task.dueDate));
+  const openAfter = task.dependents.filter((dep) => dep.status !== "COMPLETE");
+  const dueShift = task.dueDate && due
+    ? Math.round((new Date(due).getTime() - new Date(toDateVal(task.dueDate)).getTime()) / 86_400_000)
+    : 0;
   const robotOptions = allRobots.map((r) => ({ value: r.id, label: r.displayName }));
 
   // Assignee search helpers
@@ -324,8 +334,20 @@ function EditTaskForm({ task, allTasks, allMembers, allRobots, kickoffDate, endD
       </div>
       <div className="grid grid-cols-2 gap-4 [&>*]:min-w-0">
         <Field label="Start date" name="startDate" type="date" min={kickoffDate} max={endDate} defaultValue={toDateVal(task.startDate)} />
-        <Field label="Due date"   name="dueDate"   type="date" min={kickoffDate} max={endDate} defaultValue={toDateVal(task.dueDate)} />
+        <Field label="Due date"   name="dueDate"   type="date" min={kickoffDate} max={endDate} value={due} onChange={(e) => setDue(e.target.value)} />
       </div>
+      {/* Due date moved: move the tasks that come after it too */}
+      {dueShift !== 0 && openAfter.length > 0 && (
+        <label className="flex items-start gap-2 rounded-md bg-(--color-surface-overlay) px-3 py-2.5 text-sm cursor-pointer">
+          <input type="checkbox" name="shiftDependents" defaultChecked className="mt-0.5 rounded" />
+          <span className="text-(--color-text-primary)">
+            Also move what comes after it {Math.abs(dueShift)} day{Math.abs(dueShift) === 1 ? "" : "s"} {dueShift > 0 ? "later" : "earlier"}
+            <span className="block text-small text-(--color-text-secondary)">
+              {openAfter.slice(0, 3).map((dep) => dep.name).join(", ")}{openAfter.length > 3 ? ` and ${openAfter.length - 3} more` : ""}, and anything that depends on them. Finished tasks stay put.
+            </span>
+          </span>
+        </label>
+      )}
       <Field label="Estimated hours" name="estimatedHours" type="number" min="0" step="0.5" defaultValue={task.estimatedHours ?? ""} />
       <div className="space-y-2">
         <label className="flex items-center gap-3 min-h-11 cursor-pointer">

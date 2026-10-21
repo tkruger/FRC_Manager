@@ -26,7 +26,8 @@ export function designation(stage: CompetitionStage, stageNumber: number | null 
 
 // ── Template task anchors ───────────────────────────────────────────────────
 
-export const TASK_ANCHORS = ["KICKOFF", "SEASON_WEEK0", "SEASON_END", ...COMPETITION_STAGES] as const;
+/** TASK: counts from another task in the same template (its due date) — see anchorTaskName */
+export const TASK_ANCHORS = ["KICKOFF", "SEASON_WEEK0", "SEASON_END", ...COMPETITION_STAGES, "TASK"] as const;
 export type TaskAnchor = (typeof TASK_ANCHORS)[number];
 
 export function isCompetitionAnchor(a: TaskAnchor): a is CompetitionStage {
@@ -44,8 +45,9 @@ export const ANCHOR_OPTIONS: { value: TaskAnchor; label: string }[] = [
   { value: "OFFSEASON",    label: "Offseason competition (Offseason#)" },
 ];
 
-/** "kickoff", "Week 0", "Week1", "each week competition" */
-export function anchorName(anchor: TaskAnchor, n: number | null | undefined): string {
+/** "kickoff", "Week 0", "Week1", "each week competition", "“Robot design locked”" */
+export function anchorName(anchor: TaskAnchor, n: number | null | undefined, taskName?: string | null): string {
+  if (anchor === "TASK") return taskName ? `“${taskName}”` : "another task";
   if (anchor === "KICKOFF") return "kickoff";
   if (anchor === "SEASON_WEEK0") return "Week 0";
   if (anchor === "SEASON_END") return "season end";
@@ -54,9 +56,9 @@ export function anchorName(anchor: TaskAnchor, n: number | null | undefined): st
 }
 
 /** Human description, e.g. "3d after kickoff", "2d before each week competition", "on Week1". */
-export function describeAnchor(anchor: TaskAnchor, anchorNumber: number | null | undefined, offset: number): string {
-  const what = anchorName(anchor, anchorNumber);
-  if (offset === 0) return `On ${what}`;
+export function describeAnchor(anchor: TaskAnchor, anchorNumber: number | null | undefined, offset: number, taskName?: string | null): string {
+  const what = anchorName(anchor, anchorNumber, taskName) + (anchor === "TASK" ? " is due" : "");
+  if (offset === 0) return anchor === "TASK" ? `When ${what}` : `On ${what}`;
   return `${Math.abs(offset)}d ${offset < 0 ? "before" : "after"} ${what}`;
 }
 
@@ -89,6 +91,8 @@ export function resolveAnchor(anchor: TaskAnchor, anchorNumber: number | null | 
   if (anchor === "SEASON_END") return [{ date: season.endDate,     suffix: null }];
   // Week 0 always has a date (see week0Date), so its tasks are never skipped
   if (anchor === "SEASON_WEEK0") return [{ date: week0Date(season).date, suffix: null }];
+  // Counted from another task — placed by scheduleTemplate, not from the season's dates
+  if (anchor === "TASK") return [];
 
   const matches = season.competitions
     .filter((c) => c.stage === anchor && (anchorNumber == null || c.stageNumber === anchorNumber))

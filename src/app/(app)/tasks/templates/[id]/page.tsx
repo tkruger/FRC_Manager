@@ -5,7 +5,8 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { describeAnchor, isCompetitionAnchor, STAGE_INFO } from "@/lib/competition";
 import type { SeasonPreview } from "./TaskTimingFields";
-import { executionOrder, illustrativeSeason, ruleText } from "@/lib/template-timeline";
+import { buildTimeline, executionOrder, illustrativeSeason, ruleText } from "@/lib/template-timeline";
+import type { TaskOption } from "./TaskTimingFields";
 import { HoverDetails, type HoverDetail } from "@/components/HoverDetails";
 import { HelpLink } from "@/components/HelpLink";
 import { Badge } from "@/components/ui/badge";
@@ -49,8 +50,8 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
     competitions: activeSeason.competitionEvents.map((c) => ({ ...c, startDate: c.startDate.toISOString() })),
   };
   /** "Due 3d before Week 0" — the due date is the start plus the length */
-  const due = (t: { anchor: Parameters<typeof describeAnchor>[0]; anchorNumber: number | null; startOffset: number; durationBuildDays: number }) =>
-    `Due ${describeAnchor(t.anchor, t.anchorNumber, t.startOffset + t.durationBuildDays).replace(/^On /, "on ")}`;
+  const due = (t: { anchor: Parameters<typeof describeAnchor>[0]; anchorNumber: number | null; anchorTaskName: string | null; startOffset: number; durationBuildDays: number }) =>
+    `Due ${describeAnchor(t.anchor, t.anchorNumber, t.startOffset + t.durationBuildDays, t.anchorTaskName).replace(/^(On|When) /, (m) => m.toLowerCase())}`;
 
   if (!template) notFound();
 
@@ -61,6 +62,19 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
   // Order of execution, placed on the example season the presentation uses (the CSV
   // export uses the same order)
   const { milestones, tasks: regular, at } = executionOrder(tasks);
+
+  // The template's tasks for "after another task" and prerequisites, in the order shown,
+  // each with its due date in the active season (for the form's date preview)
+  const seasonTimeline = season ? buildTimeline(tasks, season) : null;
+  const dueInSeason = new Map<string, string>();
+  if (seasonTimeline?.kickoff) {
+    const k = new Date(seasonTimeline.kickoff).getTime();
+    const unplaced = new Set([...seasonTimeline.skipped, ...seasonTimeline.broken.map((b) => b.name)]);
+    for (const it of seasonTimeline.items) {
+      if (!unplaced.has(it.name) && !dueInSeason.has(it.name)) dueInSeason.set(it.name, new Date(k + it.due * 86_400_000).toISOString());
+    }
+  }
+  const taskOptions: TaskOption[] = [...milestones, ...regular].map((t) => ({ name: t.name, isMilestone: t.isMilestone, due: dueInSeason.get(t.name) ?? null }));
 
   // Hover card for each row: everything about it, with dates in the example season
   const example = illustrativeSeason();
@@ -75,8 +89,8 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
       lines: [
         { label: "Sub-team", value: SUBTEAM_OPTIONS.find((o) => o.value === t.subTeam)?.label ?? "No sub-team", dot: t.subTeam ? SUBTEAM_COLORS[t.subTeam] : "#94A3B8" },
         { label: "Type", value: t.isMilestone ? "Milestone" : `Task · ${len} day${len === 1 ? "" : "s"} of work` },
-        { label: "Due", value: ruleText(t.anchor, t.anchorNumber, t.startOffset + len) },
-        ...(t.isMilestone ? [] : [{ label: "Starts", value: ruleText(t.anchor, t.anchorNumber, t.startOffset) }]),
+        { label: "Due", value: ruleText(t.anchor, t.anchorNumber, t.startOffset + len, t.anchorTaskName) },
+        ...(t.isMilestone ? [] : [{ label: "Starts", value: ruleText(t.anchor, t.anchorNumber, t.startOffset, t.anchorTaskName) }]),
         { label: "Example", value: `${t.isMilestone ? "" : `${exampleDay(w.start)} → `}${exampleDay(w.due)}${each ? " (first event; one per event)" : ""}` },
         { label: "Priority", value: PRIORITY_OPTIONS.find((o) => o.value === t.priority)?.label ?? t.priority },
         ...(t.estimatedHours != null ? [{ label: "Hours", value: `${t.estimatedHours} estimated` }] : []),
@@ -102,7 +116,7 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
       <div className="space-y-3">
         {/* CSV tools */}
         <div className="flex flex-wrap gap-2">
-          {isMentor && <AddTaskDialog templateId={id} season={season} />}
+          {isMentor && <AddTaskDialog templateId={id} season={season} taskOptions={taskOptions} />}
           {tasks.length > 0 && (
             <Link href={`/tasks/templates/${id}/present`}>
               <Button size="sm" variant="outline">▶ Present</Button>
@@ -150,8 +164,8 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
                   <span className={DUE}>{due(t)}</span>
                   {isMentor && (
                     <div className={ACTIONS}>
-                      <EditTaskRow task={t} season={season} />
-                      <EditTaskRow task={t} season={season} clone />
+                      <EditTaskRow task={t} season={season} taskOptions={taskOptions} />
+                      <EditTaskRow task={t} season={season} taskOptions={taskOptions} clone />
                       <DeleteTaskButton taskId={t.id} />
                     </div>
                   )}
@@ -184,8 +198,8 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
                   <span className="text-small text-(--color-text-disabled) sm:w-14 sm:text-right" title="Days of work">{t.durationBuildDays}d</span>
                   {isMentor && (
                     <div className={ACTIONS}>
-                      <EditTaskRow task={t} season={season} />
-                      <EditTaskRow task={t} season={season} clone />
+                      <EditTaskRow task={t} season={season} taskOptions={taskOptions} />
+                      <EditTaskRow task={t} season={season} taskOptions={taskOptions} clone />
                       <DeleteTaskButton taskId={t.id} />
                     </div>
                   )}

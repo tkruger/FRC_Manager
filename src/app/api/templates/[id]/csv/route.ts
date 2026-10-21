@@ -32,6 +32,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       prerequisiteNames:    t.prerequisiteNames,
       anchor:               t.anchor,
       anchorNumber:         t.anchorNumber,
+      anchorTaskName:       t.anchorTaskName,
     }))
   );
 

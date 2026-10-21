@@ -9,7 +9,8 @@ import { Field } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
 import { SUBTEAM_OPTIONS, PRIORITY_OPTIONS } from "@/lib/schedule-helpers";
 import type { TemplateTask } from "@/generated/prisma";
-import { TaskTimingFields, type SeasonPreview } from "./TaskTimingFields";
+import { TaskTimingFields, type SeasonPreview, type TaskOption } from "./TaskTimingFields";
+import { PrerequisitePicker } from "./PrerequisitePicker";
 import { toast } from "@/components/ui/toast";
 import { MarkdownEditor } from "@/components/markdown/MarkdownEditor";
 
@@ -17,7 +18,9 @@ import { MarkdownEditor } from "@/components/markdown/MarkdownEditor";
  * Edit a template task or milestone — or, with `clone`, start a new one from a copy of it:
  * same form, prefilled ("… (copy)"), saved as a new item; the original isn't touched.
  */
-export function EditTaskRow({ task, season, clone = false }: { task: TemplateTask; season: SeasonPreview | null; clone?: boolean }) {
+export function EditTaskRow({ task, season, taskOptions, clone = false }: { task: TemplateTask; season: SeasonPreview | null; taskOptions: TaskOption[]; clone?: boolean }) {
+  // Everything else in the template (a copy may follow or need the original)
+  const others = clone ? taskOptions : taskOptions.filter((o) => o.name !== task.name);
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,17 +53,17 @@ export function EditTaskRow({ task, season, clone = false }: { task: TemplateTas
           {/* A copy keeps what the form doesn't show */}
           {clone && <>
             <input type="hidden" name="description" value={task.description ?? ""} />
-            <input type="hidden" name="prerequisiteNames" value={task.prerequisiteNames.join("|")} />
             {task.estimatedHours != null && <input type="hidden" name="estimatedHours" value={task.estimatedHours} />}
           </>}
           <div className="grid grid-cols-2 gap-4">
             <Select label="Sub-team" name="subTeam" placeholder="Any" options={SUBTEAM_OPTIONS} defaultValue={task.subTeam ?? ""} />
             <Select label="Priority" name="priority" options={PRIORITY_OPTIONS} defaultValue={task.priority} />
           </div>
-          <TaskTimingFields season={season} initial={{
-            anchor: task.anchor, anchorNumber: task.anchorNumber, startOffset: task.startOffset,
+          <TaskTimingFields season={season} tasks={others} initial={{
+            anchor: task.anchor, anchorNumber: task.anchorNumber, anchorTaskName: task.anchorTaskName, startOffset: task.startOffset,
             durationBuildDays: task.durationBuildDays, isMilestone: task.isMilestone,
           }} />
+          <PrerequisitePicker options={others} initial={task.prerequisiteNames} />
           <MarkdownEditor name="details" defaultValue={task.details ?? ""} rows={5}
             hint="Copied to the task when the template is applied. Only shown when the task is opened." />
           <div className="flex items-center gap-4">

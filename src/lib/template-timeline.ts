@@ -18,12 +18,126 @@ export interface TimelineTask {
   isMilestone: boolean;
   anchor: TaskAnchor;
   anchorNumber: number | null;
+  /** With anchor TASK: the template task (by name) this one counts from */
+  anchorTaskName: string | null;
   startOffset: number;
   durationBuildDays: number;
   estimatedHours: number | null;
   designReviewRequired: boolean;
   prerequisiteNames: string[];
   description: string | null;
+}
+
+// ── Scheduling: events first, then tasks timed from other tasks ─────────────
+
+/** What placing a template task needs */
+export interface ScheduleTask {
+  name: string;
+  anchor: TaskAnchor;
+  anchorNumber: number | null;
+  anchorTaskName?: string | null;
+  startOffset: number;
+  durationBuildDays: number;
+}
+
+/** Where an event-anchored task lands (days from kickoff); none = the season can't place it */
+export interface EventTarget {
+  day: number;
+  suffix: string | null;
+  estimated: boolean;
+  /** Placed by estimate because the season has no such event (it'd be skipped when applied) */
+  missing?: boolean;
+}
+
+export interface Placement<T> {
+  task: T;
+  /** "Week1" when the task repeats per competition — inherited by tasks timed from it */
+  suffix: string | null;
+  /** Days from kickoff */
+  start: number;
+  due: number;
+  estimated: boolean;
+  missing: boolean;
+  /** The event the chain starts from (a TASK-timed task takes its target's) */
+  root: TaskAnchor;
+}
+
+export type UnplacedReason = "no-event" | "missing-task" | "loop" | "after-unplaced";
+
+const nameKey = (n: string) => n.trim().toLowerCase();
+
+/**
+ * Places template tasks on one timeline (days from kickoff). Event anchors come from
+ * `eventTargets`; a TASK-anchored task counts from the due date of the named task in the
+ * same template, once for each time that task happens (same suffix — "Adjust strategy"
+ * follows each "Event"). Tasks that can't be placed come back in `unplaced` with why:
+ * no such event, the task they follow isn't in the template, they follow each other in a
+ * loop, or the task they follow couldn't be placed.
+ */
+export function scheduleTemplate<T extends ScheduleTask>(
+  tasks: T[],
+  eventTargets: (t: T) => EventTarget[],
+): { placed: Placement<T>[]; unplaced: { task: T; reason: UnplacedReason }[] } {
+  const byName = new Map<string, T>();
+  for (const t of tasks) if (!byName.has(nameKey(t.name))) byName.set(nameKey(t.name), t);
+
+  const done = new Map<T, Placement<T>[] | UnplacedReason>();
+  const place = (t: T, targets: (EventTarget & { root: TaskAnchor })[]) =>
+    done.set(t, targets.map((x) => ({
+      task: t, suffix: x.suffix, estimated: x.estimated, missing: !!x.missing, root: x.root,
+      start: x.day + t.startOffset, due: x.day + t.startOffset + t.durationBuildDays,
+    })));
+
+  for (const t of tasks) {
+    if (t.anchor === "TASK") continue;
+    const targets = eventTargets(t);
+    if (targets.length) place(t, targets.map((x) => ({ ...x, root: t.anchor })));
+    else done.set(t, "no-event");
+  }
+
+  // Tasks timed from tasks: keep going while something new can be placed
+  let pending = tasks.filter((t) => t.anchor === "TASK");
+  for (let progress = true; progress && pending.length; ) {
+    progress = false;
+    pending = pending.filter((t) => {
+      const target = t.anchorTaskName ? byName.get(nameKey(t.anchorTaskName)) : undefined;
+      if (!target) { done.set(t, "missing-task"); progress = true; return false; }
+      if (target === t) { done.set(t, "loop"); progress = true; return false; }
+      const at = done.get(target);
+      if (at === undefined) return true; // not placed yet
+      if (typeof at === "string") { done.set(t, "after-unplaced"); progress = true; return false; }
+      place(t, at.map((p) => ({ day: p.due, suffix: p.suffix, estimated: p.estimated, missing: p.missing, root: p.root })));
+      progress = true;
+      return false;
+    });
+  }
+  for (const t of pending) done.set(t, "loop");
+
+  const placed: Placement<T>[] = [];
+  const unplaced: { task: T; reason: UnplacedReason }[] = [];
+  for (const t of tasks) {
+    const r = done.get(t)!;
+    if (typeof r === "string") unplaced.push({ task: t, reason: r });
+    else placed.push(...r);
+  }
+  return { placed, unplaced };
+}
+
+/**
+ * Template tasks that would follow each other in a loop if `name` were timed from
+ * `targetName` (directly or through others) — used to refuse such an edit.
+ */
+export function wouldLoop(tasks: { name: string; anchor: TaskAnchor; anchorTaskName?: string | null }[], name: string, targetName: string): boolean {
+  const byName = new Map(tasks.map((t) => [nameKey(t.name), t]));
+  const seen = new Set<string>();
+  for (let cur = nameKey(targetName); cur; ) {
+    if (cur === nameKey(name)) return true;
+    if (seen.has(cur)) return false;
+    seen.add(cur);
+    const t = byName.get(cur);
+    cur = t?.anchor === "TASK" && t.anchorTaskName ? nameKey(t.anchorTaskName) : "";
+  }
+  return false;
 }
 
 export interface TimelineSeason {
@@ -105,6 +219,8 @@ export interface Timeline {
   illustrative: boolean;
   /** Template tasks the active season can't place (they'd be skipped when applied) */
   skipped: string[];
+  /** Tasks timed from a task that isn't in the template, or in a loop (shown at kickoff) */
+  broken: { name: string; reason: UnplacedReason }[];
 }
 
 const DAY = 86_400_000;
@@ -121,12 +237,14 @@ function estimateDay(anchor: TaskAnchor, n: number | null, week0: number, end: n
     case "PLAYOFF":      return week0 + 49 + 7 * (n ?? 0);
     case "WORLDS":       return week0 + 63;
     case "OFFSEASON":    return end + 21 + 21 * Math.max(0, (n ?? 1) - 1);
+    case "TASK":         return 0; // placed from its task by scheduleTemplate
   }
 }
 
-export function ruleText(anchor: TaskAnchor, anchorNumber: number | null, offset: number): string {
-  const what = anchorName(anchor, anchorNumber);
-  return offset === 0 ? `on ${what}` : `${days(offset)} ${offset < 0 ? "before" : "after"} ${what}`;
+/** "3 days before Week 0", "on kickoff", "2 days after “Robot design locked” is due" */
+export function ruleText(anchor: TaskAnchor, anchorNumber: number | null, offset: number, taskName?: string | null): string {
+  const what = anchorName(anchor, anchorNumber, taskName) + (anchor === "TASK" ? " is due" : "");
+  return offset === 0 ? `${anchor === "TASK" ? "when" : "on"} ${what}` : `${days(offset)} ${offset < 0 ? "before" : "after"} ${what}`;
 }
 
 export function buildTimeline(tasks: TimelineTask[], season: TimelineSeason | null): Timeline {
@@ -145,28 +263,36 @@ export function buildTimeline(tasks: TimelineTask[], season: TimelineSeason | nu
   const week0Estimated = !w0 || w0.source === "estimate";
   const end   = dates ? dayOf(dates.endDate) : 120;
 
-  const items: TimelineItem[] = [];
-  const skipped: string[] = [];
-  for (const t of tasks) {
-    const due = t.startOffset + t.durationBuildDays;
-    const rule = ruleText(t.anchor, t.anchorNumber, due);
-    let targets = dates
+  // Every event-anchored task gets a place: the season's date, else a typical-season estimate
+  const { placed, unplaced } = scheduleTemplate(tasks, (t): EventTarget[] => {
+    const real = dates
       ? resolveAnchor(t.anchor, t.anchorNumber, dates).map((r) => ({ day: dayOf(r.date), suffix: r.suffix, estimated: t.anchor === "SEASON_WEEK0" && week0Estimated }))
       : [];
-    if (targets.length === 0) {
-      if (season) skipped.push(t.name);
-      const each = isCompetitionAnchor(t.anchor) && STAGE_INFO[t.anchor].numbered && t.anchorNumber == null;
-      targets = [{ day: estimateDay(t.anchor, t.anchorNumber, week0, end), suffix: each ? `each ${STAGE_INFO[t.anchor as CompetitionStage].label.toLowerCase()}` : null, estimated: true }];
-    }
-    for (const [i, target] of targets.entries()) {
-      items.push({
-        key: `${t.id}-${i}`, taskId: t.id, name: t.name, suffix: target.suffix,
-        subTeam: t.subTeam, priority: t.priority, isMilestone: t.isMilestone,
-        start: target.day + t.startOffset, due: target.day + due,
-        estimated: target.estimated, anchor: t.anchor, rule,
-        hours: t.estimatedHours, designReview: t.designReviewRequired, description: t.description,
-      });
-    }
+    if (real.length) return real;
+    const each = isCompetitionAnchor(t.anchor) && STAGE_INFO[t.anchor].numbered && t.anchorNumber == null;
+    return [{ day: estimateDay(t.anchor, t.anchorNumber, week0, end), suffix: each ? `each ${STAGE_INFO[t.anchor as CompetitionStage].label.toLowerCase()}` : null, estimated: true, missing: !!season }];
+  });
+  // Tasks timed from a task that isn't there (or in a loop) still show, at kickoff
+  const all: Placement<TimelineTask>[] = [
+    ...placed,
+    ...unplaced.map(({ task: t }) => ({ task: t, suffix: null, start: t.startOffset, due: t.startOffset + t.durationBuildDays, estimated: true, missing: true, root: "KICKOFF" as TaskAnchor })),
+  ];
+
+  const items: TimelineItem[] = [];
+  const skipped: string[] = [];
+  const count = new Map<string, number>();
+  for (const p of all) {
+    const t = p.task;
+    if (p.missing && season) skipped.push(t.name);
+    const i = count.get(t.id) ?? 0;
+    count.set(t.id, i + 1);
+    items.push({
+      key: `${t.id}-${i}`, taskId: t.id, name: t.name, suffix: p.suffix,
+      subTeam: t.subTeam, priority: t.priority, isMilestone: t.isMilestone,
+      start: p.start, due: p.due,
+      estimated: p.estimated, anchor: p.root, rule: ruleText(t.anchor, t.anchorNumber, t.startOffset + t.durationBuildDays, t.anchorTaskName),
+      hours: t.estimatedHours, designReview: t.designReviewRequired, description: t.description,
+    });
   }
   // Order of execution: tasks by when they start, milestones by when they're due (older
   // milestones can carry a length, and their start isn't when they happen)
@@ -191,7 +317,11 @@ export function buildTimeline(tasks: TimelineTask[], season: TimelineSeason | nu
   }
   markers.sort((a, b) => a.day - b.day);
 
-  return { items, markers, kickoff: season?.kickoffDate ?? null, seasonName: season?.name ?? null, illustrative: !!season?.illustrative, skipped: [...new Set(skipped)] };
+  return {
+    items, markers, kickoff: season?.kickoffDate ?? null, seasonName: season?.name ?? null, illustrative: !!season?.illustrative,
+    skipped: [...new Set(skipped)],
+    broken: unplaced.map((u) => ({ name: u.task.name, reason: u.reason })),
+  };
 }
 
 /** Which part of the season a task belongs to (one slide per phase) */
@@ -251,6 +381,16 @@ export function templateChecks(tasks: TimelineTask[], timeline: Timeline, subTea
   const names = new Set(tasks.map((t) => t.name.trim().toLowerCase()));
   const missingPrereqs = [...new Set(tasks.flatMap((t) => t.prerequisiteNames).filter((p) => !names.has(p.trim().toLowerCase())))];
   if (missingPrereqs.length) checks.push({ ok: false, title: `${missingPrereqs.length} prerequisite${missingPrereqs.length === 1 ? "" : "s"} not in this template`, detail: missingPrereqs.slice(0, 4).join(", ") });
+
+  // Timed from a task that isn't in the template, or tasks that follow each other in a loop
+  if (timeline.broken.length) {
+    const why = (r: UnplacedReason) => (r === "loop" ? "loop" : r === "missing-task" ? "task not in template" : "follows one of these");
+    checks.push({
+      ok: false,
+      title: `${timeline.broken.length} task${timeline.broken.length === 1 ? "" : "s"} can't be timed from the task they follow`,
+      detail: timeline.broken.slice(0, 4).map((b) => `${b.name} (${why(b.reason)})`).join(", ") + " — shown at kickoff; edit their timing.",
+    });
+  }
 
   if (timeline.seasonName && timeline.illustrative) {
     if (timeline.skipped.length) checks.push({ ok: false, title: `${timeline.skipped.length} need events the example season doesn't have`, detail: `Shown with estimated dates: ${timeline.skipped.slice(0, 4).join(", ")}${timeline.skipped.length > 4 ? "…" : ""}. They're skipped if your season has no matching event.` });

@@ -9,11 +9,12 @@ import { Field } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
 import { SUBTEAM_OPTIONS, PRIORITY_OPTIONS } from "@/lib/schedule-helpers";
-import { TaskTimingFields, type SeasonPreview } from "./TaskTimingFields";
+import { TaskTimingFields, type SeasonPreview, type TaskOption } from "./TaskTimingFields";
+import { PrerequisitePicker } from "./PrerequisitePicker";
 import { MarkdownEditor } from "@/components/markdown/MarkdownEditor";
 
 /** "+ Add task" button that opens the add form in a dialog; closes once it's added */
-export function AddTaskDialog({ templateId, season }: { templateId: string; season: SeasonPreview | null }) {
+export function AddTaskDialog({ templateId, season, taskOptions }: { templateId: string; season: SeasonPreview | null; taskOptions: TaskOption[] }) {
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -22,13 +23,13 @@ export function AddTaskDialog({ templateId, season }: { templateId: string; seas
       </DialogTrigger>
       <DialogContent title="Add a task or milestone" className="sm:max-w-xl">
         {/* Mounted only while open, so each add starts from an empty form */}
-        {open && <AddTaskForm templateId={templateId} season={season} onAdded={() => setOpen(false)} />}
+        {open && <AddTaskForm templateId={templateId} season={season} taskOptions={taskOptions} onAdded={() => setOpen(false)} />}
       </DialogContent>
     </Dialog>
   );
 }
 
-function AddTaskForm({ templateId, season, onAdded }: { templateId: string; season: SeasonPreview | null; onAdded: () => void }) {
+function AddTaskForm({ templateId, season, taskOptions, onAdded }: { templateId: string; season: SeasonPreview | null; taskOptions: TaskOption[]; onAdded: () => void }) {
   const router = useRouter();
   // bind(null, templateId) pre-fills the first arg so useActionState sees (_prev, formData)
   const boundAction = addTemplateTaskAction.bind(null, templateId);
@@ -54,7 +55,8 @@ function AddTaskForm({ templateId, season, onAdded }: { templateId: string; seas
         <Select label="Priority" name="priority" options={PRIORITY_OPTIONS} defaultValue="MEDIUM" />
       </div>
 
-      <TaskTimingFields season={season} />
+      <TaskTimingFields season={season} tasks={taskOptions} />
+      <PrerequisitePicker options={taskOptions} />
 
       <MarkdownEditor name="details" rows={4}
         hint="Copied to the task when the template is applied. Only shown when the task is opened." />

@@ -1193,6 +1193,8 @@ model TemplateTask {
   /// What startOffset counts from. Competition anchors with no anchorNumber create one task per matching competition.
   anchor               TaskAnchor     @default(KICKOFF)
   anchorNumber         Int?
+  /// With anchor TASK: the template task (by name) whose due date this one counts from
+  anchorTaskName       String?
 }
 
 enum TaskAnchor {
@@ -1204,6 +1206,7 @@ enum TaskAnchor {
   PLAYOFF
   WORLDS
   OFFSEASON
+  TASK           // another task in the same template (anchorTaskName): counts from its due date
 }
 
 // ─────────────────────────────────────────────

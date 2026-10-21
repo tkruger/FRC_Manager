@@ -14,6 +14,13 @@ export interface SeasonPreview {
   competitions: { name: string; stage: CompetitionStage; stageNumber: number | null; startDate: string }[];
 }
 
+/** Another task in the template a task can be timed from, with its due date in the active season (ISO) */
+export interface TaskOption {
+  name: string;
+  isMilestone: boolean;
+  due: string | null;
+}
+
 type Direction = "before" | "on" | "after";
 
 const inputCls =
@@ -37,9 +44,11 @@ function relative(n: number, what: string) {
  * templates, CSVs and applying are unchanged: due = start + length. People think in due
  * dates, so that's what the form asks for; milestones are just a due date (length 0).
  */
-export function TaskTimingFields({ initial, season }: {
-  initial?: { anchor: TaskAnchor | null; anchorNumber: number | null; startOffset: number; durationBuildDays: number; isMilestone: boolean };
+export function TaskTimingFields({ initial, season, tasks = [] }: {
+  initial?: { anchor: TaskAnchor | null; anchorNumber: number | null; anchorTaskName?: string | null; startOffset: number; durationBuildDays: number; isMilestone: boolean };
   season:   SeasonPreview | null;
+  /** The template's other tasks, for "after another task" */
+  tasks?:   TaskOption[];
 }) {
   // New tasks start as "due 7 days after kickoff, takes 3 days"
   const startOffset = initial?.startOffset ?? 4;
@@ -52,18 +61,24 @@ export function TaskTimingFields({ initial, season }: {
   const [direction, setDirection] = useState<Direction>(due0 < 0 ? "before" : due0 > 0 ? "after" : "on");
   const [count, setCount]         = useState(String(Math.abs(due0) || ""));
   const [length, setLength]       = useState(String(Math.max(1, length0)));
+  const [after, setAfter]         = useState(initial?.anchorTaskName ?? "");
 
   const numbered = isCompetitionAnchor(anchor) && STAGE_INFO[anchor].numbered;
   const n        = numbered && number !== "" ? Number(number) : null;
-  const what     = anchorName(anchor, n);
+  const byTask   = anchor === "TASK";
+  const what     = anchorName(anchor, n, after || null) + (byTask ? " is due" : "");
+  const afterTask = byTask ? tasks.find((t) => t.name === after) : undefined;
 
   // What gets saved
   const dueOffset = direction === "on" ? 0 : (direction === "before" ? -1 : 1) * Math.max(0, Math.round(Number(count) || 0));
   const len       = milestone ? 0 : Math.max(1, Math.round(Number(length) || 1));
   const start     = dueOffset - len;
 
-  // This season's dates for the first match, if the season has one
-  const target = season
+  // This season's dates for the first match, if the season has one (for a task timed from
+  // a task: that task's due date)
+  const target = byTask
+    ? (afterTask?.due ? [{ date: new Date(afterTask.due), suffix: null }] : [])
+    : season
     ? resolveAnchor(anchor, n, {
         kickoffDate:  new Date(season.kickoffDate),
         endDate:      new Date(season.endDate),
@@ -112,8 +127,22 @@ export function TaskTimingFields({ initial, season }: {
           </select>
           <select className={`${inputCls} min-w-0 flex-1 basis-56`} aria-label="Relative to" value={anchor} onChange={(e) => setAnchor(e.target.value as TaskAnchor)}>
             {ANCHOR_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            {(tasks.length > 0 || byTask) && <option value="TASK">Another task in this template…</option>}
           </select>
         </div>
+        {byTask && (
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <select className={`${inputCls} min-w-0 flex-1 basis-64`} aria-label="Which task" required value={after} onChange={(e) => setAfter(e.target.value)}>
+              <option value="" disabled>Pick the task it follows…</option>
+              {after && !tasks.some((t) => t.name === after) && <option value={after}>{after} (not in this template)</option>}
+              {tasks.map((t) => <option key={t.name} value={t.name}>{t.isMilestone ? "◆ " : ""}{t.name}</option>)}
+            </select>
+            <span className="text-sm text-(--color-text-secondary)">is due</span>
+            <p className="basis-full text-small text-(--color-text-secondary)">
+              Moves with that task, and it&apos;s added as a prerequisite. If it happens at every competition, this does too.
+            </p>
+          </div>
+        )}
         {numbered && (
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <label className="text-sm text-(--color-text-secondary)" htmlFor="anchor-number">Which one</label>
@@ -156,7 +185,12 @@ export function TaskTimingFields({ initial, season }: {
             {target.length > 1 && ` — and ${target.length - 1} more`}
           </p>
         )}
-        {season && !first && (
+        {season && !first && byTask && (
+          <p className="text-(--color-text-secondary)">
+            {after ? `Dated from “${after}” when the template is applied.` : "Pick the task this one follows."}
+          </p>
+        )}
+        {season && !first && !byTask && (
           <p className="text-(--color-warning)">
             {season.name} has no {isCompetitionAnchor(anchor) ? `${n != null ? `${STAGE_INFO[anchor].prefix}${n}` : STAGE_INFO[anchor].label.toLowerCase()}` : "Week 0"} yet, so this would be skipped when the template is applied.
           </p>
@@ -166,6 +200,7 @@ export function TaskTimingFields({ initial, season }: {
       {/* Saved the same way as always */}
       <input type="hidden" name="anchor" value={anchor} />
       <input type="hidden" name="anchorNumber" value={numbered ? number : ""} />
+      <input type="hidden" name="anchorTaskName" value={byTask ? after : ""} />
       <input type="hidden" name="startOffset" value={start} />
       <input type="hidden" name="durationBuildDays" value={len} />
       {milestone && <input type="hidden" name="isMilestone" value="on" />}

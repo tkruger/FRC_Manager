@@ -11,24 +11,21 @@ import { DeleteTemplateButton } from "./DeleteTemplateButton";
 import { ApplyCustomTemplateButton } from "./ApplyCustomTemplateButton";
 import { shortDate } from "@/lib/schedule-helpers";
 import { PageHeader } from "@/components/PageHeader";
+import { describeAnchor } from "@/lib/competition";
+import { executionOrder } from "@/lib/template-timeline";
+import { standardTimelineTasks } from "@/lib/standard-template-view";
+import { SUBTEAM_OPTIONS } from "@/lib/schedule-helpers";
 
 const MENTOR_ROLES = ["HEAD_MENTOR", "BUILD_LEAD", "INVENTORY_ADMIN"];
 
-const STANDARD_MILESTONES = [
-  { name: "Game Analysis Complete",                offset: "Kickoff + 2d",  team: "Strategy"    },
-  { name: "Robot Strategy & Design Brief",         offset: "Kickoff + 5d",  team: "Design"      },
-  { name: "Subsystem Design Reviews Complete",     offset: "Kickoff + 10d", team: "Mechanical"  },
-  { name: "Prototyping Complete",                  offset: "Kickoff + 14d", team: "Mechanical"  },
-  { name: "Full Robot CAD Complete",               offset: "Kickoff + 18d", team: "Design"      },
-  { name: "Drivetrain Assembled & Driving",        offset: "Week 0 − 21d",  team: "Mechanical"  },
-  { name: "All Subsystems Integrated",             offset: "Week 0 − 14d",  team: "Mechanical"  },
-  { name: "Robot Driving with Full Functionality", offset: "Week 0 − 10d",  team: "Programming" },
-  { name: "Driver Practice Begins",               offset: "Week 0 − 7d",   team: "Drive Team"  },
-  { name: "Robot Weight Confirmed Under Limit",   offset: "Week 0 − 5d",   team: "Mechanical"  },
-  { name: "BOM Complete & Reviewed",              offset: "Week 0 − 3d",   team: "Operations"  },
-  { name: "Robot Documentation Complete",         offset: "Week 0 − 2d",   team: "Operations"  },
-  { name: "Week 0 — Robot Done",                  offset: "Week 0",        team: "All"         },
-];
+// The standard template's milestones (in the order they happen) and how many tasks it has
+const standard = executionOrder(standardTimelineTasks());
+const STANDARD_MILESTONES = standard.milestones.map((m) => ({
+  name:   m.name,
+  offset: describeAnchor(m.anchor, m.anchorNumber, m.startOffset + m.durationBuildDays, m.anchorTaskName),
+  team:   SUBTEAM_OPTIONS.find((o) => o.value === m.subTeam)?.label ?? "All",
+}));
+const STANDARD_TASK_COUNT = standard.tasks.length;
 
 export default async function TemplatesPage() {
   const session = await auth();
@@ -125,10 +122,10 @@ export default async function TemplatesPage() {
         <div className="card space-y-5">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h3 className="text-h3 text-[--color-text-primary]">Standard 6-Week FRC Build Season</h3>
+              <h3 className="text-h3 text-[--color-text-primary]">Standard FRC season</h3>
               <p className="text-body text-[--color-text-secondary] mt-1">
-                {STANDARD_MILESTONES.length} milestones + {22 - STANDARD_MILESTONES.length} supporting tasks,
-                anchored to your kickoff, competitions and season end. Missing tasks are added; existing tasks are never overwritten.
+                {STANDARD_MILESTONES.length} milestones and {STANDARD_TASK_COUNT} tasks from kickoff to the end of the season,
+                anchored to your kickoff, Week 0, competitions and season end — some follow other tasks. Missing tasks are added; existing tasks are never overwritten.
               </p>
               {activeSeason && (
                 <p className="text-small text-[--color-text-secondary] mt-2">
@@ -137,6 +134,9 @@ export default async function TemplatesPage() {
               )}
             </div>
             <div className="flex flex-wrap gap-2 shrink-0">
+              <Link href="/tasks/templates/standard/present">
+                <Button variant="outline" size="sm">▶ Present</Button>
+              </Link>
               <a href="/api/templates/standard/csv" download>
                 <Button variant="outline" size="sm">Download CSV</Button>
               </a>
@@ -157,7 +157,7 @@ export default async function TemplatesPage() {
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     <Badge variant="neutral">{m.team}</Badge>
-                    <span className="text-small text-[--color-text-secondary] font-mono">{m.offset}</span>
+                    <span className="text-small text-[--color-text-secondary]">{m.offset}</span>
                   </div>
                 </div>
               ))}

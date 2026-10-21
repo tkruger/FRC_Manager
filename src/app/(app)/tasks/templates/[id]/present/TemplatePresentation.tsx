@@ -529,8 +529,10 @@ function buildSlides(name: string, description: string | null, teamNumber: numbe
 
 // ── The presenter ───────────────────────────────────────────────────────────
 
-export function TemplatePresentation({ templateId, name, description, teamNumber, tasks, season }: {
+export function TemplatePresentation({ templateId, name, description, teamNumber, tasks, season, exitHref: exitTo }: {
   templateId: string; name: string; description: string | null; teamNumber: number | null;
+  /** Where ✕ / Esc go (default: the template's page) */
+  exitHref?: string;
   tasks: TimelineTask[]; season: TimelineSeason | null;
 }) {
   const slides = useMemo(() => buildSlides(name, description, teamNumber, tasks, buildTimeline(tasks, season)), [name, description, teamNumber, tasks, season]);
@@ -540,7 +542,7 @@ export function TemplatePresentation({ templateId, name, description, teamNumber
   const rootRef = useRef<HTMLDivElement>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const touch = useRef<{ x: number; y: number } | null>(null);
-  const exitHref = `/tasks/templates/${templateId}`;
+  const exitHref = exitTo ?? `/tasks/templates/${templateId}`;
   const router = useRouter();
 
   const go = useCallback((delta: number) => setIndex((i) => Math.min(slides.length - 1, Math.max(0, i + delta))), [slides.length]);

@@ -108,7 +108,7 @@ export function TemplateCSVImport({ templateId }: Props) {
                   <span className="text-sm text-[--color-text-primary] truncate flex-1">{t.name}</span>
                   {t.subTeam && <span className="text-xs text-[--color-text-secondary] shrink-0">{t.subTeam.replace(/_/g, " ")}</span>}
                   <span className="text-xs text-[--color-text-disabled] shrink-0">
-                    {describeAnchor(t.anchor, t.anchorNumber, t.startOffset)}
+                    {describeAnchor(t.anchor, t.anchorNumber, t.startOffset, t.anchorTaskName)}
                   </span>
                 </div>
               ))}

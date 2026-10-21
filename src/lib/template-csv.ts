@@ -16,6 +16,7 @@ export const CSV_HEADERS = [
   "prerequisiteNames",
   "anchor",
   "anchorNumber",
+  "anchorTaskName",
 ] as const;
 
 export type CsvRow = {
@@ -31,6 +32,7 @@ export type CsvRow = {
   prerequisiteNames:    string; // pipe-separated
   anchor:               string;
   anchorNumber:         string;
+  anchorTaskName:       string;
 };
 
 export function tasksToCSV(tasks: {
@@ -46,6 +48,7 @@ export function tasksToCSV(tasks: {
   prerequisiteNames:    string[];
   anchor?:              string | null;
   anchorNumber?:        number | null;
+  anchorTaskName?:      string | null;
 }[]): string {
   const rows = tasks.map((t) => [
     t.name,
@@ -60,6 +63,7 @@ export function tasksToCSV(tasks: {
     (t.prerequisiteNames ?? []).join("|"),
     t.anchor ?? legacyAnchor(t.startOffset),
     t.anchorNumber != null ? String(t.anchorNumber) : "",
+    t.anchor === "TASK" ? t.anchorTaskName ?? "" : "",
   ].map(csvCell).join(","));
 
   return [CSV_HEADERS.join(","), ...rows].join("\n");
@@ -68,11 +72,13 @@ export function tasksToCSV(tasks: {
 export function emptyCSV(): string {
   return [
     CSV_HEADERS.join(","),
-    "Example Task,Optional description,MECHANICAL,5,3,MEDIUM,,false,false,,KICKOFF,",
-    "Pack the robot,,OPERATIONS,-2,1,HIGH,,false,false,,WEEK,",
+    "Example Task,Optional description,MECHANICAL,5,3,MEDIUM,,false,false,,KICKOFF,,",
+    "Pack the robot,,OPERATIONS,-2,1,HIGH,,false,false,,WEEK,,",
+    "Strategy debrief,,STRATEGY,0,2,MEDIUM,,false,false,Pack the robot,TASK,,Pack the robot",
     "# startOffset: when the task STARTS — days after (positive) or before (negative) the anchor",
     "# durationBuildDays: how many days it takes; it's due at startOffset + durationBuildDays (milestones may use 0)",
-    "# anchor: KICKOFF SEASON_WEEK0 SEASON_END PRACTICE WEEK PLAYOFF WORLDS OFFSEASON",
+    "# anchor: KICKOFF SEASON_WEEK0 SEASON_END PRACTICE WEEK PLAYOFF WORLDS OFFSEASON TASK",
+    "# anchorTaskName: with anchor TASK, the task in this template it counts from — startOffset is days after that task is due",
     "# anchorNumber: blank = every competition of that type (one task each); a number = only that one (e.g. WEEK + 1 = Week1)",
     "# subTeam: MECHANICAL ELECTRICAL PROGRAMMING DRIVE_TEAM STRATEGY DESIGN OUTREACH OPERATIONS",
     "# priority: CRITICAL HIGH MEDIUM LOW",
@@ -95,6 +101,7 @@ export interface ParsedTask {
   prerequisiteNames:    string[];
   anchor:               TaskAnchor;
   anchorNumber:         number | null;
+  anchorTaskName:       string | null;
 }
 
 export interface ParseResult {
@@ -175,6 +182,10 @@ export function parseCSV(content: string): ParseResult {
     if (anchorNumber != null && (isNaN(anchorNumber) || anchorNumber < 0)) {
       errors.push(`Row ${i + 1}: anchorNumber must be a whole number.`); continue;
     }
+    const anchorTaskName = anchor === "TASK" ? get("anchortaskname") || null : null;
+    if (anchor === "TASK" && !anchorTaskName) {
+      errors.push(`Row ${i + 1}: anchor TASK needs anchorTaskName (the task it counts from).`); continue;
+    }
 
     tasks.push({
       name,
@@ -190,7 +201,16 @@ export function parseCSV(content: string): ParseResult {
       prerequisiteNames,
       anchor,
       anchorNumber,
+      anchorTaskName,
     });
+  }
+
+  // Tasks timed from a task must name one in the file
+  const names = new Set(tasks.map((t) => t.name.trim().toLowerCase()));
+  for (const t of tasks) {
+    if (t.anchorTaskName && !names.has(t.anchorTaskName.trim().toLowerCase())) {
+      errors.push(`“${t.name}” counts from “${t.anchorTaskName}”, which isn't in the file — it needs to be in the template already.`);
+    }
   }
 
   return { tasks, errors };

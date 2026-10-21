@@ -80,6 +80,7 @@ export default function HelpPage() {
           <li><b>My tasks / All tasks</b> switches between tasks assigned to you and the whole team. Your choice is remembered.</li>
           <li>Filter by sub-team, priority, assignee or due date (next 7, 14 or 30 days, or a custom range).</li>
           <li>Tap a task to edit it, assign people, add prerequisites or change its status.</li>
+          <li>Moving a task&apos;s <b>due date</b> when other tasks depend on it offers to <b>move what comes after it</b> by the same number of days — its dependents, theirs, and so on. Finished tasks stay put; untick the box to move just this one.</li>
           <li><b>Description</b> is a short summary shown on cards and lists. <b>Details</b> holds longer notes — steps, links, checklists — and only shows when the task is opened. It&apos;s written in Markdown: use the buttons (bold, italic, heading, lists, checklist, link, code, quote) or type it (<code>**bold**</code>, <code>- [ ] to do</code>), and check it on the <b>Preview</b> tab.</li>
           <li>Marking a task <b>Blocked</b> notifies its assignees, Build Leads and Head Mentors.</li>
           <li>The progress card at the top shows how far through the build season you are and how each sub-team is doing. Tap it to collapse it.</li>
@@ -115,7 +116,13 @@ export default function HelpPage() {
         <ul className="list">
           <li>Leave <b>Which one</b> blank to create the task once <b>for each</b> matching competition. Each copy is named after its event, e.g. “Pack robot — Week1”, “Pack robot — Week2”.</li>
           <li>Enter a number to target just that event — e.g. Week competition <b>1</b> means only Week1.</li>
-
+        </ul>
+        <H3>After another task</H3>
+        <ul className="list">
+          <li>Pick <b>Another task in this template…</b> to time a task from another one&apos;s <b>due date</b> — e.g. “Order remaining parts” due 1 day after “Design locked” is due. It moves with that task, and that task becomes a prerequisite.</li>
+          <li>If the task it follows happens at every competition, it does too, paired by event: “Strategy debrief — Week1” follows “Event — Week1”.</li>
+          <li><b>Prerequisites</b> on a template task list what has to be done first; they become real links when the template is applied.</li>
+          <li>Renaming a task keeps everything that follows it pointed at it. Deleting one hands its timing to the tasks that followed it, so their dates don&apos;t change.</li>
         </ul>
         <H3>Applying a template</H3>
         <ul className="list">
@@ -124,13 +131,14 @@ export default function HelpPage() {
           <li>Applying again never duplicates tasks — only tasks that don&apos;t exist yet (for example, for a newly added competition) are created.</li>
           <li>On a template, hover a milestone or task to see everything about it, or tap <b>Clone</b> to start a new one from a copy — change what&apos;s different and save.</li>
           <li>A template task&apos;s <b>Details</b> (longer Markdown notes — steps, links, checklists) are copied to the real task when the template is applied.</li>
-          <li><b>Save season as template</b> turns the current season&apos;s tasks into a new template.</li>
+          <li><b>Save season as template</b> turns the current season&apos;s tasks into a new template, keeping their prerequisites.</li>
+          <li>The built-in <b>Standard FRC season</b> covers kickoff prep, early design and the purchasing waves, the build up to Week 0, each competition and the season wrap-up. Use <b>▶ Present</b> on it to walk through it, or download its CSV as a starting point for your own.</li>
           <li><b>▶ Present</b> (on a template) opens full-screen slides to walk the team through it: the milestones, the whole timeline as a Gantt chart, each phase up close, who&apos;s busy when, and a checklist of what might be missing. Dates are drawn on an example season for illustration (kickoff on the second Sunday of January, Week 2 and Week 4 events, district playoffs in Week 6, Worlds in April, with competitions on weekends), and weekends are shaded. Long timelines scroll on their slide (↑/↓, the mouse wheel or a swipe) while the dates stay at the top. Use ←/→, space or a click to move on, <b>F</b> for full screen and <b>Esc</b> to leave. On a phone or tablet, swipe.</li>
         </ul>
         <H3>Import &amp; export (CSV)</H3>
         <ul className="list">
           <li><b>Download CSV</b> exports a template; <b>Import CSV</b> adds tasks from a spreadsheet, with a preview first. The empty CSV includes an example and notes on every column.</li>
-          <li>Columns <code>anchor</code> (KICKOFF, SEASON_WEEK0, SEASON_END, PRACTICE, WEEK, PLAYOFF, WORLDS, OFFSEASON) and <code>anchorNumber</code> (blank = each) set the anchor; <code>startOffset</code> is when the task <b>starts</b> (days before/after it) and <code>durationBuildDays</code> how long it takes, so it&apos;s due at start + length. Milestones can use a length of 0. Older CSVs without an anchor still work: positive offsets count from kickoff, negative ones back from Week 0.</li>
+          <li>Columns <code>anchor</code> (KICKOFF, SEASON_WEEK0, SEASON_END, PRACTICE, WEEK, PLAYOFF, WORLDS, OFFSEASON, TASK) and <code>anchorNumber</code> (blank = each) set the anchor — with <code>TASK</code>, <code>anchorTaskName</code> names the task it counts from (its due date); <code>startOffset</code> is when the task <b>starts</b> (days before/after it) and <code>durationBuildDays</code> how long it takes, so it&apos;s due at start + length. Milestones can use a length of 0. Older CSVs without an anchor still work: positive offsets count from kickoff, negative ones back from Week 0.</li>
           <li><code>prerequisiteNames</code> lists other task names separated by <code>|</code>.</li>
         </ul>
       </Section>

@@ -55,7 +55,7 @@ async function scopeTaskRefs(
 const TASK_STATUSES: TaskStatus[] = ["NOT_STARTED", "IN_PROGRESS", "BLOCKED", "IN_REVIEW", "COMPLETE"];
 
 export type TaskActionState =
-  | { success: true; taskId: string }
+  | { success: true; taskId: string; /** Tasks after it that moved with its due date */ moved?: number }
   | { success: false; error: string };
 
 /** Markdown details from a form: trimmed, "" → null (clears), missing field → undefined (unchanged) */
@@ -191,7 +191,7 @@ export async function updateTaskAction(
 
   const prev = await prisma.task.findUnique({
     where:  { id: taskId },
-    select: { status: true, assignees: { select: { id: true } } },
+    select: { status: true, dueDate: true, assignees: { select: { id: true } } },
   });
 
   await prisma.task.update({
@@ -219,6 +219,15 @@ export async function updateTaskAction(
     },
   });
 
+  // Due date moved and "move what comes after" was ticked: shift every unfinished task that
+  // depends on this one (and the ones after those) by the same number of days
+  let moved = 0;
+  const newDue = d.dueDate ? new Date(d.dueDate) : null;
+  if (formData.get("shiftDependents") === "on" && prev?.dueDate && newDue) {
+    const shift = Math.round((newDue.getTime() - prev.dueDate.getTime()) / 86_400_000);
+    if (shift !== 0) moved = await shiftDependents(taskId, owned.seasonId, shift);
+  }
+
   const previousAssignees = new Set(prev?.assignees.map((a) => a.id));
   const added = refs.assigneeIds.filter((id) => !previousAssignees.has(id));
   if (added.length) await notify.taskAssigned(taskId, added, session.user.id);
@@ -226,7 +235,34 @@ export async function updateTaskAction(
 
   revalidatePath("/tasks");
   revalidatePath(`/tasks/${taskId}`);
-  return { success: true, taskId };
+  return { success: true, taskId, moved };
+}
+
+/**
+ * Moves the unfinished tasks that come after a task — its dependents, theirs, and so on —
+ * by `days`. Each moves once, even if it follows several of them. Returns how many moved.
+ */
+async function shiftDependents(taskId: string, seasonId: string, days: number): Promise<number> {
+  const seen = new Set<string>([taskId]);
+  const toMove: { id: string; startDate: Date | null; dueDate: Date | null }[] = [];
+  for (let frontier = [taskId]; frontier.length; ) {
+    const next = await prisma.task.findMany({
+      where:  { seasonId, prerequisites: { some: { id: { in: frontier } } } },
+      select: { id: true, status: true, startDate: true, dueDate: true },
+    });
+    frontier = [];
+    for (const t of next) {
+      if (seen.has(t.id)) continue;
+      seen.add(t.id);
+      frontier.push(t.id);
+      if (t.status !== "COMPLETE") toMove.push(t);
+    }
+  }
+  const by = (d: Date | null) => (d ? new Date(d.getTime() + days * 86_400_000) : null);
+  if (toMove.length) {
+    await prisma.$transaction(toMove.map((t) => prisma.task.update({ where: { id: t.id }, data: { startDate: by(t.startDate), dueDate: by(t.dueDate) } })));
+  }
+  return toMove.length;
 }
 
 export async function deleteTaskAction(taskId: string): Promise<{ success: boolean }> {
