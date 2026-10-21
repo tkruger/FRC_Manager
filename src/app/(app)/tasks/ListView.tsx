@@ -11,7 +11,7 @@ import {
   shortDate,
   isOverdue,
 } from "@/lib/schedule-helpers";
-import { TaskModal } from "./TaskModal";
+import { TaskModal, clearOpenTaskParam } from "./TaskModal";
 import type { TaskModalData } from "./TaskModal";
 import type { TaskStatus } from "@/generated/prisma";
 
@@ -38,9 +38,10 @@ export function ListView({
   allRobots,
   kickoffDate,
   endDate,
-}: Props) {
+  openTask,
+}: Props & { /** Opened on arrival (?task=<id>) */ openTask?: TaskModalData | null }) {
   const router = useRouter();
-  const [selectedTask, setSelectedTask] = useState<TaskModalData | null>(null);
+  const [selectedTask, setSelectedTask] = useState<TaskModalData | null>(openTask ?? null);
   const [filterSubteam, setFilterSubteam] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("priority");
@@ -240,7 +241,7 @@ export function ListView({
           allRobots={allRobots}
           kickoffDate={kickoffDate}
           endDate={endDate}
-          onClose={() => setSelectedTask(null)}
+          onClose={() => { setSelectedTask(null); clearOpenTaskParam(); }}
           onUpdated={() => {
             setSelectedTask(null);
             router.refresh();

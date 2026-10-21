@@ -16,7 +16,7 @@ import {
   isOverdue,
 } from "@/lib/schedule-helpers";
 import { useKanbanStyle, stickyNoteLook } from "@/lib/kanban-style";
-import { TaskModal } from "./TaskModal";
+import { TaskModal, clearOpenTaskParam } from "./TaskModal";
 import { useFinePointer, useTouchDrag } from "./useTouchDrag";
 import type { TaskModalData } from "./TaskModal";
 import type { TaskStatus } from "@/generated/prisma";
@@ -68,11 +68,11 @@ function getColTasks(tasks: KanbanTask[], colId: string, statuses: Record<string
 }
 
 export function KanbanView({
-  tasks, allTasks, allMembers, allRobots, kickoffDate, endDate, canEdit,
-}: Props) {
+  tasks, allTasks, allMembers, allRobots, kickoffDate, endDate, canEdit, openTask,
+}: Props & { /** Opened on arrival (?task=<id>) */ openTask?: KanbanTask | null }) {
   const router = useRouter();
   const [, startTransition]   = useTransition();
-  const [selectedTask,    setSelectedTask]   = useState<KanbanTask | null>(null);
+  const [selectedTask,    setSelectedTask]   = useState<KanbanTask | null>(openTask ?? null);
   const [filterSubteam,   setFilterSubteam]  = useState("");
   const [filterPriority,  setFilterPriority] = useState("");
   const [filterAssignee,  setFilterAssignee] = useState("");
@@ -373,7 +373,7 @@ export function KanbanView({
           allRobots={allRobots}
           kickoffDate={kickoffDate}
           endDate={endDate}
-          onClose={() => setSelectedTask(null)}
+          onClose={() => { setSelectedTask(null); clearOpenTaskParam(); }}
           onUpdated={() => { setSelectedTask(null); router.refresh(); }}
         />
       )}

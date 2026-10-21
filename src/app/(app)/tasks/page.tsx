@@ -15,9 +15,10 @@ import { PageHeader } from "@/components/PageHeader";
 export default async function SchedulePage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; mine?: string }>;
+  searchParams: Promise<{ view?: string; mine?: string; task?: string }>;
 }) {
-  const { view = "kanban", mine } = await searchParams;
+  // ?task=<id> opens that task's card (links to /tasks/<id> land here)
+  const { view = "kanban", mine, task: openTaskId } = await searchParams;
   const showMineOnly = mine !== "0";
   const session = await auth();
   if (!session?.user?.teamId) redirect("/dashboard");
@@ -61,18 +62,19 @@ export default async function SchedulePage({
   const buildProgress = Math.round(Math.min(Math.max((elapsed / totalBuildDays) * 100, 0), 100));
 
   // Full task fetch for all views + modal data
+  const taskInclude = {
+    assignees:     { select: { id: true, name: true } },
+    prerequisites: { select: { id: true, name: true, status: true } },
+    dependents:    { select: { id: true, name: true, status: true, autoSchedule: true } },
+    robot:         { select: { id: true, displayName: true } },
+  } as const;
   const tasks = await prisma.task.findMany({
     where: {
       seasonId: activeSeason.id,
       ...(activeRobotId ? { OR: [{ robotId: activeRobotId }, { robotId: null }] } : {}),
       ...(showMineOnly ? { assignees: { some: { id: session.user.id } } } : {}),
     },
-    include: {
-      assignees:     { select: { id: true, name: true } },
-      prerequisites: { select: { id: true, name: true, status: true } },
-      dependents:    { select: { id: true, name: true, status: true, autoSchedule: true } },
-      robot:         { select: { id: true, displayName: true } },
-    },
+    include: taskInclude,
     orderBy: [{ priority: "asc" }, { dueDate: "asc" }],
   });
 
@@ -89,7 +91,7 @@ export default async function SchedulePage({
   ]);
 
   // Serialize for client components
-  const serializedTasks = tasks.map((t) => ({
+  const serialize = (t: (typeof tasks)[number]) => ({
     id:                   t.id,
     name:                 t.name,
     details:              t.details,
@@ -112,7 +114,14 @@ export default async function SchedulePage({
     prerequisites:        t.prerequisites,
     dependents:           t.dependents,
     robot:                t.robot,
-  }));
+  });
+  const serializedTasks = tasks.map(serialize);
+
+  // The task to open: from the list, or loaded on its own when the filters hide it
+  const openTask = openTaskId
+    ? serializedTasks.find((t) => t.id === openTaskId)
+      ?? await prisma.task.findFirst({ where: { id: openTaskId, seasonId: activeSeason.id }, include: taskInclude }).then((t) => (t ? serialize(t) : null))
+    : null;
 
   // Every task in the season (not just the ones shown), for picking prerequisites and
   // working out dates from them
@@ -194,6 +203,7 @@ export default async function SchedulePage({
           allRobots={allRobots}
           kickoffDate={kickoffStr}
           endDate={endStr}
+          openTask={openTask}
         />
       ) : (
         <KanbanView
@@ -204,6 +214,7 @@ export default async function SchedulePage({
           kickoffDate={kickoffStr}
           endDate={endStr}
           canEdit={canEdit}
+          openTask={openTask}
         />
       )}
     </div>

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Task links work: /tasks/<id> (and “Open in Tasks” on the Gantt and Fleet pages) opens the Tasks page with that task's card instead of a 404
 - Tasks can be scheduled **after their prerequisites**: give a length and a gap, and the dates are worked out from the last prerequisite's due date. When a prerequisite moves, the task and everything scheduled after it move too. Template tasks timed from another task become these when the template is applied
 - Colors fixed across the app: about 870 styles written in an older Tailwind syntax (`bg-[--color-surface]`) did nothing under Tailwind v4, so some backgrounds were see-through (e.g. the New Task buttons over the form), borders and dividers fell back to bright lines, and secondary text wasn't gray. They now use the theme colors as intended, in light and dark mode
 - Gantt: tasks with only a start or only a due date no longer break the page; they show on the one date they have

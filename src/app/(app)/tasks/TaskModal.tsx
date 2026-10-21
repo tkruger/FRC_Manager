@@ -46,6 +46,14 @@ export interface TaskModalData {
   endDate?: string;
 }
 
+/** Removes ?task= from the address (after closing a card opened from a link), so a refresh doesn't reopen it */
+export function clearOpenTaskParam() {
+  const url = new URL(window.location.href);
+  if (!url.searchParams.has("task")) return;
+  url.searchParams.delete("task");
+  window.history.replaceState(window.history.state, "", url.pathname + url.search);
+}
+
 interface Props {
   task: TaskModalData | null;
   allTasks?: { id: string; name: string; status: string; dueDate?: string | null }[];

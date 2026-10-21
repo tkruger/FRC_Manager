@@ -347,9 +347,9 @@ export function GanttClient({ tasks, kickoffDate, endDate, seasonName, markers }
                   <p className="text-sm text-(--color-text-primary)">{modalTask.blockersNotes}</p>
                 </div>
               )}
-              <Link href={`/tasks/${modalTask.id}`} onClick={() => setModalTask(null)}
+              <Link href={`/tasks?mine=0&task=${modalTask.id}`} onClick={() => setModalTask(null)}
                 className="inline-flex items-center gap-1 text-sm text-(--color-secondary) hover:underline">
-                Open full task →
+                Open in Tasks →
               </Link>
             </div>
           </DialogContent>
