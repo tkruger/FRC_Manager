@@ -1,24 +1,25 @@
 # Changelog
 
-## Unreleased
+## 1.3.0 — 2026-10-21
 
-- Template CSV export lists rows in the same order as the template page: milestones by due date, then tasks in the order they start
-- Template pages: **+ Add task** opens the add form in a dialog instead of a form at the top of the page. On phones each row shows the full name with its sub-team, priority, timing and Edit / Clone / Delete underneath, instead of squeezing everything onto one line
-- Template Edit and Clone dialogs: Save/Add copy and Cancel stay pinned to the bottom while the form scrolls behind them (like the task card)
-- Presentation: the Milestones slide now comes before the whole-plan Timeline
-- Presentation Gantt slides: smaller text, a one-line title and slimmer margins, so about twice as many rows fit and the chart gets most of the slide
-- Presentation example season: the district playoffs are in Week 6 (they landed in Week 5 before), with Worlds on the third Saturday of April
-- Task card: the Edit/Delete/Close and Save/Cancel buttons stay pinned to the bottom of the card while long details and forms scroll behind them
-- Tasks have a **Details** section for longer notes — steps, links, checklists — written in Markdown with formatting buttons (bold, italic, heading, lists, checklist, link, code, quote) and a Preview tab. Details only show when a task is opened (and on its create/edit forms), never on cards or lists. Template tasks have details too, copied to the real task when the template is applied (and kept by Save season as template and Clone)
+**Tasks**
+- Tasks have a **Details** section for longer notes — steps, links, checklists — written in Markdown with formatting buttons (bold, italic, heading, lists, checklist, link, code, quote) and a Preview tab. Details only show when a task is opened and on its create/edit forms, never on cards or lists
+- The task card's buttons (Edit / Delete / Close, or Save / Cancel) stay pinned to the bottom while long details and forms scroll behind them
+- Tasks → Gantt has a new look: rows in the order things happen with sub-team color dots, shaded weekends, day and week ticks, kickoff / Week 0 / competition / season-end lines, length and due date beside each bar, and a hover card with the full details
 - Week 0 is the week before the Week 1 events: the season's Week0 event, else 7 days before Week 1 — worked out from its Week events or, with none, the typical FRC schedule (about seven weeks after kickoff). Template tasks and milestones tied to Week 0 are always added, never skipped
-- Template Clone buttons match Edit (outlined)
-- Template pages: hover a milestone or task for its full details (timing in words, example dates, hours, prerequisites, description), and **Clone** any of them to add a similar one quickly
-- Presentation: hover any Gantt row for its full name, dates, rule and description; sub-team colors now match the rest of the app, and milestones are dark diamonds
-- Tasks → Gantt matches the presentation: rows in the order things happen with sub-team color dots, shaded weekends, day and week ticks, kickoff / Week 0 / competition / season-end lines, length and due date beside each bar, and a hover card with the full details
-- Presentation: milestones in true date order, a sub-team color key from the first slide (and on every Gantt slide), day and week ticks and shaded weekends on Gantt rows, and long lists scroll on one slide instead of splitting
-- Template pages list milestones and tasks in the order they happen (tasks by start, milestones by due date), even when they count from different dates
-- **Present** a template: full-screen 16:9 slides with the whole plan as a Gantt chart, the milestones, each phase up close, who's busy when, and a checklist of what might be missing. Shown on an example season (kickoff on the second Sunday of January, Week 2 and Week 4, a regional playoff and Worlds in April — competitions on weekends) for illustration. Keyboard, click or swipe to move through it
-- Template tasks: the form now asks when a task is **due** (days before, on or after kickoff, Week 0, a competition…) and how long it **takes**, and spells out when it starts with this season's real dates. Milestones are just a due date, with no length
+
+**Templates**
+- The task form asks when a task is **due** (days before, on or after kickoff, Week 0, a competition…) and how long it **takes**, and spells out when it starts with this season's real dates. Milestones are just a due date, with no length
+- **+ Add task** opens the form in a dialog; Edit and Clone dialogs keep Save / Cancel pinned to the bottom
+- Milestones and tasks are listed in the order they happen (milestones by due date, tasks by start), even when they count from different dates — and the CSV export uses the same order
+- Hover a milestone or task for its full details (timing in words, example dates, hours, prerequisites, description), and **Clone** any of them to add a similar one quickly
+- Template tasks have Markdown details too, copied to the real task when the template is applied (and kept by Clone and Save season as template)
+- Works on phones: each row shows the full name with its sub-team, priority, timing and Edit / Clone / Delete underneath
+
+**Present a template**
+- **▶ Present** opens full-screen 16:9 slides: the milestones, the whole plan as a Gantt chart, each phase up close, who's busy when, and a checklist of what might be missing. Keyboard, click or swipe to move through it
+- Drawn on an example season for illustration: kickoff on the second Sunday of January, Week 2 and Week 4 events, district playoffs in Week 6 and Worlds on the third Saturday of April, with competitions on weekends
+- Gantt slides use compact text so about twice as many rows fit; long lists scroll on one slide under a fixed date header. Weekends are shaded, rows have day and week ticks, sub-team colors match the app with a color key on every Gantt slide, and hovering a row shows its full details
 
 ## 1.2.0 — 2026-10-16
 
