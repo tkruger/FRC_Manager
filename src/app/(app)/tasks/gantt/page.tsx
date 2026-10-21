@@ -32,7 +32,7 @@ export default async function GanttPage({ searchParams }: { searchParams: Promis
         seasonId: activeSeason.id,
         ...(subTeam ? { subTeam: subTeam as any } : {}),
         ...(activeRobotId ? { OR: [{ robotId: activeRobotId }, { robotId: null }] } : {}),
-        NOT: { startDate: null, dueDate: null },
+        NOT: { startDate: null, dueDate: null }, // at least one date
         ...(showMineOnly ? { assignees: { some: { id: session.user.id } } } : {}),
       },
       include: { assignees: { select: { name: true } } },
@@ -50,8 +50,9 @@ export default async function GanttPage({ searchParams }: { searchParams: Promis
     status:         t.status,
     priority:       t.priority,
     subTeam:        t.subTeam,
-    startDate:      t.startDate!.toISOString(),
-    dueDate:        t.dueDate!.toISOString(),
+    // A task with only one date sits on that day (the query skips ones with neither)
+    startDate:      (t.startDate ?? t.dueDate)!.toISOString(),
+    dueDate:        (t.dueDate ?? t.startDate)!.toISOString(),
     isMilestone:    t.isMilestone,
     details:        t.details,
     blockersNotes:  t.blockersNotes,
@@ -129,7 +130,7 @@ export default async function GanttPage({ searchParams }: { searchParams: Promis
 
       {ganttTasks.length === 0 ? (
         <div className="card text-center py-12">
-          <p className="text-body text-[--color-text-secondary] mb-4">
+          <p className="text-body text-(--color-text-secondary) mb-4">
             No tasks with dates yet. Tasks need a start and due date to appear on the Gantt.
           </p>
           <Link href="/tasks/new"><Button size="sm">Create task</Button></Link>

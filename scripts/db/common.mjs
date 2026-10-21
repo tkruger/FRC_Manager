@@ -27,7 +27,8 @@ export function host(url) {
 }
 
 export async function connect(url) {
-  const c = new pg.Client({ connectionString: url });
+  // Same as sslmode=require already does in pg (see withStrictSsl in src/lib/prisma.ts), minus the warning
+  const c = new pg.Client({ connectionString: url.replace(/([?&]sslmode=)(?:prefer|require|verify-ca)(?=&|$)/i, "$1verify-full") });
   await c.connect();
   return c;
 }
