@@ -261,3 +261,32 @@ export function templateChecks(tasks: TimelineTask[], timeline: Timeline, subTea
   }
   return checks;
 }
+
+// ── Execution order ─────────────────────────────────────────────────────────
+
+/**
+ * Template tasks in the order they happen, as the template page lists them (and the CSV
+ * export writes them): milestones by due date, then tasks by start (then due). Each is
+ * placed on the example season so tasks counted from different dates compare properly;
+ * "each competition" tasks go by their first one. Also returns each task's example
+ * start/due (days from kickoff).
+ */
+export function executionOrder<T extends TimelineTask>(tasks: T[]): {
+  milestones: T[];
+  tasks: T[];
+  at: (id: string) => { start: number; due: number };
+} {
+  const when = new Map<string, { start: number; due: number }>();
+  for (const it of buildTimeline(tasks, illustrativeSeason()).items) {
+    const prev = when.get(it.taskId);
+    if (!prev || it.start < prev.start) when.set(it.taskId, { start: it.start, due: it.due });
+  }
+  const at = (id: string) => when.get(id) ?? { start: 0, due: 0 };
+  return {
+    milestones: tasks.filter((t) => t.isMilestone)
+      .sort((a, b) => at(a.id).due - at(b.id).due || a.name.localeCompare(b.name)),
+    tasks: tasks.filter((t) => !t.isMilestone)
+      .sort((a, b) => at(a.id).start - at(b.id).start || at(a.id).due - at(b.id).due || a.name.localeCompare(b.name)),
+    at,
+  };
+}

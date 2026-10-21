@@ -5,7 +5,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { describeAnchor, isCompetitionAnchor, STAGE_INFO } from "@/lib/competition";
 import type { SeasonPreview } from "./TaskTimingFields";
-import { buildTimeline, illustrativeSeason, ruleText } from "@/lib/template-timeline";
+import { executionOrder, illustrativeSeason, ruleText } from "@/lib/template-timeline";
 import { HoverDetails, type HoverDetail } from "@/components/HoverDetails";
 import { HelpLink } from "@/components/HelpLink";
 import { Badge } from "@/components/ui/badge";
@@ -58,20 +58,9 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
     ? await prisma.user.findUnique({ where: { id: template.createdById }, select: { name: true } })
     : null;
 
-  // Order of execution: place every task on the example season (the same one the
-  // presentation uses) so tasks counted from different dates compare properly.
-  // Tasks go by start, milestones by due; "each competition" tasks use their first one.
-  const when = new Map<string, { start: number; due: number }>();
-  for (const it of buildTimeline(tasks.map((t) => ({
-    id: t.id, name: t.name, subTeam: t.subTeam, priority: t.priority, isMilestone: t.isMilestone,
-    anchor: t.anchor, anchorNumber: t.anchorNumber, startOffset: t.startOffset, durationBuildDays: t.durationBuildDays,
-    estimatedHours: t.estimatedHours, designReviewRequired: t.designReviewRequired,
-    prerequisiteNames: t.prerequisiteNames, description: t.description,
-  })), illustrativeSeason()).items) {
-    const prev = when.get(it.taskId);
-    if (!prev || it.start < prev.start) when.set(it.taskId, { start: it.start, due: it.due });
-  }
-  const at = (id: string) => when.get(id) ?? { start: 0, due: 0 };
+  // Order of execution, placed on the example season the presentation uses (the CSV
+  // export uses the same order)
+  const { milestones, tasks: regular, at } = executionOrder(tasks);
 
   // Hover card for each row: everything about it, with dates in the example season
   const example = illustrativeSeason();
@@ -97,10 +86,6 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
       note: t.description,
     };
   };
-  const milestones = tasks.filter((t) => t.isMilestone)
-    .sort((a, b) => at(a.id).due - at(b.id).due || a.name.localeCompare(b.name));
-  const regular    = tasks.filter((t) => !t.isMilestone)
-    .sort((a, b) => at(a.id).start - at(b.id).start || at(a.id).due - at(b.id).due || a.name.localeCompare(b.name));
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
