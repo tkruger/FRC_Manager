@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Tasks and template tasks have one notes field, **Details** (Markdown). The separate Description is gone: any existing description was moved to the top of the task's details, so nothing is lost. Template CSVs use a `details` column (multi-line Markdown works); older files with `description` still import
+
 ## 1.4.0 — 2026-10-21
 
 **Task dependencies**

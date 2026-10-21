@@ -9,6 +9,6 @@ export function standardTimelineTasks(): TimelineTask[] {
     anchor: t.anchor, anchorNumber: t.anchorNumber ?? null, anchorTaskName: t.anchorTaskName ?? null,
     startOffset: t.startOffset, durationBuildDays: t.durationBuildDays,
     estimatedHours: t.estimatedHours ?? null, designReviewRequired: t.designReviewRequired,
-    prerequisiteNames: t.prerequisiteNames, description: t.description ?? null,
+    prerequisiteNames: t.prerequisiteNames,
   }));
 }

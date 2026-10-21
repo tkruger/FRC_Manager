@@ -283,7 +283,6 @@ function HoverCard({ item: it, labels, rowTop, rowH, height, left }: {
       {it.hours != null && !it.isMilestone && line("Effort", `${it.hours} hour${it.hours === 1 ? "" : "s"} estimated`)}
       {it.designReview && line("Review", "Design review required")}
       {it.estimated && line("Note", "No matching event in the example season — date estimated")}
-      {it.description && <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,.15)", color: "#e2e8f0" }}>{it.description}</div>}
     </div>
   );
 }

@@ -9,7 +9,6 @@ import type { TaskStatus, TaskPriority, SubTeam, DesignReviewStatus } from "@/ge
 
 const TaskSchema = z.object({
   name:                 z.string().max(300).min(1),
-  description:          z.string().max(5000).optional(),
   subTeam:              z.string().max(300).optional(),
   robotId:              z.string().max(300).optional(),
   startDate:            z.string().max(300).optional(),
@@ -83,7 +82,6 @@ export async function createTaskAction(
 
   const parsed = TaskSchema.safeParse({
     name:                 formData.get("name"),
-    description:          formData.get("description") || undefined,
     subTeam:              formData.get("subTeam") || undefined,
     robotId:              formData.get("robotId") || undefined,
     startDate:            formData.get("startDate") || undefined,
@@ -106,7 +104,6 @@ export async function createTaskAction(
       seasonId:             activeSeason.id,
       createdById:          session.user.id,
       name:                 d.name,
-      description:          d.description,
       details:              detailsFrom(formData),
       subTeam:              (d.subTeam as SubTeam) || null,
       robotId:              refs.robotId,
@@ -173,7 +170,6 @@ export async function updateTaskAction(
 
   const parsed = TaskSchema.safeParse({
     name:                 formData.get("name"),
-    description:          formData.get("description") || undefined,
     subTeam:              formData.get("subTeam") || undefined,
     robotId:              formData.get("robotId") || undefined,
     startDate:            formData.get("startDate") || undefined,
@@ -198,7 +194,6 @@ export async function updateTaskAction(
     where: { id: taskId },
     data: {
       name:                 d.name,
-      description:          d.description,
       details:              detailsFrom(formData),
       subTeam:              (d.subTeam as SubTeam) || null,
       robotId:              refs.robotId,

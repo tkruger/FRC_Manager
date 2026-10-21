@@ -92,7 +92,6 @@ export default async function SchedulePage({
   const serializedTasks = tasks.map((t) => ({
     id:                   t.id,
     name:                 t.name,
-    description:          t.description,
     details:              t.details,
     status:               t.status,
     priority:             t.priority,

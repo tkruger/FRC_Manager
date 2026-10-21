@@ -5,7 +5,7 @@ import { csvCell } from "@/lib/csv";
 
 export const CSV_HEADERS = [
   "name",
-  "description",
+  "details",
   "subTeam",
   "startOffset",
   "durationBuildDays",
@@ -21,7 +21,7 @@ export const CSV_HEADERS = [
 
 export type CsvRow = {
   name:                 string;
-  description:          string;
+  details:              string; // Markdown; may span lines (quoted)
   subTeam:              string;
   startOffset:          string;
   durationBuildDays:    string;
@@ -37,7 +37,7 @@ export type CsvRow = {
 
 export function tasksToCSV(tasks: {
   name:                 string;
-  description?:         string | null;
+  details?:             string | null;
   subTeam?:             string | null;
   startOffset:          number;
   durationBuildDays:    number;
@@ -52,7 +52,7 @@ export function tasksToCSV(tasks: {
 }[]): string {
   const rows = tasks.map((t) => [
     t.name,
-    t.description ?? "",
+    t.details ?? "",
     t.subTeam ?? "",
     String(t.startOffset),
     String(t.durationBuildDays),
@@ -72,7 +72,7 @@ export function tasksToCSV(tasks: {
 export function emptyCSV(): string {
   return [
     CSV_HEADERS.join(","),
-    "Example Task,Optional description,MECHANICAL,5,3,MEDIUM,,false,false,,KICKOFF,,",
+    "Example Task,Optional notes (Markdown),MECHANICAL,5,3,MEDIUM,,false,false,,KICKOFF,,",
     "Pack the robot,,OPERATIONS,-2,1,HIGH,,false,false,,WEEK,,",
     "Strategy debrief,,STRATEGY,0,2,MEDIUM,,false,false,Pack the robot,TASK,,Pack the robot",
     "# startOffset: when the task STARTS — days after (positive) or before (negative) the anchor",
@@ -90,7 +90,7 @@ export function emptyCSV(): string {
 
 export interface ParsedTask {
   name:                 string;
-  description:          string;
+  details:              string | null;
   subTeam:              string | null;
   startOffset:          number;
   durationBuildDays:    number;
@@ -115,31 +115,43 @@ const VALID_SUBTEAMS = new Set([
 ]);
 const VALID_PRIORITIES = new Set(["CRITICAL","HIGH","MEDIUM","LOW"]);
 
-function parseCSVLine(line: string): string[] {
-  const cells: string[] = [];
+/**
+ * Splits CSV text into rows of cells. Quoted cells may contain commas, "" and line breaks
+ * (multi-line Markdown details), so rows are found here rather than by splitting lines.
+ */
+function parseCSVRecords(content: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
   let cur = "";
   let inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if (ch === '"') {
-      if (inQuotes && line[i + 1] === '"') { cur += '"'; i++; }
-      else inQuotes = !inQuotes;
-    } else if (ch === "," && !inQuotes) {
-      cells.push(cur); cur = "";
+  for (let i = 0; i < content.length; i++) {
+    const ch = content[i];
+    if (inQuotes) {
+      if (ch === '"' && content[i + 1] === '"') { cur += '"'; i++; }
+      else if (ch === '"') inQuotes = false;
+      else cur += ch;
+    } else if (ch === '"') {
+      inQuotes = true;
+    } else if (ch === ",") {
+      row.push(cur); cur = "";
+    } else if (ch === "\n" || ch === "\r") {
+      if (ch === "\r" && content[i + 1] === "\n") i++;
+      row.push(cur); rows.push(row); row = []; cur = "";
     } else {
       cur += ch;
     }
   }
-  cells.push(cur);
+  if (cur || row.length) { row.push(cur); rows.push(row); }
   // Undo the ' that exports put in front of formula-like text (see csvCell)
-  return cells.map((c) => (/^'[=+\-@\t\r]/.test(c) ? c.slice(1) : c));
+  return rows.map((r) => r.map((c) => (/^'[=+\-@\t\r]/.test(c) ? c.slice(1) : c.replace(/\r\n/g, "\n"))));
 }
 
 export function parseCSV(content: string): ParseResult {
-  const lines = content.split(/\r?\n/).filter((l) => l.trim() && !l.trim().startsWith("#"));
+  // Skip blank rows and # notes
+  const lines = parseCSVRecords(content).filter((r) => r.some((c) => c.trim()) && !r[0].trim().startsWith("#"));
   if (lines.length < 2) return { tasks: [], errors: ["CSV must have a header row and at least one task row."] };
 
-  const header = parseCSVLine(lines[0]).map((h) => h.trim().toLowerCase());
+  const header = lines[0].map((h) => h.trim().toLowerCase());
   const nameIdx = header.indexOf("name");
   if (nameIdx === -1) return { tasks: [], errors: ["CSV must have a 'name' column."] };
 
@@ -149,7 +161,7 @@ export function parseCSV(content: string): ParseResult {
   const errors: string[] = [];
 
   for (let i = 1; i < lines.length; i++) {
-    const cells = parseCSVLine(lines[i]);
+    const cells = lines[i];
     const get = (col: string) => (cells[idx(col)] ?? "").trim();
 
     const name = get("name");
@@ -189,7 +201,8 @@ export function parseCSV(content: string): ParseResult {
 
     tasks.push({
       name,
-      description:          get("description"),
+      // Older files have a one-line "description" instead
+      details:              (cells[idx("details")] ?? "").trim() || get("description") || null,
       subTeam:              subTeamRaw || null,
       startOffset,
       // Milestones may be 0 days (due on their start); tasks take at least a day

@@ -52,7 +52,6 @@ export function EditTaskRow({ task, season, taskOptions, clone = false }: { task
           <Field label={task.isMilestone ? "Milestone name" : "Task name"} name="name" required defaultValue={clone ? `${task.name} (copy)` : task.name} autoFocus={clone} />
           {/* A copy keeps what the form doesn't show */}
           {clone && <>
-            <input type="hidden" name="description" value={task.description ?? ""} />
             {task.estimatedHours != null && <input type="hidden" name="estimatedHours" value={task.estimatedHours} />}
           </>}
           <div className="grid grid-cols-2 gap-4">

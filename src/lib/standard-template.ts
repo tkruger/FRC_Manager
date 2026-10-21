@@ -9,7 +9,6 @@ import type { TaskAnchor } from "@/lib/competition";
 
 export interface StandardTask {
   name:              string;
-  description?:      string;
   /** Longer Markdown notes, copied to the task */
   details?:          string;
   subTeam:           string | null;
@@ -29,7 +28,7 @@ export interface StandardTask {
 
 type Team = "MECHANICAL" | "ELECTRICAL" | "PROGRAMMING" | "DRIVE_TEAM" | "STRATEGY" | "DESIGN" | "OUTREACH" | "OPERATIONS" | null;
 type Priority = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
-type Extra = Partial<Pick<StandardTask, "anchorNumber" | "prerequisiteNames" | "designReviewRequired" | "details" | "description">>;
+type Extra = Partial<Pick<StandardTask, "anchorNumber" | "prerequisiteNames" | "designReviewRequired" | "details">>;
 /** "After" a task: anchor TASK, counted from that task's due date */
 type When = TaskAnchor | { after: string };
 
@@ -59,7 +58,7 @@ export const STANDARD_TASKS: StandardTask[] = [
   T("Code base ready for the new season", "PROGRAMMING", "HIGH", "KICKOFF", -7, 6, {
     details: "- [ ] Install this year's WPILib and vendor libraries\n- [ ] New repository/branch from last year's framework\n- [ ] Update roboRIO, radio and motor-controller firmware",
   }),
-  T("Kickoff day plan", "OPERATIONS", "MEDIUM", "KICKOFF", -10, 9, { description: "Where to watch, food, and who's on which analysis group" }),
+  T("Kickoff day plan", "OPERATIONS", "MEDIUM", "KICKOFF", -10, 9, { details: "Where to watch, food, and who's on which analysis group." }),
 
   // ── Kickoff week: understand the game ───────────────────────────────────────
   T("Game manual review", "STRATEGY", "CRITICAL", "KICKOFF", 0, 2),
@@ -77,7 +76,7 @@ export const STANDARD_TASKS: StandardTask[] = [
   }),
   T("Place first parts order (rush)", "OPERATIONS", "CRITICAL", "KICKOFF", 2, 1),
   T("Practice drivetrain driving", "MECHANICAL", "CRITICAL", "KICKOFF", 2, 3, {
-    description: "A drivetrain (practice robot / alphabot) for programming and drivers to use right away",
+    details: "A drivetrain (practice robot / alphabot) for programming and drivers to use right away.",
   }),
   T("Auto paths built & tested on the practice drivetrain", "PROGRAMMING", "HIGH", { after: "Practice drivetrain driving" }, 0, 10),
   T("Test bumpers for the practice drivetrain", "MECHANICAL", "MEDIUM", { after: "Practice drivetrain driving" }, 3, 2),
@@ -123,7 +122,7 @@ export const STANDARD_TASKS: StandardTask[] = [
     details: "Both alliance colors, team numbers per the rules, and test the fit on the competition robot.",
   }),
   M("Robot weight confirmed under limit", "MECHANICAL", "HIGH", "SEASON_WEEK0", -10),
-  T("Order competition spares", "OPERATIONS", "HIGH", "SEASON_WEEK0", -12, 2, { description: "Spare mechanism parts, motors, wheels, belts and electronics" }),
+  T("Order competition spares", "OPERATIONS", "HIGH", "SEASON_WEEK0", -12, 2, { details: "Spare mechanism parts, motors, wheels, belts and electronics." }),
   M("Robot done", null, "CRITICAL", "SEASON_WEEK0", -8, {
     prerequisiteNames: ["All subsystems integrated", "Robot weight confirmed under limit"],
     details: "Feature-complete and at weight. From here on it's driver practice, tuning and fixes.",
@@ -158,7 +157,7 @@ export const STANDARD_TASKS: StandardTask[] = [
   ...perBuildTeam((t) => `Fixes & improvements after the playoffs — ${t}`, "MEDIUM", { after: "District championship" }, 0, 5),
 
   // ── Worlds ──────────────────────────────────────────────────────────────────
-  T("Worlds travel & logistics", "OPERATIONS", "HIGH", "WORLDS", -28, 21, { description: "Registration, travel, hotel, shipping the robot" }),
+  T("Worlds travel & logistics", "OPERATIONS", "HIGH", "WORLDS", -28, 21, { details: "Registration, travel, hotel, shipping the robot." }),
   T("Worlds driver practice", "DRIVE_TEAM", "CRITICAL", "WORLDS", -12, 10),
   T("Worlds", "DRIVE_TEAM", "CRITICAL", "WORLDS", 0, 4),
 

@@ -53,7 +53,6 @@ export default async function GanttPage({ searchParams }: { searchParams: Promis
     startDate:      t.startDate!.toISOString(),
     dueDate:        t.dueDate!.toISOString(),
     isMilestone:    t.isMilestone,
-    description:    t.description,
     details:        t.details,
     blockersNotes:  t.blockersNotes,
     estimatedHours: t.estimatedHours,

@@ -97,7 +97,6 @@ const TemplateTaskSchema = z.object({
   estimatedHours:       z.coerce.number().optional(),
   isMilestone:          z.coerce.boolean().optional(),
   designReviewRequired: z.coerce.boolean().optional(),
-  description:          z.string().max(5000).optional(),
   details:              z.string().max(20000).optional(),
   anchor:               z.enum(TASK_ANCHORS).optional(),
   anchorNumber:         z.coerce.number().int().min(0).max(99).optional(),
@@ -115,7 +114,6 @@ function parseTemplateTaskForm(formData: FormData) {
     estimatedHours:       formData.get("estimatedHours") || undefined,
     isMilestone:          formData.get("isMilestone") === "on",
     designReviewRequired: formData.get("designReviewRequired") === "on",
-    description:          formData.get("description") || undefined,
     details:              typeof formData.get("details") === "string" ? formData.get("details") : undefined,
     anchor:               formData.get("anchor") || undefined,
     anchorNumber:         formData.get("anchorNumber") || undefined,
@@ -149,7 +147,6 @@ function parseTemplateTaskForm(formData: FormData) {
     estimatedHours:       d.estimatedHours,
     isMilestone:          d.isMilestone ?? false,
     designReviewRequired: d.designReviewRequired ?? false,
-    description:          d.description,
     // Present (even empty) → set or cleared; absent → left as it is
     details:              d.details === undefined ? undefined : d.details.replace(/\r\n?/g, "\n").trim() || null,
     anchor,
@@ -301,7 +298,7 @@ export async function saveSeasonAsTemplateAction(
   const tasks = await prisma.task.findMany({
     where: { seasonId: activeSeason.id },
     select: { name: true, subTeam: true, startDate: true, dueDate: true, priority: true,
-              isMilestone: true, estimatedHours: true, designReviewRequired: true, description: true, details: true,
+              isMilestone: true, estimatedHours: true, designReviewRequired: true, details: true,
               prerequisites: { select: { name: true } } },
   });
 
@@ -343,7 +340,6 @@ export async function saveSeasonAsTemplateAction(
             isMilestone:          t.isMilestone,
             estimatedHours:       t.estimatedHours,
             designReviewRequired: t.designReviewRequired,
-            description:          t.description,
             details:              t.details,
             prerequisiteNames:    t.prerequisites.map((p) => p.name),
           };
@@ -360,7 +356,6 @@ export async function saveSeasonAsTemplateAction(
 
 interface ApplicableTask {
   name:                 string;
-  description?:         string | null;
   details?:             string | null;
   prerequisiteNames:    string[];
   anchorTaskName?:      string | null;
@@ -424,7 +419,7 @@ async function applyToActiveSeason(teamId: string, userId: string, tasks: Applic
     created.push(p);
     rows.push({
       seasonId: season.id, createdById: userId,
-      name, subTeam: t.subTeam, description: t.description ?? null, details: t.details ?? null,
+      name, subTeam: t.subTeam, details: t.details ?? null,
       startDate: new Date(kickoff + p.start * DAY), dueDate: new Date(kickoff + p.due * DAY),
       priority: t.priority, isMilestone: t.isMilestone, estimatedHours: t.estimatedHours ?? null,
       designReviewRequired: t.designReviewRequired,
@@ -512,7 +507,7 @@ export async function importTemplateTasksAction(
   templateId: string,
   tasks: {
     name: string;
-    description: string;
+    details: string | null;
     subTeam: string | null;
     startOffset: number;
     durationBuildDays: number;
@@ -538,7 +533,7 @@ export async function importTemplateTasksAction(
     data: tasks.map((t) => ({
       templateId,
       name:                 t.name,
-      description:          t.description || null,
+      details:              t.details?.trim().slice(0, 20000) || null,
       subTeam:              (t.subTeam as SubTeam) || null,
       startOffset:          t.startOffset,
       durationBuildDays:    t.durationBuildDays,

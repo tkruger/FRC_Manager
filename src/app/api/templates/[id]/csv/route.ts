@@ -21,7 +21,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const csv = tasksToCSV(
     [...milestones, ...tasks].map((t) => ({
       name:                 t.name,
-      description:          t.description,
+      details:              t.details,
       subTeam:              t.subTeam,
       startOffset:          t.startOffset,
       durationBuildDays:    t.durationBuildDays,

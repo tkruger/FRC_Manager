@@ -97,7 +97,6 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
         ...(t.designReviewRequired ? [{ label: "Review", value: "Design review required" }] : []),
         ...(t.prerequisiteNames.length ? [{ label: "After", value: t.prerequisiteNames.join(", ") }] : []),
       ],
-      note: t.description,
     };
   };
 
@@ -156,7 +155,6 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
                   <span className="text-[--color-primary] text-xs shrink-0 mt-1 sm:mt-0">◆</span>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-[--color-text-primary] line-clamp-2 sm:line-clamp-none sm:truncate">{t.name}</p>
-                    {t.description && <p className="text-small text-[--color-text-secondary] truncate">{t.description}</p>}
                   </div>
                 </div>
                 <div className={META + " pl-6 sm:pl-0"}>
@@ -187,7 +185,6 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
               <HoverDetails key={t.id} detail={detail(t)} className={ROW}>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-[--color-text-primary] line-clamp-2 sm:line-clamp-none sm:truncate">{t.name}</p>
-                  {t.description && <p className="text-small text-[--color-text-secondary] truncate">{t.description}</p>}
                 </div>
                 <div className={META}>
                   {t.subTeam && <Badge variant="neutral">{t.subTeam.replace(/_/g, " ")}</Badge>}

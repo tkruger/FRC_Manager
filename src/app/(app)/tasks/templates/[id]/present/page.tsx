@@ -22,7 +22,7 @@ export default async function PresentTemplatePage({ params }: { params: Promise<
     id: t.id, name: t.name, subTeam: t.subTeam, priority: t.priority, isMilestone: t.isMilestone,
     anchor: t.anchor, anchorNumber: t.anchorNumber, anchorTaskName: t.anchorTaskName, startOffset: t.startOffset, durationBuildDays: t.durationBuildDays,
     estimatedHours: t.estimatedHours, designReviewRequired: t.designReviewRequired,
-    prerequisiteNames: t.prerequisiteNames, description: t.description,
+    prerequisiteNames: t.prerequisiteNames,
   }));
   // Always drawn on the same example season, so it reads the same whenever it's presented
   const timelineSeason = illustrativeSeason();

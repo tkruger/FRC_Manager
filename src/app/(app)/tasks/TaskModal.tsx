@@ -19,7 +19,6 @@ import { toast } from "@/components/ui/toast";
 export interface TaskModalData {
   id: string;
   name: string;
-  description: string | null;
   /** Longer Markdown notes — only shown here, never on cards or lists */
   details: string | null;
   status: string;
@@ -134,14 +133,6 @@ export function TaskModal({ task, allTasks = [], allMembers = [], allRobots = []
                   </div>
                 ))}
               </div>
-
-              {/* Description */}
-              {task.description && (
-                <div>
-                  <p className="text-label text-[--color-text-secondary] mb-1">Description</p>
-                  <p className="text-sm text-[--color-text-primary] whitespace-pre-wrap">{task.description}</p>
-                </div>
-              )}
 
               {/* Details (Markdown) */}
               {task.details && (
@@ -319,7 +310,6 @@ function EditTaskForm({ task, allTasks, allMembers, allRobots, kickoffDate, endD
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && <div className="text-sm text-[--color-danger] bg-[--color-danger]/10 rounded px-3 py-2">{error}</div>}
       <Field label="Task name" name="name" required defaultValue={task.name} />
-      <Textarea label="Description" name="description" rows={2} defaultValue={task.description ?? ""} />
       <MarkdownEditor name="details" label="Details" defaultValue={task.details ?? ""} rows={6} />
 
       <div className="grid grid-cols-2 gap-4 [&>*]:min-w-0">

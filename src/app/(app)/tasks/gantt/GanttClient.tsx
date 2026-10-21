@@ -25,7 +25,6 @@ export interface GanttTask {
   startDate: string;
   dueDate: string;
   isMilestone: boolean;
-  description: string | null;
   details: string | null;
   blockersNotes: string | null;
   estimatedHours: number | null;
@@ -334,12 +333,6 @@ export function GanttClient({ tasks, kickoffDate, endDate, seasonName, markers }
                   </div>
                 </div>
               )}
-              {modalTask.description && (
-                <div>
-                  <p className="text-label text-(--color-text-secondary) mb-1">Description</p>
-                  <p className="text-sm text-(--color-text-primary) whitespace-pre-wrap">{modalTask.description}</p>
-                </div>
-              )}
               {modalTask.details && (
                 <div>
                   <p className="text-label text-(--color-text-secondary) mb-1">Details</p>
@@ -393,7 +386,6 @@ function HoverCard({ task: t, x, y, long, dayOf }: {
       {t.assignees.length > 0 && line("People", t.assignees.map((a) => a.name).join(", "))}
       {(t.estimatedHours != null || t.actualHours != null) && line("Hours", `${t.actualHours ?? 0} of ${t.estimatedHours ?? "—"} est.`)}
       {t.blockersNotes && line("Blocked", t.blockersNotes)}
-      {t.description && <p className="mt-2 pt-2 border-t border-white/15 text-slate-200 line-clamp-4">{t.description}</p>}
     </div>
   );
 }

@@ -25,7 +25,6 @@ export interface TimelineTask {
   estimatedHours: number | null;
   designReviewRequired: boolean;
   prerequisiteNames: string[];
-  description: string | null;
 }
 
 // ── Scheduling: events first, then tasks timed from other tasks ─────────────
@@ -200,7 +199,6 @@ export interface TimelineItem {
   rule: string;
   hours: number | null;
   designReview: boolean;
-  description: string | null;
 }
 
 export interface TimelineMarker {
@@ -291,7 +289,7 @@ export function buildTimeline(tasks: TimelineTask[], season: TimelineSeason | nu
       subTeam: t.subTeam, priority: t.priority, isMilestone: t.isMilestone,
       start: p.start, due: p.due,
       estimated: p.estimated, anchor: p.root, rule: ruleText(t.anchor, t.anchorNumber, t.startOffset + t.durationBuildDays, t.anchorTaskName),
-      hours: t.estimatedHours, designReview: t.designReviewRequired, description: t.description,
+      hours: t.estimatedHours, designReview: t.designReviewRequired,
     });
   }
   // Order of execution: tasks by when they start, milestones by when they're due (older

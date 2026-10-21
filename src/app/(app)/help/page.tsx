@@ -81,7 +81,7 @@ export default function HelpPage() {
           <li>Filter by sub-team, priority, assignee or due date (next 7, 14 or 30 days, or a custom range).</li>
           <li>Tap a task to edit it, assign people, add prerequisites or change its status.</li>
           <li>Moving a task&apos;s <b>due date</b> when other tasks depend on it offers to <b>move what comes after it</b> by the same number of days — its dependents, theirs, and so on. Finished tasks stay put; untick the box to move just this one.</li>
-          <li><b>Description</b> is a short summary shown on cards and lists. <b>Details</b> holds longer notes — steps, links, checklists — and only shows when the task is opened. It&apos;s written in Markdown: use the buttons (bold, italic, heading, lists, checklist, link, code, quote) or type it (<code>**bold**</code>, <code>- [ ] to do</code>), and check it on the <b>Preview</b> tab.</li>
+          <li><b>Details</b> holds a task's notes — steps, links, checklists — and shows when the task is opened (not on cards or lists, which stay short). It&apos;s written in Markdown: use the buttons (bold, italic, heading, lists, checklist, link, code, quote) or type it (<code>**bold**</code>, <code>- [ ] to do</code>), and check it on the <b>Preview</b> tab.</li>
           <li>Marking a task <b>Blocked</b> notifies its assignees, Build Leads and Head Mentors.</li>
           <li>The progress card at the top shows how far through the build season you are and how each sub-team is doing. Tap it to collapse it.</li>
         </ul>
