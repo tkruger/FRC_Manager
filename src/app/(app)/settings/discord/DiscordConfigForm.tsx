@@ -39,7 +39,7 @@ export function DiscordConfigForm({ config }: { config: DiscordConfig | null }) 
   return (
     <form action={action} className="space-y-6">
       {state && !state.success && (
-        <div className="rounded-md bg-[--color-danger]/10 border border-[--color-danger]/20 px-4 py-3 text-sm text-[--color-danger]">
+        <div className="rounded-md bg-(--color-danger)/10 border border-(--color-danger)/20 px-4 py-3 text-sm text-(--color-danger)">
           {state.error}
         </div>
       )}
@@ -53,9 +53,9 @@ export function DiscordConfigForm({ config }: { config: DiscordConfig | null }) 
         hint="Right-click your server in Discord → Copy Server ID (Developer Mode must be on)"
       />
 
-      <div className="border-t border-[--color-border] pt-5">
-        <p className="text-h3 text-[--color-text-primary] mb-1">Channel routing</p>
-        <p className="text-small text-[--color-text-secondary] mb-4">
+      <div className="border-t border-(--color-border) pt-5">
+        <p className="text-h3 text-(--color-text-primary) mb-1">Channel routing</p>
+        <p className="text-small text-(--color-text-secondary) mb-4">
           Enter Discord channel IDs to route notifications. Leave blank to disable that notification type.
           Right-click any channel → Copy Channel ID.
         </p>
@@ -73,11 +73,11 @@ export function DiscordConfigForm({ config }: { config: DiscordConfig | null }) 
         </div>
       </div>
 
-      <div className="border-t border-[--color-border] pt-5 space-y-4">
-        <p className="text-h3 text-[--color-text-primary]">Daily build summary</p>
+      <div className="border-t border-(--color-border) pt-5 space-y-4">
+        <p className="text-h3 text-(--color-text-primary)">Daily build summary</p>
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" name="dailySummaryEnabled" defaultChecked={config?.dailySummaryEnabled ?? false} className="rounded" />
-          <span className="text-sm text-[--color-text-primary]">Send a daily build summary each morning</span>
+          <span className="text-sm text-(--color-text-primary)">Send a daily build summary each morning</span>
         </label>
         <div className="grid grid-cols-2 gap-4">
           <Field label="Summary channel ID" name="dailySummaryChannel" defaultValue={config?.dailySummaryChannel ?? ""} placeholder="Channel ID" />
@@ -88,12 +88,12 @@ export function DiscordConfigForm({ config }: { config: DiscordConfig | null }) 
         </div>
       </div>
 
-      <div className="border-t border-[--color-border] pt-5">
+      <div className="border-t border-(--color-border) pt-5">
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" name="publicReadEnabled" defaultChecked={config?.publicReadEnabled ?? false} className="rounded" />
           <div>
-            <p className="text-sm font-medium text-[--color-text-primary]">Public read mode</p>
-            <p className="text-small text-[--color-text-secondary]">Allow unlinked Discord members to use read-only commands</p>
+            <p className="text-sm font-medium text-(--color-text-primary)">Public read mode</p>
+            <p className="text-small text-(--color-text-secondary)">Allow unlinked Discord members to use read-only commands</p>
           </div>
         </label>
       </div>

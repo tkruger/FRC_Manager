@@ -20,8 +20,8 @@ export default async function ProfilePage() {
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 space-y-8">
       <div>
-        <h1 className="text-h1 text-[--color-text-primary]">Profile settings</h1>
-        <p className="text-body text-[--color-text-secondary] mt-1">
+        <h1 className="text-h1 text-(--color-text-primary)">Profile settings</h1>
+        <p className="text-body text-(--color-text-secondary) mt-1">
           Update your personal information and app appearance.
         </p>
       </div>

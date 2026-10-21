@@ -39,7 +39,7 @@ export function SaveSeasonDialog() {
       </DialogTrigger>
       <DialogContent title="Save season as template" description="All current season tasks will be saved with relative date offsets.">
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && <div className="text-sm text-[--color-danger] bg-[--color-danger]/10 rounded px-3 py-2">{error}</div>}
+          {error && <div className="text-sm text-(--color-danger) bg-(--color-danger)/10 rounded px-3 py-2">{error}</div>}
           <Field label="Template name" name="name" required placeholder='e.g. "2026 Build Season"' />
           <Textarea label="Description" name="description" rows={2} placeholder="Optional notes about this template" />
           <div className="flex gap-2 pt-2">

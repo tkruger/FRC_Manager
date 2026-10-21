@@ -35,8 +35,8 @@ export function ProfileForm({ initialName }: Props) {
 
   function activeClass(isActive: boolean) {
     return isActive && mounted
-      ? "border-[--color-primary] text-white shadow-sm"   // solid fill applied via inline style below
-      : "border-[--color-border] text-[--color-text-secondary] hover:border-[--color-border-strong] hover:text-[--color-text-primary] bg-transparent";
+      ? "border-(--color-primary) text-white shadow-sm"   // solid fill applied via inline style below
+      : "border-(--color-border) text-(--color-text-secondary) hover:border-(--color-border-strong) hover:text-(--color-text-primary) bg-transparent";
   }
 
   function activeStyle(isActive: boolean): React.CSSProperties {
@@ -45,8 +45,8 @@ export function ProfileForm({ initialName }: Props) {
 
   function activeCardClass(isActive: boolean) {
     return isActive && mounted
-      ? "border-[--color-primary] shadow-sm"
-      : "border-[--color-border] hover:border-[--color-border-strong]";
+      ? "border-(--color-primary) shadow-sm"
+      : "border-(--color-border) hover:border-(--color-border-strong)";
   }
 
   function activeCardStyle(isActive: boolean): React.CSSProperties {
@@ -60,15 +60,15 @@ export function ProfileForm({ initialName }: Props) {
 
       {/* Personal info */}
       <div className="card space-y-5">
-        <h2 className="text-h3 text-[--color-text-primary]">Personal information</h2>
+        <h2 className="text-h3 text-(--color-text-primary)">Personal information</h2>
 
         {state?.success && (
-          <div className="text-sm text-[--color-success] bg-[--color-success]/10 rounded px-3 py-2">
+          <div className="text-sm text-(--color-success) bg-(--color-success)/10 rounded px-3 py-2">
             Profile updated successfully.
           </div>
         )}
         {state && !state.success && (
-          <div className="text-sm text-[--color-danger] bg-[--color-danger]/10 rounded px-3 py-2">
+          <div className="text-sm text-(--color-danger) bg-(--color-danger)/10 rounded px-3 py-2">
             {state.error}
           </div>
         )}
@@ -81,11 +81,11 @@ export function ProfileForm({ initialName }: Props) {
 
       {/* Appearance */}
       <div className="card space-y-6">
-        <h2 className="text-h3 text-[--color-text-primary]">Appearance</h2>
+        <h2 className="text-h3 text-(--color-text-primary)">Appearance</h2>
 
         {/* Display mode */}
         <div>
-          <p className="text-sm font-medium text-[--color-text-primary] mb-3">Display mode</p>
+          <p className="text-sm font-medium text-(--color-text-primary) mb-3">Display mode</p>
           <div className="flex flex-wrap gap-2">
             {(
               [
@@ -117,7 +117,7 @@ export function ProfileForm({ initialName }: Props) {
 
         {/* Background style */}
         <div>
-          <p className="text-sm font-medium text-[--color-text-primary] mb-3">Background</p>
+          <p className="text-sm font-medium text-(--color-text-primary) mb-3">Background</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
             {BG_MODES.map((opt) => {
               const isActive = bgMode === opt.id;
@@ -129,14 +129,14 @@ export function ProfileForm({ initialName }: Props) {
                   style={activeCardStyle(isActive)}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-medium text-[--color-text-primary]">{opt.label}</p>
+                    <p className="text-sm font-medium text-(--color-text-primary)">{opt.label}</p>
                     {isActive && mounted && (
                       <svg className="w-4 h-4 shrink-0" style={{ color: "var(--color-primary)" }} viewBox="0 0 16 16" fill="currentColor">
                         <path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/>
                       </svg>
                     )}
                   </div>
-                  <p className="text-xs text-[--color-text-secondary] mt-0.5">{opt.desc}</p>
+                  <p className="text-xs text-(--color-text-secondary) mt-0.5">{opt.desc}</p>
                 </button>
               );
             })}
@@ -144,40 +144,40 @@ export function ProfileForm({ initialName }: Props) {
 
           {/* Solid color picker */}
           {bgMode === "solid" && (
-            <div className="flex items-center gap-3 p-3 rounded-lg border border-[--color-border] bg-[--color-surface-overlay]">
-              <label className="text-sm text-[--color-text-secondary] shrink-0">Color</label>
+            <div className="flex items-center gap-3 p-3 rounded-lg border border-(--color-border) bg-(--color-surface-overlay)">
+              <label className="text-sm text-(--color-text-secondary) shrink-0">Color</label>
               <input
                 type="color"
                 value={bgSolidColor}
                 onChange={(e) => setBgSolidColor(e.target.value)}
-                className="w-10 h-8 rounded cursor-pointer border border-[--color-border] bg-transparent p-0.5"
+                className="w-10 h-8 rounded cursor-pointer border border-(--color-border) bg-transparent p-0.5"
               />
-              <span className="text-sm font-mono text-[--color-text-secondary]">{bgSolidColor}</span>
+              <span className="text-sm font-mono text-(--color-text-secondary)">{bgSolidColor}</span>
             </div>
           )}
 
           {/* Custom orb pickers */}
           {bgMode === "custom" && (
-            <div className="flex flex-wrap gap-4 p-3 rounded-lg border border-[--color-border] bg-[--color-surface-overlay]">
+            <div className="flex flex-wrap gap-4 p-3 rounded-lg border border-(--color-border) bg-(--color-surface-overlay)">
               <div className="flex items-center gap-2">
-                <label className="text-sm text-[--color-text-secondary] shrink-0">Orb 1</label>
+                <label className="text-sm text-(--color-text-secondary) shrink-0">Orb 1</label>
                 <input
                   type="color"
                   value={bgColor1}
                   onChange={(e) => setBgColor1(e.target.value)}
-                  className="w-10 h-8 rounded cursor-pointer border border-[--color-border] bg-transparent p-0.5"
+                  className="w-10 h-8 rounded cursor-pointer border border-(--color-border) bg-transparent p-0.5"
                 />
-                <span className="text-sm font-mono text-[--color-text-secondary]">{bgColor1}</span>
+                <span className="text-sm font-mono text-(--color-text-secondary)">{bgColor1}</span>
               </div>
               <div className="flex items-center gap-2">
-                <label className="text-sm text-[--color-text-secondary] shrink-0">Orb 2</label>
+                <label className="text-sm text-(--color-text-secondary) shrink-0">Orb 2</label>
                 <input
                   type="color"
                   value={bgColor2}
                   onChange={(e) => setBgColor2(e.target.value)}
-                  className="w-10 h-8 rounded cursor-pointer border border-[--color-border] bg-transparent p-0.5"
+                  className="w-10 h-8 rounded cursor-pointer border border-(--color-border) bg-transparent p-0.5"
                 />
-                <span className="text-sm font-mono text-[--color-text-secondary]">{bgColor2}</span>
+                <span className="text-sm font-mono text-(--color-text-secondary)">{bgColor2}</span>
               </div>
             </div>
           )}
@@ -185,7 +185,7 @@ export function ProfileForm({ initialName }: Props) {
 
         {/* Color theme */}
         <div>
-          <p className="text-sm font-medium text-[--color-text-primary] mb-3">Color theme</p>
+          <p className="text-sm font-medium text-(--color-text-primary) mb-3">Color theme</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {COLOR_THEMES.map((theme) => {
               const isActive = colorTheme === theme.id;
@@ -200,7 +200,7 @@ export function ProfileForm({ initialName }: Props) {
                     <div className="w-5 h-5 rounded-full border border-white/30" style={{ backgroundColor: theme.primary }} />
                     <div className="w-5 h-5 rounded-full border border-white/30" style={{ backgroundColor: theme.secondary }} />
                   </div>
-                  <span className="text-sm font-medium text-[--color-text-primary] truncate flex-1">{theme.label}</span>
+                  <span className="text-sm font-medium text-(--color-text-primary) truncate flex-1">{theme.label}</span>
                   {isActive && mounted && (
                     <svg className="w-4 h-4 shrink-0" style={{ color: "var(--color-primary)" }} viewBox="0 0 16 16" fill="currentColor">
                       <path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/>

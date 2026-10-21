@@ -13,11 +13,11 @@ export default async function NewToolPage() {
   }));
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <nav className="text-small text-[--color-text-secondary] mb-3">
-        <Link href="/tools" className="hover:text-[--color-primary]">Tools</Link>
+      <nav className="text-small text-(--color-text-secondary) mb-3">
+        <Link href="/tools" className="hover:text-(--color-primary)">Tools</Link>
         <span className="mx-2">›</span>New tool
       </nav>
-      <h1 className="text-h1 text-[--color-text-primary] mb-6">Add tool</h1>
+      <h1 className="text-h1 text-(--color-text-primary) mb-6">Add tool</h1>
       <NewToolForm names={names} />
     </div>
   );

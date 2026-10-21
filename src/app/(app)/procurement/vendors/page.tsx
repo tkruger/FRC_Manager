@@ -24,10 +24,10 @@ export default async function VendorsPage() {
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-h1 text-[--color-text-primary]">Vendors</h1>
-          <p className="text-body text-[--color-text-secondary] mt-1">
+          <h1 className="text-h1 text-(--color-text-primary)">Vendors</h1>
+          <p className="text-body text-(--color-text-secondary) mt-1">
             {vendors.length} vendor{vendors.length !== 1 ? "s" : ""}
-            {!isAdmin && <span className="ml-2 text-small text-[--color-text-disabled]">— read-only view</span>}
+            {!isAdmin && <span className="ml-2 text-small text-(--color-text-disabled)">— read-only view</span>}
           </p>
         </div>
         {isAdmin && (
@@ -40,14 +40,14 @@ export default async function VendorsPage() {
 
       {/* Admin notice for non-admins */}
       {!isAdmin && vendors.length > 0 && (
-        <div className="rounded-md bg-[--color-surface-overlay] border border-[--color-border] px-4 py-3 text-small text-[--color-text-secondary]">
+        <div className="rounded-md bg-(--color-surface-overlay) border border-(--color-border) px-4 py-3 text-small text-(--color-text-secondary)">
           Vendor management is restricted to admins (Head Mentor, Inventory Admin, Treasurer).
         </div>
       )}
 
       {vendors.length === 0 ? (
         <div className="card text-center py-12">
-          <p className="text-body text-[--color-text-secondary] mb-4">No vendors yet.</p>
+          <p className="text-body text-(--color-text-secondary) mb-4">No vendors yet.</p>
           {isAdmin && <SeedVendorsButton label="Import FRC vendor list" />}
         </div>
       ) : (
@@ -67,10 +67,10 @@ export default async function VendorsPage() {
               <Tr key={v.id}>
                 <Td>
                   <div>
-                    <p className="font-medium text-[--color-text-primary]">{v.name}</p>
+                    <p className="font-medium text-(--color-text-primary)">{v.name}</p>
                     {v.website && (
                       <a href={v.website} target="_blank" rel="noopener noreferrer"
-                        className="text-small text-[--color-secondary] hover:underline">
+                        className="text-small text-(--color-secondary) hover:underline">
                         {v.website.replace(/^https?:\/\//, "")}
                       </a>
                     )}
@@ -78,7 +78,7 @@ export default async function VendorsPage() {
                 </Td>
                 <Td>{v.typicalLeadDays != null ? `${v.typicalLeadDays} days` : "—"}</Td>
                 <Td className="max-w-xs">
-                  <p className="truncate text-small text-[--color-text-secondary]">
+                  <p className="truncate text-small text-(--color-text-secondary)">
                     {v.frcDiscount || v.notes || "—"}
                   </p>
                 </Td>

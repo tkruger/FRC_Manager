@@ -27,10 +27,10 @@ export default async function BudgetDashboard() {
   if (!activeSeason) {
     return (
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <h1 className="text-h1 text-[--color-text-primary] mb-4">Budget</h1>
+        <h1 className="text-h1 text-(--color-text-primary) mb-4">Budget</h1>
         <div className="card">
-          <p className="text-body text-[--color-text-secondary]">
-            No active season. <Link href="/settings/season" className="text-[--color-secondary] hover:underline">Set up a season</Link> first.
+          <p className="text-body text-(--color-text-secondary)">
+            No active season. <Link href="/settings/season" className="text-(--color-secondary) hover:underline">Set up a season</Link> first.
           </p>
         </div>
       </div>
@@ -51,10 +51,10 @@ export default async function BudgetDashboard() {
       <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
         <PageHeader title="Budget" help="budget" />
         <div className="card text-center py-12">
-          <p className="text-body text-[--color-text-secondary] mb-4">No budget configured for {activeSeason.name}.</p>
+          <p className="text-body text-(--color-text-secondary) mb-4">No budget configured for {activeSeason.name}.</p>
           {canEdit
             ? <Link href="/budget/setup"><Button>Set up budget</Button></Link>
-            : <p className="text-small text-[--color-text-disabled]">A Treasurer or Head Mentor can set up the budget.</p>}
+            : <p className="text-small text-(--color-text-disabled)">A Treasurer or Head Mentor can set up the budget.</p>}
         </div>
       </div>
     );
@@ -91,7 +91,7 @@ export default async function BudgetDashboard() {
         subtitle={activeSeason.name}
         actions={<>
           {!canEdit && (
-            <span className="text-small text-[--color-text-secondary] italic">Read-only view</span>
+            <span className="text-small text-(--color-text-secondary) italic">Read-only view</span>
           )}
           {canEdit && (
             <Link href="/budget/setup"><Button variant="outline" size="sm">Edit budget</Button></Link>
@@ -126,9 +126,9 @@ export default async function BudgetDashboard() {
           { label: "Funding received", value: formatCurrency(receivedFunding), sub: `of ${formatCurrency(totalFunding)} pledged` },
         ].map((s) => (
           <div key={s.label} className="card">
-            <p className="text-small text-[--color-text-secondary]">{s.label}</p>
-            <p className="text-h2 text-[--color-text-primary] mt-1">{s.value}</p>
-            <p className="text-small text-[--color-text-secondary] mt-0.5">{s.sub}</p>
+            <p className="text-small text-(--color-text-secondary)">{s.label}</p>
+            <p className="text-h2 text-(--color-text-primary) mt-1">{s.value}</p>
+            <p className="text-small text-(--color-text-secondary) mt-0.5">{s.sub}</p>
           </div>
         ))}
       </div>
@@ -136,7 +136,7 @@ export default async function BudgetDashboard() {
       {/* Overall progress */}
       <div className="card">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-h3 text-[--color-text-primary]">Overall spending</h2>
+          <h2 className="text-h3 text-(--color-text-primary)">Overall spending</h2>
           <Badge variant={budgetHealth}>
             {budgetHealth === "success" ? "On track" : budgetHealth === "warning" ? "At risk" : "Over budget"}
           </Badge>
@@ -152,7 +152,7 @@ export default async function BudgetDashboard() {
 
       {/* Category breakdown */}
       <div>
-        <h2 className="text-h2 text-[--color-text-primary] mb-3">By category</h2>
+        <h2 className="text-h2 text-(--color-text-primary) mb-3">By category</h2>
         <div className="card space-y-4">
           {budget.categories.filter((c) => c.allocation > 0).map((cat) => {
             const catSpent = spentIn(cat.id);
@@ -203,20 +203,20 @@ export default async function BudgetDashboard() {
         {/* Funding sources */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-h2 text-[--color-text-primary]">Funding sources</h2>
+            <h2 className="text-h2 text-(--color-text-primary)">Funding sources</h2>
             {canEdit && <AddFundingDialog budgetId={budget.id} />}
           </div>
           <div className="card space-y-3">
             {budget.fundingSources.length === 0 ? (
-              <p className="text-small text-[--color-text-secondary]">No funding sources added.</p>
+              <p className="text-small text-(--color-text-secondary)">No funding sources added.</p>
             ) : budget.fundingSources.map((f) => (
-              <div key={f.id} className="flex items-center justify-between py-2 border-b border-[--color-border] last:border-0">
+              <div key={f.id} className="flex items-center justify-between py-2 border-b border-(--color-border) last:border-0">
                 <div>
-                  <p className="text-sm font-medium text-[--color-text-primary]">{f.name}</p>
-                  <p className="text-small text-[--color-text-secondary]">{f.type.replace(/_/g, " ")}</p>
+                  <p className="text-sm font-medium text-(--color-text-primary)">{f.name}</p>
+                  <p className="text-small text-(--color-text-secondary)">{f.type.replace(/_/g, " ")}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-medium text-[--color-text-primary]">{formatCurrency(f.amount)}</p>
+                  <p className="text-sm font-medium text-(--color-text-primary)">{formatCurrency(f.amount)}</p>
                   <Badge variant={f.status === "RECEIVED" ? "success" : f.status === "PARTIAL" ? "warning" : "neutral"}>
                     {f.status}
                   </Badge>
@@ -228,20 +228,20 @@ export default async function BudgetDashboard() {
 
         {/* Recent expenses */}
         <div>
-          <h2 className="text-h2 text-[--color-text-primary] mb-3">Recent expenses</h2>
+          <h2 className="text-h2 text-(--color-text-primary) mb-3">Recent expenses</h2>
           <div className="card space-y-3">
             {budget.expenses.length === 0 ? (
-              <p className="text-small text-[--color-text-secondary]">No expenses logged.</p>
+              <p className="text-small text-(--color-text-secondary)">No expenses logged.</p>
             ) : budget.expenses.slice(0, 8).map((e) => (
-              <div key={e.id} className="flex items-center justify-between py-2 border-b border-[--color-border] last:border-0">
+              <div key={e.id} className="flex items-center justify-between py-2 border-b border-(--color-border) last:border-0">
                 <div>
-                  <p className="text-sm font-medium text-[--color-text-primary]">{e.description}</p>
-                  <p className="text-small text-[--color-text-secondary]">
+                  <p className="text-sm font-medium text-(--color-text-primary)">{e.description}</p>
+                  <p className="text-small text-(--color-text-secondary)">
                     {e.vendor ? `${e.vendor} · ` : ""}{formatDate(e.date)}
                     {e.isCommitment && <span className="ml-1.5 badge badge-info">Committed — on order</span>}
                   </p>
                 </div>
-                <p className="text-sm font-medium text-[--color-text-primary] shrink-0 ml-4">{formatCurrency(e.amount)}</p>
+                <p className="text-sm font-medium text-(--color-text-primary) shrink-0 ml-4">{formatCurrency(e.amount)}</p>
               </div>
             ))}
           </div>

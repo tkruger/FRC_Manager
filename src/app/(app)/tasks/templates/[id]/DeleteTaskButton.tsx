@@ -19,7 +19,7 @@ export function DeleteTaskButton({ taskId }: { taskId: string }) {
 
   return (
     <button onClick={handle} disabled={isPending}
-      className="text-[--color-text-disabled] hover:text-[--color-danger] transition-colors disabled:opacity-50 p-1"
+      className="text-(--color-text-disabled) hover:text-(--color-danger) transition-colors disabled:opacity-50 p-1"
       title="Remove task">
       <Trash2 className="h-3.5 w-3.5" />
     </button>

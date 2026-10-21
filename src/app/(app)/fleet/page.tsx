@@ -84,16 +84,16 @@ export default async function FleetPage() {
 
             return (
               <Link key={robot.id} href={`/fleet/${robot.id}`}
-                className="card hover:border-[--color-primary] transition-colors group flex flex-col gap-4"
+                className="card hover:border-(--color-primary) transition-colors group flex flex-col gap-4"
                 style={{ borderLeftWidth: 4, borderLeftColor: robot.role === "COMPETITION" ? "var(--color-primary)" : "var(--color-secondary)" }}>
 
                 {/* Robot header */}
                 <div className="flex items-start justify-between">
                   <div>
-                    <h2 className="text-h3 text-[--color-text-primary] group-hover:text-[--color-primary] transition-colors">
+                    <h2 className="text-h3 text-(--color-text-primary) group-hover:text-(--color-primary) transition-colors">
                       {robot.displayName}
                     </h2>
-                    <p className="text-small text-[--color-text-secondary] mt-0.5">{ROLE_LABELS[robot.role]}</p>
+                    <p className="text-small text-(--color-text-secondary) mt-0.5">{ROLE_LABELS[robot.role]}</p>
                   </div>
                   <Badge variant={statusBadge}>{robot.status.replace(/_/g, " ")}</Badge>
                 </div>
@@ -111,7 +111,7 @@ export default async function FleetPage() {
                 </div>
 
                 {robot.description && (
-                  <p className="text-small text-[--color-text-secondary] truncate">{robot.description}</p>
+                  <p className="text-small text-(--color-text-secondary) truncate">{robot.description}</p>
                 )}
 
                 <div>
@@ -125,7 +125,7 @@ export default async function FleetPage() {
         </div>
       ) : (
         <div className="card text-center py-12">
-          <p className="text-body text-[--color-text-secondary] mb-4">
+          <p className="text-body text-(--color-text-secondary) mb-4">
             {activeSeason ? "No robots added yet." : "Set up a season to start managing robots."}
           </p>
           <Link href="/settings/season">
@@ -137,18 +137,18 @@ export default async function FleetPage() {
       {/* Historical archive */}
       {pastSeasons.length > 0 && (
         <div>
-          <h2 className="text-h2 text-[--color-text-primary] mb-3">Historical archive</h2>
+          <h2 className="text-h2 text-(--color-text-primary) mb-3">Historical archive</h2>
           <div className="space-y-3">
             {pastSeasons.map((season) => (
               <div key={season.id} className="card">
-                <h3 className="text-h3 text-[--color-text-primary] mb-2">{season.name}</h3>
+                <h3 className="text-h3 text-(--color-text-primary) mb-2">{season.name}</h3>
                 {season.robots.length === 0 ? (
-                  <p className="text-small text-[--color-text-secondary]">No robots</p>
+                  <p className="text-small text-(--color-text-secondary)">No robots</p>
                 ) : (
                   <div className="flex flex-wrap gap-2">
                     {season.robots.map((r) => (
                       <Link key={r.id} href={`/fleet/${r.id}`}>
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-[--color-border] text-small text-[--color-text-primary] hover:border-[--color-primary] hover:text-[--color-primary] transition-colors">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-(--color-border) text-small text-(--color-text-primary) hover:border-(--color-primary) hover:text-(--color-primary) transition-colors">
                           {r.displayName}
                         </span>
                       </Link>

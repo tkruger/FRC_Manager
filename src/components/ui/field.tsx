@@ -19,10 +19,10 @@ const Field = forwardRef<HTMLInputElement, FieldProps>(
         </Label>
         <Input ref={ref} id={fieldId} error={error} required={required} {...props} />
         {hint && !error && (
-          <p className="mt-1 text-small text-[--color-text-secondary]">{hint}</p>
+          <p className="mt-1 text-small text-(--color-text-secondary)">{hint}</p>
         )}
         {error && (
-          <p className="mt-1 text-small text-[--color-danger]" role="alert">{error}</p>
+          <p className="mt-1 text-small text-(--color-danger)" role="alert">{error}</p>
         )}
       </div>
     );

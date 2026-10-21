@@ -79,15 +79,15 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
           {/* Left: logo + season pill */}
           <div className="flex items-center gap-2">
             <Link href="/dashboard" className="flex items-center gap-2" aria-label="FRC Manager home">
-              <div className="w-7 h-7 rounded bg-[--color-primary] flex items-center justify-center shrink-0">
+              <div className="w-7 h-7 rounded bg-(--color-primary) flex items-center justify-center shrink-0">
                 <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-white" stroke="currentColor" strokeWidth={2.5} aria-hidden>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z" />
                 </svg>
               </div>
-              <span className="font-bold text-sm text-[--color-text-primary] hidden xl:inline">FRC Manager</span>
+              <span className="font-bold text-sm text-(--color-text-primary) hidden xl:inline">FRC Manager</span>
             </Link>
             {activeSeasonName && (
-              <span className="hidden 2xl:inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[--color-surface-overlay] text-[--color-text-secondary] border border-[--color-border] max-w-[140px] truncate">
+              <span className="hidden 2xl:inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-(--color-surface-overlay) text-(--color-text-secondary) border border-(--color-border) max-w-[140px] truncate">
                 {activeSeasonName}
               </span>
             )}
@@ -107,8 +107,8 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
                   className={cn(
                     "relative flex items-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-medium transition-all duration-150",
                     isActive
-                      ? "text-[--color-text-primary] bg-[--color-surface-overlay]"
-                      : "text-[--color-text-secondary] hover:text-[--color-text-primary] hover:bg-[--color-surface-overlay]/60"
+                      ? "text-(--color-text-primary) bg-(--color-surface-overlay)"
+                      : "text-(--color-text-secondary) hover:text-(--color-text-primary) hover:bg-(--color-surface-overlay)/60"
                   )}
                 >
                   <Icon className="w-4 h-4 shrink-0" />
@@ -130,7 +130,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
           )}
           <button
             onClick={toggle}
-            className="h-8 w-8 rounded-md flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors"
+            className="h-8 w-8 rounded-md flex items-center justify-center text-(--color-text-secondary) hover:bg-(--color-surface-overlay) transition-colors"
             aria-label={resolvedTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
             title={`Mode: ${mode}`}
           >
@@ -139,7 +139,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
 
           <Link
             href="/calendar"
-            className="h-8 w-8 rounded-md flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors"
+            className="h-8 w-8 rounded-md flex items-center justify-center text-(--color-text-secondary) hover:bg-(--color-surface-overlay) transition-colors"
             aria-label="Meeting calendar"
           >
             <CalendarIcon className="w-4 h-4" />
@@ -162,19 +162,19 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
                   <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z" />
                 </svg>
               </div>
-              <span className="font-bold text-sm text-[--color-text-primary] hidden sm:block">FRC Manager</span>
+              <span className="font-bold text-sm text-(--color-text-primary) hidden sm:block">FRC Manager</span>
             </Link>
           </div>
           {/* min-w-0 + flex-1 let the robot picker shrink so the row never exceeds the screen */}
           <div className="flex min-w-0 flex-1 items-center justify-end gap-1">
             {robots.length > 0 && <RobotSelector robots={robots} activeRobotId={activeRobotId} activeRobot={activeRobot} />}
             {/* Phones: theme lives in Profile & appearance, calendar in the bottom bar */}
-            <button onClick={toggle} aria-label="Toggle light/dark mode" className="hidden sm:flex h-9 w-9 shrink-0 rounded-md items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors">
+            <button onClick={toggle} aria-label="Toggle light/dark mode" className="hidden sm:flex h-9 w-9 shrink-0 rounded-md items-center justify-center text-(--color-text-secondary) hover:bg-(--color-surface-overlay) transition-colors">
               {resolvedTheme === "dark" ? <SunIcon /> : <MoonIcon />}
             </button>
             <Link
               href="/calendar"
-              className="hidden sm:flex h-9 w-9 shrink-0 rounded-md items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors"
+              className="hidden sm:flex h-9 w-9 shrink-0 rounded-md items-center justify-center text-(--color-text-secondary) hover:bg-(--color-surface-overlay) transition-colors"
               aria-label="Meeting calendar"
             >
               <CalendarIcon className="w-4 h-4" />
@@ -208,10 +208,10 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
           >
             <div className="px-4 pt-4 pb-2">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-sm font-semibold text-[--color-text-primary]">More</p>
+                <p className="text-sm font-semibold text-(--color-text-primary)">More</p>
                 <button
                   onClick={() => setMoreOpen(false)}
-                  className="h-7 w-7 rounded-full flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors text-base leading-none"
+                  className="h-7 w-7 rounded-full flex items-center justify-center text-(--color-text-secondary) hover:bg-(--color-surface-overlay) transition-colors text-base leading-none"
                 >×</button>
               </div>
               <div className="grid grid-cols-3 gap-2">
@@ -225,8 +225,8 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
                       className={cn(
                         "flex flex-col items-center gap-1.5 rounded-xl py-3 px-2 transition-colors",
                         active
-                          ? "bg-[--color-primary]/10 text-[--color-primary]"
-                          : "text-[--color-text-secondary] hover:bg-[--color-surface-overlay] hover:text-[--color-text-primary]"
+                          ? "bg-(--color-primary)/10 text-(--color-primary)"
+                          : "text-(--color-text-secondary) hover:bg-(--color-surface-overlay) hover:text-(--color-text-primary)"
                       )}
                     >
                       <Icon className="w-6 h-6" />
@@ -260,11 +260,11 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
                   onClick={() => setMoreOpen(false)}
                   className={cn(
                     "flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors py-2",
-                    active ? "text-[--color-primary]" : "text-[--color-text-secondary]"
+                    active ? "text-(--color-primary)" : "text-(--color-text-secondary)"
                   )}
                   aria-current={active ? "page" : undefined}
                 >
-                  <Icon className={cn("w-5 h-5", active && "text-[--color-primary]")} />
+                  <Icon className={cn("w-5 h-5", active && "text-(--color-primary)")} />
                   {label}
                 </Link>
               );
@@ -275,11 +275,11 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
               onClick={() => setMoreOpen((o) => !o)}
               className={cn(
                 "flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors py-2",
-                moreOpen ? "text-[--color-primary]" : "text-[--color-text-secondary]"
+                moreOpen ? "text-(--color-primary)" : "text-(--color-text-secondary)"
               )}
               aria-expanded={moreOpen}
             >
-              <MoreIcon className={cn("w-5 h-5", moreOpen && "text-[--color-primary]")} />
+              <MoreIcon className={cn("w-5 h-5", moreOpen && "text-(--color-primary)")} />
               More
             </button>
           </div>
@@ -311,10 +311,10 @@ function RobotSelector({
   }
 
   return (
-    <div className="flex min-w-0 items-center gap-1.5 rounded-md border border-[--color-border] bg-[--color-surface-raised] px-3 h-9 text-sm">
-      <span className="hidden sm:inline text-[--color-text-secondary] text-xs">Robot:</span>
+    <div className="flex min-w-0 items-center gap-1.5 rounded-md border border-(--color-border) bg-(--color-surface-raised) px-3 h-9 text-sm">
+      <span className="hidden sm:inline text-(--color-text-secondary) text-xs">Robot:</span>
       <select
-        className={cn("min-w-0 w-full max-w-[140px] truncate bg-transparent text-[--color-text-primary] text-sm font-medium focus:outline-none cursor-pointer", isPending && "opacity-50")}
+        className={cn("min-w-0 w-full max-w-[140px] truncate bg-transparent text-(--color-text-primary) text-sm font-medium focus:outline-none cursor-pointer", isPending && "opacity-50")}
         value={activeRobotId ?? ""}
         onChange={handleChange}
         disabled={isPending}
@@ -373,7 +373,7 @@ function UserMenu({ user, canManageTeam, canManageSeason, canManageDiscord, canM
       >
         {user.name?.[0]?.toUpperCase() ?? "U"}
         {pendingMemberCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-[--color-warning] text-white text-[10px] font-bold flex items-center justify-center" aria-hidden>
+          <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-(--color-warning) text-white text-[10px] font-bold flex items-center justify-center" aria-hidden>
             {pendingMemberCount > 9 ? "9+" : pendingMemberCount}
           </span>
         )}
@@ -381,49 +381,49 @@ function UserMenu({ user, canManageTeam, canManageSeason, canManageDiscord, canM
 
       {open && (
         <div
-          className="absolute right-0 top-full mt-1 w-56 rounded-lg border border-[--color-border] py-1 z-50"
+          className="absolute right-0 top-full mt-1 w-56 rounded-lg border border-(--color-border) py-1 z-50"
           style={{
             backgroundColor: "var(--color-surface)",
             boxShadow: "0 8px 32px -4px rgba(0,0,0,0.18), 0 0 0 1px var(--color-border)",
           }}
           role="menu"
         >
-          <div className="px-3 py-2.5 border-b border-[--color-border]">
-            <p className="text-sm font-semibold text-[--color-text-primary] truncate">{user.name}</p>
-            <p className="text-xs text-[--color-text-secondary] truncate mt-0.5">{user.email}</p>
+          <div className="px-3 py-2.5 border-b border-(--color-border)">
+            <p className="text-sm font-semibold text-(--color-text-primary) truncate">{user.name}</p>
+            <p className="text-xs text-(--color-text-secondary) truncate mt-0.5">{user.email}</p>
           </div>
           <Link href="/settings/profile" role="menuitem" onClick={() => setOpen(false)}
-            className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-[--color-text-primary] hover:bg-[--color-surface-overlay] transition-colors">
-            <svg className="w-4 h-4 text-[--color-text-secondary]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+            className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-(--color-text-primary) hover:bg-(--color-surface-overlay) transition-colors">
+            <svg className="w-4 h-4 text-(--color-text-secondary)" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
             </svg>
             Profile &amp; appearance
           </Link>
           <Link href="/settings/notifications" role="menuitem" onClick={() => setOpen(false)}
-            className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-[--color-text-primary] hover:bg-[--color-surface-overlay] transition-colors">
-            <svg className="w-4 h-4 text-[--color-text-secondary]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+            className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-(--color-text-primary) hover:bg-(--color-surface-overlay) transition-colors">
+            <svg className="w-4 h-4 text-(--color-text-secondary)" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
               <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
             </svg>
             Notification settings
           </Link>
           <Link href="/help" role="menuitem" onClick={() => setOpen(false)}
-            className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-[--color-text-primary] hover:bg-[--color-surface-overlay] transition-colors">
-            <svg className="w-4 h-4 text-[--color-text-secondary]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+            className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-(--color-text-primary) hover:bg-(--color-surface-overlay) transition-colors">
+            <svg className="w-4 h-4 text-(--color-text-secondary)" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
             </svg>
             Help &amp; guide
           </Link>
           {canManageTeam && (
             <Link href="/settings/members" role="menuitem" onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-[--color-text-primary] hover:bg-[--color-surface-overlay] transition-colors">
-              <UserCircleIcon className="w-4 h-4 text-[--color-text-secondary]" />
+              className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-(--color-text-primary) hover:bg-(--color-surface-overlay) transition-colors">
+              <UserCircleIcon className="w-4 h-4 text-(--color-text-secondary)" />
               Team members
             </Link>
           )}
           {canInvite && (
             <Link href="/settings/invites" role="menuitem" onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-[--color-text-primary] hover:bg-[--color-surface-overlay] transition-colors">
-              <svg className="w-4 h-4 text-[--color-text-secondary]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+              className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-(--color-text-primary) hover:bg-(--color-surface-overlay) transition-colors">
+              <svg className="w-4 h-4 text-(--color-text-secondary)" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
               </svg>
               Invite people
@@ -431,8 +431,8 @@ function UserMenu({ user, canManageTeam, canManageSeason, canManageDiscord, canM
           )}
           {canManageTemplates && (
             <Link href="/tasks/templates" role="menuitem" onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-[--color-text-primary] hover:bg-[--color-surface-overlay] transition-colors">
-              <svg className="w-4 h-4 text-[--color-text-secondary]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+              className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-(--color-text-primary) hover:bg-(--color-surface-overlay) transition-colors">
+              <svg className="w-4 h-4 text-(--color-text-secondary)" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
               </svg>
               Templates
@@ -440,16 +440,16 @@ function UserMenu({ user, canManageTeam, canManageSeason, canManageDiscord, canM
           )}
           {canManageSeason && (
             <Link href="/settings/season" role="menuitem" onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-[--color-text-primary] hover:bg-[--color-surface-overlay] transition-colors">
-              <CalendarIcon className="w-4 h-4 text-[--color-text-secondary]" />
+              className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-(--color-text-primary) hover:bg-(--color-surface-overlay) transition-colors">
+              <CalendarIcon className="w-4 h-4 text-(--color-text-secondary)" />
               Season settings
             </Link>
           )}
           {/* Same audience as Discord: Head Mentor + Team Leadership (view); editing is Head Mentor only */}
           {canManageDiscord && (
             <Link href="/settings/workflows" role="menuitem" onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-[--color-text-primary] hover:bg-[--color-surface-overlay] transition-colors">
-              <svg className="w-4 h-4 text-[--color-text-secondary]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+              className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-(--color-text-primary) hover:bg-(--color-surface-overlay) transition-colors">
+              <svg className="w-4 h-4 text-(--color-text-secondary)" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6h4.5v4.5h-4.5V6zm12 0h4.5v4.5h-4.5V6zm-6 7.5h4.5V18h-4.5v-4.5zM8.25 8.25h7.5M6 10.5v3.75h3.75M18 10.5v3.75h-3.75" />
               </svg>
               Purchase workflow
@@ -457,8 +457,8 @@ function UserMenu({ user, canManageTeam, canManageSeason, canManageDiscord, canM
           )}
           {canManageDiscord && (
             <Link href="/settings/discord" role="menuitem" onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-[--color-text-primary] hover:bg-[--color-surface-overlay] transition-colors">
-              <svg className="w-4 h-4 text-[--color-text-secondary]" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+              className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-(--color-text-primary) hover:bg-(--color-surface-overlay) transition-colors">
+              <svg className="w-4 h-4 text-(--color-text-secondary)" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
                 <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/>
               </svg>
               Discord integration
@@ -467,18 +467,18 @@ function UserMenu({ user, canManageTeam, canManageSeason, canManageDiscord, canM
           {/* Platform admin — not a team role */}
           {isSuperAdmin && (
             <Link href="/settings/admin" role="menuitem" onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-[--color-text-primary] hover:bg-[--color-surface-overlay] transition-colors">
-              <svg className="w-4 h-4 text-[--color-text-secondary]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+              className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-(--color-text-primary) hover:bg-(--color-surface-overlay) transition-colors">
+              <svg className="w-4 h-4 text-(--color-text-secondary)" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
               </svg>
               Team approvals
             </Link>
           )}
-          <div className="border-t border-[--color-border] mt-1 pt-1">
+          <div className="border-t border-(--color-border) mt-1 pt-1">
             <button
               role="menuitem"
               onClick={() => signOut({ callbackUrl: "/login" })}
-              className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-[--color-danger] hover:bg-[--color-surface-overlay] transition-colors"
+              className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-(--color-danger) hover:bg-(--color-surface-overlay) transition-colors"
             >
               <SignOutIcon className="w-4 h-4" />
               Sign out

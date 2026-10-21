@@ -48,12 +48,12 @@ export function MemberRoleEditor({ userId, currentRoles }: { userId: string; cur
         <Button variant="outline" size="sm">Edit roles</Button>
       </DialogTrigger>
       <DialogContent title="Edit member roles">
-        {error && <div className="text-sm text-[--color-danger] bg-[--color-danger]/10 rounded px-3 py-2 mb-4">{error}</div>}
+        {error && <div className="text-sm text-(--color-danger) bg-(--color-danger)/10 rounded px-3 py-2 mb-4">{error}</div>}
         <div className="space-y-2 mb-6">
           {ALL_ROLES.map((role) => (
-            <label key={role} className="flex items-center gap-3 cursor-pointer py-1.5 px-2 rounded hover:bg-[--color-surface-overlay]">
+            <label key={role} className="flex items-center gap-3 cursor-pointer py-1.5 px-2 rounded hover:bg-(--color-surface-overlay)">
               <input type="checkbox" checked={selected.includes(role)} onChange={() => toggle(role)} className="rounded" />
-              <span className="text-sm text-[--color-text-primary]">{ROLE_LABELS[role]}</span>
+              <span className="text-sm text-(--color-text-primary)">{ROLE_LABELS[role]}</span>
             </label>
           ))}
         </div>

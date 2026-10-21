@@ -74,7 +74,7 @@ export function InventoryTableClient({ items, robots, emptyMessage, canAdd, reti
 
       {displayed.length === 0 ? (
         <div className="card text-center py-12">
-          <p className="text-body text-[--color-text-secondary]">
+          <p className="text-body text-(--color-text-secondary)">
             {search.trim() ? `No items match "${search}"` : emptyMessage}
           </p>
         </div>
@@ -93,22 +93,22 @@ export function InventoryTableClient({ items, robots, emptyMessage, canAdd, reti
                 <Td>
                   <Link
                     href={`/inventory/${item.id}`}
-                    className="font-medium text-[--color-secondary] hover:underline group-hover:text-[--color-primary] transition-colors"
+                    className="font-medium text-(--color-secondary) hover:underline group-hover:text-(--color-primary) transition-colors"
                   >
                     {item.name}
                   </Link>
                   {item.archived && <Badge variant="neutral" className="ml-2 text-xs">Retired</Badge>}
                   {item.partNumber && (
-                    <p className="text-mono text-[--color-text-secondary]">{item.partNumber}</p>
+                    <p className="text-mono text-(--color-text-secondary)">{item.partNumber}</p>
                   )}
                 </Td>
                 <Td>
-                  <Link href={`/inventory/${item.id}`} className="block text-[--color-text-secondary] group-hover:text-[--color-text-primary]">
+                  <Link href={`/inventory/${item.id}`} className="block text-(--color-text-secondary) group-hover:text-(--color-text-primary)">
                     {item.category.replace(/_/g, " ")}
                   </Link>
                 </Td>
                 <Td>
-                  <Link href={`/inventory/${item.id}`} className="block text-[--color-text-secondary] group-hover:text-[--color-text-primary]">
+                  <Link href={`/inventory/${item.id}`} className="block text-(--color-text-secondary) group-hover:text-(--color-text-primary)">
                     {item.itemType.replace(/_/g, " ")}
                   </Link>
                 </Td>
@@ -117,7 +117,7 @@ export function InventoryTableClient({ items, robots, emptyMessage, canAdd, reti
                     {item.currentStock} {item.unitOfMeasure.toLowerCase()}
                   </Badge>
                 </Td>
-                <Td right className="text-[--color-text-secondary]">{item.minStockThreshold}</Td>
+                <Td right className="text-(--color-text-secondary)">{item.minStockThreshold}</Td>
                 <Td>{item.storageLocation ?? "—"}</Td>
                 <Td right>{formatCurrency(item.unitCost)}</Td>
                 <Td>

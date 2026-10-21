@@ -28,7 +28,7 @@ export function AddVendorDialog() {
       <DialogContent title="Add vendor">
         <form action={action} className="space-y-4">
           {state && !state.success && (
-            <div className="text-sm text-[--color-danger] bg-[--color-danger]/10 rounded px-3 py-2">{state.error}</div>
+            <div className="text-sm text-(--color-danger) bg-(--color-danger)/10 rounded px-3 py-2">{state.error}</div>
           )}
           <Field label="Vendor name" name="name" required placeholder="e.g. AndyMark" />
           <Field label="Website" name="website" type="url" placeholder="https://" />
@@ -40,7 +40,7 @@ export function AddVendorDialog() {
           <Textarea label="Notes" name="notes" rows={2} placeholder="Rush orders available, free shipping over $50, etc." />
           <div className="flex items-center gap-2">
             <input type="checkbox" id="preferred" name="preferred" className="rounded" />
-            <label htmlFor="preferred" className="text-sm text-[--color-text-primary]">Mark as preferred vendor</label>
+            <label htmlFor="preferred" className="text-sm text-(--color-text-primary)">Mark as preferred vendor</label>
           </div>
           <div className="flex gap-2 pt-2">
             <Button type="submit" isLoading={pending}>Add vendor</Button>

@@ -19,7 +19,7 @@ export function DeleteTemplateButton({ templateId, templateName }: { templateId:
 
   return (
     <button onClick={handle} disabled={isPending}
-      className="text-[--color-text-disabled] hover:text-[--color-danger] transition-colors disabled:opacity-50 shrink-0 p-1"
+      className="text-(--color-text-disabled) hover:text-(--color-danger) transition-colors disabled:opacity-50 shrink-0 p-1"
       title="Delete template">
       <Trash2 className="h-4 w-4" />
     </button>

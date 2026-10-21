@@ -20,11 +20,11 @@ export function TaskStatusButton({ taskId, currentStatus }: { taskId: string; cu
   }
 
   const variantClasses: Record<string, string> = {
-    success: "text-[--color-success]",
-    warning: "text-[--color-warning]",
-    danger:  "text-[--color-danger]",
-    info:    "text-[--color-info]",
-    neutral: "text-[--color-text-secondary]",
+    success: "text-(--color-success)",
+    warning: "text-(--color-warning)",
+    danger:  "text-(--color-danger)",
+    info:    "text-(--color-info)",
+    neutral: "text-(--color-text-secondary)",
   };
 
   return (

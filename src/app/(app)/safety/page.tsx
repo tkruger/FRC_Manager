@@ -56,13 +56,13 @@ export default async function SafetyPage() {
 
       {/* Expiring certs warning */}
       {expiringCerts.length > 0 && (
-        <div className="rounded-md bg-[--color-warning]/10 border border-[--color-warning]/20 px-4 py-3">
-          <p className="text-sm font-medium text-[--color-warning] mb-1">
+        <div className="rounded-md bg-(--color-warning)/10 border border-(--color-warning)/20 px-4 py-3">
+          <p className="text-sm font-medium text-(--color-warning) mb-1">
             {expiringCerts.length} certification{expiringCerts.length !== 1 ? "s" : ""} expiring within 30 days
           </p>
           <div className="flex flex-wrap gap-2 mt-1">
             {expiringCerts.map((c) => (
-              <span key={c.id} className="text-small text-[--color-warning]">
+              <span key={c.id} className="text-small text-(--color-warning)">
                 {c.user.name} — {c.certName} ({formatDate(c.expiresAt)})
               </span>
             ))}
@@ -73,18 +73,18 @@ export default async function SafetyPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Incident log */}
         <div>
-          <h2 className="text-h2 text-[--color-text-primary] mb-3">Incident log</h2>
-          <div className="card divide-y divide-[--color-border]">
+          <h2 className="text-h2 text-(--color-text-primary) mb-3">Incident log</h2>
+          <div className="card divide-y divide-(--color-border)">
             {incidents.length === 0 ? (
-              <p className="py-6 text-center text-small text-[--color-success]">No incidents reported 🎉</p>
+              <p className="py-6 text-center text-small text-(--color-success)">No incidents reported 🎉</p>
             ) : incidents.map((i) => (
               <div key={i.id} className="py-3">
                 <div className="flex items-center gap-2 mb-1">
                   <Badge variant={SEVERITY_BADGE[i.severity]}>{i.severity.replace(/_/g, " ")}</Badge>
-                  <span className="text-small text-[--color-text-secondary]">{formatDate(i.incidentDate)}</span>
+                  <span className="text-small text-(--color-text-secondary)">{formatDate(i.incidentDate)}</span>
                 </div>
-                <p className="text-sm text-[--color-text-primary] font-medium">{i.description.slice(0, 80)}{i.description.length > 80 ? "…" : ""}</p>
-                <p className="text-small text-[--color-text-secondary]">Reported by {i.reportedBy.name}</p>
+                <p className="text-sm text-(--color-text-primary) font-medium">{i.description.slice(0, 80)}{i.description.length > 80 ? "…" : ""}</p>
+                <p className="text-small text-(--color-text-secondary)">Reported by {i.reportedBy.name}</p>
               </div>
             ))}
           </div>
@@ -92,18 +92,18 @@ export default async function SafetyPage() {
 
         {/* Quick actions */}
         <div className="space-y-4">
-          <h2 className="text-h2 text-[--color-text-primary]">Quick actions</h2>
+          <h2 className="text-h2 text-(--color-text-primary)">Quick actions</h2>
           <div className="grid grid-cols-1 gap-3">
             {[
               { label: "Certification matrix",      desc: "View all members × all certifications", href: "/safety/certifications", color: "var(--color-secondary)" },
               { label: "Pre-competition inspection", desc: "PRECHECK status for each robot, plus checklists",   href: "/safety/inspection",     color: "var(--color-primary)"   },
             ].map((a) => (
               <Link key={a.href} href={a.href}
-                className="card flex items-center gap-4 hover:border-[--color-primary] transition-colors"
+                className="card flex items-center gap-4 hover:border-(--color-primary) transition-colors"
                 style={{ borderLeftWidth: 4, borderLeftColor: a.color }}>
                 <div>
-                  <p className="text-sm font-medium text-[--color-text-primary]">{a.label}</p>
-                  <p className="text-small text-[--color-text-secondary]">{a.desc}</p>
+                  <p className="text-sm font-medium text-(--color-text-primary)">{a.label}</p>
+                  <p className="text-small text-(--color-text-secondary)">{a.desc}</p>
                 </div>
               </Link>
             ))}
@@ -111,19 +111,19 @@ export default async function SafetyPage() {
 
           {/* Stats */}
           <div className="card">
-            <h3 className="text-h3 text-[--color-text-primary] mb-3">Season stats</h3>
+            <h3 className="text-h3 text-(--color-text-primary) mb-3">Season stats</h3>
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
-                <p className="text-h2 text-[--color-text-primary]">{incidents.length}</p>
-                <p className="text-small text-[--color-text-secondary]">Incidents</p>
+                <p className="text-h2 text-(--color-text-primary)">{incidents.length}</p>
+                <p className="text-small text-(--color-text-secondary)">Incidents</p>
               </div>
               <div>
-                <p className="text-h2 text-[--color-text-primary]">{incidents.filter((i) => i.severity === "SIGNIFICANT_INJURY").length}</p>
-                <p className="text-small text-[--color-text-secondary]">Significant</p>
+                <p className="text-h2 text-(--color-text-primary)">{incidents.filter((i) => i.severity === "SIGNIFICANT_INJURY").length}</p>
+                <p className="text-small text-(--color-text-secondary)">Significant</p>
               </div>
               <div>
-                <p className="text-h2 text-[--color-text-primary]">{expiringCerts.length}</p>
-                <p className="text-small text-[--color-text-secondary]">Certs expiring</p>
+                <p className="text-h2 text-(--color-text-primary)">{expiringCerts.length}</p>
+                <p className="text-small text-(--color-text-secondary)">Certs expiring</p>
               </div>
             </div>
           </div>

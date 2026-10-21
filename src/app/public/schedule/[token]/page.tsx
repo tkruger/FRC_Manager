@@ -35,9 +35,9 @@ export default async function PublicSchedulePage({ params }: { params: Promise<{
   }));
 
   return (
-    <div className="min-h-screen bg-[--color-surface]">
+    <div className="min-h-screen bg-(--color-surface)">
       {/* Header */}
-      <header className="border-b border-[--color-border] py-6 px-4 sm:px-8">
+      <header className="border-b border-(--color-border) py-6 px-4 sm:px-8">
         <div className="max-w-3xl mx-auto">
           <div className="flex items-center gap-3 mb-1">
             <div
@@ -47,16 +47,16 @@ export default async function PublicSchedulePage({ params }: { params: Promise<{
               {season.team.teamNumber}
             </div>
             <div>
-              <h1 className="text-h2 text-[--color-text-primary]">{season.team.name}</h1>
-              <p className="text-small text-[--color-text-secondary]">
+              <h1 className="text-h2 text-(--color-text-primary)">{season.team.name}</h1>
+              <p className="text-small text-(--color-text-secondary)">
                 {season.name} — Build Season Schedule
               </p>
             </div>
           </div>
-          <div className="flex flex-wrap gap-4 mt-3 text-small text-[--color-text-secondary]">
+          <div className="flex flex-wrap gap-4 mt-3 text-small text-(--color-text-secondary)">
             <span>
               Kickoff:{" "}
-              <strong className="text-[--color-text-primary]">
+              <strong className="text-(--color-text-primary)">
                 {season.kickoffDate.toLocaleDateString("en-US", {
                   month: "short", day: "numeric", year: "numeric",
                 })}
@@ -64,7 +64,7 @@ export default async function PublicSchedulePage({ params }: { params: Promise<{
             </span>
             <span>
               Ends:{" "}
-              <strong className="text-[--color-text-primary]">
+              <strong className="text-(--color-text-primary)">
                 {season.endDate.toLocaleDateString("en-US", {
                   month: "short", day: "numeric", year: "numeric",
                 })}
@@ -82,7 +82,7 @@ export default async function PublicSchedulePage({ params }: { params: Promise<{
         <PublicCalendarClient meetings={serializedMeetings} />
       </main>
 
-      <footer className="border-t border-[--color-border] py-4 px-4 text-center text-small text-[--color-text-disabled]">
+      <footer className="border-t border-(--color-border) py-4 px-4 text-center text-small text-(--color-text-disabled)">
         FRC Manager — Team {season.team.teamNumber}
       </footer>
     </div>

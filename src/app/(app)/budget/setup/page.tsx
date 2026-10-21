@@ -24,12 +24,12 @@ export default async function BudgetSetupPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       <div>
-        <nav className="text-small text-[--color-text-secondary] mb-1">
-          <Link href="/budget" className="hover:text-[--color-primary]">Budget</Link>
+        <nav className="text-small text-(--color-text-secondary) mb-1">
+          <Link href="/budget" className="hover:text-(--color-primary)">Budget</Link>
           <span className="mx-2">›</span>Setup
         </nav>
-        <h1 className="text-h1 text-[--color-text-primary]">Budget setup</h1>
-        <p className="text-body text-[--color-text-secondary] mt-1">
+        <h1 className="text-h1 text-(--color-text-primary)">Budget setup</h1>
+        <p className="text-body text-(--color-text-secondary) mt-1">
           Configure total budget and allocations for {activeSeason.name}.
         </p>
       </div>

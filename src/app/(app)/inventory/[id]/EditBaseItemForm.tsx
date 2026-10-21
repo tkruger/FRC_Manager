@@ -71,12 +71,12 @@ export function EditBaseItemForm({
   return (
     <form action={action} className="space-y-5">
       {state && !state.success && (
-        <div className="rounded-md bg-[--color-danger]/10 border border-[--color-danger]/20 px-4 py-3 text-sm text-[--color-danger]">
+        <div className="rounded-md bg-(--color-danger)/10 border border-(--color-danger)/20 px-4 py-3 text-sm text-(--color-danger)">
           {state.error}
         </div>
       )}
       {state?.success && (
-        <div className="rounded-md bg-[--color-success]/10 border border-[--color-success]/20 px-4 py-3 text-sm text-[--color-success]">
+        <div className="rounded-md bg-(--color-success)/10 border border-(--color-success)/20 px-4 py-3 text-sm text-(--color-success)">
           Saved successfully.
         </div>
       )}
@@ -92,8 +92,8 @@ export function EditBaseItemForm({
       </div>
       <Textarea label="Description" name="description" rows={2} defaultValue={item.description ?? ""} />
 
-      <div className="border-t border-[--color-border] pt-4 space-y-3">
-        <p className="text-label font-medium text-[--color-text-secondary] uppercase tracking-wide">Stock &amp; reorder</p>
+      <div className="border-t border-(--color-border) pt-4 space-y-3">
+        <p className="text-label font-medium text-(--color-text-secondary) uppercase tracking-wide">Stock &amp; reorder</p>
         <div className="grid grid-cols-3 gap-4">
           <Field label="Current stock"  name="currentStock"      type="number" min="0" step="0.01" defaultValue={item.currentStock} />
           <Field label="Min threshold"  name="minStockThreshold" type="number" min="0" step="0.01" defaultValue={item.minStockThreshold} hint="Triggers reorder" />
@@ -110,15 +110,15 @@ export function EditBaseItemForm({
         <Field label="Storage location" name="storageLocation" defaultValue={item.storageLocation ?? ""} />
       </div>
 
-      <div className="border-t border-[--color-border] pt-4 space-y-2">
-        <p className="text-label font-medium text-[--color-text-secondary] uppercase tracking-wide">FIRST</p>
+      <div className="border-t border-(--color-border) pt-4 space-y-2">
+        <p className="text-label font-medium text-(--color-text-secondary) uppercase tracking-wide">FIRST</p>
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" name="isKopItem" defaultChecked={item.isKopItem} className="rounded" />
-          <span className="text-sm text-[--color-text-primary]">Kit of Parts (KOP) item</span>
+          <span className="text-sm text-(--color-text-primary)">Kit of Parts (KOP) item</span>
         </label>
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" name="isFirstChoiceItem" defaultChecked={item.isFirstChoiceItem} className="rounded" />
-          <span className="text-sm text-[--color-text-primary]">FIRST Choice item ($0 acquisition cost)</span>
+          <span className="text-sm text-(--color-text-primary)">FIRST Choice item ($0 acquisition cost)</span>
         </label>
       </div>
 

@@ -25,7 +25,7 @@ export function IncidentForm() {
   return (
     <form action={action} className="space-y-6">
       {state && !state.success && (
-        <div className="rounded-md bg-[--color-danger]/10 border border-[--color-danger]/20 px-4 py-3 text-sm text-[--color-danger]">{state.error}</div>
+        <div className="rounded-md bg-(--color-danger)/10 border border-(--color-danger)/20 px-4 py-3 text-sm text-(--color-danger)">{state.error}</div>
       )}
       <div className="card space-y-4">
         <div className="grid grid-cols-2 gap-4">
@@ -38,7 +38,7 @@ export function IncidentForm() {
         <Field label="People involved / witnesses" name="peopleInvolved" placeholder="Names of those involved or who witnessed it" />
       </div>
       <div className="card space-y-4">
-        <h2 className="text-h3 text-[--color-text-primary]">Response</h2>
+        <h2 className="text-h3 text-(--color-text-primary)">Response</h2>
         <Textarea label="Immediate action taken" name="immediateAction" rows={2}
           placeholder='e.g. Applied first aid, stopped work, notified mentor' />
         <Textarea label="Corrective action planned" name="correctiveAction" rows={2}

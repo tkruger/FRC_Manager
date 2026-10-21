@@ -31,8 +31,8 @@ export function RenameTemplateForm({ templateId, currentName, currentDescription
     return (
       <div className="flex items-start gap-3">
         <div>
-          <h1 className="text-h1 text-[--color-text-primary]">{currentName}</h1>
-          {currentDescription && <p className="text-body text-[--color-text-secondary] mt-1">{currentDescription}</p>}
+          <h1 className="text-h1 text-(--color-text-primary)">{currentName}</h1>
+          {currentDescription && <p className="text-body text-(--color-text-secondary) mt-1">{currentDescription}</p>}
         </div>
         <Button variant="outline" size="sm" onClick={() => setEditing(true)} className="mt-1 shrink-0">
           Rename

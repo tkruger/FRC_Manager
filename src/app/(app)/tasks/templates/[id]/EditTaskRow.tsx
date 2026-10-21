@@ -68,7 +68,7 @@ export function EditTaskRow({ task, season, taskOptions, clone = false }: { task
           <div className="flex items-center gap-4">
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" name="designReviewRequired" defaultChecked={task.designReviewRequired} className="rounded" />
-              <span className="text-sm text-[--color-text-primary]">Design review</span>
+              <span className="text-sm text-(--color-text-primary)">Design review</span>
             </label>
           </div>
           <DialogFooter>

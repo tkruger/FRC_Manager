@@ -51,7 +51,7 @@ export function SeasonProgressBar({
         className="w-full flex items-center justify-between gap-4 text-left group"
       >
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 min-w-0">
-          <p className="text-small text-[--color-text-secondary] whitespace-nowrap">
+          <p className="text-small text-(--color-text-secondary) whitespace-nowrap">
             Kickoff {shortDate(new Date(kickoffDate))} → Ends {shortDate(new Date(endDate))}
             {daysToEnd >= 0
               ? <span className="ml-1 font-medium text-(--color-text-primary)">· {daysToEnd}d left</span>
@@ -64,14 +64,14 @@ export function SeasonProgressBar({
               {" · "}{nextCompetition.days <= 0 ? "now" : `${nextCompetition.days}d`}
             </p>
           )}
-          <p className="text-small font-medium text-[--color-text-primary] whitespace-nowrap">
+          <p className="text-small font-medium text-(--color-text-primary) whitespace-nowrap">
             {completeTasks}/{totalTasks} tasks complete
           </p>
         </div>
 
         <svg
           viewBox="0 0 16 16"
-          className={`shrink-0 w-3.5 h-3.5 text-[--color-text-secondary] group-hover:text-[--color-text-primary] transition-all duration-200 ${collapsed ? "" : "rotate-180"}`}
+          className={`shrink-0 w-3.5 h-3.5 text-(--color-text-secondary) group-hover:text-(--color-text-primary) transition-all duration-200 ${collapsed ? "" : "rotate-180"}`}
           fill="currentColor"
         >
           <path d="M8 10.5a.75.75 0 01-.53-.22l-4-4a.75.75 0 111.06-1.06L8 8.69l3.47-3.47a.75.75 0 111.06 1.06l-4 4A.75.75 0 018 10.5z" />
@@ -82,16 +82,16 @@ export function SeasonProgressBar({
       {!collapsed && (
         <div className="mt-3 space-y-3">
           {/* Progress bar */}
-          <div className="w-full h-2 rounded-full bg-[--color-surface-overlay] overflow-hidden">
+          <div className="w-full h-2 rounded-full bg-(--color-surface-overlay) overflow-hidden">
             <div
-              className="h-full rounded-full bg-[--color-primary] transition-all"
+              className="h-full rounded-full bg-(--color-primary) transition-all"
               style={{ width: `${buildProgress}%` }}
             />
           </div>
 
           {/* Sub-team breakdown */}
           {Object.keys(subteamStats).length > 0 && (
-            <div className="pt-2 border-t border-[--color-border] grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+            <div className="pt-2 border-t border-(--color-border) grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
               {Object.entries(subteamStats).map(([st, s]) => {
                 const pct = s.total ? Math.round((s.done / s.total) * 100) : 0;
                 const color = SUBTEAM_COLORS[st] ?? "#64748B";
@@ -99,9 +99,9 @@ export function SeasonProgressBar({
                   <div key={st}>
                     <div className="flex justify-between text-small mb-1">
                       <span style={{ color }} className="font-medium truncate">{st.replace(/_/g, " ")}</span>
-                      <span className="text-[--color-text-secondary] shrink-0 ml-1">{s.done}/{s.total}</span>
+                      <span className="text-(--color-text-secondary) shrink-0 ml-1">{s.done}/{s.total}</span>
                     </div>
-                    <div className="h-1.5 rounded-full bg-[--color-surface-overlay]">
+                    <div className="h-1.5 rounded-full bg-(--color-surface-overlay)">
                       <div
                         className="h-full rounded-full transition-all"
                         style={{ width: `${pct}%`, backgroundColor: color }}

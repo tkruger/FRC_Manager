@@ -67,8 +67,8 @@ export default async function InspectionPage({ searchParams }: { searchParams: P
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       <div>
-        <nav className="text-small text-[--color-text-secondary] mb-1">
-          <Link href="/safety" className="hover:text-[--color-primary]">Safety</Link>
+        <nav className="text-small text-(--color-text-secondary) mb-1">
+          <Link href="/safety" className="hover:text-(--color-primary)">Safety</Link>
           <span className="mx-2">›</span>Inspection
         </nav>
         <h1 className="text-h1 text-(--color-text-primary)">Pre-competition inspection</h1>
@@ -101,7 +101,7 @@ export default async function InspectionPage({ searchParams }: { searchParams: P
       {/* Start new checklist */}
       {!checklist && (
         <div className="card space-y-4">
-          <h2 className="text-h3 text-[--color-text-primary]">Start inspection checklist</h2>
+          <h2 className="text-h3 text-(--color-text-primary)">Start inspection checklist</h2>
           <StartInspectionButton robots={robots} />
         </div>
       )}
@@ -111,8 +111,8 @@ export default async function InspectionPage({ searchParams }: { searchParams: P
         <div className="space-y-4">
           <div className="card flex items-center justify-between">
             <div>
-              <p className="text-h3 text-[--color-text-primary]">{checklist.eventName ?? "Inspection checklist"}</p>
-              <p className="text-small text-[--color-text-secondary]">
+              <p className="text-h3 text-(--color-text-primary)">{checklist.eventName ?? "Inspection checklist"}</p>
+              <p className="text-small text-(--color-text-secondary)">
                 {checklist.items.filter((i) => i.status === "PASS").length} / {checklist.items.length} items passed
               </p>
             </div>
@@ -121,11 +121,11 @@ export default async function InspectionPage({ searchParams }: { searchParams: P
 
           {Object.entries(grouped).map(([category, items]) => (
             <div key={category} className="card">
-              <h3 className="text-h3 text-[--color-text-primary] mb-3">{category}</h3>
+              <h3 className="text-h3 text-(--color-text-primary) mb-3">{category}</h3>
               <div className="space-y-2">
                 {items.map((item) => (
                   <div key={item.id} className="flex items-center justify-between gap-4">
-                    <p className={`text-sm flex-1 ${item.status === "PASS" ? "text-[--color-text-secondary] line-through" : "text-[--color-text-primary]"}`}>
+                    <p className={`text-sm flex-1 ${item.status === "PASS" ? "text-(--color-text-secondary) line-through" : "text-(--color-text-primary)"}`}>
                       {item.description}
                     </p>
                     <div className="flex gap-1 shrink-0">
@@ -147,15 +147,15 @@ export default async function InspectionPage({ searchParams }: { searchParams: P
       {/* Recent checklists */}
       {recent.length > 0 && (
         <div className="card">
-          <h2 className="text-h3 text-[--color-text-primary] mb-3">Recent checklists</h2>
+          <h2 className="text-h3 text-(--color-text-primary) mb-3">Recent checklists</h2>
           <div className="space-y-2">
             {recent.map((c) => {
               const passed = passCount(c.items);
               return (
                 <Link key={c.id} href={`/safety/inspection?checklistId=${c.id}`}
-                  className="flex items-center justify-between py-2 border-b border-[--color-border] last:border-0 hover:text-[--color-primary] transition-colors">
-                  <span className="text-sm text-[--color-text-primary]">{c.eventName ?? "Unnamed"}</span>
-                  <span className="text-small text-[--color-text-secondary]">{passed}/{c.items.length} passed</span>
+                  className="flex items-center justify-between py-2 border-b border-(--color-border) last:border-0 hover:text-(--color-primary) transition-colors">
+                  <span className="text-sm text-(--color-text-primary)">{c.eventName ?? "Unnamed"}</span>
+                  <span className="text-small text-(--color-text-secondary)">{passed}/{c.items.length} passed</span>
                 </Link>
               );
             })}

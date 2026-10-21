@@ -27,7 +27,7 @@ export function InventorySearch({ defaultValue }: { defaultValue?: string }) {
       defaultValue={defaultValue}
       onChange={handleChange}
       placeholder="Search items…"
-      className="w-full sm:max-w-xs rounded-md border border-[--color-border] bg-[--color-surface] text-[--color-text-primary] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary]/40 focus:border-[--color-primary]"
+      className="w-full sm:max-w-xs rounded-md border border-(--color-border) bg-(--color-surface) text-(--color-text-primary) px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-(--color-primary)/40 focus:border-(--color-primary)"
     />
   );
 }

@@ -17,8 +17,8 @@ export default async function DiscordLinkPage({
   if (!token) {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center space-y-4">
-        <p className="text-h2 text-[--color-text-primary]">❌ Invalid link</p>
-        <p className="text-body text-[--color-text-secondary]">No token provided. Use <code>/link</code> in Discord to get a new link.</p>
+        <p className="text-h2 text-(--color-text-primary)">❌ Invalid link</p>
+        <p className="text-body text-(--color-text-secondary)">No token provided. Use <code>/link</code> in Discord to get a new link.</p>
       </div>
     );
   }
@@ -28,8 +28,8 @@ export default async function DiscordLinkPage({
   if (!record || record.used || record.expiresAt < new Date()) {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center space-y-4">
-        <p className="text-h2 text-[--color-text-primary]">⏰ Link expired</p>
-        <p className="text-body text-[--color-text-secondary]">This link has expired or already been used. Run <code>/link</code> in Discord to get a fresh one.</p>
+        <p className="text-h2 text-(--color-text-primary)">⏰ Link expired</p>
+        <p className="text-body text-(--color-text-secondary)">This link has expired or already been used. Run <code>/link</code> in Discord to get a fresh one.</p>
       </div>
     );
   }
@@ -45,7 +45,7 @@ export default async function DiscordLinkPage({
   if (!discordInfo) {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center">
-        <p className="text-h2 text-[--color-text-primary]">❌ Invalid token data</p>
+        <p className="text-h2 text-(--color-text-primary)">❌ Invalid token data</p>
       </div>
     );
   }
@@ -54,8 +54,8 @@ export default async function DiscordLinkPage({
   if (session.user.teamId !== discordInfo.teamId) {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center space-y-4">
-        <p className="text-h2 text-[--color-text-primary]">❌ Wrong team</p>
-        <p className="text-body text-[--color-text-secondary]">
+        <p className="text-h2 text-(--color-text-primary)">❌ Wrong team</p>
+        <p className="text-body text-(--color-text-secondary)">
           This link is for a different team. Make sure you&apos;re signed in to the correct account.
         </p>
       </div>
@@ -73,8 +73,8 @@ export default async function DiscordLinkPage({
   if (existingByUser || existingByDiscord) {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center space-y-4">
-        <p className="text-h2 text-[--color-text-primary]">⚠️ Already linked</p>
-        <p className="text-body text-[--color-text-secondary]">
+        <p className="text-h2 text-(--color-text-primary)">⚠️ Already linked</p>
+        <p className="text-body text-(--color-text-secondary)">
           {existingByUser
             ? "Your platform account is already linked to a Discord account."
             : "This Discord account is already linked to another platform account."}
@@ -114,8 +114,8 @@ export default async function DiscordLinkPage({
   return (
     <div className="max-w-md mx-auto px-4 py-16 text-center space-y-6">
       <div className="text-5xl">✅</div>
-      <h1 className="text-h1 text-[--color-text-primary]">Discord linked!</h1>
-      <p className="text-body text-[--color-text-secondary]">
+      <h1 className="text-h1 text-(--color-text-primary)">Discord linked!</h1>
+      <p className="text-body text-(--color-text-secondary)">
         Your Discord account <strong>@{discordInfo.discordUsername}</strong> is now linked to{" "}
         <strong>{session.user.name}</strong>. Head back to Discord and run{" "}
         <code>/help</code> to see available commands.

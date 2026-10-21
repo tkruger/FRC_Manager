@@ -82,15 +82,15 @@ export function PublicCalendarClient({ meetings }: Props) {
   return (
     <div className="space-y-4">
       {/* Tab bar */}
-      <div className="flex items-center gap-0 border-b border-[--color-border]">
+      <div className="flex items-center gap-0 border-b border-(--color-border)">
         {(["week", "list"] as const).map((v) => (
           <button
             key={v}
             onClick={() => setView(v)}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
               view === v
-                ? "text-[--color-primary] border-[--color-primary]"
-                : "text-[--color-text-secondary] border-transparent hover:text-[--color-text-primary]"
+                ? "text-(--color-primary) border-(--color-primary)"
+                : "text-(--color-text-secondary) border-transparent hover:text-(--color-text-primary)"
             }`}
           >
             {v === "week" ? "Week" : "List"}
@@ -105,15 +105,15 @@ export function PublicCalendarClient({ meetings }: Props) {
           <div className="flex items-center justify-between">
             <button
               onClick={() => setWeekOffset((o) => o - 1)}
-              className="h-8 w-8 rounded flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors text-lg"
+              className="h-8 w-8 rounded flex items-center justify-center text-(--color-text-secondary) hover:bg-(--color-surface-overlay) transition-colors text-lg"
               aria-label="Previous week"
             >‹</button>
             <div className="text-center">
-              <p className="text-sm font-semibold text-[--color-text-primary]">{weekLabel}</p>
+              <p className="text-sm font-semibold text-(--color-text-primary)">{weekLabel}</p>
               {weekOffset !== 0 && (
                 <button
                   onClick={() => setWeekOffset(0)}
-                  className="text-xs text-[--color-secondary] hover:underline"
+                  className="text-xs text-(--color-secondary) hover:underline"
                 >
                   This week
                 </button>
@@ -121,14 +121,14 @@ export function PublicCalendarClient({ meetings }: Props) {
             </div>
             <button
               onClick={() => setWeekOffset((o) => o + 1)}
-              className="h-8 w-8 rounded flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors text-lg"
+              className="h-8 w-8 rounded flex items-center justify-center text-(--color-text-secondary) hover:bg-(--color-surface-overlay) transition-colors text-lg"
               aria-label="Next week"
             >›</button>
           </div>
 
           {/* Calendar card */}
           <div
-            className="rounded-xl border border-[--color-border]/60 overflow-hidden"
+            className="rounded-xl border border-(--color-border)/60 overflow-hidden"
             style={{ boxShadow: "var(--shadow-card)" }}
           >
             {/* Gradient DOW header */}
@@ -139,14 +139,14 @@ export function PublicCalendarClient({ meetings }: Props) {
               }}
             >
               {DOW_LABELS.map((d) => (
-                <div key={d} className="py-2.5 text-center text-label font-semibold text-[--color-text-primary] tracking-wide">
+                <div key={d} className="py-2.5 text-center text-label font-semibold text-(--color-text-primary) tracking-wide">
                   {d}
                 </div>
               ))}
             </div>
 
             {/* Day cells */}
-            <div className="grid grid-cols-7 bg-[--color-surface]">
+            <div className="grid grid-cols-7 bg-(--color-surface)">
               {weekDays.map((date) => {
                 const key         = ymd(date);
                 const isToday     = key === todayStr;
@@ -157,8 +157,8 @@ export function PublicCalendarClient({ meetings }: Props) {
                   <div
                     key={key}
                     className={[
-                      "relative min-h-[120px] p-1.5 border-b border-r border-[--color-border]/20",
-                      !isToday && isWeekend ? "bg-[--color-surface-raised]/40" : "",
+                      "relative min-h-[120px] p-1.5 border-b border-r border-(--color-border)/20",
+                      !isToday && isWeekend ? "bg-(--color-surface-raised)/40" : "",
                     ].join(" ")}
                     style={isToday ? { backgroundColor: "color-mix(in srgb, var(--color-primary) 10%, transparent)" } : undefined}
                   >
@@ -196,7 +196,7 @@ export function PublicCalendarClient({ meetings }: Props) {
           {(() => {
             const weekMeetings = weekDays.flatMap((d) => meetingMap[ymd(d)] ?? []);
             if (weekMeetings.length === 0) return (
-              <p className="text-center text-small text-[--color-text-secondary] py-3">
+              <p className="text-center text-small text-(--color-text-secondary) py-3">
                 No meetings this week.
               </p>
             );
@@ -213,18 +213,18 @@ export function PublicCalendarClient({ meetings }: Props) {
                   return (
                     <div
                       key={key}
-                      className={`rounded-lg border px-4 py-3 ${isToday ? "border-[--color-primary] bg-[--color-primary]/5" : "border-[--color-border]"}`}
+                      className={`rounded-lg border px-4 py-3 ${isToday ? "border-(--color-primary) bg-(--color-primary)/5" : "border-(--color-border)"}`}
                     >
-                      <p className="text-sm font-semibold text-[--color-text-primary] mb-1.5">
+                      <p className="text-sm font-semibold text-(--color-text-primary) mb-1.5">
                         {dateLabel}
                         {isToday && <span className="ml-2 badge badge-info text-xs">Today</span>}
                       </p>
                       {dayMeetings.map((m) => (
                         <div key={m.id} className="space-y-1 text-sm">
-                          <p className="text-[--color-text-secondary]">
+                          <p className="text-(--color-text-secondary)">
                             {fmt12(m.startTime)} – {fmt12(m.endTime)}
                             {m.title && (
-                              <span className="ml-2 font-medium text-[--color-text-primary]">{m.title}</span>
+                              <span className="ml-2 font-medium text-(--color-text-primary)">{m.title}</span>
                             )}
                           </p>
                           {m.tasks.length > 0 && (
@@ -235,7 +235,7 @@ export function PublicCalendarClient({ meetings }: Props) {
                             </div>
                           )}
                           {m.notes && (
-                            <p className="text-small text-[--color-text-secondary] whitespace-pre-wrap">{m.notes}</p>
+                            <p className="text-small text-(--color-text-secondary) whitespace-pre-wrap">{m.notes}</p>
                           )}
                         </div>
                       ))}
@@ -250,13 +250,13 @@ export function PublicCalendarClient({ meetings }: Props) {
         /* ── List view ── */
         <div className="space-y-8">
           {byMonth.length === 0 && (
-            <p className="text-center py-16 text-[--color-text-secondary]">
+            <p className="text-center py-16 text-(--color-text-secondary)">
               No meetings scheduled yet. Check back soon.
             </p>
           )}
           {byMonth.map(({ label, meetings: ms }) => (
             <section key={label}>
-              <h2 className="text-h3 text-[--color-text-primary] mb-4">{label}</h2>
+              <h2 className="text-h3 text-(--color-text-primary) mb-4">{label}</h2>
               <div className="space-y-3">
                 {ms.map((m) => {
                   const isToday = m.date.slice(0, 10) === todayStr;
@@ -264,14 +264,14 @@ export function PublicCalendarClient({ meetings }: Props) {
                   return (
                     <div
                       key={m.id}
-                      className={`rounded-lg border px-4 py-3 ${isToday ? "border-[--color-primary] bg-[--color-primary]/5" : "border-[--color-border]"}`}
+                      className={`rounded-lg border px-4 py-3 ${isToday ? "border-(--color-primary) bg-(--color-primary)/5" : "border-(--color-border)"}`}
                     >
-                      <p className="text-sm font-semibold text-[--color-text-primary]">
+                      <p className="text-sm font-semibold text-(--color-text-primary)">
                         {d.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
                         {isToday && <span className="ml-2 badge badge-info text-xs">Today</span>}
                       </p>
-                      {m.title && <p className="text-body text-[--color-text-primary] mt-0.5">{m.title}</p>}
-                      <p className="text-small text-[--color-text-secondary] mt-0.5">
+                      {m.title && <p className="text-body text-(--color-text-primary) mt-0.5">{m.title}</p>}
+                      <p className="text-small text-(--color-text-secondary) mt-0.5">
                         {fmt12(m.startTime)} – {fmt12(m.endTime)}
                       </p>
                       {m.tasks.length > 0 && (
@@ -282,7 +282,7 @@ export function PublicCalendarClient({ meetings }: Props) {
                         </div>
                       )}
                       {m.notes && (
-                        <p className="text-small text-[--color-text-secondary] mt-2 whitespace-pre-wrap">{m.notes}</p>
+                        <p className="text-small text-(--color-text-secondary) mt-2 whitespace-pre-wrap">{m.notes}</p>
                       )}
                     </div>
                   );

@@ -49,7 +49,7 @@ export function AcquireButton({ itemId, itemName, robots, maxQty }: Props) {
       </DialogTrigger>
       <DialogContent title={`Use on Robot: ${itemName}`}>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && <div className="text-sm text-[--color-danger] bg-[--color-danger]/10 rounded px-3 py-2">{error}</div>}
+          {error && <div className="text-sm text-(--color-danger) bg-(--color-danger)/10 rounded px-3 py-2">{error}</div>}
           <Field label="Quantity" name="quantity" type="number" required min="1" max={maxQty} defaultValue="1"
             hint={`${maxQty} available`} />
           {robots.length > 0 && <Select label="Assign to robot" name="robotId" placeholder="No specific robot" options={robotOpts} />}

@@ -46,7 +46,7 @@ function AddTaskForm({ templateId, season, taskOptions, onAdded }: { templateId:
   return (
     <form action={formAction} className="space-y-4">
       {state && !state.success && (
-        <div className="text-sm text-[--color-danger] bg-[--color-danger]/10 rounded px-3 py-2">{state.error}</div>
+        <div className="text-sm text-(--color-danger) bg-(--color-danger)/10 rounded px-3 py-2">{state.error}</div>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -64,7 +64,7 @@ function AddTaskForm({ templateId, season, taskOptions, onAdded }: { templateId:
       <div className="flex flex-wrap items-end gap-6">
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" name="designReviewRequired" className="rounded" />
-          <span className="text-sm text-[--color-text-primary]">Design review required</span>
+          <span className="text-sm text-(--color-text-primary)">Design review required</span>
         </label>
         <Field label="Est. hours" name="estimatedHours" type="number" min="0" step="0.5" placeholder="—" className="w-28" />
       </div>

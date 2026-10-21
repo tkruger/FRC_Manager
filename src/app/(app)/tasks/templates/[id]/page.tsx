@@ -103,12 +103,12 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Breadcrumb */}
-      <nav className="text-small text-[--color-text-secondary]">
-        <Link href="/tasks" className="hover:text-[--color-primary]">Tasks</Link>
+      <nav className="text-small text-(--color-text-secondary)">
+        <Link href="/tasks" className="hover:text-(--color-primary)">Tasks</Link>
         <span className="mx-2">›</span>
-        <Link href="/tasks/templates" className="hover:text-[--color-primary]">Templates</Link>
+        <Link href="/tasks/templates" className="hover:text-(--color-primary)">Templates</Link>
         <span className="mx-2">›</span>
-        <span className="text-[--color-text-primary]">{template.name}</span>
+        <span className="text-(--color-text-primary)">{template.name}</span>
       </nav>
 
       {/* Header */}
@@ -132,12 +132,12 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
           ? <RenameTemplateForm templateId={id} currentName={template.name} currentDescription={template.description} />
           : (
             <div>
-              <h1 className="text-h1 text-[--color-text-primary]">{template.name}</h1>
-              {template.description && <p className="text-body text-[--color-text-secondary] mt-1">{template.description}</p>}
+              <h1 className="text-h1 text-(--color-text-primary)">{template.name}</h1>
+              {template.description && <p className="text-body text-(--color-text-secondary) mt-1">{template.description}</p>}
             </div>
           )
         }
-        <p className="text-small text-[--color-text-secondary] mt-2">
+        <p className="text-small text-(--color-text-secondary) mt-2">
           {tasks.length} tasks · Created by {creator?.name ?? "unknown"}
         </p>
       </div>
@@ -145,16 +145,16 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
       {/* Milestones */}
       {milestones.length > 0 && (
         <section>
-          <h2 className="text-h2 text-[--color-text-primary] mb-3">
-            Milestones <span className="text-small font-normal text-[--color-text-secondary]">({milestones.length})</span>
+          <h2 className="text-h2 text-(--color-text-primary) mb-3">
+            Milestones <span className="text-small font-normal text-(--color-text-secondary)">({milestones.length})</span>
           </h2>
-          <div className="card divide-y divide-[--color-border] p-0 overflow-hidden">
+          <div className="card divide-y divide-(--color-border) p-0 overflow-hidden">
             {milestones.map((t) => (
               <HoverDetails key={t.id} detail={detail(t)} className={ROW}>
                 <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0">
-                  <span className="text-[--color-primary] text-xs shrink-0 mt-1 sm:mt-0">◆</span>
+                  <span className="text-(--color-primary) text-xs shrink-0 mt-1 sm:mt-0">◆</span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[--color-text-primary] line-clamp-2 sm:line-clamp-none sm:truncate">{t.name}</p>
+                    <p className="text-sm font-medium text-(--color-text-primary) line-clamp-2 sm:line-clamp-none sm:truncate">{t.name}</p>
                   </div>
                 </div>
                 <div className={META + " pl-6 sm:pl-0"}>
@@ -177,14 +177,14 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
       {/* Regular tasks */}
       {regular.length > 0 && (
         <section>
-          <h2 className="text-h2 text-[--color-text-primary] mb-3">
-            Tasks <span className="text-small font-normal text-[--color-text-secondary]">({regular.length})</span>
+          <h2 className="text-h2 text-(--color-text-primary) mb-3">
+            Tasks <span className="text-small font-normal text-(--color-text-secondary)">({regular.length})</span>
           </h2>
-          <div className="card divide-y divide-[--color-border] p-0 overflow-hidden">
+          <div className="card divide-y divide-(--color-border) p-0 overflow-hidden">
             {regular.map((t) => (
               <HoverDetails key={t.id} detail={detail(t)} className={ROW}>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-[--color-text-primary] line-clamp-2 sm:line-clamp-none sm:truncate">{t.name}</p>
+                  <p className="text-sm text-(--color-text-primary) line-clamp-2 sm:line-clamp-none sm:truncate">{t.name}</p>
                 </div>
                 <div className={META}>
                   {t.subTeam && <Badge variant="neutral">{t.subTeam.replace(/_/g, " ")}</Badge>}
@@ -209,7 +209,7 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
 
       {tasks.length === 0 && (
         <div className="card text-center py-12">
-          <p className="text-body text-[--color-text-secondary]">
+          <p className="text-body text-(--color-text-secondary)">
             No tasks yet. {isMentor ? "Tap + Add task to add your first one." : "A mentor can add tasks to this template."}
           </p>
         </div>

@@ -18,7 +18,7 @@ export function RevokeCertButton({ userId, certName }: { userId: string; certNam
 
   return (
     <button onClick={handle} disabled={isPending}
-      className="text-[10px] text-[--color-danger] hover:underline disabled:opacity-50 mt-0.5">
+      className="text-[10px] text-(--color-danger) hover:underline disabled:opacity-50 mt-0.5">
       Revoke
     </button>
   );

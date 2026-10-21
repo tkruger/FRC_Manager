@@ -74,8 +74,8 @@ export function ListView({
     });
 
   function SortIcon({ col }: { col: SortKey }) {
-    if (sortKey !== col) return <span className="text-[--color-text-disabled]"> ↕</span>;
-    return <span className="text-[--color-primary]">{sortAsc ? " ↑" : " ↓"}</span>;
+    if (sortKey !== col) return <span className="text-(--color-text-disabled)"> ↕</span>;
+    return <span className="text-(--color-primary)">{sortAsc ? " ↑" : " ↓"}</span>;
   }
 
   return (
@@ -85,7 +85,7 @@ export function ListView({
         <select
           value={filterSubteam}
           onChange={(e) => setFilterSubteam(e.target.value)}
-          className="text-sm rounded-md border border-[--color-border] bg-[--color-surface] text-[--color-text-primary] px-2 py-1.5"
+          className="text-sm rounded-md border border-(--color-border) bg-(--color-surface) text-(--color-text-primary) px-2 py-1.5"
         >
           <option value="">All sub-teams</option>
           {SUBTEAM_OPTIONS.map((o) => (
@@ -96,7 +96,7 @@ export function ListView({
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className="text-sm rounded-md border border-[--color-border] bg-[--color-surface] text-[--color-text-primary] px-2 py-1.5"
+          className="text-sm rounded-md border border-(--color-border) bg-(--color-surface) text-(--color-text-primary) px-2 py-1.5"
         >
           <option value="">All statuses</option>
           <option value="NOT_STARTED">Not Started</option>
@@ -109,22 +109,22 @@ export function ListView({
         {(filterSubteam || filterStatus) && (
           <button
             onClick={() => { setFilterSubteam(""); setFilterStatus(""); }}
-            className="text-sm text-[--color-text-secondary] hover:text-[--color-danger] transition-colors"
+            className="text-sm text-(--color-text-secondary) hover:text-(--color-danger) transition-colors"
           >
             Clear filters
           </button>
         )}
 
-        <span className="ml-auto text-small text-[--color-text-secondary]">
+        <span className="ml-auto text-small text-(--color-text-secondary)">
           {sorted.length} task{sorted.length !== 1 ? "s" : ""}
         </span>
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-lg border border-[--color-border]">
+      <div className="overflow-x-auto rounded-lg border border-(--color-border)">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-[--color-border] bg-[--color-surface-overlay]">
+            <tr className="border-b border-(--color-border) bg-(--color-surface-overlay)">
               {(
                 [
                   ["name",    "Task"],
@@ -137,12 +137,12 @@ export function ListView({
                 <th
                   key={key}
                   onClick={() => toggleSort(key)}
-                  className="text-left px-4 py-3 text-label font-semibold text-[--color-text-secondary] cursor-pointer select-none hover:text-[--color-text-primary] transition-colors whitespace-nowrap"
+                  className="text-left px-4 py-3 text-label font-semibold text-(--color-text-secondary) cursor-pointer select-none hover:text-(--color-text-primary) transition-colors whitespace-nowrap"
                 >
                   {label}<SortIcon col={key} />
                 </th>
               ))}
-              <th className="text-left px-4 py-3 text-label font-semibold text-[--color-text-secondary]">
+              <th className="text-left px-4 py-3 text-label font-semibold text-(--color-text-secondary)">
                 Assignees
               </th>
             </tr>
@@ -150,7 +150,7 @@ export function ListView({
           <tbody>
             {sorted.length === 0 ? (
               <tr>
-                <td colSpan={6} className="text-center py-12 text-[--color-text-secondary]">
+                <td colSpan={6} className="text-center py-12 text-(--color-text-secondary)">
                   No tasks match your filters
                 </td>
               </tr>
@@ -168,13 +168,13 @@ export function ListView({
                   <tr
                     key={task.id}
                     onClick={() => setSelectedTask(task)}
-                    className={`border-b border-[--color-border] cursor-pointer hover:bg-[--color-surface-overlay] transition-colors ${
-                      i % 2 === 0 ? "" : "bg-[--color-surface-overlay]/30"
+                    className={`border-b border-(--color-border) cursor-pointer hover:bg-(--color-surface-overlay) transition-colors ${
+                      i % 2 === 0 ? "" : "bg-(--color-surface-overlay)/30"
                     }`}
                   >
                     <td className="px-4 py-3" style={{ borderLeftColor: stColor, borderLeftWidth: "3px" }}>
-                      <span className="font-medium text-[--color-text-primary]">
-                        {task.isMilestone && <span className="text-[--color-primary] mr-1">◆</span>}
+                      <span className="font-medium text-(--color-text-primary)">
+                        {task.isMilestone && <span className="text-(--color-primary) mr-1">◆</span>}
                         {task.name}
                       </span>
                     </td>
@@ -184,7 +184,7 @@ export function ListView({
                           {task.subTeam.replace(/_/g, " ")}
                         </span>
                       ) : (
-                        <span className="text-[--color-text-disabled]">—</span>
+                        <span className="text-(--color-text-disabled)">—</span>
                       )}
                     </td>
                     <td className="px-4 py-3">
@@ -197,7 +197,7 @@ export function ListView({
                         {priorityCfg?.label ?? task.priority}
                       </Badge>
                     </td>
-                    <td className={`px-4 py-3 text-sm whitespace-nowrap ${overdue ? "text-[--color-danger] font-medium" : "text-[--color-text-secondary]"}`}>
+                    <td className={`px-4 py-3 text-sm whitespace-nowrap ${overdue ? "text-(--color-danger) font-medium" : "text-(--color-text-secondary)"}`}>
                       {task.dueDate ? shortDate(task.dueDate) : "—"}
                       {overdue && " ⚠"}
                     </td>
@@ -208,20 +208,20 @@ export function ListView({
                             <div
                               key={a.id}
                               title={a.name}
-                              className="w-6 h-6 rounded-full border-2 border-[--color-surface] flex items-center justify-center text-xs font-bold text-white"
+                              className="w-6 h-6 rounded-full border-2 border-(--color-surface) flex items-center justify-center text-xs font-bold text-white"
                               style={{ backgroundColor: "var(--color-primary)" }}
                             >
                               {a.name[0].toUpperCase()}
                             </div>
                           ))}
                           {task.assignees.length > 4 && (
-                            <div className="w-6 h-6 rounded-full border-2 border-[--color-surface] bg-[--color-surface-overlay] flex items-center justify-center text-xs text-[--color-text-secondary]">
+                            <div className="w-6 h-6 rounded-full border-2 border-(--color-surface) bg-(--color-surface-overlay) flex items-center justify-center text-xs text-(--color-text-secondary)">
                               +{task.assignees.length - 4}
                             </div>
                           )}
                         </div>
                       ) : (
-                        <span className="text-[--color-text-disabled] text-xs">Unassigned</span>
+                        <span className="text-(--color-text-disabled) text-xs">Unassigned</span>
                       )}
                     </td>
                   </tr>

@@ -38,12 +38,12 @@ export default async function DiscordSettingsPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       <div>
-        <nav className="text-small text-[--color-text-secondary] mb-1">
-          <Link href="/settings/members" className="hover:text-[--color-primary]">Settings</Link>
+        <nav className="text-small text-(--color-text-secondary) mb-1">
+          <Link href="/settings/members" className="hover:text-(--color-primary)">Settings</Link>
           <span className="mx-2">›</span>Discord
         </nav>
         <PageTitle help="discord">Discord Integration</PageTitle>
-        <p className="text-body text-[--color-text-secondary] mt-1">
+        <p className="text-body text-(--color-text-secondary) mt-1">
           Connect your team's Discord server to enable slash commands and proactive notifications.
         </p>
       </div>
@@ -72,10 +72,10 @@ export default async function DiscordSettingsPage() {
 
         {/* Setup instructions */}
         {!config?.active && (
-          <div className="mt-4 rounded-md bg-[--color-info]/10 border border-[--color-info]/20 px-4 py-3 space-y-2">
-            <p className="text-sm font-medium text-[--color-text-primary]">Setup instructions</p>
-            <ol className="text-small text-[--color-text-secondary] space-y-1 list-decimal list-inside">
-              <li>Create a Discord bot at <a href="https://discord.com/developers/applications" target="_blank" rel="noopener noreferrer" className="text-[--color-secondary] hover:underline">discord.com/developers/applications</a></li>
+          <div className="mt-4 rounded-md bg-(--color-info)/10 border border-(--color-info)/20 px-4 py-3 space-y-2">
+            <p className="text-sm font-medium text-(--color-text-primary)">Setup instructions</p>
+            <ol className="text-small text-(--color-text-secondary) space-y-1 list-decimal list-inside">
+              <li>Create a Discord bot at <a href="https://discord.com/developers/applications" target="_blank" rel="noopener noreferrer" className="text-(--color-secondary) hover:underline">discord.com/developers/applications</a></li>
               <li>Add <code>DISCORD_BOT_TOKEN</code>, <code>DISCORD_APPLICATION_ID</code>, and <code>DISCORD_PUBLIC_KEY</code> to your Vercel environment variables</li>
               <li>Set the Interactions Endpoint URL in your Discord app to: <code className="text-[10px]">{interactionsEndpoint}</code></li>
               <li>Invite the bot to your server, then enter the Guild ID below and save</li>
@@ -87,7 +87,7 @@ export default async function DiscordSettingsPage() {
 
       {/* Config form */}
       <div className="card">
-        <h2 className="text-h3 text-[--color-text-primary] mb-4">
+        <h2 className="text-h3 text-(--color-text-primary) mb-4">
           {config?.active ? "Server configuration" : "Connect a Discord server"}
         </h2>
         <DiscordConfigForm config={config} />
@@ -95,8 +95,8 @@ export default async function DiscordSettingsPage() {
 
       {/* Account links */}
       <div>
-        <h2 className="text-h2 text-[--color-text-primary] mb-3">Account links</h2>
-        <p className="text-small text-[--color-text-secondary] mb-3">
+        <h2 className="text-h2 text-(--color-text-primary) mb-3">Account links</h2>
+        <p className="text-small text-(--color-text-secondary) mb-3">
           Members link their Discord accounts by running <code>/link</code> in Discord.
         </p>
         <Table>
@@ -136,7 +136,7 @@ export default async function DiscordSettingsPage() {
       {/* Activity log */}
       {recentLogs.length > 0 && (
         <div>
-          <h2 className="text-h2 text-[--color-text-primary] mb-3">Recent activity</h2>
+          <h2 className="text-h2 text-(--color-text-primary) mb-3">Recent activity</h2>
           <Table>
             <TableHead>
               <tr><Th>Command</Th><Th>Discord user</Th><Th>Result</Th><Th>Time</Th></tr>

@@ -107,13 +107,13 @@ export function TaskModal({ task, allTasks = [], allMembers = [], allRobots = []
               </div>
 
               {/* Status quick-change */}
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-[--color-surface-overlay]">
-                <span className="text-small text-[--color-text-secondary]">Status</span>
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-(--color-surface-overlay)">
+                <span className="text-small text-(--color-text-secondary)">Status</span>
                 <select
                   value={localStatus}
                   onChange={(e) => handleStatusChange(e.target.value)}
                   disabled={isPending}
-                  className="text-sm font-medium bg-transparent border-none focus:outline-none cursor-pointer text-[--color-text-primary]"
+                  className="text-sm font-medium bg-transparent border-none focus:outline-none cursor-pointer text-(--color-text-primary)"
                 >
                   {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
@@ -127,9 +127,9 @@ export function TaskModal({ task, allTasks = [], allMembers = [], allRobots = []
                   { label: "Est. hours", value: task.estimatedHours != null ? `${task.estimatedHours}h` : "—" },
                   { label: "Actual",     value: task.actualHours    != null ? `${task.actualHours}h`    : "—" },
                 ].map((m) => (
-                  <div key={m.label} className="rounded-md bg-[--color-surface-overlay] px-3 py-2">
-                    <p className="text-label text-[--color-text-secondary]">{m.label}</p>
-                    <p className="text-sm font-medium text-[--color-text-primary] mt-0.5">{m.value}</p>
+                  <div key={m.label} className="rounded-md bg-(--color-surface-overlay) px-3 py-2">
+                    <p className="text-label text-(--color-text-secondary)">{m.label}</p>
+                    <p className="text-sm font-medium text-(--color-text-primary) mt-0.5">{m.value}</p>
                   </div>
                 ))}
               </div>
@@ -146,19 +146,19 @@ export function TaskModal({ task, allTasks = [], allMembers = [], allRobots = []
 
               {/* Blockers */}
               {task.blockersNotes && (
-                <div className="rounded-md bg-[--color-danger]/8 border border-[--color-danger]/20 px-3 py-2">
-                  <p className="text-label text-[--color-danger] mb-0.5">Blockers</p>
-                  <p className="text-sm text-[--color-text-primary]">{task.blockersNotes}</p>
+                <div className="rounded-md bg-(--color-danger)/8 border border-(--color-danger)/20 px-3 py-2">
+                  <p className="text-label text-(--color-danger) mb-0.5">Blockers</p>
+                  <p className="text-sm text-(--color-text-primary)">{task.blockersNotes}</p>
                 </div>
               )}
 
               {/* Assignees */}
               {task.assignees.length > 0 && (
                 <div>
-                  <p className="text-label text-[--color-text-secondary] mb-2">Assignees</p>
+                  <p className="text-label text-(--color-text-secondary) mb-2">Assignees</p>
                   <div className="flex flex-wrap gap-2">
                     {task.assignees.map((a) => (
-                      <span key={a.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[--color-surface-overlay] text-sm text-[--color-text-primary]">
+                      <span key={a.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-(--color-surface-overlay) text-sm text-(--color-text-primary)">
                         <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold text-white"
                           style={{ backgroundColor: "var(--color-primary)" }}>
                           {a.name[0].toUpperCase()}
@@ -175,13 +175,13 @@ export function TaskModal({ task, allTasks = [], allMembers = [], allRobots = []
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {task.prerequisites.length > 0 && (
                     <div>
-                      <p className="text-label text-[--color-text-secondary] mb-2">Prerequisites</p>
+                      <p className="text-label text-(--color-text-secondary) mb-2">Prerequisites</p>
                       <div className="space-y-1">
                         {task.prerequisites.map((p) => {
                           const cfg = STATUS_CONFIG[p.status as TaskStatus];
                           return (
                             <div key={p.id} className="flex items-center justify-between text-sm">
-                              <span className="text-[--color-text-primary] truncate">{p.name}</span>
+                              <span className="text-(--color-text-primary) truncate">{p.name}</span>
                               <Badge variant={cfg?.variant ?? "neutral"} className="ml-2 shrink-0">{cfg?.label ?? p.status}</Badge>
                             </div>
                           );
@@ -191,13 +191,13 @@ export function TaskModal({ task, allTasks = [], allMembers = [], allRobots = []
                   )}
                   {task.dependents.length > 0 && (
                     <div>
-                      <p className="text-label text-[--color-text-secondary] mb-2">Unlocks</p>
+                      <p className="text-label text-(--color-text-secondary) mb-2">Unlocks</p>
                       <div className="space-y-1">
                         {task.dependents.map((d) => {
                           const cfg = STATUS_CONFIG[d.status as TaskStatus];
                           return (
                             <div key={d.id} className="flex items-center justify-between text-sm">
-                              <span className="text-[--color-text-primary] truncate">{d.name}</span>
+                              <span className="text-(--color-text-primary) truncate">{d.name}</span>
                               <Badge variant={cfg?.variant ?? "neutral"} className="ml-2 shrink-0">{cfg?.label ?? d.status}</Badge>
                             </div>
                           );
@@ -210,9 +210,9 @@ export function TaskModal({ task, allTasks = [], allMembers = [], allRobots = []
 
               {/* Design review */}
               {task.designReviewRequired && (
-                <div className="rounded-md bg-[--color-surface-overlay] px-3 py-2">
-                  <p className="text-label text-[--color-text-secondary]">Design review</p>
-                  <p className="text-sm font-medium text-[--color-text-primary] mt-0.5">
+                <div className="rounded-md bg-(--color-surface-overlay) px-3 py-2">
+                  <p className="text-label text-(--color-text-secondary)">Design review</p>
+                  <p className="text-sm font-medium text-(--color-text-primary) mt-0.5">
                     {task.designReviewStatus.replace(/_/g, " ")}
                   </p>
                 </div>
@@ -308,7 +308,7 @@ function EditTaskForm({ task, allTasks, allMembers, allRobots, kickoffDate, endD
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {error && <div className="text-sm text-[--color-danger] bg-[--color-danger]/10 rounded px-3 py-2">{error}</div>}
+      {error && <div className="text-sm text-(--color-danger) bg-(--color-danger)/10 rounded px-3 py-2">{error}</div>}
       <Field label="Task name" name="name" required defaultValue={task.name} />
       <MarkdownEditor name="details" label="Details" defaultValue={task.details ?? ""} rows={6} />
 
@@ -342,18 +342,18 @@ function EditTaskForm({ task, allTasks, allMembers, allRobots, kickoffDate, endD
       <div className="space-y-2">
         <label className="flex items-center gap-3 min-h-11 cursor-pointer">
           <input type="checkbox" name="isMilestone" defaultChecked={task.isMilestone} className="rounded" />
-          <span className="text-sm text-[--color-text-primary]">Milestone</span>
+          <span className="text-sm text-(--color-text-primary)">Milestone</span>
         </label>
         <label className="flex items-center gap-3 min-h-11 cursor-pointer">
           <input type="checkbox" name="designReviewRequired" defaultChecked={task.designReviewRequired} className="rounded" />
-          <span className="text-sm text-[--color-text-primary]">Design review required</span>
+          <span className="text-sm text-(--color-text-primary)">Design review required</span>
         </label>
       </div>
 
       {/* Assignees — searchable picker */}
       {allMembers.length > 0 && (
         <div>
-          <p className="text-sm font-medium text-[--color-text-primary] mb-2">Assignees</p>
+          <p className="text-sm font-medium text-(--color-text-primary) mb-2">Assignees</p>
 
           {/* Hidden inputs carry selected IDs to the form */}
           {selectedAssignees.map((id) => (
@@ -368,14 +368,14 @@ function EditTaskForm({ task, allTasks, allMembers, allRobots, kickoffDate, endD
                 if (!m) return null;
                 return (
                   <span key={id}
-                    className="inline-flex items-center gap-1 pl-1 pr-2 py-0.5 rounded-full bg-[--color-primary]/10 border border-[--color-primary]/25 text-sm">
+                    className="inline-flex items-center gap-1 pl-1 pr-2 py-0.5 rounded-full bg-(--color-primary)/10 border border-(--color-primary)/25 text-sm">
                     <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
                       style={{ backgroundColor: "var(--color-primary)" }}>
                       {m.name[0].toUpperCase()}
                     </span>
-                    <span className="text-[--color-text-primary]">{m.name}</span>
+                    <span className="text-(--color-text-primary)">{m.name}</span>
                     <button type="button" onClick={() => setSelectedAssignees((p) => p.filter((i) => i !== id))}
-                      className="ml-0.5 text-[--color-text-secondary] hover:text-[--color-danger] transition-colors leading-none">
+                      className="ml-0.5 text-(--color-text-secondary) hover:text-(--color-danger) transition-colors leading-none">
                       ×
                     </button>
                   </span>
@@ -391,24 +391,24 @@ function EditTaskForm({ task, allTasks, allMembers, allRobots, kickoffDate, endD
             value={assigneeSearch}
             onChange={(e) => setAssigneeSearch(e.target.value)}
             placeholder="Search team members…"
-            className="w-full rounded-md border border-[--color-border] bg-[--color-surface] text-[--color-text-primary] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary]/40 focus:border-[--color-primary]"
+            className="w-full rounded-md border border-(--color-border) bg-(--color-surface) text-(--color-text-primary) px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-(--color-primary)/40 focus:border-(--color-primary)"
           />
           {assigneeSearch.trim() && (
             <div
-              className="mt-1 rounded-md border border-[--color-border] overflow-hidden"
+              className="mt-1 rounded-md border border-(--color-border) overflow-hidden"
               style={{ backgroundColor: "var(--color-surface)" }}
             >
               {searchResults.length === 0 ? (
-                <p className="px-3 py-2 text-sm text-[--color-text-secondary]">No members found</p>
+                <p className="px-3 py-2 text-sm text-(--color-text-secondary)">No members found</p>
               ) : (
                 searchResults.map((m) => (
                   <button key={m.id} type="button" onClick={() => addAssignee(m.id)}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-[--color-surface-overlay] transition-colors text-left border-b border-[--color-table-border] last:border-0">
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-(--color-surface-overlay) transition-colors text-left border-b border-(--color-table-border) last:border-0">
                     <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
                       style={{ backgroundColor: "var(--color-primary)" }}>
                       {m.name[0].toUpperCase()}
                     </span>
-                    <span className="text-[--color-text-primary]">{m.name}</span>
+                    <span className="text-(--color-text-primary)">{m.name}</span>
                   </button>
                 ))
               )}
@@ -420,13 +420,13 @@ function EditTaskForm({ task, allTasks, allMembers, allRobots, kickoffDate, endD
       {/* Prerequisites */}
       {allTasks.length > 0 && (
         <div>
-          <p className="text-sm font-medium text-[--color-text-primary] mb-2">Prerequisites</p>
-          <div className="max-h-36 overflow-y-auto space-y-0.5 rounded-md border border-[--color-border] p-2">
+          <p className="text-sm font-medium text-(--color-text-primary) mb-2">Prerequisites</p>
+          <div className="max-h-36 overflow-y-auto space-y-0.5 rounded-md border border-(--color-border) p-2">
             {allTasks.filter((t) => t.id !== task.id).map((t) => (
-              <label key={t.id} className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer text-sm ${selectedPrereqs.includes(t.id) ? "bg-[--color-primary]/10" : "hover:bg-[--color-surface-overlay]"}`}>
+              <label key={t.id} className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer text-sm ${selectedPrereqs.includes(t.id) ? "bg-(--color-primary)/10" : "hover:bg-(--color-surface-overlay)"}`}>
                 <input type="checkbox" name="prerequisiteIds" value={t.id} checked={selectedPrereqs.includes(t.id)}
                   onChange={(e) => setSelectedPrereqs(p => e.target.checked ? [...p, t.id] : p.filter(id => id !== t.id))} className="rounded" />
-                <span className="text-[--color-text-primary] truncate">{t.name}</span>
+                <span className="text-(--color-text-primary) truncate">{t.name}</span>
               </label>
             ))}
           </div>

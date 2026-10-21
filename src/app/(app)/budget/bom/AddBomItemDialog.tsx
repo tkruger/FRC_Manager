@@ -53,7 +53,7 @@ export function AddBomItemDialog({ robotId }: { robotId: string }) {
       </DialogTrigger>
       <DialogContent title="Add BOM item" className="max-w-lg">
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && <div className="text-sm text-[--color-danger] bg-[--color-danger]/10 rounded px-3 py-2">{error}</div>}
+          {error && <div className="text-sm text-(--color-danger) bg-(--color-danger)/10 rounded px-3 py-2">{error}</div>}
 
           <div className="grid grid-cols-2 gap-4">
             <Field label="Part name" name="partName" required placeholder="e.g. Falcon 500" className="col-span-2" />

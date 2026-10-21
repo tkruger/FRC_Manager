@@ -63,20 +63,20 @@ export default async function RobotDetailPage({ params }: { params: Promise<{ id
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       {/* Breadcrumb */}
-      <nav className="text-small text-[--color-text-secondary]">
-        <Link href="/fleet" className="hover:text-[--color-primary]">Fleet</Link>
+      <nav className="text-small text-(--color-text-secondary)">
+        <Link href="/fleet" className="hover:text-(--color-primary)">Fleet</Link>
         <span className="mx-2">›</span>
-        <span className="text-[--color-text-primary]">{robot.displayName}</span>
+        <span className="text-(--color-text-primary)">{robot.displayName}</span>
       </nav>
 
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-h1 text-[--color-text-primary]">{robot.displayName}</h1>
-          <p className="text-body text-[--color-text-secondary] mt-1">
+          <h1 className="text-h1 text-(--color-text-primary)">{robot.displayName}</h1>
+          <p className="text-body text-(--color-text-secondary) mt-1">
             {robot.season.name} · {robot.role.replace("_", " ")}
           </p>
-          {robot.description && <p className="text-small text-[--color-text-secondary] mt-1">{robot.description}</p>}
+          {robot.description && <p className="text-small text-(--color-text-secondary) mt-1">{robot.description}</p>}
         </div>
         <div className="flex flex-wrap justify-end gap-2">
           {canEdit && (
@@ -103,7 +103,7 @@ export default async function RobotDetailPage({ params }: { params: Promise<{ id
       {/* Weight + BOM summary */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="card space-y-3">
-          <h2 className="text-h3 text-[--color-text-primary]">Weight</h2>
+          <h2 className="text-h3 text-(--color-text-primary)">Weight</h2>
           <ProgressBar
             value={displayWeight}
             max={weightLimit}
@@ -111,14 +111,14 @@ export default async function RobotDetailPage({ params }: { params: Promise<{ id
             warnAt={90} dangerAt={98}
           />
           {latestWeight == null && calculatedWeight === 0 && (
-            <p className="text-small text-[--color-warning]">No weight data. Log a snapshot or add installed items with weights.</p>
+            <p className="text-small text-(--color-warning)">No weight data. Log a snapshot or add installed items with weights.</p>
           )}
           <WeightLogger robotId={robot.id} />
         </div>
 
         <div className="card space-y-3">
-          <h2 className="text-h3 text-[--color-text-primary]">Bill of Materials</h2>
-          <p className="text-body text-[--color-text-primary]">{formatCurrency(bomFmv)} total FMV</p>
+          <h2 className="text-h3 text-(--color-text-primary)">Bill of Materials</h2>
+          <p className="text-body text-(--color-text-primary)">{formatCurrency(bomFmv)} total FMV</p>
           <Link href={`/budget/bom?robotId=${robot.id}`}>
             <Button variant="outline" size="sm">View &amp; edit BOM</Button>
           </Link>
@@ -128,7 +128,7 @@ export default async function RobotDetailPage({ params }: { params: Promise<{ id
       {/* Weight by subsystem */}
       {Object.keys(weightBySubsystem).length > 0 && (
         <div className="card">
-          <h2 className="text-h3 text-[--color-text-primary] mb-4">Weight by subsystem</h2>
+          <h2 className="text-h3 text-(--color-text-primary) mb-4">Weight by subsystem</h2>
           <div className="space-y-3">
             {SUBSYSTEM_ORDER.filter((s) => weightBySubsystem[s] > 0).map((sub) => (
               <ProgressBar
@@ -147,7 +147,7 @@ export default async function RobotDetailPage({ params }: { params: Promise<{ id
       {/* Weight history */}
       {robot.weightSnaps.length > 0 && (
         <div className="card">
-          <h2 className="text-h3 text-[--color-text-primary] mb-3">Weight history</h2>
+          <h2 className="text-h3 text-(--color-text-primary) mb-3">Weight history</h2>
           <Table>
             <TableHead><tr><Th>Date</Th><Th right>Weight (lbs)</Th><Th>Notes</Th></tr></TableHead>
             <TableBody>
@@ -167,15 +167,15 @@ export default async function RobotDetailPage({ params }: { params: Promise<{ id
       {robot.tasks.length > 0 && (
         <div className="card">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-h3 text-[--color-text-primary]">Open tasks</h2>
-            <Link href={`/schedule/tasks?robotId=${robot.id}`} className="text-small text-[--color-secondary] hover:underline">All</Link>
+            <h2 className="text-h3 text-(--color-text-primary)">Open tasks</h2>
+            <Link href={`/schedule/tasks?robotId=${robot.id}`} className="text-small text-(--color-secondary) hover:underline">All</Link>
           </div>
           <div className="space-y-2">
             {robot.tasks.map((t) => (
               <Link key={t.id} href={`/tasks/${t.id}`}
-                className="flex items-center justify-between py-2 border-b border-[--color-border] last:border-0 hover:text-[--color-primary] transition-colors">
-                <span className="text-sm text-[--color-text-primary]">{t.name}</span>
-                <span className="text-small text-[--color-text-secondary]">{t.dueDate ? formatDate(t.dueDate) : "No due date"}</span>
+                className="flex items-center justify-between py-2 border-b border-(--color-border) last:border-0 hover:text-(--color-primary) transition-colors">
+                <span className="text-sm text-(--color-text-primary)">{t.name}</span>
+                <span className="text-small text-(--color-text-secondary)">{t.dueDate ? formatDate(t.dueDate) : "No due date"}</span>
               </Link>
             ))}
           </div>

@@ -51,7 +51,7 @@ export function NewBaseItemForm({
   return (
     <form action={action} className="space-y-5">
       {state && !state.success && (
-        <div className="rounded-md bg-[--color-danger]/10 border border-[--color-danger]/20 px-4 py-3 text-sm text-[--color-danger]">{state.error}</div>
+        <div className="rounded-md bg-(--color-danger)/10 border border-(--color-danger)/20 px-4 py-3 text-sm text-(--color-danger)">{state.error}</div>
       )}
 
       <Field label="Item name" name="name" required placeholder='e.g. Falcon 500 Motor' />
@@ -65,8 +65,8 @@ export function NewBaseItemForm({
       </div>
       <Textarea label="Description" name="description" rows={2} placeholder="Optional notes about this item" />
 
-      <div className="border-t border-[--color-border] pt-4 space-y-3">
-        <p className="text-label font-medium text-[--color-text-secondary] uppercase tracking-wide">Stock & reorder</p>
+      <div className="border-t border-(--color-border) pt-4 space-y-3">
+        <p className="text-label font-medium text-(--color-text-secondary) uppercase tracking-wide">Stock & reorder</p>
         <div className="grid grid-cols-3 gap-4">
           <Field label="Current stock" name="currentStock" type="number" min="0" step="0.01" defaultValue={0} />
           <Field label="Min threshold" name="minStockThreshold" type="number" min="0" step="0.01" defaultValue={0} hint="Triggers reorder" />
@@ -83,15 +83,15 @@ export function NewBaseItemForm({
         <Field label="Storage location" name="storageLocation" placeholder='e.g. Shelf B3 — Red Bin' />
       </div>
 
-      <div className="border-t border-[--color-border] pt-4 space-y-2">
-        <p className="text-label font-medium text-[--color-text-secondary] uppercase tracking-wide">FIRST</p>
+      <div className="border-t border-(--color-border) pt-4 space-y-2">
+        <p className="text-label font-medium text-(--color-text-secondary) uppercase tracking-wide">FIRST</p>
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" name="isKopItem" className="rounded" />
-          <span className="text-sm text-[--color-text-primary]">Kit of Parts (KOP) item</span>
+          <span className="text-sm text-(--color-text-primary)">Kit of Parts (KOP) item</span>
         </label>
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" name="isFirstChoiceItem" className="rounded" />
-          <span className="text-sm text-[--color-text-primary]">FIRST Choice item ($0 acquisition cost)</span>
+          <span className="text-sm text-(--color-text-primary)">FIRST Choice item ($0 acquisition cost)</span>
         </label>
       </div>
 

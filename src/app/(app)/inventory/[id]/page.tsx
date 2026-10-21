@@ -43,10 +43,10 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       {/* Breadcrumb */}
-      <nav className="text-small text-[--color-text-secondary]">
-        <Link href="/inventory" className="hover:text-[--color-primary]">Inventory</Link>
+      <nav className="text-small text-(--color-text-secondary)">
+        <Link href="/inventory" className="hover:text-(--color-primary)">Inventory</Link>
         <span className="mx-2">›</span>
-        <span className="text-[--color-text-primary]">{item.name}</span>
+        <span className="text-(--color-text-primary)">{item.name}</span>
       </nav>
 
       {/* Retired: out of the inventory until restored */}
@@ -92,8 +92,8 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
           { label: "Part number",      value: item.partNumber ?? "—" },
         ].map((m) => (
           <div key={m.label} className="card py-2.5">
-            <p className="text-label text-[--color-text-secondary]">{m.label}</p>
-            <p className="text-sm font-medium text-[--color-text-primary] mt-0.5">{String(m.value)}</p>
+            <p className="text-label text-(--color-text-secondary)">{m.label}</p>
+            <p className="text-sm font-medium text-(--color-text-primary) mt-0.5">{String(m.value)}</p>
           </div>
         ))}
       </div>
@@ -101,25 +101,25 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
       {/* Description */}
       {item.description && (
         <div className="card">
-          <p className="text-label text-[--color-text-secondary] mb-1">Description</p>
-          <p className="text-body text-[--color-text-primary]">{item.description}</p>
+          <p className="text-label text-(--color-text-secondary) mb-1">Description</p>
+          <p className="text-body text-(--color-text-primary)">{item.description}</p>
         </div>
       )}
 
       {/* Recent acquisitions */}
       {recentAcquisitions.length > 0 && (
         <div className="card">
-          <h2 className="text-h3 text-[--color-text-primary] mb-3">Recent acquisitions</h2>
+          <h2 className="text-h3 text-(--color-text-primary) mb-3">Recent acquisitions</h2>
           <div className="space-y-2">
             {recentAcquisitions.map((a) => (
-              <div key={a.id} className="flex items-center justify-between py-1.5 border-b border-[--color-border] last:border-0">
+              <div key={a.id} className="flex items-center justify-between py-1.5 border-b border-(--color-border) last:border-0">
                 <div>
-                  <p className="text-sm text-[--color-text-primary]">
+                  <p className="text-sm text-(--color-text-primary)">
                     {a.quantity} {item.unitOfMeasure.toLowerCase()}
-                    {a.subsystem && <span className="ml-1 text-[--color-text-secondary]">→ {a.subsystem.replace(/_/g, " ")}</span>}
-                    {a.robot && <span className="ml-1 text-[--color-text-secondary]">({a.robot.displayName})</span>}
+                    {a.subsystem && <span className="ml-1 text-(--color-text-secondary)">→ {a.subsystem.replace(/_/g, " ")}</span>}
+                    {a.robot && <span className="ml-1 text-(--color-text-secondary)">({a.robot.displayName})</span>}
                   </p>
-                  <p className="text-small text-[--color-text-secondary]">
+                  <p className="text-small text-(--color-text-secondary)">
                     {new Date(a.dateAdded).toLocaleDateString()}
                   </p>
                 </div>
@@ -133,7 +133,7 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
       {/* Edit form — editors only */}
       {canEdit && (
         <div className="card space-y-4">
-          <h2 className="text-h3 text-[--color-text-primary]">Edit item</h2>
+          <h2 className="text-h3 text-(--color-text-primary)">Edit item</h2>
           <EditBaseItemForm key={item.updatedAt.toISOString()} vendors={vendors} item={{
             id:                item.id,
             name:              item.name,

@@ -54,13 +54,13 @@ export default async function NotificationsPage() {
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-h1 text-[--color-text-primary]">Notifications</h1>
+          <h1 className="text-h1 text-(--color-text-primary)">Notifications</h1>
           {unread.length > 0 && (
-            <p className="text-small text-[--color-text-secondary] mt-0.5">{unread.length} unread</p>
+            <p className="text-small text-(--color-text-secondary) mt-0.5">{unread.length} unread</p>
           )}
         </div>
         <div className="flex items-center gap-3">
-          <Link href="/settings/notifications" className="text-sm font-medium text-[--color-secondary] hover:underline">
+          <Link href="/settings/notifications" className="text-sm font-medium text-(--color-secondary) hover:underline">
             Settings
           </Link>
           {unread.length > 0 && <MarkAllReadButton />}
@@ -69,7 +69,7 @@ export default async function NotificationsPage() {
 
       {notifications.length === 0 ? (
         <div className="card text-center py-12">
-          <p className="text-body text-[--color-text-secondary]">No notifications yet.</p>
+          <p className="text-body text-(--color-text-secondary)">No notifications yet.</p>
         </div>
       ) : (
         <div className="card p-0 divide-y divide-(--color-border)">

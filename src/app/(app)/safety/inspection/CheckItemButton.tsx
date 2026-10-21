@@ -29,8 +29,8 @@ export function CheckItemButton({ itemId, currentStatus, status, label }: {
       className={cn(
         "w-8 h-8 rounded font-bold text-sm transition-colors disabled:opacity-50",
         status === "PASS"
-          ? isActive ? "bg-[--color-success] text-white" : "border border-[--color-border] text-[--color-text-disabled] hover:border-[--color-success] hover:text-[--color-success]"
-          : isActive ? "bg-[--color-danger] text-white" : "border border-[--color-border] text-[--color-text-disabled] hover:border-[--color-danger] hover:text-[--color-danger]"
+          ? isActive ? "bg-(--color-success) text-white" : "border border-(--color-border) text-(--color-text-disabled) hover:border-(--color-success) hover:text-(--color-success)"
+          : isActive ? "bg-(--color-danger) text-white" : "border border-(--color-border) text-(--color-text-disabled) hover:border-(--color-danger) hover:text-(--color-danger)"
       )}
     >
       {label}

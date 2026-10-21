@@ -128,7 +128,7 @@ export function ToolImageCapture({ name = "imageUrl", defaultUrl, onUrl }: Props
 
       {/* Preview */}
       {preview && !showWebcam && (
-        <div className="relative w-full aspect-video max-h-56 rounded-lg overflow-hidden bg-[--color-surface-overlay]">
+        <div className="relative w-full aspect-video max-h-56 rounded-lg overflow-hidden bg-(--color-surface-overlay)">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={preview} alt="Tool photo" className="w-full h-full object-cover" />
           {uploading && (
@@ -153,7 +153,7 @@ export function ToolImageCapture({ name = "imageUrl", defaultUrl, onUrl }: Props
       {!showWebcam && (
         <div className="flex flex-wrap gap-2">
           {/* File / camera input */}
-          <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[--color-border] text-sm font-medium text-[--color-text-secondary] hover:border-[--color-border-strong] hover:text-[--color-text-primary] cursor-pointer transition-colors bg-[--color-surface]">
+          <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-(--color-border) text-sm font-medium text-(--color-text-secondary) hover:border-(--color-border-strong) hover:text-(--color-text-primary) cursor-pointer transition-colors bg-(--color-surface)">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
@@ -173,7 +173,7 @@ export function ToolImageCapture({ name = "imageUrl", defaultUrl, onUrl }: Props
             <button
               type="button"
               onClick={startWebcam}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[--color-border] text-sm font-medium text-[--color-text-secondary] hover:border-[--color-border-strong] hover:text-[--color-text-primary] transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-(--color-border) text-sm font-medium text-(--color-text-secondary) hover:border-(--color-border-strong) hover:text-(--color-text-primary) transition-colors"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
@@ -185,7 +185,7 @@ export function ToolImageCapture({ name = "imageUrl", defaultUrl, onUrl }: Props
       )}
 
       {error && (
-        <p className="text-sm text-[--color-danger]">{error}</p>
+        <p className="text-sm text-(--color-danger)">{error}</p>
       )}
     </div>
   );

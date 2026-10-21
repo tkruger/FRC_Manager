@@ -89,7 +89,7 @@ export function NotificationsDropdown({ unreadCount }: { unreadCount: number }) 
       {/* Bell button */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="relative h-9 w-9 rounded-md flex items-center justify-center text-[--color-text-secondary] hover:bg-[--color-surface-overlay] transition-colors"
+        className="relative h-9 w-9 rounded-md flex items-center justify-center text-(--color-text-secondary) hover:bg-(--color-surface-overlay) transition-colors"
         aria-label={`Notifications${localUnread > 0 ? ` (${localUnread} unread)` : ""}`}
         aria-expanded={open}
       >
@@ -107,33 +107,33 @@ export function NotificationsDropdown({ unreadCount }: { unreadCount: number }) 
       {/* Dropdown panel */}
       {open && (
         <div
-          className="absolute right-0 top-full mt-2 w-80 rounded-xl border border-[--color-border] shadow-xl z-50 overflow-hidden"
+          className="absolute right-0 top-full mt-2 w-80 rounded-xl border border-(--color-border) shadow-xl z-50 overflow-hidden"
           style={{ backgroundColor: "var(--color-surface)" }}
           role="dialog"
           aria-label="Notifications"
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[--color-border]">
-            <p className="text-sm font-semibold text-[--color-text-primary]">Notifications</p>
+          <div className="flex items-center justify-between px-4 py-3 border-b border-(--color-border)">
+            <p className="text-sm font-semibold text-(--color-text-primary)">Notifications</p>
             {notifications.length > 0 && (
               <Link href="/notifications" onClick={() => setOpen(false)}
-                className="text-xs text-[--color-secondary] hover:underline">
+                className="text-xs text-(--color-secondary) hover:underline">
                 View all
               </Link>
             )}
           </div>
 
           {/* List */}
-          <div className="max-h-96 overflow-y-auto divide-y divide-[--color-border]/50">
+          <div className="max-h-96 overflow-y-auto divide-y divide-(--color-border)/50">
             {loading && (
-              <div className="px-4 py-6 text-center text-small text-[--color-text-secondary]">
+              <div className="px-4 py-6 text-center text-small text-(--color-text-secondary)">
                 Loading…
               </div>
             )}
             {!loading && notifications.length === 0 && (
               <div className="px-4 py-8 text-center">
                 <p className="text-2xl mb-2">🔔</p>
-                <p className="text-small text-[--color-text-secondary]">No notifications yet</p>
+                <p className="text-small text-(--color-text-secondary)">No notifications yet</p>
               </div>
             )}
             {!loading && notifications.map((n) => {

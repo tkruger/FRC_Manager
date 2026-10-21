@@ -27,20 +27,20 @@ export default async function ToolEditPage({ params }: { params: Promise<{ id: s
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-      <nav className="text-small text-[--color-text-secondary]">
-        <Link href="/tools" className="hover:text-[--color-primary]">Tools</Link>
+      <nav className="text-small text-(--color-text-secondary)">
+        <Link href="/tools" className="hover:text-(--color-primary)">Tools</Link>
         <span className="mx-2">›</span>
-        <span className="text-[--color-text-primary]">{tool.name}</span>
+        <span className="text-(--color-text-primary)">{tool.name}</span>
         <span className="mx-2">›</span>
-        <span className="text-[--color-text-primary]">Edit</span>
+        <span className="text-(--color-text-primary)">Edit</span>
       </nav>
 
-      <h1 className="text-h1 text-[--color-text-primary]">{tool.name}</h1>
+      <h1 className="text-h1 text-(--color-text-primary)">{tool.name}</h1>
 
       <ToolImageUploadPanel toolId={tool.id} currentImageUrl={tool.image} />
 
       <div className="card space-y-4">
-        <h2 className="text-h3 text-[--color-text-primary]">Edit details</h2>
+        <h2 className="text-h3 text-(--color-text-primary)">Edit details</h2>
         <EditToolForm key={tool.updatedAt.toISOString()} names={groups.names} groupSize={groups.sizes[groupKey(tool.name)] ?? 1} tool={{
           id:                      tool.id,
           name:                    tool.name,

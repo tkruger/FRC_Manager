@@ -24,13 +24,13 @@ export function VendorSupplierPicker({ vendors, defaultValue, required }: Props)
   return (
     <div className="space-y-2">
       <label className="block">
-        <span className="text-sm font-medium text-[--color-text-primary]">
-          Preferred supplier{required && <span className="text-[--color-danger] ml-0.5">*</span>}
+        <span className="text-sm font-medium text-(--color-text-primary)">
+          Preferred supplier{required && <span className="text-(--color-danger) ml-0.5">*</span>}
         </span>
         <select
           value={selected}
           onChange={(e) => setSelected(e.target.value)}
-          className="mt-1 w-full rounded-lg border border-[--color-border] bg-[--color-surface] text-[--color-text-primary] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[--color-primary]/40 focus:border-[--color-primary]"
+          className="mt-1 w-full rounded-lg border border-(--color-border) bg-(--color-surface) text-(--color-text-primary) px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-(--color-primary)/40 focus:border-(--color-primary)"
         >
           <option value="">— None —</option>
           {vendors.map((v) => (

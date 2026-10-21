@@ -44,7 +44,7 @@ export function RobotForm({ seasonId }: { seasonId: string }) {
       <DialogContent title="Add robot">
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="text-sm text-[--color-danger] bg-[--color-danger]/10 rounded px-3 py-2">{error}</div>
+            <div className="text-sm text-(--color-danger) bg-(--color-danger)/10 rounded px-3 py-2">{error}</div>
           )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Robot name" name="name" required placeholder="e.g. Ironclad" />

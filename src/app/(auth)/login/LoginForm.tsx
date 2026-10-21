@@ -59,10 +59,10 @@ export function LoginForm({ providers, oauthError }: { providers: OAuthProvider[
 
   return (
     <div className="card">
-      <h1 className="text-h2 text-[--color-text-primary] mb-6">Sign in</h1>
+      <h1 className="text-h2 text-(--color-text-primary) mb-6">Sign in</h1>
 
       {error && (
-        <div className="mb-4 rounded-md bg-[--color-danger]/10 border border-[--color-danger]/20 px-4 py-3 text-sm text-[--color-danger]">
+        <div className="mb-4 rounded-md bg-(--color-danger)/10 border border-(--color-danger)/20 px-4 py-3 text-sm text-(--color-danger)">
           {error}
         </div>
       )}
@@ -99,9 +99,9 @@ export function LoginForm({ providers, oauthError }: { providers: OAuthProvider[
         </>
       )}
 
-      <p className="mt-6 text-center text-small text-[--color-text-secondary]">
+      <p className="mt-6 text-center text-small text-(--color-text-secondary)">
         {"Don't have an account? "}
-        <Link href="/register" className="text-[--color-secondary] hover:underline font-medium">
+        <Link href="/register" className="text-(--color-secondary) hover:underline font-medium">
           Create one
         </Link>
       </p>

@@ -44,7 +44,7 @@ export function SeasonForm({ onClose }: { onClose?: () => void } = {}) {
   return (
     <form action={action} className="space-y-5">
       {state && !state.success && (
-        <div className="rounded-md bg-[--color-danger]/10 border border-[--color-danger]/20 px-4 py-3 text-sm text-[--color-danger]">
+        <div className="rounded-md bg-(--color-danger)/10 border border-(--color-danger)/20 px-4 py-3 text-sm text-(--color-danger)">
           {state.error}
         </div>
       )}
@@ -60,13 +60,13 @@ export function SeasonForm({ onClose }: { onClose?: () => void } = {}) {
 
       {/* Per-day meeting times */}
       <div>
-        <p className="block text-sm font-medium text-[--color-text-primary] mb-1">
-          Build meeting days &amp; times <span className="text-[--color-danger]">*</span>
+        <p className="block text-sm font-medium text-(--color-text-primary) mb-1">
+          Build meeting days &amp; times <span className="text-(--color-danger)">*</span>
         </p>
-        <p className="text-small text-[--color-text-secondary] mb-3">
+        <p className="text-small text-(--color-text-secondary) mb-3">
           Select which days the team meets and set the start/end time for each day.
         </p>
-        <div className="rounded-md border border-[--color-border] overflow-hidden divide-y divide-[--color-border]/40">
+        <div className="rounded-md border border-(--color-border) overflow-hidden divide-y divide-(--color-border)/40">
           {DAYS.map(({ value, label }) => {
             const checked = selectedDays.includes(value);
             return (
@@ -82,7 +82,7 @@ export function SeasonForm({ onClose }: { onClose?: () => void } = {}) {
                     )}
                     className="rounded flex-shrink-0"
                   />
-                  <span className="text-sm text-[--color-text-primary]">{label}</span>
+                  <span className="text-sm text-(--color-text-primary)">{label}</span>
                 </label>
                 {checked && (
                   <div className="flex flex-wrap items-center gap-2 sm:ml-auto">

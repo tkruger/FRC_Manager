@@ -52,7 +52,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="min-h-screen bg-[--color-surface]">
+    <div className="min-h-screen bg-(--color-surface)">
       {/* Animated background — orbs + mouse follower, sits behind all content */}
       <AnimatedBackground />
 

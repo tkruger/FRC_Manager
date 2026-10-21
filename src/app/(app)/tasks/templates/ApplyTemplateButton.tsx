@@ -40,10 +40,10 @@ export function ApplyTemplateButton({ disabled, existingTaskCount }: Props) {
         Apply template
       </Button>
       {result && (
-        <p className="text-small text-[--color-success]">{result}</p>
+        <p className="text-small text-(--color-success)">{result}</p>
       )}
       {disabled && (
-        <p className="text-small text-[--color-text-secondary]">Set up a season first</p>
+        <p className="text-small text-(--color-text-secondary)">Set up a season first</p>
       )}
     </div>
   );

@@ -42,11 +42,11 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary:   "focus-visible:ring-[--color-secondary]",
-        secondary: "focus-visible:ring-[--color-secondary]",
-        danger:    "focus-visible:ring-[--color-secondary]",
-        outline:   "border border-[--color-border] bg-[--color-surface] text-[--color-text-primary]",
-        ghost:     "bg-transparent text-[--color-text-primary]",
+        primary:   "focus-visible:ring-(--color-secondary)",
+        secondary: "focus-visible:ring-(--color-secondary)",
+        danger:    "focus-visible:ring-(--color-secondary)",
+        outline:   "border border-(--color-border) bg-(--color-surface) text-(--color-text-primary)",
+        ghost:     "bg-transparent text-(--color-text-primary)",
       },
       size: {
         sm:   "h-9 px-3 text-sm",

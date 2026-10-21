@@ -26,20 +26,20 @@ export function ProgressBar({
 
   const barColor =
     pct >= dangerAt
-      ? "bg-[--color-danger]"
+      ? "bg-(--color-danger)"
       : pct >= warnAt
-      ? "bg-[--color-warning]"
-      : "bg-[--color-success]";
+      ? "bg-(--color-warning)"
+      : "bg-(--color-success)";
 
   return (
     <div className={cn("w-full", className)}>
       {(label || showValue) && (
         <div className="flex items-center justify-between mb-1.5">
-          {label && <span className="text-small font-medium text-[--color-text-primary]">{label}</span>}
-          {sublabel && <span className="text-small text-[--color-text-secondary]">{sublabel}</span>}
+          {label && <span className="text-small font-medium text-(--color-text-primary)">{label}</span>}
+          {sublabel && <span className="text-small text-(--color-text-secondary)">{sublabel}</span>}
         </div>
       )}
-      <div className="w-full h-2.5 rounded-full bg-[--color-surface-overlay] overflow-hidden">
+      <div className="w-full h-2.5 rounded-full bg-(--color-surface-overlay) overflow-hidden">
         <div
           className={cn("h-full rounded-full transition-all duration-300", barColor)}
           style={{ width: `${pct}%` }}

@@ -45,17 +45,17 @@ export default async function MembersPage() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       <div>
         <PageTitle help="roles">Team members</PageTitle>
-        <p className="text-body text-[--color-text-secondary] mt-1">
+        <p className="text-body text-(--color-text-secondary) mt-1">
           Team {team?.teamNumber} — {team?.name}
         </p>
       </div>
 
       {/* Pending approval */}
       {pending.length > 0 && (
-        <div className="card border-l-4 border-l-[--color-warning]">
-          <h2 className="text-h3 text-[--color-text-primary] mb-4">
+        <div className="card border-l-4 border-l-(--color-warning)">
+          <h2 className="text-h3 text-(--color-text-primary) mb-4">
             Pending approval
-            <span className="ml-2 inline-flex items-center justify-center w-5 h-5 rounded-full bg-[--color-warning] text-white text-xs font-bold">
+            <span className="ml-2 inline-flex items-center justify-center w-5 h-5 rounded-full bg-(--color-warning) text-white text-xs font-bold">
               {pending.length}
             </span>
           </h2>
@@ -63,11 +63,11 @@ export default async function MembersPage() {
             {pending.map((u) => (
               <div key={u.id} className="flex flex-col gap-3 py-3 border-b border-(--color-border) last:border-0 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div className="min-w-0">
-                  <p className="font-medium text-[--color-text-primary]">{u.name}</p>
-                  <p className="text-small text-[--color-text-secondary] break-all">{u.email}</p>
-                  <p className="text-small text-[--color-text-secondary]">Requested {formatDate(u.createdAt)}</p>
+                  <p className="font-medium text-(--color-text-primary)">{u.name}</p>
+                  <p className="text-small text-(--color-text-secondary) break-all">{u.email}</p>
+                  <p className="text-small text-(--color-text-secondary)">Requested {formatDate(u.createdAt)}</p>
                   {u.registrationNote && (
-                    <p className="mt-1 text-small text-[--color-text-primary] italic">
+                    <p className="mt-1 text-small text-(--color-text-primary) italic">
                       &ldquo;{u.registrationNote}&rdquo;
                     </p>
                   )}
@@ -84,7 +84,7 @@ export default async function MembersPage() {
 
       {pending.length === 0 && (
         <div className="card">
-          <p className="text-small text-[--color-text-secondary]">No pending approvals.</p>
+          <p className="text-small text-(--color-text-secondary)">No pending approvals.</p>
         </div>
       )}
 
@@ -131,13 +131,13 @@ export default async function MembersPage() {
       {/* Suspended / Denied */}
       {other.length > 0 && (
         <div>
-          <h2 className="text-h2 text-[--color-text-primary] mb-3">Inactive</h2>
+          <h2 className="text-h2 text-(--color-text-primary) mb-3">Inactive</h2>
           <div className="card divide-y divide-(--color-border)">
             {other.map((u) => (
               <div key={u.id} className="flex items-center justify-between gap-4 py-3">
                 <div className="min-w-0">
-                  <p className="font-medium text-[--color-text-primary]">{u.name}</p>
-                  <p className="text-small text-[--color-text-secondary] break-all">{u.email}</p>
+                  <p className="font-medium text-(--color-text-primary)">{u.name}</p>
+                  <p className="text-small text-(--color-text-secondary) break-all">{u.email}</p>
                 </div>
                 <span className="flex shrink-0 items-center gap-3">
                   <Badge variant={statusVariant(u.status)}>{u.status}</Badge>
@@ -151,8 +151,8 @@ export default async function MembersPage() {
 
       {/* Access code */}
       <div className="card">
-        <h2 className="text-h3 text-[--color-text-primary] mb-1">Team access code</h2>
-        <p className="text-small text-[--color-text-secondary] mb-4">
+        <h2 className="text-h3 text-(--color-text-primary) mb-1">Team access code</h2>
+        <p className="text-small text-(--color-text-secondary) mb-4">
           Members who enter this code at registration are auto-approved with the Team Member role.
           Useful for onboarding large groups at once.
         </p>

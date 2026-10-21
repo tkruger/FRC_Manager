@@ -24,9 +24,9 @@ export function ToolImageUploadPanel({ toolId, currentImageUrl }: Props) {
   return (
     <div className="card space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="text-h3 text-[--color-text-primary]">Photo</h2>
+        <h2 className="text-h3 text-(--color-text-primary)">Photo</h2>
         {isPending && (
-          <span className="text-small text-[--color-text-secondary]">Saving…</span>
+          <span className="text-small text-(--color-text-secondary)">Saving…</span>
         )}
       </div>
       <ToolImageCapture

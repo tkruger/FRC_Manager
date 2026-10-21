@@ -41,13 +41,13 @@ export function BudgetSetupForm({ existing }: Props) {
   return (
     <form action={action} className="space-y-6">
       {state && !state.success && (
-        <div className="rounded-md bg-[--color-danger]/10 border border-[--color-danger]/20 px-4 py-3 text-sm text-[--color-danger]">
+        <div className="rounded-md bg-(--color-danger)/10 border border-(--color-danger)/20 px-4 py-3 text-sm text-(--color-danger)">
           {state.error}
         </div>
       )}
 
       <div className="card space-y-4">
-        <h2 className="text-h3 text-[--color-text-primary]">Revenue</h2>
+        <h2 className="text-h3 text-(--color-text-primary)">Revenue</h2>
         <Field
           label="Total estimated revenue ($)"
           name="totalEstRevenue"
@@ -60,14 +60,14 @@ export function BudgetSetupForm({ existing }: Props) {
       </div>
 
       <div className="card space-y-4">
-        <h2 className="text-h3 text-[--color-text-primary]">Category allocations</h2>
-        <p className="text-small text-[--color-text-secondary]">
+        <h2 className="text-h3 text-(--color-text-primary)">Category allocations</h2>
+        <p className="text-small text-(--color-text-secondary)">
           Set a spending limit for each category. Suggested amounts shown based on typical FRC team budgets.
         </p>
         <div className="space-y-3">
           {DEFAULT_CATEGORIES.map((cat) => (
             <div key={cat.type} className="flex items-center gap-4">
-              <label className="flex-1 text-sm text-[--color-text-primary]">{cat.label}</label>
+              <label className="flex-1 text-sm text-(--color-text-primary)">{cat.label}</label>
               <div className="w-36">
                 <Field
                   label=""
@@ -84,7 +84,7 @@ export function BudgetSetupForm({ existing }: Props) {
         </div>
       </div>
 
-      <div className="flex gap-3 sticky bottom-0 bg-[--color-surface] border-t border-[--color-border] -mx-4 px-4 py-4 sm:-mx-6 sm:px-6">
+      <div className="flex gap-3 sticky bottom-0 bg-(--color-surface) border-t border-(--color-border) -mx-4 px-4 py-4 sm:-mx-6 sm:px-6">
         <Button type="submit" isLoading={pending}>
           {existing ? "Update budget" : "Create budget"}
         </Button>

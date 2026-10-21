@@ -37,11 +37,11 @@ export default async function SchedulePage({
   if (!activeSeason) {
     return (
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <h1 className="text-h1 text-[--color-text-primary] mb-4">Tasks</h1>
+        <h1 className="text-h1 text-(--color-text-primary) mb-4">Tasks</h1>
         <div className="card">
-          <p className="text-body text-[--color-text-secondary]">
+          <p className="text-body text-(--color-text-secondary)">
             No active season.{" "}
-            <Link href="/settings/season" className="text-[--color-secondary] hover:underline">
+            <Link href="/settings/season" className="text-(--color-secondary) hover:underline">
               Set up a season
             </Link>{" "}
             first.

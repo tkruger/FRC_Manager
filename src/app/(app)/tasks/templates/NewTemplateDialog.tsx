@@ -28,7 +28,7 @@ export function NewTemplateDialog() {
       <DialogContent title="Create template" description="Give your template a name, then add tasks on the next screen.">
         <form action={action} className="space-y-4">
           {state && !state.success && (
-            <div className="text-sm text-[--color-danger] bg-[--color-danger]/10 rounded px-3 py-2">{state.error}</div>
+            <div className="text-sm text-(--color-danger) bg-(--color-danger)/10 rounded px-3 py-2">{state.error}</div>
           )}
           <Field label="Template name" name="name" required placeholder='e.g. "2026 Offseason Build"' />
           <Textarea label="Description" name="description" rows={2} placeholder="Optional — what is this template for?" />

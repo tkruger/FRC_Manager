@@ -29,11 +29,11 @@ export default async function NewTaskPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <nav className="text-small text-[--color-text-secondary] mb-3">
-        <Link href="/tasks" className="hover:text-[--color-primary]">Tasks</Link>
+      <nav className="text-small text-(--color-text-secondary) mb-3">
+        <Link href="/tasks" className="hover:text-(--color-primary)">Tasks</Link>
         <span className="mx-2">›</span>New task
       </nav>
-      <h1 className="text-h1 text-[--color-text-primary] mb-6">New task</h1>
+      <h1 className="text-h1 text-(--color-text-primary) mb-6">New task</h1>
       <NewTaskForm
         robots={activeSeason.robots}
         members={members}

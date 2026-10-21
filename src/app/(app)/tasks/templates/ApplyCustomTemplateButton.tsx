@@ -28,8 +28,8 @@ export function ApplyCustomTemplateButton({ templateId, disabled }: { templateId
       <Button size="sm" onClick={handle} isLoading={isPending} disabled={disabled}>
         Apply to season
       </Button>
-      {result && <span className="text-small text-[--color-success]">{result}</span>}
-      {disabled && <span className="text-small text-[--color-text-disabled]">No active season</span>}
+      {result && <span className="text-small text-(--color-success)">{result}</span>}
+      {disabled && <span className="text-small text-(--color-text-disabled)">No active season</span>}
     </div>
   );
 }

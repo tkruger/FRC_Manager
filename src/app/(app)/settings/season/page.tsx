@@ -51,12 +51,12 @@ export default async function SeasonSettingsPage() {
       {/* No active season prompt */}
       {!activeSeason && (
         <div className="card text-center py-12">
-          <p className="text-body text-[--color-text-secondary] mb-4">
+          <p className="text-body text-(--color-text-secondary) mb-4">
             No active season yet. Create one to start tracking robots, tasks, and inventory.
           </p>
           {isHeadMentor
             ? <NewSeasonButton hasActiveSeason={false} label="Create first season" />
-            : <p className="text-small text-[--color-text-disabled]">Contact your Head Mentor to set up a season.</p>}
+            : <p className="text-small text-(--color-text-disabled)">Contact your Head Mentor to set up a season.</p>}
         </div>
       )}
 

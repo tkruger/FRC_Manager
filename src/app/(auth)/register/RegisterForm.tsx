@@ -24,13 +24,13 @@ export function RegisterForm({ providers }: { providers: OAuthProvider[] }) {
 
   return (
     <div className="card">
-      <h1 className="text-h2 text-[--color-text-primary] mb-1">Create account</h1>
-      <p className="text-small text-[--color-text-secondary] mb-6">
+      <h1 className="text-h2 text-(--color-text-primary) mb-1">Create account</h1>
+      <p className="text-small text-(--color-text-secondary) mb-6">
         Enter your team&apos;s access code to join instantly, or submit a request for admin approval.
       </p>
 
       {state?.success && state.activated && (
-        <div className="mb-4 rounded-md bg-[--color-success]/10 border border-[--color-success]/20 px-4 py-3 text-sm text-[--color-success] space-y-2">
+        <div className="mb-4 rounded-md bg-(--color-success)/10 border border-(--color-success)/20 px-4 py-3 text-sm text-(--color-success) space-y-2">
           <p className="font-medium">Account created — you&apos;re ready to go!</p>
           <p>Your team code was accepted and your account is active. You can sign in now.</p>
           <Link href="/login" className="inline-block mt-1 font-medium underline">
@@ -40,7 +40,7 @@ export function RegisterForm({ providers }: { providers: OAuthProvider[] }) {
       )}
 
       {state && !state.success && !state.fieldErrors && (
-        <div className="mb-4 rounded-md bg-[--color-danger]/10 border border-[--color-danger]/20 px-4 py-3 text-sm text-[--color-danger]">
+        <div className="mb-4 rounded-md bg-(--color-danger)/10 border border-(--color-danger)/20 px-4 py-3 text-sm text-(--color-danger)">
           {state.error}
         </div>
       )}
@@ -92,7 +92,7 @@ export function RegisterForm({ providers }: { providers: OAuthProvider[] }) {
         <div>
           <button
             type="button"
-            className="text-small text-[--color-secondary] hover:underline"
+            className="text-small text-(--color-secondary) hover:underline"
             onClick={() => setShowCode((v) => !v)}
           >
             {showCode ? "Hide" : "Have a team access code?"}
@@ -112,17 +112,17 @@ export function RegisterForm({ providers }: { providers: OAuthProvider[] }) {
         <div>
           <label
             htmlFor="registrationNote"
-            className="block text-sm font-medium text-[--color-text-primary] mb-1.5"
+            className="block text-sm font-medium text-(--color-text-primary) mb-1.5"
           >
             Message to admin{" "}
-            <span className="font-normal text-[--color-text-secondary]">(optional)</span>
+            <span className="font-normal text-(--color-text-secondary)">(optional)</span>
           </label>
           <textarea
             id="registrationNote"
             name="registrationNote"
             rows={2}
             placeholder="e.g. I'm a new student joining the 2026 season"
-            className="flex w-full rounded-md border border-[--color-border] bg-[--color-surface] px-3 py-2 text-sm text-[--color-text-primary] placeholder:text-[--color-text-disabled] focus:border-[--color-primary] focus:outline-none focus:ring-2 focus:ring-[--color-primary]/20 resize-none"
+            className="flex w-full rounded-md border border-(--color-border) bg-(--color-surface) px-3 py-2 text-sm text-(--color-text-primary) placeholder:text-(--color-text-disabled) focus:border-(--color-primary) focus:outline-none focus:ring-2 focus:ring-(--color-primary)/20 resize-none"
           />
         </div>
 
@@ -131,9 +131,9 @@ export function RegisterForm({ providers }: { providers: OAuthProvider[] }) {
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-small text-[--color-text-secondary]">
+      <p className="mt-6 text-center text-small text-(--color-text-secondary)">
         Already have an account?{" "}
-        <Link href="/login" className="text-[--color-secondary] hover:underline font-medium">
+        <Link href="/login" className="text-(--color-secondary) hover:underline font-medium">
           Sign in
         </Link>
       </p>

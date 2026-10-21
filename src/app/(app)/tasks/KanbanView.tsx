@@ -209,13 +209,13 @@ export function KanbanView({
       {/* Filter bar */}
       <div className="flex flex-wrap gap-2 items-center">
         <select value={filterSubteam} onChange={(e) => setFilterSubteam(e.target.value)}
-          className="text-sm rounded-md border border-[--color-border] bg-[--color-surface] text-[--color-text-primary] px-2 py-1.5">
+          className="text-sm rounded-md border border-(--color-border) bg-(--color-surface) text-(--color-text-primary) px-2 py-1.5">
           <option value="">All sub-teams</option>
           {SUBTEAM_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
 
         <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)}
-          className="text-sm rounded-md border border-[--color-border] bg-[--color-surface] text-[--color-text-primary] px-2 py-1.5">
+          className="text-sm rounded-md border border-(--color-border) bg-(--color-surface) text-(--color-text-primary) px-2 py-1.5">
           <option value="">All priorities</option>
           <option value="CRITICAL">Critical</option>
           <option value="HIGH">High</option>
@@ -225,7 +225,7 @@ export function KanbanView({
 
         {allMembers.length > 0 && (
           <select value={filterAssignee} onChange={(e) => setFilterAssignee(e.target.value)}
-            className="text-sm rounded-md border border-[--color-border] bg-[--color-surface] text-[--color-text-primary] px-2 py-1.5">
+            className="text-sm rounded-md border border-(--color-border) bg-(--color-surface) text-(--color-text-primary) px-2 py-1.5">
             <option value="">All assignees</option>
             {allMembers.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
           </select>
@@ -235,7 +235,7 @@ export function KanbanView({
         <select
           value={datePreset}
           onChange={(e) => { setDatePreset(e.target.value as typeof datePreset); setCustomFrom(""); setCustomTo(""); }}
-          className="text-sm rounded-md border border-[--color-border] bg-[--color-surface] text-[--color-text-primary] px-2 py-1.5"
+          className="text-sm rounded-md border border-(--color-border) bg-(--color-surface) text-(--color-text-primary) px-2 py-1.5"
         >
           <option value="">All dates</option>
           <option value="week">Next 7 days</option>
@@ -247,21 +247,21 @@ export function KanbanView({
         {datePreset === "custom" && (
           <>
             <input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)}
-              className="text-sm rounded-md border border-[--color-border] bg-[--color-surface] text-[--color-text-primary] px-2 py-1.5" />
-            <span className="text-small text-[--color-text-secondary]">to</span>
+              className="text-sm rounded-md border border-(--color-border) bg-(--color-surface) text-(--color-text-primary) px-2 py-1.5" />
+            <span className="text-small text-(--color-text-secondary)">to</span>
             <input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)}
-              className="text-sm rounded-md border border-[--color-border] bg-[--color-surface] text-[--color-text-primary] px-2 py-1.5" />
+              className="text-sm rounded-md border border-(--color-border) bg-(--color-surface) text-(--color-text-primary) px-2 py-1.5" />
           </>
         )}
 
         {(filterSubteam || filterPriority || filterAssignee || datePreset) && (
           <button onClick={() => { setFilterSubteam(""); setFilterPriority(""); setFilterAssignee(""); setDatePreset(""); setCustomFrom(""); setCustomTo(""); }}
-            className="text-sm text-[--color-text-secondary] hover:text-[--color-danger] transition-colors">
+            className="text-sm text-(--color-text-secondary) hover:text-(--color-danger) transition-colors">
             Clear filters
           </button>
         )}
 
-        <span className="ml-auto text-small text-[--color-text-secondary]">
+        <span className="ml-auto text-small text-(--color-text-secondary)">
           {filtered.length} task{filtered.length !== 1 ? "s" : ""}
         </span>
       </div>
@@ -278,8 +278,8 @@ export function KanbanView({
               {/* Column header */}
               <div className="flex items-center gap-2 px-1">
                 <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: col.accent }} />
-                <span className="text-small font-semibold text-[--color-text-primary] truncate">{col.label}</span>
-                <span className="ml-auto text-small text-[--color-text-secondary] font-medium">{colTasks.length}</span>
+                <span className="text-small font-semibold text-(--color-text-primary) truncate">{col.label}</span>
+                <span className="ml-auto text-small text-(--color-text-secondary) font-medium">{colTasks.length}</span>
               </div>
 
               {/* Drop zone */}
@@ -290,15 +290,15 @@ export function KanbanView({
                 className={[
                   "flex flex-col gap-2 flex-1 rounded-lg p-2 min-h-16 transition-all",
                   isDragOver
-                    ? "ring-2 ring-[--color-primary] bg-[--color-primary]/8"
+                    ? "ring-2 ring-(--color-primary) bg-(--color-primary)/8"
                     : isDragging && col.dropTarget
-                    ? "bg-[--color-surface-overlay] ring-1 ring-[--color-border] ring-dashed"
-                    : "bg-[--color-surface-overlay]",
+                    ? "bg-(--color-surface-overlay) ring-1 ring-(--color-border) ring-dashed"
+                    : "bg-(--color-surface-overlay)",
                 ].join(" ")}
               >
                 {colTasks.length === 0 ? (
                   <div className={`text-center py-6 text-small transition-colors ${
-                    isDragOver ? "text-[--color-primary]" : "text-[--color-text-disabled]"
+                    isDragOver ? "text-(--color-primary)" : "text-(--color-text-disabled)"
                   }`}>
                     {isDragOver ? "Drop here" : "Empty"}
                   </div>

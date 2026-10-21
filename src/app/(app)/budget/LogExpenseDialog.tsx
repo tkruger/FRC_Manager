@@ -39,7 +39,7 @@ export function LogExpenseDialog({ budgetId, categories }: Props) {
       </DialogTrigger>
       <DialogContent title="Log expense">
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && <div className="text-sm text-[--color-danger] bg-[--color-danger]/10 rounded px-3 py-2">{error}</div>}
+          {error && <div className="text-sm text-(--color-danger) bg-(--color-danger)/10 rounded px-3 py-2">{error}</div>}
           <Field label="Description" name="description" required placeholder="e.g. Falcon 500 motors x4" />
           <div className="grid grid-cols-2 gap-4">
             <Field label="Amount ($)" name="amount" type="number" required step="0.01" placeholder="0.00" />

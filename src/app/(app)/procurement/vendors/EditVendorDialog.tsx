@@ -46,7 +46,7 @@ export function EditVendorDialog({ vendor }: { vendor: Vendor }) {
       <DialogContent title={`Edit: ${vendor.name}`}>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="text-sm text-[--color-danger] bg-[--color-danger]/10 rounded px-3 py-2">{error}</div>
+            <div className="text-sm text-(--color-danger) bg-(--color-danger)/10 rounded px-3 py-2">{error}</div>
           )}
 
           <Field label="Vendor name" name="name" required defaultValue={vendor.name} />
@@ -66,7 +66,7 @@ export function EditVendorDialog({ vendor }: { vendor: Vendor }) {
             defaultValue={vendor.notes ?? ""} />
           <label className="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" name="preferred" defaultChecked={vendor.preferred} className="rounded" />
-            <span className="text-sm text-[--color-text-primary]">Mark as preferred vendor</span>
+            <span className="text-sm text-(--color-text-primary)">Mark as preferred vendor</span>
           </label>
 
           <div className="flex gap-2 pt-2">

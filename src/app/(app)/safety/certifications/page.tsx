@@ -56,34 +56,34 @@ export default async function CertificationsPage() {
     <div className="max-w-full px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <nav className="text-small text-[--color-text-secondary] mb-1">
-            <Link href="/safety" className="hover:text-[--color-primary]">Safety</Link>
+          <nav className="text-small text-(--color-text-secondary) mb-1">
+            <Link href="/safety" className="hover:text-(--color-primary)">Safety</Link>
             <span className="mx-2">›</span>Certifications
           </nav>
-          <h1 className="text-h1 text-[--color-text-primary]">Certification matrix</h1>
-          <p className="text-body text-[--color-text-secondary] mt-1">{members.length} members × {allCertNames.length} certifications</p>
+          <h1 className="text-h1 text-(--color-text-primary)">Certification matrix</h1>
+          <p className="text-body text-(--color-text-secondary) mt-1">{members.length} members × {allCertNames.length} certifications</p>
         </div>
         {isAdmin && <AwardCertDialog members={members} certNames={allCertNames} />}
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-[--color-border]">
+      <div className="overflow-x-auto rounded-lg border border-(--color-border)">
         <table className="text-sm">
-          <thead className="bg-[--color-surface-raised] border-b border-[--color-border]">
+          <thead className="bg-(--color-surface-raised) border-b border-(--color-border)">
             <tr>
-              <th className="px-4 py-3 text-left text-label font-medium text-[--color-text-secondary] whitespace-nowrap sticky left-0 bg-[--color-surface-raised] z-10 min-w-[160px]">
+              <th className="px-4 py-3 text-left text-label font-medium text-(--color-text-secondary) whitespace-nowrap sticky left-0 bg-(--color-surface-raised) z-10 min-w-[160px]">
                 Member
               </th>
               {allCertNames.map((cert) => (
-                <th key={cert} className="px-3 py-3 text-label font-medium text-[--color-text-secondary] text-center whitespace-nowrap min-w-[120px]">
+                <th key={cert} className="px-3 py-3 text-label font-medium text-(--color-text-secondary) text-center whitespace-nowrap min-w-[120px]">
                   {cert}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-[--color-border]">
+          <tbody className="divide-y divide-(--color-border)">
             {members.map((m) => (
-              <tr key={m.id} className="hover:bg-[--color-surface-raised] transition-colors">
-                <td className="px-4 py-3 font-medium text-[--color-text-primary] sticky left-0 bg-[--color-surface] z-10 border-r border-[--color-border]">
+              <tr key={m.id} className="hover:bg-(--color-surface-raised) transition-colors">
+                <td className="px-4 py-3 font-medium text-(--color-text-primary) sticky left-0 bg-(--color-surface) z-10 border-r border-(--color-border)">
                   {m.name}
                 </td>
                 {allCertNames.map((cert) => {
@@ -93,16 +93,16 @@ export default async function CertificationsPage() {
                     <td key={cert} className="px-3 py-3 text-center">
                       {status === "ACTIVE" ? (
                         <div className="flex flex-col items-center gap-0.5">
-                          <span className="text-[--color-success] text-lg" title={c?.expiresAt ? `Expires ${formatDate(c.expiresAt)}` : "Active"}>✓</span>
-                          {c?.expiresAt && <span className="text-[10px] text-[--color-text-secondary]">{formatDate(c.expiresAt)}</span>}
+                          <span className="text-(--color-success) text-lg" title={c?.expiresAt ? `Expires ${formatDate(c.expiresAt)}` : "Active"}>✓</span>
+                          {c?.expiresAt && <span className="text-[10px] text-(--color-text-secondary)">{formatDate(c.expiresAt)}</span>}
                           {isAdmin && c?.id && <RevokeCertButton userId={m.id} certName={cert} />}
                         </div>
                       ) : status === "EXPIRED" ? (
-                        <span className="text-[--color-warning] text-lg" title="Expired">⚠</span>
+                        <span className="text-(--color-warning) text-lg" title="Expired">⚠</span>
                       ) : status === "REVOKED" ? (
-                        <span className="text-[--color-danger] text-xs">Revoked</span>
+                        <span className="text-(--color-danger) text-xs">Revoked</span>
                       ) : (
-                        <span className="text-[--color-text-disabled]">—</span>
+                        <span className="text-(--color-text-disabled)">—</span>
                       )}
                     </td>
                   );

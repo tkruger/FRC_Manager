@@ -49,7 +49,7 @@ export function AddFundingDialog({ budgetId }: { budgetId: string }) {
       </DialogTrigger>
       <DialogContent title="Add funding source">
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && <div className="text-sm text-[--color-danger] bg-[--color-danger]/10 rounded px-3 py-2">{error}</div>}
+          {error && <div className="text-sm text-(--color-danger) bg-(--color-danger)/10 rounded px-3 py-2">{error}</div>}
           <Field label="Source name" name="name" required placeholder="e.g. ACME Corp Sponsorship" />
           <div className="grid grid-cols-2 gap-4">
             <Select label="Type" name="type" required options={TYPE_OPTIONS} />

@@ -21,7 +21,7 @@ export function BomItemActions({ itemId }: { itemId: string }) {
     <button
       onClick={handleDelete}
       disabled={isPending}
-      className="text-[--color-text-disabled] hover:text-[--color-danger] transition-colors disabled:opacity-50"
+      className="text-(--color-text-disabled) hover:text-(--color-danger) transition-colors disabled:opacity-50"
       title="Remove item"
     >
       <Trash2 className="h-4 w-4" />
