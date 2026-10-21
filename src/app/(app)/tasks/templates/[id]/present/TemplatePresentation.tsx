@@ -212,9 +212,12 @@ function Gantt({ items, range, markers, labels, height }: {
           <div key={it.key} onMouseEnter={() => setHover(r)}
             style={{ position: "absolute", left: 0, top, width: G_ROW_W, height: rowH, background: hover === r ? "rgba(29,58,138,.08)" : r % 2 ? "rgba(15,23,42,.025)" : "transparent" }}>
             <div style={{ position: "absolute", left: 0, width: G_LABEL_W - 16, top: 0, height: rowH, display: "flex", alignItems: "center", gap: 8, fontSize: font }}>
-              <span style={{ width: 8, height: 8, borderRadius: 4, background: color, flex: "none" }} />
+              {/* One marker in the sub-team color: a dot for tasks, a diamond for milestones */}
+              {it.isMilestone
+                ? <span style={{ width: 8, height: 8, margin: "0 1px", background: color, transform: "rotate(45deg)", flex: "none" }} />
+                : <span style={{ width: 8, height: 8, borderRadius: 4, background: color, flex: "none" }} />}
               <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: it.isMilestone ? 700 : 500 }}>
-                {it.isMilestone ? "◆ " : ""}{it.name}{it.suffix ? <span style={{ color: C.muted }}> — {it.suffix}</span> : null}
+                {it.name}{it.suffix ? <span style={{ color: C.muted }}> — {it.suffix}</span> : null}
               </span>
             </div>
             <div style={{ position: "absolute", left: G_LABEL_W, top: 0, width: G_CHART_W, height: rowH }}>

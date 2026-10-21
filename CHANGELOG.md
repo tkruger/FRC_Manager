@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Gantt charts (Tasks → Gantt and the presentation): milestones are marked with a diamond in the sub-team color instead of a dot plus ◆, so rows no longer look double-bulleted
+
 ## 1.3.0 — 2026-10-21
 
 **Tasks**

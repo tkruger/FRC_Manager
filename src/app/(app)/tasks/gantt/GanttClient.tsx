@@ -231,9 +231,12 @@ export function GanttClient({ tasks, kickoffDate, endDate, seasonName, markers }
                   onClick={() => setModalTask(task)}>
                   {/* Name */}
                   <div className="absolute left-0 top-0 bottom-0 flex items-center gap-2 px-3 bg-(--color-surface)/80" style={{ width: LABEL_W }}>
-                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: teamColor(task.subTeam) }} />
+                    {/* One marker in the sub-team color: a dot for tasks, a diamond for milestones */}
+                    {task.isMilestone
+                      ? <span className="w-2 h-2 mx-px rotate-45 shrink-0" style={{ background: teamColor(task.subTeam) }} title="Milestone" />
+                      : <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: teamColor(task.subTeam) }} />}
                     <span className={`text-small truncate ${task.isMilestone ? "font-semibold" : ""} ${isDone ? "line-through text-(--color-text-secondary)" : "text-(--color-text-primary)"}`}>
-                      {task.isMilestone ? "◆ " : ""}{task.name}
+                      {task.name}
                     </span>
                   </div>
                   {/* Timeline */}
