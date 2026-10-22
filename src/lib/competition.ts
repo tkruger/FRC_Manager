@@ -24,6 +24,18 @@ export function designation(stage: CompetitionStage, stageNumber: number | null 
   return info.numbered && stageNumber != null ? `${info.prefix}${stageNumber}` : info.prefix;
 }
 
+// ── Task length ─────────────────────────────────────────────────────────────
+
+/**
+ * Days count both ends: a task that takes N days runs from its start through its due date,
+ * so it's due on day start + N − 1 (Thursday–Sunday is 4 days). Milestones (0) are one day.
+ */
+export const lastDay = (start: number, length: number) => start + Math.max(0, length - 1);
+/** How many days a start–due span covers, counting both ends */
+export const spanDays = (start: number, due: number) => due - start + 1;
+/** A template task's due day, relative to its anchor */
+export const dueOffsetOf = (t: { startOffset: number; durationBuildDays: number }) => lastDay(t.startOffset, t.durationBuildDays);
+
 // ── Template task anchors ───────────────────────────────────────────────────
 
 /** TASK: counts from another task in the same template (its due date) — see anchorTaskName */

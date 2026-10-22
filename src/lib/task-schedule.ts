@@ -14,7 +14,8 @@ export function datesAfter(prereqDues: (Date | null)[], lagDays: number, duratio
   if (!dues.length) return null;
   const start = Math.max(...dues) + lagDays * DAY;
   const length = isMilestone ? 0 : Math.max(1, durationDays ?? 1);
-  return { start: new Date(start), due: new Date(start + length * DAY) };
+  // Counting both ends: a 4-day task starting Thursday is due Sunday
+  return { start: new Date(start), due: new Date(start + Math.max(0, length - 1) * DAY) };
 }
 
 /**

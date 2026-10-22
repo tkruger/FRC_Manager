@@ -6,7 +6,7 @@
 // is marked `estimated`, so the deck can still show the whole plan.
 
 import {
-  STAGE_INFO, anchorName, designation, isCompetitionAnchor, resolveAnchor, week0Date,
+  dueOffsetOf, lastDay, STAGE_INFO, anchorName, designation, isCompetitionAnchor, resolveAnchor, week0Date,
   type CompetitionStage, type TaskAnchor,
 } from "@/lib/competition";
 
@@ -84,7 +84,7 @@ export function scheduleTemplate<T extends ScheduleTask>(
   const place = (t: T, targets: (EventTarget & { root: TaskAnchor })[]) =>
     done.set(t, targets.map((x) => ({
       task: t, suffix: x.suffix, estimated: x.estimated, missing: !!x.missing, root: x.root,
-      start: x.day + t.startOffset, due: x.day + t.startOffset + t.durationBuildDays,
+      start: x.day + t.startOffset, due: x.day + lastDay(t.startOffset, t.durationBuildDays),
     })));
 
   for (const t of tasks) {
@@ -274,7 +274,7 @@ export function buildTimeline(tasks: TimelineTask[], season: TimelineSeason | nu
   // Tasks timed from a task that isn't there (or in a loop) still show, at kickoff
   const all: Placement<TimelineTask>[] = [
     ...placed,
-    ...unplaced.map(({ task: t }) => ({ task: t, suffix: null, start: t.startOffset, due: t.startOffset + t.durationBuildDays, estimated: true, missing: true, root: "KICKOFF" as TaskAnchor })),
+    ...unplaced.map(({ task: t }) => ({ task: t, suffix: null, start: t.startOffset, due: dueOffsetOf(t), estimated: true, missing: true, root: "KICKOFF" as TaskAnchor })),
   ];
 
   const items: TimelineItem[] = [];
@@ -289,7 +289,7 @@ export function buildTimeline(tasks: TimelineTask[], season: TimelineSeason | nu
       key: `${t.id}-${i}`, taskId: t.id, name: t.name, suffix: p.suffix,
       subTeam: t.subTeam, priority: t.priority, isMilestone: t.isMilestone,
       start: p.start, due: p.due,
-      estimated: p.estimated, anchor: p.root, rule: ruleText(t.anchor, t.anchorNumber, t.startOffset + t.durationBuildDays, t.anchorTaskName),
+      estimated: p.estimated, anchor: p.root, rule: ruleText(t.anchor, t.anchorNumber, dueOffsetOf(t), t.anchorTaskName),
       hours: t.estimatedHours, designReview: t.designReviewRequired,
     });
   }

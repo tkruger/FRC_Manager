@@ -11,7 +11,7 @@ import { DeleteTemplateButton } from "./DeleteTemplateButton";
 import { ApplyCustomTemplateButton } from "./ApplyCustomTemplateButton";
 import { shortDate } from "@/lib/schedule-helpers";
 import { PageHeader } from "@/components/PageHeader";
-import { describeAnchor } from "@/lib/competition";
+import { describeAnchor, dueOffsetOf } from "@/lib/competition";
 import { executionOrder } from "@/lib/template-timeline";
 import { standardTimelineTasks } from "@/lib/standard-template-view";
 import { SUBTEAM_OPTIONS } from "@/lib/schedule-helpers";
@@ -22,7 +22,7 @@ const MENTOR_ROLES = ["HEAD_MENTOR", "BUILD_LEAD", "INVENTORY_ADMIN"];
 const standard = executionOrder(standardTimelineTasks());
 const STANDARD_MILESTONES = standard.milestones.map((m) => ({
   name:   m.name,
-  offset: describeAnchor(m.anchor, m.anchorNumber, m.startOffset + m.durationBuildDays, m.anchorTaskName),
+  offset: describeAnchor(m.anchor, m.anchorNumber, dueOffsetOf(m), m.anchorTaskName),
   team:   SUBTEAM_OPTIONS.find((o) => o.value === m.subTeam)?.label ?? "All",
 }));
 const STANDARD_TASK_COUNT = standard.tasks.length;

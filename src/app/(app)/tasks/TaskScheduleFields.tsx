@@ -29,10 +29,11 @@ export function TaskScheduleFields({ initial, prereqDues, kickoffDate, endDate, 
   const [mode, setMode] = useState<ScheduleMode>(initial?.autoSchedule ? "auto" : "dates");
   // Length defaults to the task's current dates, if it has them
   const currentLength = initial?.startDate && initial?.dueDate
-    ? Math.max(1, Math.round((new Date(initial.dueDate).getTime() - new Date(initial.startDate).getTime()) / DAY))
+    ? Math.max(1, Math.round((new Date(initial.dueDate).getTime() - new Date(initial.startDate).getTime()) / DAY) + 1)
     : null;
   const [length, setLength] = useState(String(initial?.durationDays ?? currentLength ?? 3));
-  const [lag, setLag] = useState(String(initial?.lagDays ?? 0));
+  // New: start the day after the last prerequisite is due
+  const [lag, setLag] = useState(String(initial?.lagDays ?? 1));
   const [ownDue, setOwnDue] = useState(toDateVal(initial?.dueDate));
   const dueValue = due ?? ownDue;
   const setDue = onDueChange ?? setOwnDue;
@@ -96,7 +97,7 @@ export function TaskScheduleFields({ initial, prereqDues, kickoffDate, endDate, 
             {start
               ? milestone
                 ? <>Due <b>{show(start)}</b></>
-                : <><b>{show(start)}</b> → due <b>{show(new Date(start.getTime() + lenN * DAY))}</b> · {lenN} day{lenN === 1 ? "" : "s"}</>
+                : <><b>{show(start)}</b> → due <b>{show(new Date(start.getTime() + (lenN - 1) * DAY))}</b> · {lenN} day{lenN === 1 ? "" : "s"}</>
               : "Dates are set once a prerequisite has a due date."}
           </p>
           <input type="hidden" name="durationDays" value={lenN} />

@@ -76,7 +76,7 @@ export function emptyCSV(): string {
     "Pack the robot,,OPERATIONS,-2,1,HIGH,,false,false,,WEEK,,",
     "Strategy debrief,,STRATEGY,0,2,MEDIUM,,false,false,Pack the robot,TASK,,Pack the robot",
     "# startOffset: when the task STARTS — days after (positive) or before (negative) the anchor",
-    "# durationBuildDays: how many days it takes; it's due at startOffset + durationBuildDays (milestones may use 0)",
+    "# durationBuildDays: how many days it takes, counting both ends; it's due on day startOffset + durationBuildDays - 1 (milestones use 0)",
     "# anchor: KICKOFF SEASON_WEEK0 SEASON_END PRACTICE WEEK PLAYOFF WORLDS OFFSEASON TASK",
     "# anchorTaskName: with anchor TASK, the task in this template it counts from — startOffset is days after that task is due",
     "# anchorNumber: blank = every competition of that type (one task each); a number = only that one (e.g. WEEK + 1 = Week1)",

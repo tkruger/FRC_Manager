@@ -139,7 +139,7 @@ export default function HelpPage() {
         <H3>Import &amp; export (CSV)</H3>
         <ul className="list">
           <li><b>Download CSV</b> exports a template; <b>Import CSV</b> adds tasks from a spreadsheet, with a preview first. The empty CSV includes an example and notes on every column.</li>
-          <li>Columns <code>anchor</code> (KICKOFF, SEASON_WEEK0, SEASON_END, PRACTICE, WEEK, PLAYOFF, WORLDS, OFFSEASON, TASK) and <code>anchorNumber</code> (blank = each) set the anchor — with <code>TASK</code>, <code>anchorTaskName</code> names the task it counts from (its due date); <code>startOffset</code> is when the task <b>starts</b> (days before/after it) and <code>durationBuildDays</code> how long it takes, so it&apos;s due at start + length. Milestones can use a length of 0. Older CSVs without an anchor still work: positive offsets count from kickoff, negative ones back from Week 0.</li>
+          <li>Columns <code>anchor</code> (KICKOFF, SEASON_WEEK0, SEASON_END, PRACTICE, WEEK, PLAYOFF, WORLDS, OFFSEASON, TASK) and <code>anchorNumber</code> (blank = each) set the anchor — with <code>TASK</code>, <code>anchorTaskName</code> names the task it counts from (its due date); <code>startOffset</code> is when the task <b>starts</b> (days before/after it) and <code>durationBuildDays</code> how long it takes, counting both ends, so it&apos;s due on day start + length − 1 (a 4-day task starting Thursday is due Sunday). Milestones can use a length of 0. Older CSVs without an anchor still work: positive offsets count from kickoff, negative ones back from Week 0.</li>
           <li><code>prerequisiteNames</code> lists other task names separated by <code>|</code>.</li>
         </ul>
       </Section>

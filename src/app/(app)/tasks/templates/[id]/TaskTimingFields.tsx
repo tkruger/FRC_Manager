@@ -53,7 +53,7 @@ export function TaskTimingFields({ initial, season, tasks = [] }: {
   // New tasks start as "due 7 days after kickoff, takes 3 days"
   const startOffset = initial?.startOffset ?? 4;
   const length0     = initial ? initial.durationBuildDays : 3;
-  const due0        = startOffset + length0;
+  const due0        = startOffset + Math.max(0, length0 - 1); // both ends count
 
   const [milestone, setMilestone] = useState(initial?.isMilestone ?? false);
   const [anchor, setAnchor]       = useState<TaskAnchor>(initial?.anchor ?? legacyAnchor(startOffset));
@@ -72,7 +72,7 @@ export function TaskTimingFields({ initial, season, tasks = [] }: {
   // What gets saved
   const dueOffset = direction === "on" ? 0 : (direction === "before" ? -1 : 1) * Math.max(0, Math.round(Number(count) || 0));
   const len       = milestone ? 0 : Math.max(1, Math.round(Number(length) || 1));
-  const start     = dueOffset - len;
+  const start     = dueOffset - Math.max(0, len - 1); // a 3-day task due Friday starts Wednesday
 
   // This season's dates for the first match, if the season has one (for a task timed from
   // a task: that task's due date)

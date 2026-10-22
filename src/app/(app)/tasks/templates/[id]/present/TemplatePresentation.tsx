@@ -202,9 +202,10 @@ function Gantt({ items, range, markers, labels, height }: {
       {items.map((it, r) => {
         const top = r * rowH;
         const color = teamColor(it.subTeam);
-        const x1 = x(it.start), x2 = x(it.due);
+        // Tasks fill their due day too (Thu–Sun reaches the end of Sunday); milestones sit on it
+        const x1 = x(it.start), x2 = it.isMilestone ? x(it.due) : x(it.due + 1);
         const barW = Math.max(6, x2 - x1);
-        const tag = it.isMilestone ? labels.date(it.due) : `${it.due - it.start}d · due ${labels.date(it.due)}`;
+        const tag = it.isMilestone ? labels.date(it.due) : `${it.due - it.start + 1}d · due ${labels.date(it.due)}`;
         const tagRight = x2 + 12 + 120 < G_CHART_W;
         // Clear of the diamond (or the bar end)
         const gap = it.isMilestone ? rowH * 0.4 + 8 : 12;
@@ -277,7 +278,7 @@ function HoverCard({ item: it, labels, rowTop, rowH, height, left }: {
         ? line("Due", labels.long(it.due))
         : <>
             {line("Starts", labels.long(it.start))}
-            {line("Due", `${labels.long(it.due)} · ${it.due - it.start} day${it.due - it.start === 1 ? "" : "s"} of work`)}
+            {line("Due", `${labels.long(it.due)} · ${it.due - it.start + 1} day${it.due - it.start === 0 ? "" : "s"} of work`)}
           </>}
       {line("Rule", `due ${it.rule}`)}
       {it.hours != null && !it.isMilestone && line("Effort", `${it.hours} hour${it.hours === 1 ? "" : "s"} estimated`)}
@@ -470,7 +471,7 @@ function buildSlides(name: string, description: string | null, teamNumber: numbe
                   {laneItems.map((it) => it.isMilestone ? (
                     <div key={it.key} style={{ position: "absolute", left: x(it.due) - 7, top: laneH / 2 - 7, width: 14, height: 14, background: C.milestone, transform: "rotate(45deg)" }} />
                   ) : (
-                    <div key={it.key} style={{ position: "absolute", left: x(it.start), width: Math.max(4, x(it.due) - x(it.start)), top: laneH * 0.2, height: laneH * 0.6, borderRadius: 6, background: teamColor(lane), opacity: 0.3 }} />
+                    <div key={it.key} style={{ position: "absolute", left: x(it.start), width: Math.max(4, x(it.due + 1) - x(it.start)), top: laneH * 0.2, height: laneH * 0.6, borderRadius: 6, background: teamColor(lane), opacity: 0.3 }} />
                   ))}
                 </div>
               </div>

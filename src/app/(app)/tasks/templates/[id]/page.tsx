@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { findTeamTemplate } from "@/lib/template-access";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { describeAnchor, isCompetitionAnchor, STAGE_INFO } from "@/lib/competition";
+import { describeAnchor, dueOffsetOf, isCompetitionAnchor, STAGE_INFO } from "@/lib/competition";
 import type { SeasonPreview } from "./TaskTimingFields";
 import { buildTimeline, executionOrder, illustrativeSeason, ruleText } from "@/lib/template-timeline";
 import type { TaskOption } from "./TaskTimingFields";
@@ -51,7 +51,7 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
   };
   /** "Due 3d before Week 0" — the due date is the start plus the length */
   const due = (t: { anchor: Parameters<typeof describeAnchor>[0]; anchorNumber: number | null; anchorTaskName: string | null; startOffset: number; durationBuildDays: number }) =>
-    `Due ${describeAnchor(t.anchor, t.anchorNumber, t.startOffset + t.durationBuildDays, t.anchorTaskName).replace(/^(On|When) /, (m) => m.toLowerCase())}`;
+    `Due ${describeAnchor(t.anchor, t.anchorNumber, dueOffsetOf(t), t.anchorTaskName).replace(/^(On|When) /, (m) => m.toLowerCase())}`;
 
   if (!template) notFound();
 
@@ -89,7 +89,7 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
       lines: [
         { label: "Sub-team", value: SUBTEAM_OPTIONS.find((o) => o.value === t.subTeam)?.label ?? "No sub-team", dot: t.subTeam ? SUBTEAM_COLORS[t.subTeam] : "#94A3B8" },
         { label: "Type", value: t.isMilestone ? "Milestone" : `Task · ${len} day${len === 1 ? "" : "s"} of work` },
-        { label: "Due", value: ruleText(t.anchor, t.anchorNumber, t.startOffset + len, t.anchorTaskName) },
+        { label: "Due", value: ruleText(t.anchor, t.anchorNumber, dueOffsetOf(t), t.anchorTaskName) },
         ...(t.isMilestone ? [] : [{ label: "Starts", value: ruleText(t.anchor, t.anchorNumber, t.startOffset, t.anchorTaskName) }]),
         { label: "Example", value: `${t.isMilestone ? "" : `${exampleDay(w.start)} → `}${exampleDay(w.due)}${each ? " (first event; one per event)" : ""}` },
         { label: "Priority", value: PRIORITY_OPTIONS.find((o) => o.value === t.priority)?.label ?? t.priority },

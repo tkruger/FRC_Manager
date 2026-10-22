@@ -218,8 +218,9 @@ export function GanttClient({ tasks, kickoffDate, endDate, seasonName, markers }
               const isBlocked = task.status === "BLOCKED";
               const color = isBlocked ? "var(--color-danger)" : isDone ? "var(--color-success)" : teamColor(task.subTeam);
               const visible = d >= viewStart && (task.isMilestone ? d <= viewEnd : s <= viewEnd + 1);
-              const x1 = clamp(x(s), 0, chartW), x2 = clamp(x(d), 0, chartW);
-              const tag = task.isMilestone ? short(d) : `${d - s}d · due ${short(d)}`;
+              // Tasks fill their due day too (lengths count both ends); milestones sit on it
+              const x1 = clamp(x(s), 0, chartW), x2 = clamp(x(task.isMilestone ? d : d + 1), 0, chartW);
+              const tag = task.isMilestone ? short(d) : `${d - s + 1}d · due ${short(d)}`;
               const tagRight = x2 + 150 < chartW;
               const gap = task.isMilestone ? 14 : 8;
               return (

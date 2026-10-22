@@ -42,7 +42,7 @@ function scheduleData(d: z.infer<typeof TaskSchema>, prerequisiteCount: number) 
   if (d.scheduleMode === "auto") {
     if (!prerequisiteCount) return { error: "Pick at least one prerequisite to schedule this task after." } as const;
     return {
-      data: { autoSchedule: true, durationDays: d.isMilestone ? 0 : Math.max(1, d.durationDays ?? 1), lagDays: d.lagDays ?? 0 },
+      data: { autoSchedule: true, durationDays: d.isMilestone ? 0 : Math.max(1, d.durationDays ?? 1), lagDays: d.lagDays ?? 1 },
     } as const;
   }
   return {

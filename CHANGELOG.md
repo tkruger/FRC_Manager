@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Task lengths count both ends: a task that takes 4 days starting Thursday is due Sunday, and the Gantt charts show it as 4 days with the bar covering Sunday (they showed one day less). Existing template tasks and tasks scheduled after prerequisites keep the due dates and lengths that were entered — their start moves a day later to match. Standard template: Worlds 4 days (Thu–Sun), week events 2 (Sat–Sun), district championship 3 (Thu–Sat); tasks after another task start the day after it's due
 - Standard template and presentation: events run on their real days — Worlds Thursday–Sunday (it showed Saturday–Tuesday), week events Saturday–Sunday, district championship Thursday–Saturday. Competitions are dated on their first day
 
 ## 1.4.2 — 2026-10-21

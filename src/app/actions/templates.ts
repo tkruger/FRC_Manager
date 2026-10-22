@@ -7,7 +7,7 @@ import { z } from "zod";
 import { findTeamTemplate, findTeamTemplateTask } from "@/lib/template-access";
 import { STANDARD_TASKS } from "@/lib/standard-template";
 import {
-  TASK_ANCHORS, STAGE_INFO, isCompetitionAnchor, legacyAnchor, resolveAnchor, addDays, week0Date,
+  TASK_ANCHORS, dueOffsetOf, STAGE_INFO, isCompetitionAnchor, legacyAnchor, resolveAnchor, addDays, week0Date,
   type TaskAnchor, type SeasonDates,
 } from "@/lib/competition";
 import type { Prisma, TaskPriority, SubTeam } from "@/generated/prisma";
@@ -243,7 +243,7 @@ export async function deleteTemplateTaskAction(taskId: string): Promise<{ succes
         where: { id: f.id },
         data: {
           anchor: gone.anchor, anchorNumber: gone.anchorNumber, anchorTaskName: gone.anchorTaskName,
-          startOffset: f.startOffset + gone.startOffset + gone.durationBuildDays,
+          startOffset: f.startOffset + dueOffsetOf(gone),
           // …and need what it was timed from instead of it
           prerequisiteNames: [...new Set([
             ...f.prerequisiteNames.filter((n) => n.toLowerCase() !== gone.name.toLowerCase()),
@@ -329,7 +329,7 @@ export async function saveSeasonAsTemplateAction(
             .map((a) => ({ anchor: a.anchor, offset: Math.round((startMs - a.ms) / DAY) }))
             .sort((a, b) => Math.abs(a.offset) - Math.abs(b.offset))[0];
           const startOffset = nearest.offset;
-          const durationBuildDays = Math.max(1, Math.round((dueMs - startMs) / DAY));
+          const durationBuildDays = Math.max(1, Math.round((dueMs - startMs) / DAY) + 1); // both ends count
 
           return {
             name:                 t.name,

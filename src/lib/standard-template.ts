@@ -3,7 +3,8 @@
 // A starting point for any team: kickoff and early design, the build up to Week 0, each
 // competition, and the end of the season. Week 0 is the week before the Week 1 events
 // (the build deadline). Some tasks are timed from other tasks (anchor TASK) — e.g. the
-// debrief after each event — so they move with them.
+// debrief after each event — so they move with them. Lengths count both ends: T(…, start, 4)
+// runs start…start+3 (Thursday–Sunday), and a task after another starts the day after it's due.
 
 import type { TaskAnchor } from "@/lib/competition";
 
@@ -64,7 +65,7 @@ export const STANDARD_TASKS: StandardTask[] = [
   T("Game manual review", "STRATEGY", "CRITICAL", "KICKOFF", 0, 2),
   T("Game piece & field research", "STRATEGY", "HIGH", "KICKOFF", 0, 3),
   T("Order field element materials", "OPERATIONS", "CRITICAL", "KICKOFF", 0, 1),
-  T("Build practice field elements", "OPERATIONS", "HIGH", { after: "Order field element materials" }, 0, 10, {
+  T("Build practice field elements", "OPERATIONS", "HIGH", { after: "Order field element materials" }, 1, 10, {
     prerequisiteNames: ["Order field element materials"],
   }),
   M("Game analysis complete", "STRATEGY", "HIGH", "KICKOFF", 2, {
@@ -78,7 +79,7 @@ export const STANDARD_TASKS: StandardTask[] = [
   T("Practice drivetrain driving", "MECHANICAL", "CRITICAL", "KICKOFF", 2, 3, {
     details: "A drivetrain (practice robot / alphabot) for programming and drivers to use right away.",
   }),
-  T("Auto paths built & tested on the practice drivetrain", "PROGRAMMING", "HIGH", { after: "Practice drivetrain driving" }, 0, 10),
+  T("Auto paths built & tested on the practice drivetrain", "PROGRAMMING", "HIGH", { after: "Practice drivetrain driving" }, 1, 10),
   T("Test bumpers for the practice drivetrain", "MECHANICAL", "MEDIUM", { after: "Practice drivetrain driving" }, 3, 2),
 
   // ── Prototype and decide ────────────────────────────────────────────────────
@@ -139,28 +140,27 @@ export const STANDARD_TASKS: StandardTask[] = [
 
   // ── Week 0 ──────────────────────────────────────────────────────────────────
   T("Week 0 scrimmage (if attending)", "DRIVE_TEAM", "MEDIUM", "SEASON_WEEK0", 0, 2),
-  T("Strategy review after Week 0", "STRATEGY", "MEDIUM", { after: "Week 0 scrimmage (if attending)" }, 0, 2),
-  ...perBuildTeam((t) => `Hardening after Week 0 — ${t}`, "MEDIUM", { after: "Week 0 scrimmage (if attending)" }, 0, 5),
+  T("Strategy review after Week 0", "STRATEGY", "MEDIUM", { after: "Week 0 scrimmage (if attending)" }, 1, 2),
+  ...perBuildTeam((t) => `Hardening after Week 0 — ${t}`, "MEDIUM", { after: "Week 0 scrimmage (if attending)" }, 1, 5),
 
   // ── Each week competition ───────────────────────────────────────────────────
   T("Scouting plan & match strategy", "STRATEGY", "HIGH", "WEEK", -4, 3),
   T("Driver practice before the event", "DRIVE_TEAM", "HIGH", "WEEK", -5, 4),
-  T("Pack robot & pit", "OPERATIONS", "HIGH", "WEEK", -2, 1),
-  // Events: due on their last day (due = start + length), so Saturday–Sunday is a length of 1
-  T("Event", "DRIVE_TEAM", "CRITICAL", "WEEK", 0, 1, { details: "Saturday–Sunday." }),
-  T("Strategy debrief", "STRATEGY", "MEDIUM", { after: "Event" }, 0, 2, { prerequisiteNames: ["Event"] }),
-  ...perBuildTeam((t) => `Fixes & improvements after the event — ${t}`, "MEDIUM", { after: "Event" }, 0, 5),
+  T("Pack robot & pit", "OPERATIONS", "HIGH", "WEEK", -1, 1),
+  T("Event", "DRIVE_TEAM", "CRITICAL", "WEEK", 0, 2, { details: "Saturday–Sunday." }),
+  T("Strategy debrief", "STRATEGY", "MEDIUM", { after: "Event" }, 1, 2, { prerequisiteNames: ["Event"] }),
+  ...perBuildTeam((t) => `Fixes & improvements after the event — ${t}`, "MEDIUM", { after: "Event" }, 1, 5),
 
   // ── District championship / playoffs ───────────────────────────────────────
   T("Driver practice before the playoffs", "DRIVE_TEAM", "HIGH", "PLAYOFF", -5, 4),
-  T("Pack for the playoffs", "OPERATIONS", "HIGH", "PLAYOFF", -2, 1),
-  T("District championship", "DRIVE_TEAM", "CRITICAL", "PLAYOFF", 0, 2, { details: "Usually Thursday–Saturday — set the event's first day in Season settings." }),
-  ...perBuildTeam((t) => `Fixes & improvements after the playoffs — ${t}`, "MEDIUM", { after: "District championship" }, 0, 5),
+  T("Pack for the playoffs", "OPERATIONS", "HIGH", "PLAYOFF", -1, 1),
+  T("District championship", "DRIVE_TEAM", "CRITICAL", "PLAYOFF", 0, 3, { details: "Usually Thursday–Saturday — set the event's first day in Season settings." }),
+  ...perBuildTeam((t) => `Fixes & improvements after the playoffs — ${t}`, "MEDIUM", { after: "District championship" }, 1, 5),
 
   // ── Worlds ──────────────────────────────────────────────────────────────────
   T("Worlds travel & logistics", "OPERATIONS", "HIGH", "WORLDS", -28, 21, { details: "Registration, travel, hotel, shipping the robot." }),
   T("Worlds driver practice", "DRIVE_TEAM", "CRITICAL", "WORLDS", -12, 10),
-  T("Worlds", "DRIVE_TEAM", "CRITICAL", "WORLDS", 0, 3, { details: "Thursday–Sunday — set the first day (Thursday) as Worlds' date in Season settings." }),
+  T("Worlds", "DRIVE_TEAM", "CRITICAL", "WORLDS", 0, 4, { details: "Thursday–Sunday — set the first day (Thursday) as Worlds' date in Season settings." }),
 
   // ── Season end ──────────────────────────────────────────────────────────────
   T("Season retrospective", null, "MEDIUM", "SEASON_END", 1, 7, {
