@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Standard template and presentation: events run on their real days — Worlds Thursday–Sunday (it showed Saturday–Tuesday), week events Saturday–Sunday, district championship Thursday–Saturday. Competitions are dated on their first day
+
 ## 1.4.2 — 2026-10-21
 
 - Orders: product links up to 2,000 characters work again (long links were rejected at 300), and so do longer purchase-request justifications

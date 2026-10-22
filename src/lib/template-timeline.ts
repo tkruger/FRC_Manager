@@ -151,7 +151,8 @@ export interface TimelineSeason {
 /**
  * The example season the presentation is drawn on (for illustration — real seasons differ):
  * kickoff on the second Sunday of next year, Week 2 and Week 4 events, district playoffs
- * in Week 6, Worlds on the third Saturday of April, and the season ending a week after Worlds.
+ * in Week 6 (Thursday–Saturday), Worlds Thursday–Sunday in mid-April, and the season ending a
+ * week after Worlds. Each competition is dated on its first day.
  * Competitions are Saturday–Sunday, so each is dated on its Saturday; FRC's Week 1 is
  * about 7 weeks after kickoff.
  */
@@ -164,17 +165,17 @@ export function illustrativeSeason(today = new Date()): TimelineSeason {
   const kickoff = plus(jan1, (SUN - jan1.getUTCDay() + 7) % 7 + 7);       // second Sunday of the year
   const week = (n: number) => plus(kickoff, 48 + 7 * (n - 1));             // Saturday of FRC week n
   const apr1 = utc(3, 1);
-  const worlds = plus(apr1, ((SAT - apr1.getUTCDay() + 7) % 7) + 14);      // third Saturday of April
+  const worlds = plus(apr1, ((SAT - apr1.getUTCDay() + 7) % 7) + 12);      // Thursday before the third Saturday of April (Thu–Sun)
   const iso = (d: Date) => d.toISOString();
   return {
     name: `Example ${year} season`,
     illustrative: true,
     kickoffDate: iso(kickoff),
-    endDate: iso(plus(worlds, 7)),
+    endDate: iso(plus(worlds, 10)),
     competitions: [
       { name: "Week 2 event", stage: "WEEK", stageNumber: 2, startDate: iso(week(2)) },
       { name: "Week 4 event", stage: "WEEK", stageNumber: 4, startDate: iso(week(4)) },
-      { name: "District playoffs", stage: "PLAYOFF", stageNumber: 1, startDate: iso(week(6)) },
+      { name: "District playoffs", stage: "PLAYOFF", stageNumber: 1, startDate: iso(plus(week(6), -2)) }, // Thu–Sat of Week 6
       { name: "Worlds", stage: "WORLDS", stageNumber: null, startDate: iso(worlds) },
     ],
   };

@@ -146,20 +146,21 @@ export const STANDARD_TASKS: StandardTask[] = [
   T("Scouting plan & match strategy", "STRATEGY", "HIGH", "WEEK", -4, 3),
   T("Driver practice before the event", "DRIVE_TEAM", "HIGH", "WEEK", -5, 4),
   T("Pack robot & pit", "OPERATIONS", "HIGH", "WEEK", -2, 1),
-  T("Event", "DRIVE_TEAM", "CRITICAL", "WEEK", 0, 2),
+  // Events: due on their last day (due = start + length), so Saturday–Sunday is a length of 1
+  T("Event", "DRIVE_TEAM", "CRITICAL", "WEEK", 0, 1, { details: "Saturday–Sunday." }),
   T("Strategy debrief", "STRATEGY", "MEDIUM", { after: "Event" }, 0, 2, { prerequisiteNames: ["Event"] }),
   ...perBuildTeam((t) => `Fixes & improvements after the event — ${t}`, "MEDIUM", { after: "Event" }, 0, 5),
 
   // ── District championship / playoffs ───────────────────────────────────────
   T("Driver practice before the playoffs", "DRIVE_TEAM", "HIGH", "PLAYOFF", -5, 4),
   T("Pack for the playoffs", "OPERATIONS", "HIGH", "PLAYOFF", -2, 1),
-  T("District championship", "DRIVE_TEAM", "CRITICAL", "PLAYOFF", 0, 3),
+  T("District championship", "DRIVE_TEAM", "CRITICAL", "PLAYOFF", 0, 2, { details: "Usually Thursday–Saturday — set the event's first day in Season settings." }),
   ...perBuildTeam((t) => `Fixes & improvements after the playoffs — ${t}`, "MEDIUM", { after: "District championship" }, 0, 5),
 
   // ── Worlds ──────────────────────────────────────────────────────────────────
   T("Worlds travel & logistics", "OPERATIONS", "HIGH", "WORLDS", -28, 21, { details: "Registration, travel, hotel, shipping the robot." }),
   T("Worlds driver practice", "DRIVE_TEAM", "CRITICAL", "WORLDS", -12, 10),
-  T("Worlds", "DRIVE_TEAM", "CRITICAL", "WORLDS", 0, 4),
+  T("Worlds", "DRIVE_TEAM", "CRITICAL", "WORLDS", 0, 3, { details: "Thursday–Sunday — set the first day (Thursday) as Worlds' date in Season settings." }),
 
   // ── Season end ──────────────────────────────────────────────────────────────
   T("Season retrospective", null, "MEDIUM", "SEASON_END", 1, 7, {
