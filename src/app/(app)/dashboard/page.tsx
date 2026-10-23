@@ -5,8 +5,8 @@ import Link from "next/link";
 import { formatDate } from "@/lib/utils";
 import { differenceInCalendarDays } from "date-fns";
 import { TiltCard } from "@/components/ui/TiltCard";
-import { seasonBudgetTotals } from "@/lib/budget-summary";
-import { BudgetGauge, RAISED_COLOR } from "@/components/budget/BudgetGauge";
+import { seasonBudgetChart } from "@/lib/budget-summary";
+import { BudgetTile } from "@/components/budget/BudgetTile";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -46,7 +46,7 @@ export default async function DashboardPage() {
     : 0;
 
   // Budget at a glance: goal, raised, spent (null until a budget is set up)
-  const budgetTotals = activeSeason ? await seasonBudgetTotals(activeSeason.id) : null;
+  const budget = activeSeason ? await seasonBudgetChart(activeSeason.id) : null;
 
   // Pending purchase requests count
   const pendingOrdersCount = activeSeason
@@ -85,20 +85,15 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* Budget first, so everyone sees where the money stands */}
-      {activeSeason && budgetTotals && (
-        <Link href="/budget" className="card group no-underline block" style={{ borderLeftWidth: "3px", borderLeftColor: RAISED_COLOR }}>
-          <div className="flex items-baseline justify-between gap-3 mb-3">
-            <p className="text-small font-medium text-(--color-text-secondary) group-hover:text-(--color-text-primary) transition-colors">Budget</p>
-            <span className="text-small text-(--color-text-secondary) group-hover:text-(--color-primary) transition-colors">Open budget →</span>
-          </div>
-          <BudgetGauge totals={budgetTotals} compact />
-        </Link>
-      )}
-
       {/* Season summary — shown when active season exists */}
       {activeSeason && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {/* Budget first, so everyone sees where the money stands (it takes the Robots tile's place) */}
+          {budget && (
+            <BudgetTile goal={budget.goal} raised={budget.raised} spent={budget.spent}
+              kickoffDate={activeSeason.kickoffDate.toISOString()} endDate={activeSeason.endDate.toISOString()}
+              expenses={budget.expenses} raises={budget.raises} />
+          )}
           {[
             {
               label: nextComp ? "Next competition" : "Season ends",
@@ -110,14 +105,15 @@ export default async function DashboardPage() {
               href: "/tasks",
               accent: "#059669",
             },
-            {
+            // Robots only when there's no budget tile in its place
+            ...(budget ? [] : [{
               label: "Robots",
               value: activeSeason.robots.length,
               sub: activeSeason.robots.map((r) => r.displayName).join(", ") || "None yet",
               urgent: false,
               href: "/fleet",
               accent: "var(--color-primary)",
-            },
+            }]),
             {
               label: "Overdue tasks",
               value: overdueCount,

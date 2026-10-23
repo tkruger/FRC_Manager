@@ -10,7 +10,6 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { AddFundingDialog } from "./AddFundingDialog";
 import { FUNDING_TYPE_LABELS } from "@/lib/funding";
 import { budgetTotals, raisedFrom } from "@/lib/budget-summary";
-import { BudgetGauge } from "@/components/budget/BudgetGauge";
 import { LogExpenseDialog } from "./LogExpenseDialog";
 import { BudgetBurndownCard } from "./BudgetBurndownCard";
 import { PageHeader } from "@/components/PageHeader";
@@ -111,17 +110,9 @@ export default async function BudgetDashboard() {
         </>}
       />
 
-      {/* Where we stand: goal, raised, spent */}
-      <div className="card">
-        <div className="flex items-center justify-between gap-3 mb-4">
-          <h2 className="text-h3 text-(--color-text-primary)">Where we stand</h2>
-          <Badge variant={budgetHealth}>{healthLabel}</Badge>
-        </div>
-        <BudgetGauge totals={totals} />
-      </div>
-
       {/* Goal, raised and spent over the season */}
       <BudgetBurndownCard
+        badge={<Badge variant={budgetHealth}>{healthLabel}</Badge>}
         goal={goal}
         raised={raised}
         spent={spent}
@@ -130,12 +121,7 @@ export default async function BudgetDashboard() {
           .filter((r) => r.amount > 0)}
         kickoffDate={activeSeason.kickoffDate.toISOString()}
         endDate={activeSeason.endDate.toISOString()}
-        categories={budget.categories.map((c) => ({ id: c.id, label: c.label, allocation: c.allocation }))}
-        expenses={budget.expenses.map((e) => ({
-          date:       e.date.toISOString(),
-          amount:     e.amount,
-          categoryId: e.categoryId ?? null,
-        }))}
+        expenses={budget.expenses.map((e) => ({ date: e.date.toISOString(), amount: e.amount }))}
       />
 
       {/* Summary cards */}

@@ -42,15 +42,28 @@ export function budgetTotals(budget: {
   };
 }
 
-/** The active season's totals, or null when it has no budget yet */
-export async function seasonBudgetTotals(seasonId: string): Promise<BudgetTotals | null> {
+/**
+ * A season's totals plus the money in and out by date (for the goal / raised / spent
+ * chart), or null when it has no budget yet.
+ */
+export async function seasonBudgetChart(seasonId: string): Promise<(BudgetTotals & {
+  expenses: { date: string; amount: number }[];
+  raises:   { date: string; amount: number }[];
+}) | null> {
   const budget = await prisma.budget.findUnique({
     where:  { seasonId },
     select: {
       categories:     { select: { allocation: true } },
-      fundingSources: { select: { type: true, amount: true, status: true, receivedAmount: true } },
-      expenses:       { select: { amount: true, isCommitment: true } },
+      fundingSources: { select: { type: true, amount: true, status: true, receivedAmount: true, receivedDate: true, createdAt: true } },
+      expenses:       { select: { amount: true, isCommitment: true, date: true } },
     },
   });
-  return budget ? budgetTotals(budget) : null;
+  if (!budget) return null;
+  return {
+    ...budgetTotals(budget),
+    expenses: budget.expenses.map((e) => ({ date: e.date.toISOString(), amount: e.amount })),
+    raises:   budget.fundingSources
+      .map((f) => ({ date: (f.receivedDate ?? f.createdAt).toISOString(), amount: raisedFrom(f) }))
+      .filter((r) => r.amount > 0),
+  };
 }

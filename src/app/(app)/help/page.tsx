@@ -242,10 +242,10 @@ export default function HelpPage() {
 
       <Section id="budget" title="Budget">
         <ul className="list">
-          <li>The budget tracks three things, shown on the Budget page and as the first tile on the home page (everyone can see them; tap the tile to open the budget):
+          <li>The budget tracks three things, shown as a line chart on the Budget page and as a small chart in the first tile on the home page (everyone can see them; tap the tile to open the budget):
             <ul className="list">
               <li><b>Goal</b> — what the team plans to spend: the category allocations added up (set in <b>Edit budget</b>).</li>
-              <li><b>Raised</b> — money in hand: funding marked <b>Received</b> (or the received part of <b>Partly received</b>), including what the team puts in from its own account (type <b>Team account</b>). Pledges still to come show as a lighter stripe.</li>
+              <li><b>Raised</b> — money in hand: funding marked <b>Received</b> (or the received part of <b>Partly received</b>), including what the team puts in from its own account (type <b>Team account</b>). Pledges still to come are listed under Funding sources, not counted as raised.</li>
               <li><b>Spent</b> — expenses, including orders placed but not yet received.</li>
             </ul>
           </li>
