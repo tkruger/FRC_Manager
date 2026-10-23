@@ -49,7 +49,7 @@ export function BudgetLineChart({ data, height = 280, mini = false }: { data: Re
       <LineChart data={data} margin={mini ? { top: 4, right: 2, left: 2, bottom: 2 } : { top: 4, right: 8, left: 0, bottom: 0 }}>
         {!mini && <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.15} />}
         <XAxis dataKey="week" hide={mini} tick={{ fontSize: 11 }} interval="preserveStartEnd" minTickGap={24} />
-        <YAxis hide={mini} tick={{ fontSize: 11 }} tickFormatter={(v) => `$${Math.round(v / 1000)}k`} domain={[0, "auto"]} />
+        <YAxis hide={mini} tick={{ fontSize: 11 }} tickFormatter={(v) => `$${Math.round(v / 1000)}k`} domain={mini ? [0, (max: number) => Math.max(1, max) * 1.08] : [0, "auto"]} />
         {!mini && <Tooltip content={<ChartTooltip />} />}
         {!mini && <Legend wrapperStyle={{ fontSize: 12 }} />}
         <Line type="monotone"  dataKey="goal"   name="Goal"   stroke={GOAL_COLOR}   strokeWidth={mini ? 1.5 : 2} strokeDasharray="6 4" dot={false} isAnimationActive={!mini} />
