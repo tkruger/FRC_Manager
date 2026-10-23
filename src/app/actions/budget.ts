@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import type { BudgetCategoryType, FundingType } from "@/generated/prisma";
 import { ActionError, userMessage } from "@/lib/action-error";
+import { issueMessage } from "@/lib/validation";
 
 const BUDGET_ROLES = ["HEAD_MENTOR", "TREASURER"] as const;
 
@@ -99,13 +100,49 @@ export async function setupBudgetAction(
   return { success: true };
 }
 
+const FUNDING_TYPES = ["TEAM_ACCOUNT", "SCHOOL_ALLOCATION", "CORPORATE_SPONSOR", "GRANT", "FUNDRAISER", "INDIVIDUAL_DONATION", "PDV", "OTHER"] as const;
+
 const FundingSchema = z.object({
-  name: z.string().max(300).min(1),
-  type: z.string().max(300).min(1),
-  amount: z.coerce.number().min(0),
-  status: z.enum(["PLEDGED", "RECEIVED", "PARTIAL"]).default("PLEDGED"),
-  notes: z.string().max(5000).optional(),
+  name:           z.string().trim().min(1, "Give the funding source a name.").max(300),
+  type:           z.enum(FUNDING_TYPES, { error: "Choose a type." }),
+  amount:         z.coerce.number().min(0).max(100_000_000),
+  status:         z.enum(["PLEDGED", "RECEIVED", "PARTIAL"]).default("PLEDGED"),
+  /** PARTIAL: how much has come in so far */
+  receivedAmount: z.coerce.number().min(0).max(100_000_000).optional(),
+  /** When the money came in (received / partial) — places it on the budget chart */
+  receivedDate:   z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  notes:          z.string().max(5000).optional(),
 });
+
+/** Reads the funding form. Received money gets a date (today if none is given). */
+function fundingData(formData: FormData) {
+  const parsed = FundingSchema.safeParse({
+    name:           formData.get("name"),
+    type:           formData.get("type"),
+    amount:         formData.get("amount"),
+    status:         formData.get("status") || undefined,
+    receivedAmount: formData.get("receivedAmount") || undefined,
+    receivedDate:   formData.get("receivedDate") || undefined,
+    notes:          formData.get("notes") || undefined,
+  });
+  if (!parsed.success) return { error: issueMessage(parsed.error) } as const;
+  const d = parsed.data;
+  if (d.status === "PARTIAL" && d.receivedAmount != null && d.receivedAmount > d.amount) {
+    return { error: "The amount received can't be more than the total." } as const;
+  }
+  const received = d.status !== "PLEDGED";
+  return {
+    data: {
+      name:           d.name,
+      type:           d.type as FundingType,
+      amount:         d.amount,
+      status:         d.status,
+      receivedAmount: d.status === "PARTIAL" ? d.receivedAmount ?? 0 : d.status === "RECEIVED" ? d.amount : null,
+      receivedDate:   received ? (d.receivedDate ? new Date(`${d.receivedDate}T00:00:00.000Z`) : new Date(`${new Date().toISOString().slice(0, 10)}T00:00:00.000Z`)) : null,
+      notes:          d.notes ?? null,
+    },
+  } as const;
+}
 
 export async function addFundingSourceAction(
   budgetId: string,
@@ -115,27 +152,42 @@ export async function addFundingSourceAction(
   try { session = await requireBudgetRole(); } catch (e) { return { success: false, error: userMessage(e) }; }
   if (!await isTeamBudget(budgetId, session.user.teamId!)) return { success: false, error: "Budget not found." };
 
-  const parsed = FundingSchema.safeParse({
-    name: formData.get("name"),
-    type: formData.get("type"),
-    amount: formData.get("amount"),
-    status: formData.get("status"),
-    notes: formData.get("notes") || undefined,
-  });
-  if (!parsed.success) return { success: false, error: "Please fill in all fields." };
-
-  await prisma.fundingSource.create({
-    data: {
-      budgetId,
-      name: parsed.data.name,
-      type: parsed.data.type as FundingType,
-      amount: parsed.data.amount,
-      status: parsed.data.status,
-      notes: parsed.data.notes,
-    },
-  });
+  const res = fundingData(formData);
+  if ("error" in res) return { success: false, error: res.error };
+  await prisma.fundingSource.create({ data: { budgetId, ...res.data } });
 
   revalidatePath("/budget");
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
+/** The funding source if it's in one of the caller's team's budgets */
+async function findTeamFunding(id: string, teamId: string) {
+  return prisma.fundingSource.findFirst({ where: { id, budget: { season: { teamId } } }, select: { id: true } });
+}
+
+/** Edit a funding source — e.g. mark a pledge received */
+export async function updateFundingSourceAction(id: string, formData: FormData): Promise<{ success: boolean; error?: string }> {
+  let session;
+  try { session = await requireBudgetRole(); } catch (e) { return { success: false, error: userMessage(e) }; }
+  if (!await findTeamFunding(id, session.user.teamId!)) return { success: false, error: "Funding source not found." };
+
+  const res = fundingData(formData);
+  if ("error" in res) return { success: false, error: res.error };
+  await prisma.fundingSource.update({ where: { id }, data: res.data });
+
+  revalidatePath("/budget");
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
+export async function deleteFundingSourceAction(id: string): Promise<{ success: boolean; error?: string }> {
+  let session;
+  try { session = await requireBudgetRole(); } catch (e) { return { success: false, error: userMessage(e) }; }
+  if (!await findTeamFunding(id, session.user.teamId!)) return { success: false, error: "Funding source not found." };
+  await prisma.fundingSource.delete({ where: { id } });
+  revalidatePath("/budget");
+  revalidatePath("/dashboard");
   return { success: true };
 }
 

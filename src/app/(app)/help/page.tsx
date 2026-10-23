@@ -240,7 +240,14 @@ export default function HelpPage() {
 
       <Section id="budget" title="Budget">
         <ul className="list">
-          <li>Treasurers and Head Mentors set up the season budget by category, record funding sources and log expenses.</li>
+          <li>The budget tracks three things, shown on the Budget page and as the first tile on the home page (everyone can see them; tap the tile to open the budget):
+            <ul className="list">
+              <li><b>Goal</b> — what the team plans to spend: the category allocations added up (set in <b>Edit budget</b>).</li>
+              <li><b>Raised</b> — money in hand: funding marked <b>Received</b> (or the received part of <b>Partly received</b>), including what the team puts in from its own account (type <b>Team account</b>). Pledges still to come show as a lighter stripe.</li>
+              <li><b>Spent</b> — expenses, including orders placed but not yet received.</li>
+            </ul>
+          </li>
+          <li>Treasurers and Head Mentors add funding with <b>+ Add funding</b> and use <b>Edit</b> on a source to mark a pledge received (with the date it came in, so it shows on the chart at the right time). The chart shows the goal, raised and spent week by week over the season.</li>
           <li>Purchases update the budget automatically: when ordered they appear as <b>Committed — on order</b>, and become a regular expense once received. Each item counts toward its order&apos;s budget category (or its own), so one order can show in several categories.</li>
           <li>Spend without a category shows as <b>Uncategorized</b> with links to the orders. Open one and use <b>Budget → Change</b> to fix it. That works at any stage, even after the items arrive, and moves the spend already recorded. The person who placed the order, its approvers, the Buyer, the Treasurer, Team Leadership and Head Mentors can change it.</li>
         </ul>

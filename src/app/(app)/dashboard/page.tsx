@@ -5,6 +5,8 @@ import Link from "next/link";
 import { formatDate } from "@/lib/utils";
 import { differenceInCalendarDays } from "date-fns";
 import { TiltCard } from "@/components/ui/TiltCard";
+import { seasonBudgetTotals } from "@/lib/budget-summary";
+import { BudgetGauge, RAISED_COLOR } from "@/components/budget/BudgetGauge";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -43,6 +45,9 @@ export default async function DashboardPage() {
       })
     : 0;
 
+  // Budget at a glance: goal, raised, spent (null until a budget is set up)
+  const budgetTotals = activeSeason ? await seasonBudgetTotals(activeSeason.id) : null;
+
   // Pending purchase requests count
   const pendingOrdersCount = activeSeason
     ? await prisma.purchaseRequest.count({
@@ -78,6 +83,17 @@ export default async function DashboardPage() {
             </Link>.
           </p>
         </div>
+      )}
+
+      {/* Budget first, so everyone sees where the money stands */}
+      {activeSeason && budgetTotals && (
+        <Link href="/budget" className="card group no-underline block" style={{ borderLeftWidth: "3px", borderLeftColor: RAISED_COLOR }}>
+          <div className="flex items-baseline justify-between gap-3 mb-3">
+            <p className="text-small font-medium text-(--color-text-secondary) group-hover:text-(--color-text-primary) transition-colors">Budget</p>
+            <span className="text-small text-(--color-text-secondary) group-hover:text-(--color-primary) transition-colors">Open budget →</span>
+          </div>
+          <BudgetGauge totals={budgetTotals} compact />
+        </Link>
       )}
 
       {/* Season summary — shown when active season exists */}

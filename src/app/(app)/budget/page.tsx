@@ -8,6 +8,9 @@ import { ProgressBar } from "@/components/ui/progress";
 import { Table, TableHead, TableBody, Th, Td, Tr } from "@/components/ui/table";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { AddFundingDialog } from "./AddFundingDialog";
+import { FUNDING_TYPE_LABELS } from "@/lib/funding";
+import { budgetTotals, raisedFrom } from "@/lib/budget-summary";
+import { BudgetGauge } from "@/components/budget/BudgetGauge";
 import { LogExpenseDialog } from "./LogExpenseDialog";
 import { BudgetBurndownCard } from "./BudgetBurndownCard";
 import { PageHeader } from "@/components/PageHeader";
@@ -60,12 +63,11 @@ export default async function BudgetDashboard() {
     );
   }
 
-  // Totals
-  const totalFunding = budget.fundingSources.reduce((s, f) => s + f.amount, 0);
-  const receivedFunding = budget.fundingSources.filter((f) => f.status === "RECEIVED").reduce((s, f) => s + f.amount, 0);
-  const totalAllocated = budget.categories.reduce((s, c) => s + c.allocation, 0);
-  const totalSpent = budget.expenses.reduce((s, e) => s + e.amount, 0);
-  const remaining = totalAllocated - totalSpent;
+  // The three numbers: goal (planned spend), raised (money in, incl. the team account), spent
+  const totals = budgetTotals(budget);
+  const { goal, raised, spent } = totals;
+  const totalAllocated = goal;
+  const totalSpent = spent;
 
   // Spend with no category (orders placed before categories were required, or expenses
   // logged without one) — and the orders to fix
@@ -77,10 +79,16 @@ export default async function BudgetDashboard() {
     : [];
   const spentIn = (categoryId: string) => budget.expenses.filter((e) => e.categoryId === categoryId).reduce((s, e) => s + e.amount, 0);
 
+  // Over the goal, or spending money that hasn't been raised (once funding is tracked)
+  const tracksFunding = budget.fundingSources.length > 0;
   const budgetHealth: "success" | "warning" | "danger" =
-    totalSpent > totalAllocated ? "danger"
-    : totalSpent > totalAllocated * 0.85 ? "warning"
+    totalSpent > totalAllocated || (tracksFunding && spent > raised) ? "danger"
+    : totalSpent > totalAllocated * 0.85 || (tracksFunding && spent > raised * 0.85) ? "warning"
     : "success";
+  const healthLabel = budgetHealth === "success" ? "On track"
+    : tracksFunding && spent > raised ? "Spent more than raised"
+    : budgetHealth === "warning" ? (tracksFunding && spent > raised * 0.85 ? "Raised money running low" : "Close to the goal")
+    : "Over the goal";
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -103,10 +111,23 @@ export default async function BudgetDashboard() {
         </>}
       />
 
-      {/* Burndown chart */}
+      {/* Where we stand: goal, raised, spent */}
+      <div className="card">
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <h2 className="text-h3 text-(--color-text-primary)">Where we stand</h2>
+          <Badge variant={budgetHealth}>{healthLabel}</Badge>
+        </div>
+        <BudgetGauge totals={totals} />
+      </div>
+
+      {/* Goal, raised and spent over the season */}
       <BudgetBurndownCard
-        totalAllocated={totalAllocated}
-        totalSpent={totalSpent}
+        goal={goal}
+        raised={raised}
+        spent={spent}
+        raises={budget.fundingSources
+          .map((f) => ({ date: (f.receivedDate ?? f.createdAt).toISOString(), amount: raisedFrom(f) }))
+          .filter((r) => r.amount > 0)}
         kickoffDate={activeSeason.kickoffDate.toISOString()}
         endDate={activeSeason.endDate.toISOString()}
         categories={budget.categories.map((c) => ({ id: c.id, label: c.label, allocation: c.allocation }))}
@@ -120,10 +141,10 @@ export default async function BudgetDashboard() {
       {/* Summary cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: "Total budget", value: formatCurrency(totalAllocated), sub: "allocated across categories" },
-          { label: "Total spent", value: formatCurrency(totalSpent), sub: `${Math.round((totalSpent / totalAllocated) * 100)}% of budget` },
-          { label: "Remaining", value: formatCurrency(remaining), sub: remaining < 0 ? "OVER BUDGET" : "available" },
-          { label: "Funding received", value: formatCurrency(receivedFunding), sub: `of ${formatCurrency(totalFunding)} pledged` },
+          { label: "Budget goal", value: formatCurrency(goal), sub: "planned across categories" },
+          { label: "Raised", value: formatCurrency(raised), sub: totals.pledged > 0 ? `+ ${formatCurrency(totals.pledged)} pledged` : goal > 0 ? `${Math.round((raised / goal) * 100)}% of goal` : "money in hand" },
+          { label: "Spent", value: formatCurrency(spent), sub: goal > 0 ? `${Math.round((spent / goal) * 100)}% of goal` : "so far" },
+          { label: "Left to spend", value: formatCurrency(raised - spent), sub: raised - spent < 0 ? "SPENT MORE THAN RAISED" : "raised, not yet spent" },
         ].map((s) => (
           <div key={s.label} className="card">
             <p className="text-small text-(--color-text-secondary)">{s.label}</p>
@@ -131,23 +152,6 @@ export default async function BudgetDashboard() {
             <p className="text-small text-(--color-text-secondary) mt-0.5">{s.sub}</p>
           </div>
         ))}
-      </div>
-
-      {/* Overall progress */}
-      <div className="card">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-h3 text-(--color-text-primary)">Overall spending</h2>
-          <Badge variant={budgetHealth}>
-            {budgetHealth === "success" ? "On track" : budgetHealth === "warning" ? "At risk" : "Over budget"}
-          </Badge>
-        </div>
-        <ProgressBar
-          value={totalSpent}
-          max={totalAllocated}
-          sublabel={`${formatCurrency(totalSpent)} of ${formatCurrency(totalAllocated)}`}
-          warnAt={85}
-          dangerAt={100}
-        />
       </div>
 
       {/* Category breakdown */}
@@ -211,15 +215,28 @@ export default async function BudgetDashboard() {
               <p className="text-small text-(--color-text-secondary)">No funding sources added.</p>
             ) : budget.fundingSources.map((f) => (
               <div key={f.id} className="flex items-center justify-between py-2 border-b border-(--color-border) last:border-0">
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm font-medium text-(--color-text-primary)">{f.name}</p>
-                  <p className="text-small text-(--color-text-secondary)">{f.type.replace(/_/g, " ")}</p>
+                  <p className="text-small text-(--color-text-secondary)">
+                    {FUNDING_TYPE_LABELS[f.type] ?? f.type.replace(/_/g, " ")}
+                    {f.receivedDate && f.status !== "PLEDGED" && ` · ${f.receivedDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })}`}
+                  </p>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium text-(--color-text-primary)">{formatCurrency(f.amount)}</p>
-                  <Badge variant={f.status === "RECEIVED" ? "success" : f.status === "PARTIAL" ? "warning" : "neutral"}>
-                    {f.status}
-                  </Badge>
+                <div className="flex items-center gap-3 shrink-0">
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-(--color-text-primary)">
+                      {f.status === "PARTIAL" ? <>{formatCurrency(raisedFrom(f))} <span className="text-(--color-text-secondary) font-normal">of {formatCurrency(f.amount)}</span></> : formatCurrency(f.amount)}
+                    </p>
+                    <Badge variant={f.status === "RECEIVED" ? "success" : f.status === "PARTIAL" ? "warning" : "neutral"}>
+                      {f.status === "RECEIVED" ? "Received" : f.status === "PARTIAL" ? "Partly received" : "Pledged"}
+                    </Badge>
+                  </div>
+                  {canEdit && (
+                    <AddFundingDialog budgetId={budget.id} source={{
+                      id: f.id, name: f.name, type: f.type, amount: f.amount, status: f.status,
+                      receivedAmount: f.receivedAmount, receivedDate: f.receivedDate?.toISOString() ?? null, notes: f.notes,
+                    }} />
+                  )}
                 </div>
               </div>
             ))}

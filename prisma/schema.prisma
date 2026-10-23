@@ -975,12 +975,15 @@ model FundingSource {
   type         FundingType
   amount       Float
   status       FundingStatus @default(PLEDGED)
+  /// How much of it has come in so far (PARTIAL); RECEIVED counts the whole amount
+  receivedAmount Float?
   receivedDate DateTime?
   notes        String?
   createdAt    DateTime      @default(now())
 }
 
 enum FundingType {
+  TEAM_ACCOUNT        // the team's own money put toward this season's budget
   SCHOOL_ALLOCATION
   CORPORATE_SPONSOR
   GRANT

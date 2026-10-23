@@ -3,21 +3,27 @@
 import { useState, useMemo } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend,
-  LineChart, Line, CartesianGrid, ReferenceLine, Cell,
+  LineChart, Line, CartesianGrid,
 } from "recharts";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { formatCurrency } from "@/lib/utils";
+import { GOAL_COLOR, RAISED_COLOR, SPENT_COLOR } from "@/components/budget/BudgetGauge";
 
 interface Category { id: string; label: string; allocation: number; }
 interface Expense   { date: string; amount: number; categoryId: string | null; }
+/** Money that came in, and when */
+interface Raise     { date: string; amount: number; }
 
 interface Props {
-  totalAllocated: number;
-  totalSpent:     number;
-  kickoffDate:    string;
-  endDate:      string;
-  categories:     Category[];
-  expenses:       Expense[];
+  /** What the team plans to spend (category allocations added up) */
+  goal:        number;
+  raised:      number;
+  spent:       number;
+  kickoffDate: string;
+  endDate:     string;
+  categories:  Category[];
+  expenses:    Expense[];
+  raises:      Raise[];
 }
 
 // ─── Recharts custom tooltip ────────────────────────────────────────────────
@@ -37,45 +43,28 @@ function ChartTooltip({ active, payload, label }: any) {
   );
 }
 
-// ─── Build cumulative burndown data ─────────────────────────────────────────
+// ─── Goal, raised and spent, week by week ───────────────────────────────────
 
-function buildBurndownData(
-  kickoff: Date, end: Date, totalAllocated: number, expenses: Expense[]
-) {
-  // Sample one point per week
-  const weeks: { week: string; remaining: number; spent: number }[] = [];
-  const sortedExpenses = [...expenses].sort((a, b) => a.date.localeCompare(b.date));
-  let cumSpent = 0;
-  let ei = 0;
+const DAY = 86_400_000;
+const label = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
 
-  const cur = new Date(kickoff);
-  let weekNum = 0;
-  while (cur <= end) {
-    // Accumulate expenses up to this date
-    while (ei < sortedExpenses.length && sortedExpenses[ei].date.slice(0, 10) <= cur.toISOString().slice(0, 10)) {
-      cumSpent += sortedExpenses[ei].amount;
-      ei++;
-    }
-    if (cur.getDay() === 1 || weekNum === 0) { // Monday or kickoff
-      weeks.push({
-        week:      `Wk ${weekNum + 1}`,
-        remaining: Math.max(0, totalAllocated - cumSpent),
-        spent:     cumSpent,
-      });
-      weekNum++;
-    }
-    cur.setDate(cur.getDate() + 1);
+function buildProgressData(kickoff: Date, end: Date, goal: number, expenses: Expense[], raises: Raise[]) {
+  // From the earliest of kickoff and the first money in or out, to the season's end
+  const firsts = [...expenses.map((e) => e.date), ...raises.map((r) => r.date)].map((d) => new Date(d).getTime());
+  const start = Math.min(kickoff.getTime(), ...firsts);
+  const sum = (list: { date: string; amount: number }[], upTo: number) =>
+    list.reduce((s, x) => (new Date(x.date).getTime() <= upTo ? s + x.amount : s), 0);
+
+  const points: { week: string; goal: number; raised: number; spent: number }[] = [];
+  for (let t = start; t < end.getTime() + 7 * DAY; t += 7 * DAY) {
+    const at = Math.min(t, end.getTime());
+    points.push({ week: label(new Date(at)), goal, raised: sum(raises, at), spent: sum(expenses, at) });
+    if (at === end.getTime()) break;
   }
-  // Ensure the season end is always included
-  weeks.push({
-    week: "Wk 0",
-    remaining: Math.max(0, totalAllocated - cumSpent),
-    spent: cumSpent,
-  });
-  return weeks;
+  return points;
 }
 
-// ─── Build category breakdown data ─────────────────────────────────────────
+// ─── Category breakdown ─────────────────────────────────────────────────────
 
 function buildCategoryData(categories: Category[], expenses: Expense[]) {
   const spentById: Record<string, number> = {};
@@ -85,62 +74,43 @@ function buildCategoryData(categories: Category[], expenses: Expense[]) {
   return categories
     .filter((c) => c.allocation > 0)
     .map((c) => ({
-      name:       c.label.replace(" — ", "\n").replace("Robot Parts ", ""),
-      allocated:  c.allocation,
-      spent:      spentById[c.id] ?? 0,
-      remaining:  Math.max(0, c.allocation - (spentById[c.id] ?? 0)),
+      name:      c.label.replace(" — ", "\n").replace("Robot Parts ", ""),
+      allocated: c.allocation,
+      spent:     spentById[c.id] ?? 0,
     }))
     .sort((a, b) => b.allocated - a.allocated);
 }
 
-// ─── Shared colors ───────────────────────────────────────────────────────────
-
-const C_ALLOCATED = "#4F7FE8"; // secondary blue
-const C_SPENT     = "#E63946"; // primary red
-const C_REMAINING = "#34C77B"; // success green
-
 // ─── Chart panels ────────────────────────────────────────────────────────────
 
-function BurndownLine({ data, totalAllocated, compact = false }: {
-  data: ReturnType<typeof buildBurndownData>; totalAllocated: number; compact?: boolean;
-}) {
-  const h = compact ? 120 : 260;
+function ProgressLines({ data, compact = false }: { data: ReturnType<typeof buildProgressData>; compact?: boolean }) {
   return (
-    <ResponsiveContainer width="100%" height={h}>
+    <ResponsiveContainer width="100%" height={compact ? 150 : 280}>
       <LineChart data={data} margin={{ top: 4, right: 8, left: compact ? -20 : 0, bottom: 0 }}>
         {!compact && <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.15} />}
-        <XAxis dataKey="week" tick={{ fontSize: 11 }} interval={compact ? 1 : 0} />
+        <XAxis dataKey="week" tick={{ fontSize: 11 }} interval="preserveStartEnd" minTickGap={24} />
         <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `$${Math.round(v / 1000)}k`} />
         <Tooltip content={<ChartTooltip />} />
-        {!compact && <Legend wrapperStyle={{ fontSize: 12 }} />}
-        <ReferenceLine y={0} stroke="var(--color-border)" />
-        <Line
-          type="monotone" dataKey="remaining" name="Remaining"
-          stroke={C_REMAINING} strokeWidth={2} dot={!compact}
-        />
-        <Line
-          type="monotone" dataKey="spent" name="Spent"
-          stroke={C_SPENT} strokeWidth={2} dot={!compact} strokeDasharray={compact ? "4 2" : undefined}
-        />
+        <Legend wrapperStyle={{ fontSize: 12 }} />
+        <Line type="monotone" dataKey="goal"   name="Goal"   stroke={GOAL_COLOR}   strokeWidth={2} strokeDasharray="6 4" dot={false} />
+        <Line type="stepAfter" dataKey="raised" name="Raised" stroke={RAISED_COLOR} strokeWidth={2.5} dot={false} />
+        <Line type="stepAfter" dataKey="spent"  name="Spent"  stroke={SPENT_COLOR}  strokeWidth={2.5} dot={false} />
       </LineChart>
     </ResponsiveContainer>
   );
 }
 
-function CategoryBars({ data, compact = false }: {
-  data: ReturnType<typeof buildCategoryData>; compact?: boolean;
-}) {
-  const h = compact ? 120 : 320;
+function CategoryBars({ data, compact = false }: { data: ReturnType<typeof buildCategoryData>; compact?: boolean }) {
   return (
-    <ResponsiveContainer width="100%" height={h}>
+    <ResponsiveContainer width="100%" height={compact ? 150 : 320}>
       <BarChart data={data} layout="vertical" margin={{ top: 4, right: 8, left: compact ? 60 : 100, bottom: 0 }}>
         {!compact && <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.15} horizontal={false} />}
         <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `$${Math.round(v / 1000)}k`} />
         <YAxis type="category" dataKey="name" tick={{ fontSize: compact ? 9 : 11 }} width={compact ? 56 : 96} />
         <Tooltip content={<ChartTooltip />} />
         {!compact && <Legend wrapperStyle={{ fontSize: 12 }} />}
-        <Bar dataKey="allocated" name="Allocated" fill={C_ALLOCATED} opacity={0.7} radius={[0, 2, 2, 0]} />
-        <Bar dataKey="spent"     name="Spent"     fill={C_SPENT}     radius={[0, 2, 2, 0]} />
+        <Bar dataKey="allocated" name="Planned" fill={GOAL_COLOR} opacity={0.7} radius={[0, 2, 2, 0]} />
+        <Bar dataKey="spent"     name="Spent"   fill={SPENT_COLOR} radius={[0, 2, 2, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );
@@ -148,44 +118,27 @@ function CategoryBars({ data, compact = false }: {
 
 // ─── Main component ──────────────────────────────────────────────────────────
 
-export function BudgetBurndownCard({ totalAllocated, totalSpent, kickoffDate, endDate, categories, expenses }: Props) {
+/** The Budget page chart: goal, raised and spent over the season — or spend by category */
+export function BudgetBurndownCard({ goal, raised, spent, kickoffDate, endDate, categories, expenses, raises }: Props) {
   const [open, setOpen] = useState(false);
-  const [tab, setTab]   = useState<"burndown" | "categories">("burndown");
+  const [tab, setTab]   = useState<"season" | "categories">("season");
 
-  const burndownData  = useMemo(() => buildBurndownData(new Date(kickoffDate), new Date(endDate), totalAllocated, expenses), [kickoffDate, endDate, totalAllocated, expenses]);
-  const categoryData  = useMemo(() => buildCategoryData(categories, expenses), [categories, expenses]);
-
-  const pct = totalAllocated > 0 ? Math.round((totalSpent / totalAllocated) * 100) : 0;
+  const progressData = useMemo(() => buildProgressData(new Date(kickoffDate), new Date(endDate), goal, expenses, raises), [kickoffDate, endDate, goal, expenses, raises]);
+  const categoryData = useMemo(() => buildCategoryData(categories, expenses), [categories, expenses]);
+  const tabs = [["season", "Over the season"], ["categories", "By category"]] as const;
 
   return (
     <>
-      {/* Compact card */}
-      <div
-        className="card cursor-pointer hover:border-(--color-primary)/40 transition-colors group"
-        onClick={() => setOpen(true)}
-        title="Click to expand"
-      >
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <h2 className="text-h3 text-(--color-text-primary)">Budget overview</h2>
-            {/* Mini KPIs */}
-            <div className="hidden sm:flex items-center gap-4 text-small text-(--color-text-secondary)">
-              <span><strong className="text-(--color-text-primary)">{formatCurrency(totalSpent)}</strong> spent</span>
-              <span><strong className="text-(--color-text-primary)">{pct}%</strong> of budget</span>
-              <span style={{ color: totalAllocated - totalSpent < 0 ? "var(--color-danger)" : "var(--color-success)" }}>
-                <strong>{formatCurrency(Math.abs(totalAllocated - totalSpent))}</strong>
-                {totalAllocated - totalSpent < 0 ? " over" : " remaining"}
-              </span>
-            </div>
-          </div>
-          {/* Tab switcher (compact) */}
+      <div className="card cursor-pointer hover:border-(--color-primary)/40 transition-colors group" onClick={() => setOpen(true)} title="Click to expand">
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <h2 className="text-h3 text-(--color-text-primary)">Goal, raised and spent</h2>
           <div className="flex items-center gap-2">
             <div className="flex rounded border border-(--color-border) text-xs overflow-hidden">
-              {(["burndown", "categories"] as const).map((t) => (
+              {tabs.map(([t, name]) => (
                 <button key={t} onClick={(e) => { e.stopPropagation(); setTab(t); }}
                   className={`px-2.5 py-1 transition-colors ${tab === t ? "text-white" : "text-(--color-text-secondary) hover:text-(--color-text-primary) bg-(--color-surface)"}`}
                   style={tab === t ? { backgroundColor: "var(--color-primary)" } : undefined}>
-                  {t === "burndown" ? "Burndown" : "By category"}
+                  {name}
                 </button>
               ))}
             </div>
@@ -194,60 +147,43 @@ export function BudgetBurndownCard({ totalAllocated, totalSpent, kickoffDate, en
             </svg>
           </div>
         </div>
-
-        {tab === "burndown"
-          ? <BurndownLine data={burndownData} totalAllocated={totalAllocated} compact />
-          : <CategoryBars data={categoryData} compact />}
-
+        {tab === "season" ? <ProgressLines data={progressData} compact /> : <CategoryBars data={categoryData} compact />}
         <p className="text-small text-(--color-text-disabled) text-right mt-1">Click to expand</p>
       </div>
 
-      {/* Expanded modal */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent title="Budget overview" className="sm:max-w-3xl">
+        <DialogContent title="Goal, raised and spent" className="sm:max-w-3xl">
           <div className="space-y-4">
-            {/* KPI summary row */}
             <div className="grid grid-cols-3 gap-3">
               {[
-                { label: "Total allocated", value: formatCurrency(totalAllocated), color: C_ALLOCATED },
-                { label: "Total spent",     value: formatCurrency(totalSpent),     color: C_SPENT },
-                { label: "Remaining",       value: formatCurrency(Math.max(0, totalAllocated - totalSpent)), color: C_REMAINING },
+                { label: "Goal",   value: goal,   color: GOAL_COLOR },
+                { label: "Raised", value: raised, color: RAISED_COLOR },
+                { label: "Spent",  value: spent,  color: SPENT_COLOR },
               ].map((s) => (
                 <div key={s.label} className="rounded-md bg-(--color-surface-overlay) px-3 py-2.5 text-center">
-                  <p className="text-h2 font-bold" style={{ color: s.color }}>{s.value}</p>
+                  <p className="text-h2 font-bold" style={{ color: s.color }}>{formatCurrency(s.value)}</p>
                   <p className="text-label text-(--color-text-secondary)">{s.label}</p>
                 </div>
               ))}
             </div>
-
-            {/* Tabs */}
             <div className="flex border-b border-(--color-border) gap-4">
-              {(["burndown", "categories"] as const).map((t) => (
+              {tabs.map(([t, name]) => (
                 <button key={t} onClick={() => setTab(t)}
-                  className={`pb-2 text-sm font-medium border-b-2 transition-colors ${
-                    tab === t
-                      ? "border-(--color-primary) text-(--color-primary)"
-                      : "border-transparent text-(--color-text-secondary) hover:text-(--color-text-primary)"
-                  }`}>
-                  {t === "burndown" ? "Cumulative burndown" : "By category"}
+                  className={`pb-2 text-sm font-medium border-b-2 transition-colors ${tab === t ? "border-(--color-primary) text-(--color-primary)" : "border-transparent text-(--color-text-secondary) hover:text-(--color-text-primary)"}`}>
+                  {name}
                 </button>
               ))}
             </div>
-
-            {tab === "burndown" && (
+            {tab === "season" ? (
               <div>
                 <p className="text-small text-(--color-text-secondary) mb-3">
-                  Cumulative spend (red) vs. remaining budget (green) over the build season.
+                  The goal (dashed), money raised so far and money spent so far (including orders not yet received), week by week.
                 </p>
-                <BurndownLine data={burndownData} totalAllocated={totalAllocated} />
+                <ProgressLines data={progressData} />
               </div>
-            )}
-
-            {tab === "categories" && (
+            ) : (
               <div>
-                <p className="text-small text-(--color-text-secondary) mb-3">
-                  Allocated (blue) vs. spent (red) per budget category.
-                </p>
+                <p className="text-small text-(--color-text-secondary) mb-3">Planned (blue) vs. spent (red) per budget category.</p>
                 <CategoryBars data={categoryData} />
               </div>
             )}
