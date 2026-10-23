@@ -1,24 +1,13 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { updateSeasonAction } from "@/app/actions/season";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
-import { TimeSelect } from "@/components/ui/time-select";
 import { toast } from "@/components/ui/toast";
-
-const DAYS = [
-  { value: "MON", label: "Monday" },
-  { value: "TUE", label: "Tuesday" },
-  { value: "WED", label: "Wednesday" },
-  { value: "THU", label: "Thursday" },
-  { value: "FRI", label: "Friday" },
-  { value: "SAT", label: "Saturday" },
-  { value: "SUN", label: "Sunday" },
-];
-
-interface DayTime { start: string; end: string; }
+import { scheduleSlots, type Slot } from "@/lib/meeting-schedule";
+import { MeetingScheduleFields } from "./MeetingScheduleFields";
 
 interface Season {
   id: string;
@@ -30,43 +19,43 @@ interface Season {
   meetingDays: string[];
   meetingStartTime: string;
   meetingEndTime: string;
-  meetingDayTimes: Record<string, DayTime> | null;
+  /** Each day's meetings: { MON: [{ start, end }, …] } (older seasons: one { start, end }) */
+  meetingDayTimes: Record<string, Slot[] | Slot> | null;
   expectedAttendance: number;
 }
 
 export function EditSeasonForm({ season, onClose }: { season: Season; onClose: () => void }) {
   const router = useRouter();
 
-  const boundAction = updateSeasonAction.bind(null, season.id);
-  const [state, action, pending] = useActionState(boundAction, null);
-  const [selectedDays, setSelectedDays] = useState<string[]>(season.meetingDays);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
 
-  useEffect(() => {
-    if (state?.success) {
-      const m = state.meetings;
+  // Submitted by hand (not a form action) so a failed save keeps what was typed
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+    const fd = new FormData(e.currentTarget);
+    startTransition(async () => {
+      const res = await updateSeasonAction(season.id, null, fd);
+      if (!res.success) { setError(res.error); return; }
+      const m = res.meetings;
       const parts = m ? [m.moved && `${m.moved} moved`, m.added && `${m.added} added`, m.removed && `${m.removed} removed`].filter(Boolean) : [];
       const moved = parts.length ? ` — future meetings: ${parts.join(", ")}` : "";
       toast.success(`Season saved${moved}`);
       router.refresh(); onClose();
-    }
-  }, [state, router, onClose]);
+    });
+  }
 
   function toDateInputValue(d: Date) {
     return new Date(d).toISOString().split("T")[0];
   }
 
-  function defaultStart(day: string) {
-    return season.meetingDayTimes?.[day]?.start ?? season.meetingStartTime;
-  }
-  function defaultEnd(day: string) {
-    return season.meetingDayTimes?.[day]?.end ?? season.meetingEndTime;
-  }
 
   return (
-    <form action={action} className="space-y-5">
-      {state && !state.success && (
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {error && (
         <div className="rounded-md bg-(--color-danger)/10 border border-(--color-danger)/20 px-4 py-3 text-sm text-(--color-danger)">
-          {state.error}
+          {error}
         </div>
       )}
 
@@ -84,44 +73,7 @@ export function EditSeasonForm({ season, onClose }: { season: Season; onClose: (
           hint="After your last competition. Changing it updates future meetings." />
       </div>
 
-      {/* Per-day meeting times */}
-      <div>
-        <p className="block text-sm font-medium text-(--color-text-primary) mb-1">
-          Build meeting days &amp; times <span className="text-(--color-danger)">*</span>
-        </p>
-        <p className="text-small text-(--color-text-secondary) mb-3">
-          Toggle days and set individual start/end times for each.
-        </p>
-        <div className="rounded-md border border-(--color-border) overflow-hidden divide-y divide-(--color-border)/40">
-          {DAYS.map(({ value, label }) => {
-            const checked = selectedDays.includes(value);
-            return (
-              <div key={value} className={`flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-3 transition-colors ${checked ? "bg-(--color-primary)/8" : "hover:bg-(--color-surface-overlay)"}`}>
-                <label className="flex items-center gap-3 cursor-pointer flex-shrink-0 min-w-[140px]">
-                  <input
-                    type="checkbox"
-                    name="meetingDays"
-                    value={value}
-                    checked={checked}
-                    onChange={(e) => setSelectedDays((prev) =>
-                      e.target.checked ? [...prev, value] : prev.filter((d) => d !== value)
-                    )}
-                    className="rounded flex-shrink-0"
-                  />
-                  <span className="text-sm text-(--color-text-primary)">{label}</span>
-                </label>
-                {checked && (
-                  <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
-                    <TimeSelect size="sm" name={`dayStart_${value}`} defaultValue={defaultStart(value)} aria-label={`${label} start time`} />
-                    <span className="text-small text-(--color-text-secondary)">to</span>
-                    <TimeSelect size="sm" name={`dayEnd_${value}`} defaultValue={defaultEnd(value)} aria-label={`${label} end time`} />
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      <MeetingScheduleFields initialDays={season.meetingDays} initialSlots={scheduleSlots(season)} />
 
       <Field label="Expected attendance" name="expectedAttendance" type="number" defaultValue={season.expectedAttendance} min={1} />
 

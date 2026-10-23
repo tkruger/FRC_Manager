@@ -3,6 +3,7 @@ import { runReminders } from "@/lib/notify/scheduler";
 import { safeEqual } from "@/lib/security/crypto";
 import { pruneRateLimits } from "@/lib/security/rate-limit";
 import { pruneAuthTokens } from "@/lib/security/auth-tokens";
+import { syncAllActiveSeasons } from "@/lib/season-active";
 
 // Hourly reminder job. Called by Vercel Cron or the GitHub Actions schedule with
 // `Authorization: Bearer $CRON_SECRET`. Safe to call more often — reminders are deduplicated.
@@ -17,8 +18,10 @@ export async function GET(request: Request) {
   }
 
   const started = Date.now();
+  // The season today falls in becomes active on its own (a future season on its start date)
+  const seasonsSwitched = await syncAllActiveSeasons().catch(() => 0);
   const result = await runReminders();
   // Housekeeping: expired rate-limit counters and one-time email links
   const [rateLimitsCleared, tokensCleared] = await Promise.all([pruneRateLimits(), pruneAuthTokens()]).catch(() => [0, 0]);
-  return NextResponse.json({ ...result, rateLimitsCleared, tokensCleared, ms: Date.now() - started });
+  return NextResponse.json({ ...result, seasonsSwitched, rateLimitsCleared, tokensCleared, ms: Date.now() - started });
 }

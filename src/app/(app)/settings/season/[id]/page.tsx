@@ -5,7 +5,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { ActiveSeasonCard } from "../ActiveSeasonCard";
 
-// Full-page view of a past season (the active season lives on /settings/season).
+// Full-page view of a past or upcoming season (the active season lives on /settings/season).
 export default async function PastSeasonPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await auth();
@@ -49,7 +49,10 @@ export default async function PastSeasonPage({ params }: { params: Promise<{ id:
           <span className="mx-2">›</span>{season.name}
         </nav>
         <h1 className="text-h1 text-(--color-text-primary)">{season.name}</h1>
-        <p className="text-body text-(--color-text-secondary) mt-1">{season.year} build season</p>
+        <p className="text-body text-(--color-text-secondary) mt-1">
+          {season.year} build season
+          {!seasonStarted(season.kickoffDate) && <> · starts {season.kickoffDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" })} and becomes the active season then</>}
+        </p>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -63,11 +66,12 @@ export default async function PastSeasonPage({ params }: { params: Promise<{ id:
 
       <ActiveSeasonCard
         isActive={false}
+        upcoming={!seasonStarted(season.kickoffDate)}
         canEdit={isHeadMentor}
         season={{
           ...season,
           startLocked: seasonStarted(season.kickoffDate),
-          meetingDayTimes: season.meetingDayTimes as Record<string, { start: string; end: string }> | null,
+          meetingDayTimes: season.meetingDayTimes as Record<string, { start: string; end: string }[] | { start: string; end: string }> | null,
           competitions: season.competitionEvents.map((c) => ({
             id: c.id, name: c.name, location: c.location, stage: c.stage, stageNumber: c.stageNumber,
             startDate: c.startDate.toISOString(), endDate: c.endDate.toISOString(),

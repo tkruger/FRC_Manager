@@ -7,13 +7,15 @@ interface Season {
   robotCount: number;
   taskCount: number;
   taskComplete: number;
+  /** Shown in place of task progress (e.g. "Starts Jan 9, 2027") */
+  note?: string;
 }
 
-/** List of past seasons; each opens its full page at /settings/season/[id]. */
-export function PastSeasonsCard({ seasons }: { seasons: Season[] }) {
+/** A list of seasons (past or upcoming); each opens its full page at /settings/season/[id]. */
+export function PastSeasonsCard({ seasons, title = "Past seasons" }: { seasons: Season[]; title?: string }) {
   return (
     <div className="card">
-      <h2 className="text-h3 text-(--color-text-primary) mb-3">Past seasons</h2>
+      <h2 className="text-h3 text-(--color-text-primary) mb-3">{title}</h2>
       <div className="divide-y divide-(--color-border)/60">
         {seasons.map((s) => {
           const pct = s.taskCount > 0 ? Math.round((s.taskComplete / s.taskCount) * 100) : 0;
@@ -30,7 +32,8 @@ export function PastSeasonsCard({ seasons }: { seasons: Season[] }) {
                 <span className="text-small text-(--color-text-secondary)">{s.year}</span>
               </div>
               <div className="flex items-center gap-4 shrink-0">
-                {s.taskCount > 0 && (
+                {s.note && <span className="text-small text-(--color-text-secondary)">{s.note}</span>}
+                {!s.note && s.taskCount > 0 && (
                   <span className="hidden sm:inline text-small text-(--color-text-secondary)">{pct}% tasks done</span>
                 )}
                 <span className="hidden sm:inline text-small text-(--color-text-secondary)">

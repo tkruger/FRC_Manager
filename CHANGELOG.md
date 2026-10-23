@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Seasons: set up a future season ahead of time — it's listed under Upcoming seasons and becomes active by itself on its start date. The active season is always the one today falls in (between seasons, the last one stays active). Creating a season no longer clears the form when something's wrong, and the error says what to fix
+- Meeting schedule: a day can have several meetings (e.g. 3–5 pm and 6–8 pm) — “+ another time” on that day; the calendar gets one meeting per slot
+- Time fields use the device's own time picker (iOS / Android wheels, desktop clock field); the hour / minute dropdowns are only a fallback for browsers without one
 - Budget: track the **goal** (planned spend), how much has been **raised** (received funding, including a new **Team account** type for the team's own contribution; pledges shown separately) and how much has been **spent**. The Budget page shows where you stand and a goal / raised / spent chart over the season, and the badge warns when spending runs ahead of what's been raised
 - Funding sources can be edited (e.g. mark a pledge received, with the date) or removed, and partly received pledges record how much has come in
 - Home page: the first tile is the budget at a glance — goal, raised and spent — and opens the Budget page

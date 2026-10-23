@@ -8,6 +8,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { FALLBACK_TIMEZONE, calendarDayKey, isValidTimezone, localParts, zonedTimeToUtc } from "@/lib/notify/time";
+import { daySlots, minutesOf, type Slot } from "@/lib/meeting-schedule";
 
 const DAY_KEYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
@@ -19,12 +20,6 @@ export interface MeetingSchedule {
   meetingDayTimes:  unknown;
 }
 
-/** A day's meeting times under a schedule, or null when it isn't a meeting day */
-function timesFor(schedule: MeetingSchedule, day: string): { start: string; end: string } | null {
-  if (!schedule.meetingDays.includes(day)) return null;
-  const perDay = (schedule.meetingDayTimes as Record<string, { start: string; end: string }> | null) ?? {};
-  return perDay[day] ?? { start: schedule.meetingStartTime, end: schedule.meetingEndTime };
-}
 
 /** "2026-10-07" → "WED" */
 function weekday(dayKey: string): string {
@@ -73,10 +68,11 @@ async function upcomingMeetings(seasonId: string, tz: string, onlyRegular: boole
 /**
  * Bring meetings that haven't started yet in line with the season's dates and schedule:
  * - meetings outside the season's dates are removed
- * - regular meetings take their day's current times
- * - meetings on a day that's no longer a meeting day are removed, unless someone has
- *   added a title, notes or tasks to them, or canceled them
- * - meeting days without a meeting get one
+ * - each meeting day's time slots (a day can have several) get one meeting each; regular
+ *   meetings take their slot's current times
+ * - meetings with no slot (a day that's no longer a meeting day, or a slot that's gone) are
+ *   removed, unless someone has added a title, notes or tasks to them, or canceled them
+ * - slots without a meeting get one
  * Meetings whose time someone set by hand (customTime) are left alone.
  */
 export async function syncSeasonMeetings(seasonId: string): Promise<{ added: number; removed: number; moved: number }> {
@@ -98,33 +94,48 @@ export async function syncSeasonMeetings(seasonId: string): Promise<{ added: num
     removed += (await prisma.meeting.deleteMany({ where: { id: { in: outside.map((m) => m.id) } } })).count;
   }
 
-  // Regular meetings follow the schedule
-  for (const m of await upcomingMeetings(seasonId, tz, true)) {
-    if (m.day < startKey || m.day > endKey) continue;
-    const times = timesFor(season, weekday(m.day));
-    if (!times) {
-      const inUse = m.title || m.notes || m.cancelled || m._count.tasks > 0;
-      if (!inUse) { await prisma.meeting.delete({ where: { id: m.id } }); removed++; }
-    } else if (m.startTime !== times.start || m.endTime !== times.end) {
-      await prisma.meeting.update({ where: { id: m.id }, data: { startTime: times.start, endTime: times.end } });
-      moved++;
-    }
-  }
-
-  // Meeting days that don't have a meeting yet (today only if its time is still ahead)
+  // Day by day, each of the day's slots gets one meeting. Meetings that can't move —
+  // set by hand, or already started — keep the slot nearest them; regular meetings take the
+  // nearest free slot (and its times); slots left over get a new meeting; regular meetings
+  // left over are removed unless someone has added a title, notes or tasks, or canceled them.
   const firstKey = startKey > todayKey ? startKey : todayKey;
   const marginStart = new Date(`${firstKey}T00:00:00Z`);
   marginStart.setUTCDate(marginStart.getUTCDate() - 1);
-  const taken = new Set(
-    (await prisma.meeting.findMany({ where: { seasonId, date: { gte: marginStart } }, select: { date: true } }))
-      .map((m) => calendarDayKey(m.date)),
-  );
+  const existing = (await prisma.meeting.findMany({
+    where:  { seasonId, date: { gte: marginStart } },
+    select: { id: true, date: true, startTime: true, endTime: true, customTime: true, title: true, notes: true, cancelled: true, _count: { select: { tasks: true } } },
+  })).map((m) => ({ ...m, day: calendarDayKey(m.date) }));
+  const byDay = new Map<string, typeof existing>();
+  for (const m of existing) byDay.set(m.day, [...(byDay.get(m.day) ?? []), m]);
+
   const meetings: { seasonId: string; date: Date; startTime: string; endTime: string }[] = [];
   for (let key = firstKey; key <= endKey; key = nextDay(key)) {
-    const times = timesFor(season, weekday(key));
-    if (!times || taken.has(key)) continue;
-    if (key === todayKey && startsAt(key, times.start, tz) <= now) continue;
-    meetings.push({ seasonId, date: new Date(`${key}T00:00:00Z`), startTime: times.start, endTime: times.end });
+    const slots: (Slot | null)[] = daySlots(season, weekday(key));
+    const onDay = (byDay.get(key) ?? []).sort((x, y) => x.startTime.localeCompare(y.startTime));
+    const started = (m: { startTime: string }) => key === todayKey && startsAt(key, m.startTime, tz) <= now;
+    // The free slot nearest a time (by start), taken out of the list
+    const claim = (time: string): Slot | null => {
+      let best = -1;
+      slots.forEach((sl, i) => { if (sl && (best < 0 || Math.abs(minutesOf(sl.start) - minutesOf(time)) < Math.abs(minutesOf(slots[best]!.start) - minutesOf(time)))) best = i; });
+      if (best < 0) return null;
+      const sl = slots[best]; slots[best] = null; return sl;
+    };
+    for (const m of onDay.filter((m) => m.customTime || started(m))) claim(m.startTime);
+    for (const m of onDay.filter((m) => !m.customTime && !started(m))) {
+      const sl = claim(m.startTime);
+      if (!sl) {
+        const inUse = m.title || m.notes || m.cancelled || m._count.tasks > 0;
+        if (!inUse) { await prisma.meeting.delete({ where: { id: m.id } }); removed++; }
+      } else if (m.startTime !== sl.start || m.endTime !== sl.end) {
+        await prisma.meeting.update({ where: { id: m.id }, data: { startTime: sl.start, endTime: sl.end } });
+        moved++;
+      }
+    }
+    for (const sl of slots) {
+      if (!sl) continue;
+      if (key === todayKey && startsAt(key, sl.start, tz) <= now) continue; // already past today
+      meetings.push({ seasonId, date: new Date(`${key}T00:00:00Z`), startTime: sl.start, endTime: sl.end });
+    }
   }
   if (meetings.length) await prisma.meeting.createMany({ data: meetings });
 

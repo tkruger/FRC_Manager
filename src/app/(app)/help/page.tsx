@@ -146,10 +146,12 @@ export default function HelpPage() {
 
       <Section id="season" title="Season, robots & competitions">
         <ul className="list">
-          <li><b>Season settings</b> (Head Mentors) hold the season&apos;s start (kickoff) and end dates, its competitions, meeting days and times, and expected attendance. Only one season is active at a time; everything else in the app uses the active season.</li>
+          <li><b>Season settings</b> (Head Mentors) hold the season&apos;s start (kickoff) and end dates, its competitions, meeting days and times, and expected attendance. Only one season is active at a time and everything else in the app uses it. It&apos;s chosen by date: the season today falls in is active; between seasons the last one stays active until the next one starts.</li>
+          <li><b>Set up the next season ahead of time</b> with <b>+ New season</b> — it&apos;s listed under <b>Upcoming seasons</b> and becomes the active season by itself on its start date. Seasons can&apos;t overlap.</li>
+          <li>A meeting day can have <b>more than one meeting</b> (e.g. 3–5 pm and 6–8 pm): use <b>+ another time</b> on that day. Time fields use your device&apos;s own time picker.</li>
           <li>Changing the season&apos;s dates or meeting schedule updates every meeting that <b>hasn&apos;t started yet</b>, including ones later today — past meetings never change. Upcoming meetings move to a day&apos;s new times, days dropped from the schedule lose their meetings (unless one has a title, notes, tasks or was canceled), and new meeting days and dates get meetings. A meeting you&apos;ve moved to another time by hand keeps its time. Once the season has started, its start date is locked.</li>
           <li><b>Robots</b>: add the season&apos;s robots and use <b>Edit robot</b> to change a name, role, status, weight target or description. A robot&apos;s name always includes the season year.</li>
-          <li><b>Past seasons</b> open on their own page with their stats, robots, competitions and milestones.</li>
+          <li><b>Past and upcoming seasons</b> open on their own page with their stats, robots, competitions and milestones.</li>
         </ul>
         <H3>Competitions</H3>
         <p>Add each event the team attends. Its type and number give it a designation that templates can refer to:</p>

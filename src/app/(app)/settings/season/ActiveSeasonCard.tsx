@@ -8,6 +8,7 @@ import { EditSeasonForm } from "./EditSeasonForm";
 import { RobotForm } from "./RobotForm";
 import { CompetitionsSection, type Competition } from "./CompetitionsSection";
 import { EditRobotDialog } from "@/components/fleet/EditRobotDialog";
+import { daySlots, type Slot } from "@/lib/meeting-schedule";
 
 interface Robot {
   id: string;
@@ -31,7 +32,7 @@ interface Season {
   meetingDays: string[];
   meetingStartTime: string;
   meetingEndTime: string;
-  meetingDayTimes: Record<string, { start: string; end: string }> | null;
+  meetingDayTimes: Record<string, Slot[] | Slot> | null;
   expectedAttendance: number;
   robots: Robot[];
   competitions: Competition[];
@@ -42,8 +43,8 @@ const DAY_SHORT: Record<string, string> = { MON: "Mon", TUE: "Tue", WED: "Wed", 
 
 /** Full season card. Also used for past seasons (isActive=false) on /settings/season/[id]. */
 export function ActiveSeasonCard({
-  season, canEdit = false, isActive = true,
-}: { season: Season; canEdit?: boolean; isActive?: boolean }) {
+  season, canEdit = false, isActive = true, upcoming = false,
+}: { season: Season; canEdit?: boolean; isActive?: boolean; /** Not started yet — becomes active on its start date */ upcoming?: boolean }) {
   const [editing, setEditing] = useState(false);
 
   return (
@@ -54,7 +55,7 @@ export function ActiveSeasonCard({
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <h2 className="text-h3 text-(--color-text-primary)">{season.name}</h2>
-                {isActive ? <Badge variant="success">Active</Badge> : <Badge variant="neutral">Past season</Badge>}
+                {isActive ? <Badge variant="success">Active</Badge> : upcoming ? <Badge variant="info">Upcoming</Badge> : <Badge variant="neutral">Past season</Badge>}
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-1 text-small text-(--color-text-secondary) mt-2">
                 <span>Starts: <strong className="text-(--color-text-primary)">{formatDate(season.kickoffDate)}</strong></span>
@@ -70,11 +71,12 @@ export function ActiveSeasonCard({
                 ) : (
                   <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-0.5 text-small">
                     {WEEK_ORDER.filter((d) => season.meetingDays.includes(d)).map((d) => {
-                      const t = season.meetingDayTimes?.[d] ?? { start: season.meetingStartTime, end: season.meetingEndTime };
                       return (
                         <li key={d} className="flex gap-3">
                           <span className="w-10 font-medium text-(--color-text-primary)">{DAY_SHORT[d]}</span>
-                          <span className="text-(--color-text-primary)">{formatTime12(t.start)} – {formatTime12(t.end)}</span>
+                          <span className="text-(--color-text-primary)">
+                            {daySlots(season, d).map((t) => `${formatTime12(t.start)} – ${formatTime12(t.end)}`).join(", ")}
+                          </span>
                         </li>
                       );
                     })}
@@ -121,7 +123,7 @@ export function ActiveSeasonCard({
         <>
           <div className="flex items-center gap-2 mb-4">
             <h2 className="text-h3 text-(--color-text-primary)">Edit season</h2>
-            {isActive ? <Badge variant="success">Active</Badge> : <Badge variant="neutral">Past season</Badge>}
+            {isActive ? <Badge variant="success">Active</Badge> : upcoming ? <Badge variant="info">Upcoming</Badge> : <Badge variant="neutral">Past season</Badge>}
           </div>
           <EditSeasonForm season={season} onClose={() => setEditing(false)} />
         </>

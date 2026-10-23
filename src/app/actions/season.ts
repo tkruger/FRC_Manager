@@ -4,6 +4,8 @@ import { z } from "zod";
 import { issueMessage } from "@/lib/validation";
 import { prisma } from "@/lib/prisma";
 import { seasonStarted, syncSeasonMeetings } from "@/lib/season-meetings";
+import { syncActiveSeason } from "@/lib/season-active";
+import { minutesOf, type Slot } from "@/lib/meeting-schedule";
 import * as notify from "@/lib/notify/events";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
@@ -45,7 +47,7 @@ async function checkSeasonOverlap(
   if (!overlapping) return null;
 
   const fmt = (d: Date) =>
-    d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }); // calendar dates are UTC midnight
 
   return (
     `This season's schedule overlaps with "${overlapping.name}" ` +
@@ -59,38 +61,42 @@ const SeasonSchema = z.object({
   year:               z.coerce.number().int().min(2000).max(2100),
   kickoffDate:        z.string().max(300).min(1),
   endDate:            z.string().max(300).min(1),
-  meetingDays:        z.array(z.string().max(100)).max(200).min(1),
+  meetingDays:        z.array(z.enum(ALL_DAYS as [string, ...string[]])).max(7).min(1, "Pick at least one meeting day."),
   expectedAttendance: z.coerce.number().int().min(1).default(10),
-}).refine((d) => new Date(d.endDate) > new Date(d.kickoffDate), { message: "The season has to end after it starts." });
+}).refine((d) => new Date(d.endDate) > new Date(d.kickoffDate), { message: "The season has to end after it starts.", path: ["endDate"] });
 
 export type SeasonActionState =
-  | { success: true; seasonId: string; meetings?: { added: number; removed: number; moved: number } }
+  | { success: true; seasonId: string; meetings?: { added: number; removed: number; moved: number }; /** It's the active season now */ active?: boolean }
   | { success: false; error: string };
 
-/** Extract per-day time config from form data:
- *  dayStart_MON, dayEnd_MON, dayStart_WED, dayEnd_WED, etc.
- *  Falls back to global meetingStartTime / meetingEndTime if no per-day fields. */
+/**
+ * Each meeting day's meetings from the form: dayStart_MON / dayEnd_MON appear once per
+ * meeting (a day can have several), in order. The first meeting of the first day is also
+ * kept as the season's default times. Returns an error when a meeting ends before it starts.
+ */
 function extractDayTimes(
   formData: FormData,
   selectedDays: string[]
-): { dayTimes: Record<string, { start: string; end: string }>; globalStart: string; globalEnd: string } {
-  const globalStart = (formData.get("meetingStartTime") as string) || "15:00";
-  const globalEnd   = (formData.get("meetingEndTime")   as string) || "20:00";
+): { dayTimes: Record<string, Slot[]>; globalStart: string; globalEnd: string } | { error: string } {
+  const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
+  const fallbackStart = (formData.get("meetingStartTime") as string) || "15:00";
+  const fallbackEnd   = (formData.get("meetingEndTime")   as string) || "20:00";
 
-  const dayTimes: Record<string, { start: string; end: string }> = {};
+  const dayTimes: Record<string, Slot[]> = {};
   for (const day of selectedDays) {
-    const start = (formData.get(`dayStart_${day}`) as string) || globalStart;
-    const end   = (formData.get(`dayEnd_${day}`)   as string) || globalEnd;
-    dayTimes[day] = { start, end };
+    const starts = formData.getAll(`dayStart_${day}`).map(String);
+    const ends   = formData.getAll(`dayEnd_${day}`).map(String);
+    const slots = (starts.length ? starts : [fallbackStart]).slice(0, 6).map((start, i) => ({
+      start: TIME.test(start) ? start : fallbackStart,
+      end:   TIME.test(ends[i] ?? "") ? ends[i] : fallbackEnd,
+    }));
+    const bad = slots.find((sl) => minutesOf(sl.end) <= minutesOf(sl.start));
+    if (bad) return { error: `A ${day.charAt(0) + day.slice(1).toLowerCase()} meeting ends before it starts (${bad.start}–${bad.end}).` };
+    dayTimes[day] = slots.sort((x, y) => x.start.localeCompare(y.start));
   }
 
-  // Use the first selected day's times as the global fallback
-  const firstDay = selectedDays[0];
-  return {
-    dayTimes,
-    globalStart: dayTimes[firstDay]?.start ?? globalStart,
-    globalEnd:   dayTimes[firstDay]?.end   ?? globalEnd,
-  };
+  const first = dayTimes[selectedDays[0]]?.[0];
+  return { dayTimes, globalStart: first?.start ?? fallbackStart, globalEnd: first?.end ?? fallbackEnd };
 }
 
 export async function createSeasonAction(
@@ -110,7 +116,7 @@ export async function createSeasonAction(
     expectedAttendance: formData.get("expectedAttendance"),
   });
 
-  if (!parsed.success) return { success: false, error: parsed.error.issues.find((i) => i.code === "custom")?.message ?? "Please fill in all required fields." };
+  if (!parsed.success) return { success: false, error: issueMessage(parsed.error) };
   const d = parsed.data;
 
   const overlapError = await checkSeasonOverlap(
@@ -120,13 +126,12 @@ export async function createSeasonAction(
   );
   if (overlapError) return { success: false, error: overlapError };
 
-  const { dayTimes, globalStart, globalEnd } = extractDayTimes(formData, d.meetingDays);
+  const times = extractDayTimes(formData, d.meetingDays);
+  if ("error" in times) return { success: false, error: times.error };
+  const { dayTimes, globalStart, globalEnd } = times;
 
-  await prisma.season.updateMany({
-    where: { teamId: session.user.teamId, isActive: true },
-    data: { isActive: false },
-  });
-
+  // Not made active here: the season today falls in is (see syncActiveSeason), so a future
+  // season can be set up ahead and takes over on its start date
   const season = await prisma.season.create({
     data: {
       teamId:             session.user.teamId!,
@@ -134,7 +139,7 @@ export async function createSeasonAction(
       year:               d.year,
       kickoffDate:        new Date(d.kickoffDate),
       endDate:            new Date(d.endDate),
-      isActive:           true,
+      isActive:           false,
       meetingDays:        d.meetingDays,
       meetingStartTime:   globalStart,
       meetingEndTime:     globalEnd,
@@ -144,9 +149,13 @@ export async function createSeasonAction(
     },
   });
 
+  await syncSeasonMeetings(season.id);
+  const activeId = await syncActiveSeason(session.user.teamId!);
+
+  revalidatePath("/", "layout");
   revalidatePath("/settings/season");
   revalidatePath("/dashboard");
-  return { success: true, seasonId: season.id };
+  return { success: true, seasonId: season.id, active: activeId === season.id };
 }
 
 export async function updateSeasonAction(
@@ -163,11 +172,11 @@ export async function updateSeasonAction(
     year:               formData.get("year"),
     kickoffDate:        formData.get("kickoffDate"),
     endDate:            formData.get("endDate"),
-    meetingDays:        days.length > 0 ? days : ["MON"],
+    meetingDays:        days,
     expectedAttendance: formData.get("expectedAttendance"),
   });
 
-  if (!parsed.success) return { success: false, error: parsed.error.issues.find((i) => i.code === "custom")?.message ?? "Please fill in all required fields." };
+  if (!parsed.success) return { success: false, error: issueMessage(parsed.error) };
   const d = parsed.data;
 
   const overlapError = await checkSeasonOverlap(
@@ -178,7 +187,9 @@ export async function updateSeasonAction(
   );
   if (overlapError) return { success: false, error: overlapError };
 
-  const { dayTimes, globalStart, globalEnd } = extractDayTimes(formData, d.meetingDays);
+  const times = extractDayTimes(formData, d.meetingDays);
+  if ("error" in times) return { success: false, error: times.error };
+  const { dayTimes, globalStart, globalEnd } = times;
 
   const before = await prisma.season.findFirst({
     where:  { id: seasonId, teamId: session.user.teamId },
@@ -213,6 +224,8 @@ export async function updateSeasonAction(
   // so they can never drift from it. Past meetings, and ones whose time was set by hand, stay.
   const meetings = await syncSeasonMeetings(seasonId);
   if (meetings?.added) await notify.meetingsPublished(session.user.teamId!, meetings.added, session.user.id);
+  // New dates can change which season today falls in
+  const activeId = await syncActiveSeason(session.user.teamId!);
 
   // Robots copy the season year into their display name ("2026 Ironclad") —
   // keep them in step when the season's year changes.
@@ -228,7 +241,7 @@ export async function updateSeasonAction(
   revalidatePath("/settings/season");
   revalidatePath("/dashboard");
   revalidatePath("/calendar");
-  return { success: true, seasonId, meetings };
+  return { success: true, seasonId, meetings, active: activeId === seasonId };
 }
 
 const RobotSchema = z.object({
