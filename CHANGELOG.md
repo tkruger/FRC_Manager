@@ -1,15 +1,22 @@
 # Changelog
 
-## Unreleased
+## 1.5.0 — 2026-10-23
 
-- Seasons: set up a future season ahead of time — it's listed under Upcoming seasons and becomes active by itself on its start date. The active season is always the one today falls in (between seasons, the last one stays active). Creating a season no longer clears the form when something's wrong, and the error says what to fix
-- Meeting schedule: a day can have several meetings (e.g. 3–5 pm and 6–8 pm) — “+ another time” on that day; the calendar gets one meeting per slot
-- Time fields use the device's own time picker (iOS / Android wheels, desktop clock field); the hour / minute dropdowns are only a fallback for browsers without one
-- Budget: track the **goal** (planned spend), how much has been **raised** (received funding, including a new **Team account** type for the team's own contribution; pledges shown separately) and how much has been **spent**. The Budget page shows them as a line chart over the season (the bar charts are gone), and the badge warns when spending runs ahead of what's been raised
+**Budget**
+- Track the **goal** (planned spend), how much has been **raised** (received funding, including a new **Team account** type for the team's own contribution; pledges shown separately) and how much has been **spent**
+- The Budget page shows goal, raised and spent as a line chart over the season, and the badge warns when spending runs ahead of what's been raised
 - Funding sources can be edited (e.g. mark a pledge received, with the date) or removed, and partly received pledges record how much has come in
-- Home page: the first tile shows the budget as a small goal / raised / spent chart with the numbers, in place of the Robots tile, and opens the Budget page
-- Task lengths count both ends: a task that takes 4 days starting Thursday is due Sunday, and the Gantt charts show it as 4 days with the bar covering Sunday (they showed one day less). Existing template tasks and tasks scheduled after prerequisites keep the due dates and lengths that were entered — their start moves a day later to match. Standard template: Worlds 4 days (Thu–Sun), week events 2 (Sat–Sun), district championship 3 (Thu–Sat); tasks after another task start the day after it's due
-- Standard template and presentation: events run on their real days — Worlds Thursday–Sunday (it showed Saturday–Tuesday), week events Saturday–Sunday, district championship Thursday–Saturday. Competitions are dated on their first day
+- Home page: the first tile is the budget — a small goal / raised / spent chart with the numbers on it — in place of the Robots tile, and opens the Budget page
+
+**Seasons & meetings**
+- Set up a future season ahead of time: it's listed under Upcoming seasons and becomes active by itself on its start date. The active season is always the one today falls in (between seasons, the last one stays active)
+- Creating or editing a season no longer clears the form when something's wrong, and the error says what to fix
+- A meeting day can have several meetings (e.g. 3–5 pm and 6–8 pm) — “+ another time” on that day; the calendar gets one meeting per slot
+- Time fields use the device's own time picker (iOS / Android wheels, desktop clock field); the hour / minute dropdowns are only a fallback
+
+**Tasks & templates**
+- Task lengths count both ends: a task that takes 4 days starting Thursday is due Sunday, and the Gantt charts show it as 4 days with the bar covering Sunday. Existing template tasks and tasks scheduled after prerequisites keep the due dates and lengths that were entered — their start moves a day later to match
+- Standard template and presentation: events run on their real days — Worlds Thursday–Sunday (4 days), week events Saturday–Sunday, district championship Thursday–Saturday — and tasks after another task start the day after it's due. Competitions are dated on their first day
 
 ## 1.4.2 — 2026-10-21
 
