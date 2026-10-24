@@ -45,8 +45,10 @@ export function SeasonForm({ onClose }: { onClose?: () => void } = {}) {
         <Field label="Season name" name="name" required placeholder={`${currentYear} Season`} />
         <Field label="Season year" name="year" type="number" required defaultValue={currentYear} min={2000} max={2100} />
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Start date" name="kickoffDate" type="date" required hint="Kickoff" />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* The form field is still named kickoffDate — it's the season's start */}
+        <Field label="Start date" name="kickoffDate" type="date" required hint="The season's first day" />
+        <Field label="Kickoff" name="gameKickoff" type="date" hint="FRC kickoff — template “kickoff” tasks count from it (empty: the start date)" />
         <Field label="End date" name="endDate" type="date" required hint="After your last competition" />
       </div>
       <p className="text-small text-(--color-text-secondary) -mt-2">

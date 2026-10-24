@@ -53,7 +53,7 @@ export default async function SchedulePage({
   }
 
   const now = new Date();
-  const kickoff = activeSeason.kickoffDate;
+  const kickoff = activeSeason.startDate; // the season's span, start to end
   const end = activeSeason.endDate;
   const daysToEnd = daysBetween(now, end);
   const totalBuildDays = daysBetween(kickoff, end);
@@ -151,7 +151,7 @@ export default async function SchedulePage({
     if (t.status === "COMPLETE") subteamStats[st].done++;
   }
 
-  const kickoffStr = activeSeason.kickoffDate.toISOString().split("T")[0];
+  const kickoffStr = activeSeason.startDate.toISOString().split("T")[0];
   const endStr     = activeSeason.endDate.toISOString().split("T")[0];
 
   return (
@@ -181,7 +181,7 @@ export default async function SchedulePage({
 
       {/* Season progress bar */}
       <SeasonProgressBar
-        kickoffDate={activeSeason.kickoffDate.toISOString()}
+        kickoffDate={activeSeason.startDate.toISOString()}
         endDate={activeSeason.endDate.toISOString()}
         daysToEnd={daysToEnd}
         nextCompetition={nextComp}

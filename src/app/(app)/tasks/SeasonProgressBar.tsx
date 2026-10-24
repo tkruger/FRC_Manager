@@ -52,7 +52,7 @@ export function SeasonProgressBar({
       >
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 min-w-0">
           <p className="text-small text-(--color-text-secondary) whitespace-nowrap">
-            Kickoff {shortDate(new Date(kickoffDate))} → Ends {shortDate(new Date(endDate))}
+            Starts {shortDate(new Date(kickoffDate))} → Ends {shortDate(new Date(endDate))}
             {daysToEnd >= 0
               ? <span className="ml-1 font-medium text-(--color-text-primary)">· {daysToEnd}d left</span>
               : <span className="ml-1 font-medium text-(--color-warning)">· ended {Math.abs(daysToEnd)}d ago</span>}

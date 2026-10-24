@@ -3,6 +3,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { NextRequest } from "next/server";
+import { kickoffOf } from "@/lib/competition";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -106,12 +107,13 @@ export async function GET(
   );
 
   // Kickoff
-  const kickoffEnd = new Date(season.kickoffDate.getTime() + 86400000);
+  const kickoffDay = kickoffOf(season);
+  const kickoffEnd = new Date(kickoffDay.getTime() + 86400000);
   L(
     "BEGIN:VEVENT",
     prop("UID",     `kickoff-${season.id}@frc-manager.app`),
     prop("DTSTAMP", now),
-    prop("DTSTART", icsDate(season.kickoffDate), "VALUE=DATE"),
+    prop("DTSTART", icsDate(kickoffDay), "VALUE=DATE"),
     prop("DTEND",   icsDate(kickoffEnd),          "VALUE=DATE"),
     prop("SUMMARY", esc(`${season.name} - KICKOFF`)),
     "BEGIN:VALARM",

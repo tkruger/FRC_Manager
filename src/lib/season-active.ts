@@ -11,8 +11,8 @@ import { prisma } from "@/lib/prisma";
 import { FALLBACK_TIMEZONE, calendarDayKey, isValidTimezone, localParts } from "@/lib/notify/time";
 
 /** The season that should be active, from a team's seasons and today's date ("YYYY-MM-DD") */
-export function pickActiveSeason<T extends { id: string; kickoffDate: Date; endDate: Date }>(seasons: T[], todayKey: string): T | null {
-  const span = (s: T) => ({ s, start: calendarDayKey(s.kickoffDate), end: calendarDayKey(s.endDate) });
+export function pickActiveSeason<T extends { id: string; startDate: Date; endDate: Date }>(seasons: T[], todayKey: string): T | null {
+  const span = (s: T) => ({ s, start: calendarDayKey(s.startDate), end: calendarDayKey(s.endDate) });
   const all = seasons.map(span);
   const current = all.filter((x) => x.start <= todayKey && todayKey <= x.end).sort((a, b) => b.start.localeCompare(a.start))[0];
   if (current) return current.s;
@@ -25,7 +25,7 @@ export function pickActiveSeason<T extends { id: string; kickoffDate: Date; endD
 export async function syncActiveSeason(teamId: string): Promise<string | null> {
   const [team, seasons] = await Promise.all([
     prisma.team.findUnique({ where: { id: teamId }, select: { timezone: true } }),
-    prisma.season.findMany({ where: { teamId }, select: { id: true, kickoffDate: true, endDate: true, isActive: true } }),
+    prisma.season.findMany({ where: { teamId }, select: { id: true, startDate: true, endDate: true, isActive: true } }),
   ]);
   const tz = isValidTimezone(team?.timezone) ? team!.timezone! : FALLBACK_TIMEZONE;
   const want = pickActiveSeason(seasons, localParts(new Date(), tz).dateKey);

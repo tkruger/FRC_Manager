@@ -55,13 +55,19 @@ export default async function PublicSchedulePage({ params }: { params: Promise<{
           </div>
           <div className="flex flex-wrap gap-4 mt-3 text-small text-(--color-text-secondary)">
             <span>
-              Kickoff:{" "}
+              Starts:{" "}
               <strong className="text-(--color-text-primary)">
-                {season.kickoffDate.toLocaleDateString("en-US", {
-                  month: "short", day: "numeric", year: "numeric",
-                })}
+                {season.startDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })}
               </strong>
             </span>
+            {season.kickoffDate && (
+              <span>
+                Kickoff:{" "}
+                <strong className="text-(--color-text-primary)">
+                  {season.kickoffDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })}
+                </strong>
+              </span>
+            )}
             <span>
               Ends:{" "}
               <strong className="text-(--color-text-primary)">

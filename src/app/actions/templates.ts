@@ -7,7 +7,7 @@ import { z } from "zod";
 import { findTeamTemplate, findTeamTemplateTask } from "@/lib/template-access";
 import { STANDARD_TASKS } from "@/lib/standard-template";
 import {
-  TASK_ANCHORS, dueOffsetOf, STAGE_INFO, isCompetitionAnchor, legacyAnchor, resolveAnchor, addDays, week0Date,
+  TASK_ANCHORS, dueOffsetOf, kickoffOf, STAGE_INFO, isCompetitionAnchor, legacyAnchor, resolveAnchor, addDays, week0Date,
   type TaskAnchor, type SeasonDates,
 } from "@/lib/competition";
 import type { Prisma, TaskPriority, SubTeam } from "@/generated/prisma";
@@ -308,8 +308,8 @@ export async function saveSeasonAsTemplateAction(
   // Convert absolute dates to offsets from whichever season date is nearest:
   // kickoff, Week 0 (the week before Week 1 — see week0Date) or the season end
   const DAY = 86400000;
-  const kickoff = activeSeason.kickoffDate.getTime();
-  const week0   = week0Date({ kickoffDate: activeSeason.kickoffDate, competitions: activeSeason.competitionEvents }).date;
+  const kickoff = kickoffOf(activeSeason).getTime();
+  const week0   = week0Date({ kickoffDate: kickoffOf(activeSeason), competitions: activeSeason.competitionEvents }).date;
   const anchors: { anchor: TaskAnchor; ms: number }[] = [
     { anchor: "KICKOFF",      ms: kickoff },
     { anchor: "SEASON_WEEK0", ms: week0.getTime() },
@@ -393,7 +393,7 @@ async function applyToActiveSeason(teamId: string, userId: string, tasks: Applic
   if (!season) return { success: false, error: "No active season." };
 
   const dates: SeasonDates = {
-    kickoffDate:  season.kickoffDate,
+    kickoffDate:  kickoffOf(season), // "kickoff" tasks count from the kickoff
     endDate:      season.endDate,
     competitions: season.competitionEvents,
   };
@@ -403,7 +403,7 @@ async function applyToActiveSeason(teamId: string, userId: string, tasks: Applic
 
   // Place everything: events from the season's dates, then tasks timed from other tasks
   // (days from kickoff; calendar dates are UTC midnight)
-  const kickoff = season.kickoffDate.getTime();
+  const kickoff = kickoffOf(season).getTime();
   const DAY = 86_400_000;
   const { placed, unplaced } = scheduleTemplate(tasks, (t): EventTarget[] =>
     resolveAnchor(t.anchor, t.anchorNumber, dates).map((r) => ({ day: Math.round((r.date.getTime() - kickoff) / DAY), suffix: r.suffix, estimated: false })));

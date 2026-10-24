@@ -8,6 +8,7 @@ import { SubscribeCalendarButton } from "@/components/calendar/SubscribeCalendar
 import { GenerateShareLinkButton } from "./GenerateShareLinkButton";
 import { PageHeader } from "@/components/PageHeader";
 import { appUrl } from "@/lib/app-url";
+import { kickoffOf } from "@/lib/competition";
 
 export default async function CalendarPage() {
   const session = await auth();
@@ -68,7 +69,8 @@ export default async function CalendarPage() {
         season={{
           id:            activeSeason.id,
           name:          activeSeason.name,
-          kickoffDate:   activeSeason.kickoffDate.toISOString(),
+          startDate:     activeSeason.startDate.toISOString(),
+          kickoffDate:   kickoffOf(activeSeason).toISOString(),
           endDate:     activeSeason.endDate.toISOString(),
           meetingDays:   activeSeason.meetingDays,
           calendarToken: activeSeason.calendarToken,

@@ -178,8 +178,8 @@ export async function handleTeamStatus(ctx: InteractionContext): Promise<Respons
 
   const now = new Date();
   const daysToEnd = differenceInCalendarDays(season.endDate, now);
-  const kickoffDay  = differenceInCalendarDays(now, season.kickoffDate) + 1;
-  const totalDays   = differenceInCalendarDays(season.endDate, season.kickoffDate);
+  const kickoffDay  = differenceInCalendarDays(now, season.startDate) + 1;
+  const totalDays   = differenceInCalendarDays(season.endDate, season.startDate);
   const nextComp    = competitionCountdown(season.competitionEvents, now);
 
   const [taskStats, robotData, inventoryAlerts, openCheckouts, nextMilestone] = await Promise.all([

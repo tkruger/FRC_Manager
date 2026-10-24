@@ -182,7 +182,7 @@ export function GanttClient({ tasks, kickoffDate, endDate, seasonName, markers }
             <div className="absolute top-0 bottom-0" style={{ left: LABEL_W, width: chartW }}>
               {weekStarts.map((d) => (
                 <div key={d} className="absolute top-1.5 text-label text-(--color-text-secondary) whitespace-nowrap" style={{ left: x(d) + 4 }}>
-                  {d === 0 ? "Kickoff" : short(d)}
+                  {d === 0 ? "Start" : short(d)}
                 </div>
               ))}
               {dayLetters && Array.from({ length: shownDays }, (_, i) => viewStart + i).map((d) => (

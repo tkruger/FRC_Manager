@@ -119,7 +119,7 @@ export default async function BudgetDashboard() {
         raises={budget.fundingSources
           .map((f) => ({ date: (f.receivedDate ?? f.createdAt).toISOString(), amount: raisedFrom(f) }))
           .filter((r) => r.amount > 0)}
-        kickoffDate={activeSeason.kickoffDate.toISOString()}
+        kickoffDate={activeSeason.startDate.toISOString()}
         endDate={activeSeason.endDate.toISOString()}
         expenses={budget.expenses.map((e) => ({ date: e.date.toISOString(), amount: e.amount }))}
       />

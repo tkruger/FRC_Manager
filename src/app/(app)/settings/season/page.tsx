@@ -25,9 +25,9 @@ export default async function SeasonSettingsPage() {
 
   const activeSeason = seasons.find((s) => s.isActive);
   // Not active: future seasons (set up ahead; one becomes active on its start date) and past ones
-  const upcomingSeasons = seasons.filter((s) => !s.isActive && !seasonStarted(s.kickoffDate))
-    .sort((a, b) => a.kickoffDate.getTime() - b.kickoffDate.getTime());
-  const pastSeasons  = seasons.filter((s) => !s.isActive && seasonStarted(s.kickoffDate));
+  const upcomingSeasons = seasons.filter((s) => !s.isActive && !seasonStarted(s.startDate))
+    .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+  const pastSeasons  = seasons.filter((s) => !s.isActive && seasonStarted(s.startDate));
 
   // Task completion stats for past seasons
   const pastSeasonStats = await Promise.all(
@@ -68,7 +68,7 @@ export default async function SeasonSettingsPage() {
         <ActiveSeasonCard
           season={{
             ...activeSeason,
-            startLocked: seasonStarted(activeSeason.kickoffDate),
+            startLocked: seasonStarted(activeSeason.startDate),
             meetingDayTimes: activeSeason.meetingDayTimes as Record<string, { start: string; end: string }[] | { start: string; end: string }> | null,
             competitions: activeSeason.competitionEvents.map((c) => ({
               id: c.id, name: c.name, location: c.location, stage: c.stage, stageNumber: c.stageNumber,
@@ -85,7 +85,7 @@ export default async function SeasonSettingsPage() {
           title="Upcoming seasons"
           seasons={upcomingSeasons.map((s) => ({
             id: s.id, name: s.name, year: s.year, robotCount: s.robots.length, taskCount: 0, taskComplete: 0,
-            note: `Starts ${s.kickoffDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })}`,
+            note: `Starts ${s.startDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })}`,
           }))}
         />
       )}

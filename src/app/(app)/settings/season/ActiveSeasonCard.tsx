@@ -10,6 +10,9 @@ import { CompetitionsSection, type Competition } from "./CompetitionsSection";
 import { EditRobotDialog } from "@/components/fleet/EditRobotDialog";
 import { daySlots, type Slot } from "@/lib/meeting-schedule";
 
+/** A calendar date (stored as UTC midnight) */
+const formatDay = (d: Date) => new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+
 interface Robot {
   id: string;
   year: number;
@@ -25,7 +28,10 @@ interface Season {
   id: string;
   name: string;
   year: number;
-  kickoffDate: Date;
+  /** The season's first day */
+  startDate: Date;
+  /** The FRC kickoff (null: not set — the start date is used) */
+  kickoffDate: Date | null;
   endDate: Date;
   /** The season has started, so its start date can't change */
   startLocked: boolean;
@@ -58,8 +64,9 @@ export function ActiveSeasonCard({
                 {isActive ? <Badge variant="success">Active</Badge> : upcoming ? <Badge variant="info">Upcoming</Badge> : <Badge variant="neutral">Past season</Badge>}
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-1 text-small text-(--color-text-secondary) mt-2">
-                <span>Starts: <strong className="text-(--color-text-primary)">{formatDate(season.kickoffDate)}</strong></span>
-                <span>Ends: <strong className="text-(--color-text-primary)">{formatDate(season.endDate)}</strong></span>
+                <span>Starts: <strong className="text-(--color-text-primary)">{formatDay(season.startDate)}</strong></span>
+                <span>Kickoff: <strong className="text-(--color-text-primary)">{season.kickoffDate ? formatDay(season.kickoffDate) : "not set"}</strong></span>
+                <span>Ends: <strong className="text-(--color-text-primary)">{formatDay(season.endDate)}</strong></span>
                 <span>Attendance: <strong className="text-(--color-text-primary)">{season.expectedAttendance}</strong></span>
               </div>
 

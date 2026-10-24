@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Seasons have a **Kickoff** date separate from the season's start. Template tasks counted from kickoff (and the Week 1 estimate) use it; until it's set, the start date is used as before. The kickoff shows on the season card, the Gantt's kickoff line, the calendar and the calendar feed's KICKOFF event
+- Dates no longer show a day early in some time zones (e.g. the Tasks progress card and the Templates page)
+
 ## 1.5.0 — 2026-10-23
 
 **Budget**

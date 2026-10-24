@@ -91,7 +91,7 @@ export default async function DashboardPage() {
           {/* Budget first, so everyone sees where the money stands (it takes the Robots tile's place) */}
           {budget && (
             <BudgetTile goal={budget.goal} raised={budget.raised} spent={budget.spent}
-              kickoffDate={activeSeason.kickoffDate.toISOString()} endDate={activeSeason.endDate.toISOString()}
+              kickoffDate={activeSeason.startDate.toISOString()} endDate={activeSeason.endDate.toISOString()}
               expenses={budget.expenses} raises={budget.raises} />
           )}
           {[

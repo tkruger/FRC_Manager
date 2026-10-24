@@ -51,7 +51,7 @@ export default async function PastSeasonPage({ params }: { params: Promise<{ id:
         <h1 className="text-h1 text-(--color-text-primary)">{season.name}</h1>
         <p className="text-body text-(--color-text-secondary) mt-1">
           {season.year} build season
-          {!seasonStarted(season.kickoffDate) && <> · starts {season.kickoffDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" })} and becomes the active season then</>}
+          {!seasonStarted(season.startDate) && <> · starts {season.startDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" })} and becomes the active season then</>}
         </p>
       </div>
 
@@ -66,11 +66,11 @@ export default async function PastSeasonPage({ params }: { params: Promise<{ id:
 
       <ActiveSeasonCard
         isActive={false}
-        upcoming={!seasonStarted(season.kickoffDate)}
+        upcoming={!seasonStarted(season.startDate)}
         canEdit={isHeadMentor}
         season={{
           ...season,
-          startLocked: seasonStarted(season.kickoffDate),
+          startLocked: seasonStarted(season.startDate),
           meetingDayTimes: season.meetingDayTimes as Record<string, { start: string; end: string }[] | { start: string; end: string }> | null,
           competitions: season.competitionEvents.map((c) => ({
             id: c.id, name: c.name, location: c.location, stage: c.stage, stageNumber: c.stageNumber,

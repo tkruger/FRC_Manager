@@ -24,6 +24,11 @@ export function designation(stage: CompetitionStage, stageNumber: number | null 
   return info.numbered && stageNumber != null ? `${info.prefix}${stageNumber}` : info.prefix;
 }
 
+// ── Kickoff ─────────────────────────────────────────────────────────────────
+
+/** The FRC kickoff — set on the season, else its start date (they used to be one date) */
+export const kickoffOf = (s: { kickoffDate: Date | null; startDate: Date }): Date => s.kickoffDate ?? s.startDate;
+
 // ── Task length ─────────────────────────────────────────────────────────────
 
 /**

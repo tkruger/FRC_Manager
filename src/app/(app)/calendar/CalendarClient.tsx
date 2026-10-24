@@ -25,7 +25,7 @@ interface Meeting {
 }
 interface TaskOption { id: string; name: string; status: string; subTeam: string | null; dueDate: string | null; }
 interface Season {
-  id: string; name: string; kickoffDate: string; endDate: string;
+  id: string; name: string; startDate: string; kickoffDate: string; endDate: string;
   meetingDays: string[]; calendarToken: string | null;
 }
 
@@ -118,7 +118,8 @@ export function CalendarClient({ season, meetings, allTasks, isLeadership }: Pro
   // All season months for full-season view
   const seasonMonths: { year: number; month: number }[] = [];
   {
-    const cur = new Date(kickoff.getFullYear(), kickoff.getMonth(), 1);
+    const seasonStart = new Date(season.startDate);
+    const cur = new Date(seasonStart.getFullYear(), seasonStart.getMonth(), 1);
     const end = new Date(seasonEnd.getFullYear(), seasonEnd.getMonth(), 1);
     while (cur <= end) {
       seasonMonths.push({ year: cur.getFullYear(), month: cur.getMonth() });

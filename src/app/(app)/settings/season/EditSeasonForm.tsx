@@ -13,7 +13,10 @@ interface Season {
   id: string;
   name: string;
   year: number;
-  kickoffDate: Date;
+  /** The season's first day */
+  startDate: Date;
+  /** The FRC kickoff (null: not set — the start date is used) */
+  kickoffDate: Date | null;
   endDate: Date;
   startLocked: boolean;
   meetingDays: string[];
@@ -64,11 +67,14 @@ export function EditSeasonForm({ season, onClose }: { season: Season; onClose: (
         <Field label="Season year" name="year" type="number" required defaultValue={season.year} min={2000} max={2100} />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Start date" name="kickoffDate" type="date" required defaultValue={toDateInputValue(season.kickoffDate)}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* The form field is still named kickoffDate — it's the season's start */}
+        <Field label="Start date" name="kickoffDate" type="date" required defaultValue={toDateInputValue(season.startDate)}
           readOnly={season.startLocked} aria-readonly={season.startLocked}
           className={season.startLocked ? "opacity-60 cursor-not-allowed" : undefined}
-          hint={season.startLocked ? "Locked — the season has started" : "Kickoff. Changing it updates future meetings."} />
+          hint={season.startLocked ? "Locked — the season has started" : "The season's first day. Changing it updates future meetings."} />
+        <Field label="Kickoff" name="gameKickoff" type="date" defaultValue={season.kickoffDate ? toDateInputValue(season.kickoffDate) : ""}
+          hint="FRC kickoff. Template tasks counted from kickoff use it — empty means the start date." />
         <Field label="End date" name="endDate" type="date" required defaultValue={toDateInputValue(season.endDate)}
           hint="After your last competition. Changing it updates future meetings." />
       </div>

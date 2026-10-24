@@ -10,6 +10,7 @@ import { TasksTabBar } from "../TasksTabBar";
 import { SeasonProgressBar } from "../SeasonProgressBar";
 import { daysBetween, SUBTEAM_OPTIONS } from "@/lib/schedule-helpers";
 import { PageHeader } from "@/components/PageHeader";
+import { kickoffOf } from "@/lib/competition";
 
 export default async function GanttPage({ searchParams }: { searchParams: Promise<{ subTeam?: string; mine?: string }> }) {
   const { subTeam, mine } = await searchParams;
@@ -64,10 +65,12 @@ export default async function GanttPage({ searchParams }: { searchParams: Promis
   // Key dates drawn as lines on the chart (days from kickoff): kickoff, Week 0 (the week
   // before Week 1 — its own event, or worked out), each competition and the season's end
   const DAY = 86_400_000;
-  const dayOf = (d: Date) => Math.round((d.getTime() - activeSeason.kickoffDate.getTime()) / DAY);
-  const week0 = week0Date({ kickoffDate: activeSeason.kickoffDate, competitions: activeSeason.competitionEvents });
+  // Days from the season's start (the chart's day 0); the kickoff line is where kickoff falls
+  const dayOf = (d: Date) => Math.round((d.getTime() - activeSeason.startDate.getTime()) / DAY);
+  const kickoff = kickoffOf(activeSeason);
+  const week0 = week0Date({ kickoffDate: kickoff, competitions: activeSeason.competitionEvents });
   const markers = [
-    { day: 0, label: "Kickoff", kind: "kickoff" as const },
+    { day: dayOf(kickoff), label: "Kickoff", kind: "kickoff" as const },
     ...activeSeason.competitionEvents.map((c) => {
       const isWeek0 = c.stage === "WEEK" && c.stageNumber === 0;
       return { day: dayOf(c.startDate), label: isWeek0 ? "Week 0" : designation(c.stage, c.stageNumber), kind: isWeek0 ? "week0" as const : "competition" as const };
@@ -77,7 +80,7 @@ export default async function GanttPage({ searchParams }: { searchParams: Promis
   ].sort((a, b) => a.day - b.day);
 
   const totalDays = Math.round(
-    (activeSeason.endDate.getTime() - activeSeason.kickoffDate.getTime()) / 86_400_000
+    (activeSeason.endDate.getTime() - activeSeason.startDate.getTime()) / 86_400_000
   ) + 1;
 
   const canEdit = session.user.roles.some((r) =>
@@ -87,8 +90,8 @@ export default async function GanttPage({ searchParams }: { searchParams: Promis
   const now = new Date();
   const daysToEnd = daysBetween(now, activeSeason.endDate);
   const nextComp = competitionCountdown(activeSeason.competitionEvents, now);
-  const totalBuildDays = daysBetween(activeSeason.kickoffDate, activeSeason.endDate);
-  const elapsed = daysBetween(activeSeason.kickoffDate, now);
+  const totalBuildDays = daysBetween(activeSeason.startDate, activeSeason.endDate);
+  const elapsed = daysBetween(activeSeason.startDate, now);
   const buildProgress = Math.round(Math.min(Math.max((elapsed / totalBuildDays) * 100, 0), 100));
   const totalTasks = allTaskStats.length;
   const completeTasks = allTaskStats.filter((t) => t.status === "COMPLETE").length;
@@ -116,7 +119,7 @@ export default async function GanttPage({ searchParams }: { searchParams: Promis
       />
 
       <SeasonProgressBar
-        kickoffDate={activeSeason.kickoffDate.toISOString()}
+        kickoffDate={activeSeason.startDate.toISOString()}
         endDate={activeSeason.endDate.toISOString()}
         daysToEnd={daysToEnd}
         nextCompetition={nextComp}
@@ -138,7 +141,7 @@ export default async function GanttPage({ searchParams }: { searchParams: Promis
       ) : (
         <GanttClient
           tasks={ganttTasks}
-          kickoffDate={activeSeason.kickoffDate.toISOString()}
+          kickoffDate={activeSeason.startDate.toISOString()}
           endDate={activeSeason.endDate.toISOString()}
           seasonName={activeSeason.name}
           markers={markers}

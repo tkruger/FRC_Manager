@@ -38,7 +38,7 @@ export default async function NewTaskPage() {
         robots={activeSeason.robots}
         members={members}
         existingTasks={existingTasks.map((t) => ({ ...t, dueDate: t.dueDate?.toISOString() ?? null }))}
-        kickoffDate={activeSeason.kickoffDate.toISOString().split("T")[0]}
+        kickoffDate={activeSeason.startDate.toISOString().split("T")[0]}
         endDate={activeSeason.endDate.toISOString().split("T")[0]}
       />
     </div>

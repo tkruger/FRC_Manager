@@ -38,10 +38,10 @@ async function checkSeasonOverlap(
     where: {
       teamId,
       ...(excludeSeasonId ? { id: { not: excludeSeasonId } } : {}),
-      kickoffDate: { lt: endDate },    // existing starts before proposed ends
+      startDate:   { lt: endDate },    // existing starts before proposed ends
       endDate:   { gt: kickoffDate },  // existing ends after proposed starts
     },
-    select: { name: true, kickoffDate: true, endDate: true },
+    select: { name: true, startDate: true, endDate: true },
   });
 
   if (!overlapping) return null;
@@ -51,7 +51,7 @@ async function checkSeasonOverlap(
 
   return (
     `This season's schedule overlaps with "${overlapping.name}" ` +
-    `(${fmt(overlapping.kickoffDate)} – ${fmt(overlapping.endDate)}). ` +
+    `(${fmt(overlapping.startDate)} – ${fmt(overlapping.endDate)}). ` +
     `Adjust the dates so they don't conflict.`
   );
 }
@@ -59,11 +59,15 @@ async function checkSeasonOverlap(
 const SeasonSchema = z.object({
   name:               z.string().max(300).min(1),
   year:               z.coerce.number().int().min(2000).max(2100),
-  kickoffDate:        z.string().max(300).min(1),
+  kickoffDate:        z.string().max(300).min(1, "Pick the season's start date."), // the form field still says kickoffDate: the start
+  gameKickoff:        z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   endDate:            z.string().max(300).min(1),
   meetingDays:        z.array(z.enum(ALL_DAYS as [string, ...string[]])).max(7).min(1, "Pick at least one meeting day."),
   expectedAttendance: z.coerce.number().int().min(1).default(10),
-}).refine((d) => new Date(d.endDate) > new Date(d.kickoffDate), { message: "The season has to end after it starts.", path: ["endDate"] });
+}).refine((d) => new Date(d.endDate) > new Date(d.kickoffDate), { message: "The season has to end after it starts.", path: ["endDate"] })
+  .refine((d) => !d.gameKickoff || (d.gameKickoff >= d.kickoffDate.slice(0, 10) && d.gameKickoff <= d.endDate.slice(0, 10)), {
+    message: "Kickoff has to be within the season (on or after its start, before its end).", path: ["gameKickoff"],
+  });
 
 export type SeasonActionState =
   | { success: true; seasonId: string; meetings?: { added: number; removed: number; moved: number }; /** It's the active season now */ active?: boolean }
@@ -111,6 +115,7 @@ export async function createSeasonAction(
     name: formData.get("name"),
     year: formData.get("year"),
     kickoffDate: formData.get("kickoffDate"),
+    gameKickoff: formData.get("gameKickoff") || undefined,
     endDate: formData.get("endDate"),
     meetingDays: days,
     expectedAttendance: formData.get("expectedAttendance"),
@@ -137,7 +142,8 @@ export async function createSeasonAction(
       teamId:             session.user.teamId!,
       name:               d.name,
       year:               d.year,
-      kickoffDate:        new Date(d.kickoffDate),
+      startDate:          new Date(d.kickoffDate),
+      kickoffDate:        d.gameKickoff ? new Date(`${d.gameKickoff}T00:00:00.000Z`) : null,
       endDate:            new Date(d.endDate),
       isActive:           false,
       meetingDays:        d.meetingDays,
@@ -171,6 +177,7 @@ export async function updateSeasonAction(
     name:               formData.get("name"),
     year:               formData.get("year"),
     kickoffDate:        formData.get("kickoffDate"),
+    gameKickoff:        formData.get("gameKickoff") || undefined,
     endDate:            formData.get("endDate"),
     meetingDays:        days,
     expectedAttendance: formData.get("expectedAttendance"),
@@ -193,14 +200,14 @@ export async function updateSeasonAction(
 
   const before = await prisma.season.findFirst({
     where:  { id: seasonId, teamId: session.user.teamId },
-    select: { kickoffDate: true },
+    select: { startDate: true },
   });
   if (!before) return { success: false, error: "Season not found." };
   const kickoff = new Date(d.kickoffDate);
   const end     = new Date(d.endDate);
   const sameDay = (a: Date, b: Date) => a.toISOString().slice(0, 10) === b.toISOString().slice(0, 10);
   // Once a season has started, its start date stays put
-  if (seasonStarted(before.kickoffDate) && !sameDay(kickoff, before.kickoffDate)) {
+  if (seasonStarted(before.startDate) && !sameDay(kickoff, before.startDate)) {
     return { success: false, error: "This season has already started, so its start date can't be changed." };
   }
 
@@ -209,7 +216,8 @@ export async function updateSeasonAction(
     data: {
       name:               d.name,
       year:               d.year,
-      kickoffDate:        kickoff,
+      startDate:          kickoff,
+      kickoffDate:        d.gameKickoff ? new Date(`${d.gameKickoff}T00:00:00.000Z`) : null,
       endDate:            end,
       meetingDays:        d.meetingDays,
       meetingStartTime:   globalStart,

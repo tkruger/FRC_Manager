@@ -82,7 +82,7 @@ export async function syncSeasonMeetings(seasonId: string): Promise<{ added: num
   const tz       = await teamTimezone(seasonId);
   const now      = new Date();
   const todayKey = localParts(now, tz).dateKey;
-  const startKey = calendarDayKey(season.kickoffDate);
+  const startKey = calendarDayKey(season.startDate);
   const endKey   = calendarDayKey(season.endDate);
 
   let removed = 0;

@@ -65,7 +65,8 @@ export function clamp(val: number, min: number, max: number): number {
 /** ISO date string → "MMM D" */
 export function shortDate(d: Date | string | null | undefined): string {
   if (!d) return "—";
-  return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  // Calendar dates are stored at UTC midnight — show that day wherever the viewer is
+  return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
 }
 
 /** Returns true if dueDate is in the past and task is not complete */

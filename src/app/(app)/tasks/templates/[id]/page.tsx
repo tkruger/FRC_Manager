@@ -17,6 +17,7 @@ import { DeleteTaskButton } from "./DeleteTaskButton";
 import { RenameTemplateForm } from "./RenameTemplateForm";
 import { TemplateCSVImport } from "@/app/(app)/tasks/templates/TemplateCSVImport";
 import { Button } from "@/components/ui/button";
+import { kickoffOf } from "@/lib/competition";
 
 const MENTOR_ROLES = ["HEAD_MENTOR", "BUILD_LEAD", "INVENTORY_ADMIN"];
 
@@ -40,12 +41,12 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
     // Real dates for the add/edit preview
     prisma.season.findFirst({
       where:  { teamId: session.user.teamId, isActive: true },
-      select: { name: true, kickoffDate: true, endDate: true, competitionEvents: { select: { name: true, stage: true, stageNumber: true, startDate: true } } },
+      select: { name: true, startDate: true, kickoffDate: true, endDate: true, competitionEvents: { select: { name: true, stage: true, stageNumber: true, startDate: true } } },
     }),
   ]);
   const season: SeasonPreview | null = activeSeason && {
     name:         activeSeason.name,
-    kickoffDate:  activeSeason.kickoffDate.toISOString(),
+    kickoffDate:  kickoffOf(activeSeason).toISOString(), // template "kickoff" tasks count from the kickoff
     endDate:      activeSeason.endDate.toISOString(),
     competitions: activeSeason.competitionEvents.map((c) => ({ ...c, startDate: c.startDate.toISOString() })),
   };

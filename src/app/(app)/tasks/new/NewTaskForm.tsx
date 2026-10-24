@@ -74,7 +74,7 @@ export function NewTaskForm({ robots, members, existingTasks, kickoffDate, endDa
         <h2 className="text-h3 text-(--color-text-primary)">Schedule</h2>
         <TaskScheduleFields kickoffDate={kickoffDate} endDate={endDate}
           prereqDues={selectedPrereqs.map((id) => existingTasks.find((t) => t.id === id)?.dueDate ?? null)} />
-        <p className="text-small text-(--color-text-secondary)">Season: kickoff {kickoffDate} · ends {endDate}</p>
+        <p className="text-small text-(--color-text-secondary)">Season: starts {kickoffDate} · ends {endDate}</p>
         <Field label="Estimated hours" name="estimatedHours" type="number" min="0" step="0.5" placeholder="e.g. 8" />
       </div>
 

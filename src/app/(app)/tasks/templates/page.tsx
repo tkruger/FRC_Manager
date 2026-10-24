@@ -11,7 +11,7 @@ import { DeleteTemplateButton } from "./DeleteTemplateButton";
 import { ApplyCustomTemplateButton } from "./ApplyCustomTemplateButton";
 import { shortDate } from "@/lib/schedule-helpers";
 import { PageHeader } from "@/components/PageHeader";
-import { describeAnchor, dueOffsetOf } from "@/lib/competition";
+import { describeAnchor, dueOffsetOf, kickoffOf } from "@/lib/competition";
 import { executionOrder } from "@/lib/template-timeline";
 import { standardTimelineTasks } from "@/lib/standard-template-view";
 import { SUBTEAM_OPTIONS } from "@/lib/schedule-helpers";
@@ -129,7 +129,7 @@ export default async function TemplatesPage() {
               </p>
               {activeSeason && (
                 <p className="text-small text-(--color-text-secondary) mt-2">
-                  Kickoff: <strong>{shortDate(activeSeason.kickoffDate)}</strong> · Ends: <strong>{shortDate(activeSeason.endDate)}</strong>
+                  Kickoff: <strong>{shortDate(kickoffOf(activeSeason))}</strong>{!activeSeason.kickoffDate && " (season start — set the kickoff in Season settings)"} · Ends: <strong>{shortDate(activeSeason.endDate)}</strong>
                 </p>
               )}
             </div>

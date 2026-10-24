@@ -236,7 +236,10 @@ model Season {
   team               Team     @relation(fields: [teamId], references: [id])
   name               String
   year               Int
-  kickoffDate        DateTime        // season start
+  /// The season's first day (meetings, budget and the active season count from it)
+  startDate          DateTime
+  /// The FRC game kickoff — template "kickoff" tasks count from it. Empty = the start date.
+  kickoffDate        DateTime?
   endDate            DateTime        // season end
   isActive           Boolean  @default(false)
   meetingDays        String[]
