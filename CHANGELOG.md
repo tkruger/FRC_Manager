@@ -1,10 +1,15 @@
 # Changelog
 
-## Unreleased
+## 1.6.0 — 2026-10-24
 
-- Home page countdown follows the season in order: the next season's start, kickoff, Week 0, each competition (“Now” while one is on), then the season's end
-- Budget: the unused “Total estimated revenue” field is gone from Edit budget — money raised and pledged comes from the funding sources
+**Seasons**
 - Seasons have a **Kickoff** date separate from the season's start. Template tasks counted from kickoff (and the Week 1 estimate) use it; until it's set, the start date is used as before. The kickoff shows on the season card, the Gantt's kickoff line, the calendar and the calendar feed's KICKOFF event
+- Home page countdown follows the season in order: the next season's start, kickoff, Week 0, each competition (“Now” while one is on), then the season's end
+
+**Budget**
+- The unused “Total estimated revenue” field is gone from Edit budget — money raised and pledged comes from the funding sources
+
+**Fixes**
 - Dates no longer show a day early in some time zones (e.g. the Tasks progress card and the Templates page)
 
 ## 1.5.0 — 2026-10-23
