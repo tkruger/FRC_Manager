@@ -934,7 +934,6 @@ model Budget {
   id              String   @id @default(cuid())
   seasonId        String   @unique
   season          Season   @relation(fields: [seasonId], references: [id])
-  totalEstRevenue Float    @default(0)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

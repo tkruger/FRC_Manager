@@ -23,7 +23,7 @@ const DEFAULT_CATEGORIES = [
 ];
 
 interface Props {
-  existing: { totalEstRevenue: number; categories: BudgetCategory[] } | null;
+  existing: { categories: BudgetCategory[] } | null;
 }
 
 export function BudgetSetupForm({ existing }: Props) {
@@ -46,18 +46,10 @@ export function BudgetSetupForm({ existing }: Props) {
         </div>
       )}
 
-      <div className="card space-y-4">
-        <h2 className="text-h3 text-(--color-text-primary)">Revenue</h2>
-        <Field
-          label="Total estimated revenue ($)"
-          name="totalEstRevenue"
-          type="number"
-          step="0.01"
-          required
-          defaultValue={existing?.totalEstRevenue ?? 0}
-          hint="Sum of all expected funding (sponsorships, school allocation, grants, fundraising)"
-        />
-      </div>
+      <p className="text-small text-(--color-text-secondary)">
+        The allocations below add up to the budget goal. Money raised (and pledged) comes from the
+        <b> Funding sources</b> on the Budget page — including what the team puts in from its own account.
+      </p>
 
       <div className="card space-y-4">
         <h2 className="text-h3 text-(--color-text-primary)">Category allocations</h2>

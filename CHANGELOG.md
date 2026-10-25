@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Budget: the unused “Total estimated revenue” field is gone from Edit budget — money raised and pledged comes from the funding sources
 - Seasons have a **Kickoff** date separate from the season's start. Template tasks counted from kickoff (and the Week 1 estimate) use it; until it's set, the start date is used as before. The kickoff shows on the season card, the Gantt's kickoff line, the calendar and the calendar feed's KICKOFF event
 - Dates no longer show a day early in some time zones (e.g. the Tasks progress card and the Templates page)
 

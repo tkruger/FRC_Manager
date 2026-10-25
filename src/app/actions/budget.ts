@@ -49,8 +49,6 @@ export async function setupBudgetAction(
   });
   if (!activeSeason) return { success: false, error: "No active season." };
 
-  const totalEstRevenue = parseFloat(formData.get("totalEstRevenue") as string) || 0;
-
   // Build category allocations from form
   const categoryAllocations = DEFAULT_CATEGORIES.map((c) => ({
     type: c.type,
@@ -62,10 +60,6 @@ export async function setupBudgetAction(
   const existing = await prisma.budget.findUnique({ where: { seasonId: activeSeason.id } });
 
   if (existing) {
-    await prisma.budget.update({
-      where: { seasonId: activeSeason.id },
-      data: { totalEstRevenue },
-    });
     // Fetch existing categories to decide update vs create
     const existingCats = await prisma.budgetCategory.findMany({
       where: { budgetId: existing.id },
@@ -89,7 +83,6 @@ export async function setupBudgetAction(
     await prisma.budget.create({
       data: {
         seasonId: activeSeason.id,
-        totalEstRevenue,
         categories: { create: categoryAllocations },
       },
     });
