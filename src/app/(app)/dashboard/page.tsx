@@ -1,6 +1,7 @@
 ﻿import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { competitionCountdown } from "@/lib/competition";
+import { nextUp } from "@/lib/competition";
+import { FALLBACK_TIMEZONE, isValidTimezone, localParts } from "@/lib/notify/time";
 import Link from "next/link";
 import { formatDate } from "@/lib/utils";
 import { differenceInCalendarDays } from "date-fns";
@@ -28,11 +29,17 @@ export default async function DashboardPage() {
     : null;
 
   const now = new Date();
-  const daysToEnd = activeSeason
-    ? differenceInCalendarDays(activeSeason.endDate, now)
-    : null;
-  // Counts down to the next competition; once they're all done, to the season end
-  const nextComp = activeSeason ? competitionCountdown(activeSeason.competitionEvents, now) : null;
+  // Counts down to what's next: the next season's start, kickoff, Week 0, each
+  // competition, then the season's end — in the team's time zone
+  const [team, upcomingSeasons] = session?.user?.teamId
+    ? await Promise.all([
+        prisma.team.findUnique({ where: { id: session.user.teamId }, select: { timezone: true } }),
+        prisma.season.findMany({ where: { teamId: session.user.teamId, isActive: false, startDate: { gt: now } }, select: { name: true, startDate: true } }),
+      ])
+    : [null, []];
+  const todayKey = localParts(now, isValidTimezone(team?.timezone) ? team!.timezone! : FALLBACK_TIMEZONE).dateKey;
+  const next = nextUp(todayKey, activeSeason && { ...activeSeason, competitions: activeSeason.competitionEvents }, upcomingSeasons);
+  const nextDate = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
 
   // Overdue tasks count
   const overdueCount = activeSeason
@@ -96,13 +103,11 @@ export default async function DashboardPage() {
           )}
           {[
             {
-              label: nextComp ? "Next competition" : "Season ends",
-              value: nextComp
-                ? (nextComp.days <= 0 ? "Now" : `${nextComp.days}d away`)
-                : daysToEnd !== null && daysToEnd >= 0 ? `${daysToEnd}d away` : "Ended",
-              sub: nextComp ? nextComp.name : formatDate(activeSeason.endDate),
-              urgent: nextComp ? nextComp.days <= 14 : false,
-              href: "/tasks",
+              label: next ? `${next.label}${next.estimated ? " (est.)" : ""}` : "Season",
+              value: !next ? "Ended" : next.now ? "Now" : next.days === 0 ? "Today" : next.days === 1 ? "Tomorrow" : `${next.days}d away`,
+              sub: next ? `${next.name} · ${nextDate(next.date)}` : formatDate(activeSeason.endDate),
+              urgent: !!next && next.label !== "Season ends" && next.days <= 14,
+              href: next?.label === "Season starts" ? "/settings/season" : "/tasks",
               accent: "#059669",
             },
             // Robots only when there's no budget tile in its place

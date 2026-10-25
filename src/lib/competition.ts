@@ -188,3 +188,56 @@ export function competitionCountdown(
   const start = new Date(next.startDate); start.setHours(0, 0, 0, 0);
   return { name: next.name, designation: designation(next.stage, next.stageNumber), days: Math.round((start.getTime() - today.getTime()) / 86_400_000) };
 }
+
+// ── What's next (home page countdown) ───────────────────────────────────────
+
+export interface NextUp {
+  /** "Season starts", "Kickoff", "Week 0", "Next competition", "Season ends" */
+  label: string;
+  /** What it is: the season's or competition's name */
+  name: string;
+  /** Its first day */
+  date: Date;
+  /** Days until it starts (0 = today); for a competition under way, 0 */
+  days: number;
+  /** A competition happening right now */
+  now: boolean;
+  /** Worked out, not a set date (Week 0 without its own event or Week events) */
+  estimated: boolean;
+}
+
+/**
+ * The next thing on the season's road, in order: the next season's start (when it hasn't
+ * started yet), kickoff, Week 0, each competition (one under way counts as "now"), and
+ * finally the season's end. `todayKey` is today in the team's time zone ("YYYY-MM-DD");
+ * dates are calendar days stored at UTC midnight.
+ */
+export function nextUp(
+  todayKey: string,
+  season: { name: string; startDate: Date; kickoffDate: Date | null; endDate: Date;
+            competitions: { name: string; stage: CompetitionStage; stageNumber: number | null; startDate: Date; endDate: Date }[] } | null,
+  upcomingSeasons: { name: string; startDate: Date }[] = [],
+): NextUp | null {
+  const key = (d: Date) => d.toISOString().slice(0, 10);
+  const daysTo = (d: Date) => Math.round((Date.parse(key(d)) - Date.parse(todayKey)) / 86_400_000);
+  const items: NextUp[] = [];
+  const add = (label: string, name: string, date: Date, estimated = false) =>
+    items.push({ label, name, date, days: daysTo(date), now: false, estimated });
+
+  for (const s of upcomingSeasons) add("Season starts", s.name, s.startDate);
+  if (season) {
+    if (season.startDate > new Date(`${todayKey}T00:00:00Z`)) add("Season starts", season.name, season.startDate);
+    if (season.kickoffDate) add("Kickoff", season.name, season.kickoffDate);
+    const w0 = week0Date({ kickoffDate: kickoffOf(season), competitions: season.competitions });
+    // A Week0 event is listed as a competition below
+    if (w0.source !== "event") add("Week 0", "The build deadline", w0.date, w0.source === "estimate");
+    for (const c of season.competitions) {
+      const running = key(c.startDate) <= todayKey && todayKey <= key(c.endDate);
+      if (running) items.push({ label: "Competition", name: c.name, date: c.startDate, days: 0, now: true, estimated: false });
+      else add("Next competition", c.name, c.startDate);
+    }
+    add("Season ends", season.name, season.endDate);
+  }
+  // Under way first, then the soonest still ahead
+  return items.filter((i) => i.now || i.days >= 0).sort((a, b) => Number(b.now) - Number(a.now) || a.days - b.days)[0] ?? null;
+}
