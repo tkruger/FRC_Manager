@@ -85,8 +85,11 @@ function CompetitionDialog({
   const [stage, setStage] = useState<CompetitionStage>(competition?.stage ?? "WEEK");
   const [pending, start]  = useTransition();
 
-  // Suggest the next free number for the chosen stage
+  // Suggest the next free number for the chosen stage. Not for Week competitions: their
+  // number is the official FRC week (a team's second event may well be Week 5), and Week 0
+  // is counted back from it — so it's left for the person to fill in.
   function nextNumber(s: CompetitionStage) {
+    if (s === "WEEK") return "";
     const used = existing.filter((c) => c.stage === s && c.id !== competition?.id).map((c) => c.stageNumber ?? 0);
     return used.length ? Math.max(...used) + 1 : STAGE_INFO[s].firstNumber;
   }
@@ -142,19 +145,29 @@ function CompetitionDialog({
                   required
                   value={number}
                   onChange={(e) => setNumber(e.target.value)}
-                  hint={`Designation: ${preview}`}
+                  placeholder={stage === "WEEK" ? "e.g. 2" : undefined}
+                  hint={number === "" ? "Designation: —" : `Designation: ${preview}`}
                 />
               ) : (
                 <div className="flex items-end pb-3 text-small text-(--color-text-secondary)">Designation: {preview}</div>
               )}
             </div>
 
+            {stage === "WEEK" && (
+              <p className="rounded-md bg-(--color-surface-overlay) px-3 py-2 text-small text-(--color-text-secondary)">
+                Use the event&apos;s <b>official FRC week</b> as its number — a Week 2 event is <b>2</b> and a Week 5 event is <b>5</b>, even if
+                they&apos;re your first two. Week 0 (the build deadline) is counted back from your lowest-numbered Week event, so
+                numbering them 1, 2 instead would put everything due before Week 0 a week early. A Week 0 scrimmage is number <b>0</b>.
+              </p>
+            )}
+
             <Field label="Event name" name="name" required maxLength={120}
               defaultValue={competition?.name} placeholder="e.g. Hudson Valley Regional" />
             <Field label="Location" name="location" maxLength={160}
               defaultValue={competition?.location ?? ""} placeholder="Optional" />
             <div className="grid grid-cols-2 gap-4">
-              <Field label="Start date" name="startDate" type="date" required defaultValue={competition?.startDate.slice(0, 10)} />
+              <Field label="Start date" name="startDate" type="date" required defaultValue={competition?.startDate.slice(0, 10)}
+                hint="The event's first day — template tasks count from it" />
               <Field label="End date" name="endDate" type="date" defaultValue={competition?.endDate.slice(0, 10)} hint="Blank = one day" />
             </div>
 

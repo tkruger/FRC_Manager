@@ -166,6 +166,14 @@ export default function HelpPage() {
           ]}
         />
         <p>Each designation can only be used once per season. Competitions also drive the daily countdown notification.</p>
+        <H3>Week numbers and Week 0</H3>
+        <ul className="list">
+          <li>Number each <b>Week competition</b> with its <b>official FRC week</b>: a Week 2 event is <b>2</b> and a Week 5 event is <b>5</b>, even if they&apos;re the only two you attend. Don&apos;t number them 1, 2 in the order you go.</li>
+          <li><b>Week 0</b> — the build deadline — is the week before Week 1. It&apos;s your Week 0 event if you add one (number <b>0</b>); otherwise it&apos;s counted back from your lowest-numbered Week event (Week 2 on Mar 6 → Week 1 Feb 27 → Week 0 Feb 20); with no Week events, it&apos;s estimated from kickoff (about seven weeks after) and shown as “est.”.</li>
+          <li>That&apos;s why the numbers matter: Week2 and Week5 entered as Week1 and Week2 would put everything counted from Week 0 — robot done, driver practice — a week early.</li>
+          <li>Template tasks tied to Week 0 always get a date. Tasks for <b>each</b> week competition become one per event (“Event — Week2”, “Event — Week5”); tasks for one numbered week (e.g. Week1 only) are skipped if the season doesn&apos;t have it, and applying a template lists what was skipped.</li>
+          <li>Enter each competition&apos;s <b>first day</b> as its start date — tasks count from it, and Week 0 falls on the same weekday.</li>
+        </ul>
       </Section>
 
       <Section id="calendar" title="Meeting calendar">

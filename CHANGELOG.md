@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Adding a Week competition explains to use the official FRC week number (Week 2 = 2, Week 5 = 5) and why it matters for Week 0; the number is no longer pre-filled with the next in sequence. The guide has a new “Week numbers and Week 0” section
+
 ## 1.6.0 — 2026-10-24
 
 **Seasons**
