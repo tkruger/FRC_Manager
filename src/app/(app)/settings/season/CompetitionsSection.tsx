@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
 import { addCompetitionAction, updateCompetitionAction, deleteCompetitionAction } from "@/app/actions/season";
 import { COMPETITION_STAGES, STAGE_INFO, designation, type CompetitionStage } from "@/lib/competition";
 import { toast } from "@/components/ui/toast";
+import { LinkedDates } from "@/components/ui/linked-dates";
 
 export interface Competition {
   id:          string;
@@ -169,6 +170,7 @@ function CompetitionDialog({
               <Field label="Start date" name="startDate" type="date" required defaultValue={competition?.startDate.slice(0, 10)}
                 hint="The event's first day — template tasks count from it" />
               <Field label="End date" name="endDate" type="date" defaultValue={competition?.endDate.slice(0, 10)} hint="Blank = one day" />
+              <LinkedDates start="startDate" end="endDate" />
             </div>
 
             <div className="flex gap-2 pt-1">

@@ -8,6 +8,7 @@ import { Field } from "@/components/ui/field";
 import { toast } from "@/components/ui/toast";
 import { scheduleSlots, type Slot } from "@/lib/meeting-schedule";
 import { MeetingScheduleFields } from "./MeetingScheduleFields";
+import { LinkedDates } from "@/components/ui/linked-dates";
 
 interface Season {
   id: string;
@@ -77,6 +78,7 @@ export function EditSeasonForm({ season, onClose }: { season: Season; onClose: (
           hint="FRC kickoff. Template tasks counted from kickoff use it — empty means the start date." />
         <Field label="End date" name="endDate" type="date" required defaultValue={toDateInputValue(season.endDate)}
           hint="After your last competition. Changing it updates future meetings." />
+        <LinkedDates start="kickoffDate" end="endDate" />
       </div>
 
       <MeetingScheduleFields initialDays={season.meetingDays} initialSlots={scheduleSlots(season)} />

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canSeeAudit } from "@/lib/packing";
 import { localParts, zonedTimeToUtc, calendarDayKey, FALLBACK_TIMEZONE, isValidTimezone } from "@/lib/notify/time";
+import { LinkedDates } from "@/components/ui/linked-dates";
 
 // Audit log for mentors and leadership: every tool check-out and check-in, and every
 // safety report, in a date range — printable.
@@ -124,6 +125,7 @@ export default async function AuditLogPage({ searchParams }: { searchParams: Pro
           To
           <input type="date" name="to" defaultValue={to} max={today} className={fieldCls} />
         </label>
+        <LinkedDates start="from" end="to" />
         <label className="flex flex-col gap-1 text-sm font-medium text-(--color-text-primary)">
           Show
           <select name="show" defaultValue={show} className={fieldCls}>

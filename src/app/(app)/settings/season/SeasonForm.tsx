@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { toast } from "@/components/ui/toast";
 import { MeetingScheduleFields } from "./MeetingScheduleFields";
+import { LinkedDates } from "@/components/ui/linked-dates";
 
 const DEFAULT_DAYS = ["MON", "WED", "FRI", "SAT"];
 
@@ -50,6 +51,7 @@ export function SeasonForm({ onClose }: { onClose?: () => void } = {}) {
         <Field label="Start date" name="kickoffDate" type="date" required hint="The season's first day" />
         <Field label="Kickoff" name="gameKickoff" type="date" hint="FRC kickoff — template “kickoff” tasks count from it (empty: the start date)" />
         <Field label="End date" name="endDate" type="date" required hint="After your last competition" />
+        <LinkedDates start="kickoffDate" end="endDate" />
       </div>
       <p className="text-small text-(--color-text-secondary) -mt-2">
         You can set up a future season ahead of time. The season today falls in is active automatically; a future one takes over on its start date.

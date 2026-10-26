@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Field } from "@/components/ui/field";
+import { LinkedDates } from "@/components/ui/linked-dates";
 
 const DAY = 86_400_000;
 const show = (d: Date) => d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
@@ -107,6 +108,7 @@ export function TaskScheduleFields({ initial, prereqDues, kickoffDate, endDate, 
         <div className="grid grid-cols-2 gap-4 [&>*]:min-w-0">
           <Field label="Start date" name="startDate" type="date" min={kickoffDate} max={endDate} defaultValue={toDateVal(initial?.startDate)} />
           <Field label="Due date" name="dueDate" type="date" min={kickoffDate} max={endDate} value={dueValue} onChange={(e) => setDue(e.target.value)} />
+          <LinkedDates start="startDate" end="dueDate" />
         </div>
       )}
       <input type="hidden" name="scheduleMode" value={auto ? "auto" : "dates"} />

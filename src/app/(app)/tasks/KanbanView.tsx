@@ -246,7 +246,7 @@ export function KanbanView({
 
         {datePreset === "custom" && (
           <>
-            <input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)}
+            <input type="date" value={customFrom} onChange={(e) => { setCustomFrom(e.target.value); if (!customTo) setCustomTo(e.target.value); }}
               className="text-sm rounded-md border border-(--color-border) bg-(--color-surface) text-(--color-text-primary) px-2 py-1.5" />
             <span className="text-small text-(--color-text-secondary)">to</span>
             <input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)}

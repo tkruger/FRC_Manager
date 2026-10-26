@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Date ranges: picking a start date fills an empty end (or due) date with the same day, so its picker opens on the right month — seasons, competitions, tasks, the Kanban custom range and the audit log filter. Optional end dates that mean something when blank (a certification's expiry, the season kickoff) are left alone
 - Adding a Week competition explains to use the official FRC week number (Week 2 = 2, Week 5 = 5) and why it matters for Week 0; the number is no longer pre-filled with the next in sequence. The guide has a new “Week numbers and Week 0” section
 
 ## 1.6.0 — 2026-10-24
