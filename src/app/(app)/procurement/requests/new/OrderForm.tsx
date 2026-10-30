@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn, formatCurrency } from "@/lib/utils";
@@ -197,8 +197,37 @@ export function OrderForm({ vendors, edit, draft }: {
     });
   }
 
+  // Enter in a box moves on to the next item's Link (adding an item after the last one)
+  // instead of submitting the order
+  const linkBox = (key: number) => document.querySelector<HTMLInputElement>(`input[data-link-for="${key}"]`);
+  // A just-added item gets focus once it has rendered
+  const focusAdded = useRef<number | null>(null);
+  useEffect(() => {
+    if (focusAdded.current === null) return;
+    linkBox(focusAdded.current)?.focus();
+    focusAdded.current = null;
+  }, [items]);
+
+  function onEnter(e: React.KeyboardEvent<HTMLFormElement>) {
+    const el = e.target as HTMLElement;
+    if (e.key !== "Enter" || e.nativeEvent.isComposing || el.tagName !== "INPUT") return;
+    const type = (el as HTMLInputElement).type;
+    if (type === "submit" || type === "button" || type === "checkbox" || type === "radio") return;
+    e.preventDefault();
+    const inItem = el.closest<HTMLElement>("[data-item-key]")?.dataset.itemKey;
+    const at = inItem ? items.findIndex((i) => String(i.key) === inItem) : -1;
+    const next = items[at + 1];
+    if (next) { linkBox(next.key)?.focus(); return; }
+    // Still on an empty last item: stay there rather than piling up blank ones
+    const last = items[items.length - 1];
+    if (last && !last.link.trim() && !last.name.trim()) { linkBox(last.key)?.focus(); return; }
+    const added = blankItem({ subTeam: items[items.length - 1]?.subTeam });
+    focusAdded.current = added.key;
+    setItems((list) => [...list, added]);
+  }
+
   return (
-    <form onSubmit={submit} className="space-y-5" autoComplete="off">
+    <form onSubmit={submit} onKeyDown={onEnter} className="space-y-5" autoComplete="off">
       {picker && (
         <ProductPicker open vendorName={picker.vendorName} choices={picker.choices}
           onCancel={() => setPicker(null)} onPick={addPicked} />
@@ -234,7 +263,7 @@ export function OrderForm({ vendors, edit, draft }: {
       <datalist id="vendor-names">{vendors.map((v) => <option key={v} value={v} />)}</datalist>
 
       {items.map((item, idx) => (
-        <fieldset key={item.key} className="card space-y-3">
+        <fieldset key={item.key} data-item-key={item.key} className="card space-y-3">
           <div className="flex items-center justify-between">
             <legend className="text-h3 text-(--color-text-primary)">
               {item.ref ? <><span className="font-mono text-sm text-(--color-text-secondary) mr-2">{item.ref}</span>{item.name || `Item ${idx + 1}`}</> : `${edit ? "New item" : "Item"} ${idx + 1}`}
@@ -256,6 +285,8 @@ export function OrderForm({ vendors, edit, draft }: {
                 inputMode="url"
                 // Not contact details — keeps iOS from offering "AutoFill Contact"
                 name="product-link"
+                data-link-for={item.key}
+                enterKeyHint="next"
                 autoComplete="off"
                 autoCorrect="off"
                 autoCapitalize="off"

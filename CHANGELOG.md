@@ -20,6 +20,7 @@
 - **Member changes** are in the change history too: name, email, phone, account status (approved, suspended, deleted), roles, volunteer clearance and password changes (never the password). Each member has a History list on Team members; deleting a member erases their name and contact details from it
 - **Audit log**: one place to find it — your profile menu (the links on Tools and Safety are gone) — and **Export CSV** for the dates and filter you're viewing
 - **Clear notifications**: ✕ on each one, or Clear all, in the bell menu and on the Notifications page. Marking all as read from the bell now works (it didn't clear the badge before)
+- New or edited order: Enter no longer submits the order — it moves to the next item's Link box (adding an item after the last one), so you can paste link after link
 - Meetings can be linked directly (`/calendar?meeting=…`), and the meeting card shows its date correctly in every time zone
 - **Order approver** replaces the Treasurer role (existing Treasurers become Order approvers). It approves, denies and edits open orders only; setting up the budget, logging expenses and recording funding are now for Head Mentors, and vendors for Head Mentors and Inventory Admins
 - Orders have **tax & shipping per vendor**: once an order is approved, the Buyer enters each vendor's tax and shipping on the order's page. Tax counts as spend in the categories of that vendor's items; shipping goes to a new **Shipping** budget category. The order's total cost includes them, and spend already in the budget is updated when they change
