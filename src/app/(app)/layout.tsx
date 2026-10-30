@@ -10,6 +10,7 @@ import { Toaster } from "@/components/ui/toast";
 import { ViewOnlyBanner, ViewOnlyProvider } from "@/components/access/ViewOnly";
 import { isViewOnly } from "@/lib/access/read-only";
 import { isCleared } from "@/lib/volunteers";
+import { isTestSite } from "@/lib/test-site";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -74,6 +75,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           pendingMemberCount={pendingMemberCount}
           unreadNotificationCount={unreadNotificationCount}
           activeSeasonName={activeSeasonName}
+          testSite={await isTestSite()}
         />
         {/* pt-14 clears the top nav; pb-14 clears the mobile bottom tab bar (hidden on lg+) */}
         <main className="pt-safe-nav pb-14 lg:pb-0">

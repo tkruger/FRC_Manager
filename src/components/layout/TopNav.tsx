@@ -49,9 +49,11 @@ interface Props {
   pendingMemberCount?: number;
   unreadNotificationCount?: number;
   activeSeasonName?: string | null;
+  /** The testing copy of the app: a TEST tag beside the logo */
+  testSite?: boolean;
 }
 
-export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount = 0, unreadNotificationCount = 0, activeSeasonName }: Props) {
+export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount = 0, unreadNotificationCount = 0, activeSeasonName, testSite = false }: Props) {
   const pathname = usePathname();
   const { resolvedTheme, toggle, mode } = useTheme();
 
@@ -92,6 +94,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
               </div>
               <span className="font-bold text-sm text-(--color-text-primary) hidden xl:inline">FRC Manager</span>
             </Link>
+            {testSite && <TestTag />}
             {activeSeasonName && (
               <span className="hidden 2xl:inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-(--color-surface-overlay) text-(--color-text-secondary) border border-(--color-border) max-w-[140px] truncate">
                 {activeSeasonName}
@@ -170,6 +173,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
               </div>
               <span className="font-bold text-sm text-(--color-text-primary) hidden sm:block">FRC Manager</span>
             </Link>
+            {testSite && <TestTag />}
           </div>
           {/* min-w-0 + flex-1 let the robot picker shrink so the row never exceeds the screen */}
           <div className="flex min-w-0 flex-1 items-center justify-end gap-1">
@@ -616,6 +620,17 @@ function UserCircleIcon({ className }: { className?: string }) {
     <svg className={cn("w-4 h-4", className)} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
       <path strokeLinecap="round" strokeLinejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
     </svg>
+  );
+}
+
+/** "TEST" beside the logo on the testing copy of the app */
+function TestTag() {
+  return (
+    <span title="This is the testing copy of FRC Manager — changes here don't affect the real app"
+      className="rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider leading-none"
+      style={{ backgroundColor: "#f59e0b", color: "#111" }}>
+      Test
+    </span>
   );
 }
 

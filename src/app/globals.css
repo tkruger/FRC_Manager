@@ -367,6 +367,19 @@ input::-webkit-date-and-time-value { text-align: left; }
   backface-visibility: hidden;
 }
 
+/* Test site (src/lib/test-site.ts): an amber/black stripe along the top edge, just under the
+   status bar, above everything but never in the way of taps */
+.test-site-stripe {
+  position: fixed;
+  top: env(safe-area-inset-top, 0px);
+  left: 0;
+  right: 0;
+  height: 4px;
+  z-index: 100;
+  pointer-events: none;
+  background: repeating-linear-gradient(-45deg, #f59e0b 0 10px, #111 10px 20px);
+}
+
 /* ─── Safe area ─── */
 .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
 

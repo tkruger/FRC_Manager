@@ -7,6 +7,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { auth } from "@/lib/auth";
 import { cookies } from "next/headers";
 import { APP_ICON_COOKIE, appIconPath, resolveAppIcon } from "@/lib/app-icons";
+import { isTestSite } from "@/lib/test-site";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -17,8 +18,10 @@ const inter = Inter({
 export async function generateMetadata(): Promise<Metadata> {
   // Home-screen icon chosen on this device (Settings → Profile & appearance)
   const icon = resolveAppIcon((await cookies()).get(APP_ICON_COOKIE)?.value);
+  // The test site says so in the tab and on the home screen
+  const test = await isTestSite();
   return {
-    title:       "FRC Manager — Team Management Suite",
+    title:       `${test ? "TEST · " : ""}FRC Manager — Team Management Suite`,
     description: "Robot fleet, tools, inventory, orders, budget, and schedule — all in one place.",
     manifest:    `/api/manifest?icon=${icon}`,
     appleWebApp: {
@@ -27,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
       // blurred fade over the top of the app. A normal status bar takes its color
       // from theme-color (kept in sync with light/dark mode below).
       statusBarStyle:   "default",
-      title:            "FRC Manager",
+      title:            test ? "FRC Test" : "FRC Manager",
     },
     icons: {
       icon:  [
@@ -53,6 +56,7 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
+  const test = await isTestSite();
   const VALID_MODES = ["LIGHT", "DARK", "AUTO_SYSTEM", "AUTO_TIME"];
   const serverMode = VALID_MODES.includes(session?.user?.displayMode ?? "")
     ? session!.user.displayMode
@@ -83,6 +87,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <meta name="apple-mobile-web-app-title" content="FRC Manager" />
       </head>
       <body className="min-h-full">
+        {/* Test site: a hazard stripe along the top edge of every page */}
+        {test && <div className="test-site-stripe" aria-hidden />}
         <SessionProvider session={session}>
           <ThemeProvider initialMode={(session?.user?.displayMode as "LIGHT" | "DARK" | "AUTO_SYSTEM" | "AUTO_TIME") ?? "AUTO_SYSTEM"}>
             {children}
