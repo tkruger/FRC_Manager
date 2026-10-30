@@ -6,7 +6,8 @@ import { isViewOnly } from "@/lib/access/read-only";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { daysBetween, isOverdue, SUBTEAM_OPTIONS } from "@/lib/schedule-helpers";
-import { getActiveRobotId } from "@/app/actions/robot-context";
+import { robotFilter } from "@/lib/robot-filter";
+import { RobotFilterSelect } from "@/components/RobotFilterSelect";
 import { TasksTabBar } from "./TasksTabBar";
 import { KanbanView } from "./KanbanView";
 import { ListView } from "./ListView";
@@ -28,13 +29,10 @@ export default async function SchedulePage({
     ["HEAD_MENTOR", "BUILD_LEAD"].includes(r)
   );
 
-  const [activeSeason, activeRobotId] = await Promise.all([
-    prisma.season.findFirst({
-      where:   { teamId: session.user.teamId, isActive: true },
-      include: { competitionEvents: { select: { name: true, stage: true, stageNumber: true, startDate: true, endDate: true } } },
-    }),
-    getActiveRobotId(),
-  ]);
+  const activeSeason = await prisma.season.findFirst({
+    where:   { teamId: session.user.teamId, isActive: true },
+    include: { competitionEvents: { select: { name: true, stage: true, stageNumber: true, startDate: true, endDate: true } } },
+  });
 
   if (!activeSeason) {
     return (
@@ -52,6 +50,10 @@ export default async function SchedulePage({
       </div>
     );
   }
+
+  // Only with more than one robot (src/lib/robot-filter.ts)
+  const robots = await robotFilter(activeSeason.id);
+  const activeRobotId = robots.robotId;
 
   const now = new Date();
   const kickoff = activeSeason.startDate; // the season's span, start to end
@@ -164,11 +166,9 @@ export default async function SchedulePage({
         help="tasks"
         subtitle={<>
           {activeSeason.name}
-          {activeRobotId && (
-            <span className="ml-2 badge badge-info">Robot filtered</span>
-          )}
         </>}
         actions={<>
+          <RobotFilterSelect robots={robots.robots} robotId={activeRobotId} />
           {canEdit && (
             <Link href="/tasks/templates">
               <Button variant="outline" size="sm">Templates</Button>

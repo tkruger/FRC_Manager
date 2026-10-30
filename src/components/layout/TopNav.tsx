@@ -1,9 +1,9 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { cn } from "@/lib/utils";
 import type { Session } from "next-auth";
@@ -45,8 +45,6 @@ const MOBILE_MORE = [
 
 interface Props {
   session: Session | null;
-  robots?: { id: string; displayName: string; status: string }[];
-  activeRobotId?: string;
   pendingMemberCount?: number;
   unreadNotificationCount?: number;
   activeSeasonName?: string | null;
@@ -54,11 +52,10 @@ interface Props {
   testSite?: boolean;
 }
 
-export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount = 0, unreadNotificationCount = 0, activeSeasonName, testSite = false }: Props) {
+export function TopNav({ session, pendingMemberCount = 0, unreadNotificationCount = 0, activeSeasonName, testSite = false }: Props) {
   const pathname = usePathname();
   const { resolvedTheme, toggle, mode } = useTheme();
 
-  const activeRobot = robots.find((r) => r.id === activeRobotId);
   const roles             = session?.user?.roles ?? [];
   const canManageTeam     = roles.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP"].includes(r));
   const canManageSeason   = roles.includes("HEAD_MENTOR" as any);
@@ -139,9 +136,6 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
 
           {/* Right: controls */}
           <div className="flex items-center gap-0.5 justify-end">
-          {robots.length > 0 && !viewOnly && (
-            <RobotSelector robots={robots} activeRobotId={activeRobotId} activeRobot={activeRobot} />
-          )}
           <button
             onClick={toggle}
             className="h-8 w-8 rounded-md flex items-center justify-center text-(--color-text-secondary) hover:bg-(--color-surface-overlay) transition-colors"
@@ -182,7 +176,6 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
           </div>
           {/* min-w-0 + flex-1 let the robot picker shrink so the row never exceeds the screen */}
           <div className="flex min-w-0 flex-1 items-center justify-end gap-1">
-            {robots.length > 0 && !viewOnly && <RobotSelector robots={robots} activeRobotId={activeRobotId} activeRobot={activeRobot} />}
             {/* Phones: theme lives in Profile & appearance, calendar in the bottom bar */}
             <button onClick={toggle} aria-label="Toggle light/dark mode" className="hidden sm:flex h-9 w-9 shrink-0 rounded-md items-center justify-center text-(--color-text-secondary) hover:bg-(--color-surface-overlay) transition-colors">
               {resolvedTheme === "dark" ? <SunIcon /> : <MoonIcon />}
@@ -302,46 +295,6 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
       </>
 
     </>
-  );
-}
-
-function RobotSelector({
-  robots, activeRobotId, activeRobot,
-}: {
-  robots: { id: string; displayName: string; status: string }[];
-  activeRobotId?: string;
-  activeRobot?: { id: string; displayName: string; status: string };
-}) {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-  const isRetired = activeRobot?.status?.startsWith("RETIRED") || activeRobot?.status === "DECOMMISSIONED";
-
-  function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const robotId = e.target.value || null;
-    startTransition(async () => {
-      const { setActiveRobotAction } = await import("@/app/actions/robot-context");
-      await setActiveRobotAction(robotId);
-      router.refresh();
-    });
-  }
-
-  return (
-    <div className="flex min-w-0 items-center gap-1.5 rounded-md border border-(--color-border) bg-(--color-surface-raised) px-3 h-9 text-sm">
-      <span className="hidden sm:inline text-(--color-text-secondary) text-xs">Robot:</span>
-      <select
-        className={cn("min-w-0 w-full max-w-[140px] truncate bg-transparent text-(--color-text-primary) text-sm font-medium focus:outline-none cursor-pointer", isPending && "opacity-50")}
-        value={activeRobotId ?? ""}
-        onChange={handleChange}
-        disabled={isPending}
-        aria-label="Select robot context"
-      >
-        <option value="">All Robots</option>
-        {robots.map((r) => (
-          <option key={r.id} value={r.id}>{r.displayName}</option>
-        ))}
-      </select>
-      {isRetired && <span className="badge badge-neutral text-xs">Retired</span>}
-    </div>
   );
 }
 

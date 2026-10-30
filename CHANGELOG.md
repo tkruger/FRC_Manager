@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.7.1 — 2026-10-30
+
+- The robot picker is gone from the top bar. Tasks and the Gantt chart have a **Robot** filter beside their buttons instead (the BOM already had its own), and it only appears when the season has more than one robot — with one robot nothing is filtered
+
 ## 1.7.0 — 2026-10-30
 
 **Volunteers**

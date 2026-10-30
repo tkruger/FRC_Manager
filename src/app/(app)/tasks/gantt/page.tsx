@@ -4,7 +4,8 @@ import { competitionCountdown, designation, week0Date } from "@/lib/competition"
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { getActiveRobotId } from "@/app/actions/robot-context";
+import { robotFilter } from "@/lib/robot-filter";
+import { RobotFilterSelect } from "@/components/RobotFilterSelect";
 import { GanttClient } from "./GanttClient";
 import { TasksTabBar } from "../TasksTabBar";
 import { SeasonProgressBar } from "../SeasonProgressBar";
@@ -18,14 +19,14 @@ export default async function GanttPage({ searchParams }: { searchParams: Promis
   const session = await auth();
   if (!session?.user?.teamId) redirect("/dashboard");
 
-  const [activeSeason, activeRobotId] = await Promise.all([
-    prisma.season.findFirst({
-      where:   { teamId: session.user.teamId, isActive: true },
-      include: { competitionEvents: { select: { name: true, stage: true, stageNumber: true, startDate: true, endDate: true } } },
-    }),
-    getActiveRobotId(),
-  ]);
+  const activeSeason = await prisma.season.findFirst({
+    where:   { teamId: session.user.teamId, isActive: true },
+    include: { competitionEvents: { select: { name: true, stage: true, stageNumber: true, startDate: true, endDate: true } } },
+  });
   if (!activeSeason) redirect("/settings/season");
+  // Only with more than one robot (src/lib/robot-filter.ts)
+  const robots = await robotFilter(activeSeason.id);
+  const activeRobotId = robots.robotId;
 
   const [tasks, allTaskStats] = await Promise.all([
     prisma.task.findMany({
@@ -112,10 +113,8 @@ export default async function GanttPage({ searchParams }: { searchParams: Promis
       <PageHeader
         title="Tasks"
         help="tasks"
-        subtitle={<>
-          {activeSeason.name}
-          {activeRobotId && <span className="ml-2 badge badge-info">Robot filtered</span>}
-        </>}
+        subtitle={activeSeason.name}
+        actions={<RobotFilterSelect robots={robots.robots} robotId={activeRobotId} />}
       />
 
       <SeasonProgressBar
