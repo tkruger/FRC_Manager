@@ -2,30 +2,44 @@
 
 ## Unreleased
 
-- **Volunteers.** Every meeting needs enough adults — two confirmed adults by default. The new Volunteers page shows each upcoming meeting's coverage, and meetings that are short are flagged there and (for coordinators) on the calendar
-  - **Parent** role: sees everything a Team Member sees, but view-only (enforced for every change, not just hidden buttons); a banner says so. Parents can still help pack for competitions and scan tools into their locations, and don't see Orders, Fleet or the robot picker
-  - **Volunteer coordinator** role: asks cleared adults to cover meetings, takes people off shifts, sets the default shift instructions and how many adults a meeting needs, gives a meeting its own special instructions, and gets a morning list of the next two weeks' gaps
-  - Head Mentors mark adults **Cleared to volunteer** (optionally until a date) on Team members. Only cleared adults can sign up; ones asked by the coordinator confirm or decline
-  - Reminders: the day before each shift (with the instructions), morning nudges for unanswered asks, and a heads-up to coordinators when someone drops out of a meeting that's now short
-  - Volunteer notifications can also come by **email** (on by default; each person can turn it off in Settings → Notifications)
-  - Phone number on your profile (optional), shown only to coordinators and Head Mentors
-  - Regenerating the meeting schedule keeps meetings that adults have signed up for
-- **Team email**: Head Mentors can connect the team's own email account (Gmail, Outlook, Yahoo, iCloud, Zoho or any mail server) in Settings → Team email, with the From name and address. Notifications, invites and welcome emails then come from the team; account emails (address confirmation, password reset) still come from FRC Manager, which also sends anything the team's server fails to. Saving checks the login; "Send me a test email" checks sending. The password is stored encrypted
-- Team members on phones: a member's name no longer gets squeezed into a one-letter column by the buttons beside it
-- The test site (frc-manager.vercel.app) is marked: an amber hazard stripe along the top, a TEST tag beside the logo, and “TEST ·” in the tab title (“FRC Test” on the home screen). TEST_SITE=1/0 in a deployment overrides it
-- First visit on a phone: the “turn on notifications” question and the “add to home screen” steps take turns instead of opening on top of each other (closing one used to close both)
-- iPhone: the bottom tab bar (and top bar) stay put while scrolling long pages
-- Roles explained and the guide list the new roles; the guide's Mentor row now matches what Mentors can do (Team Member access)
-- **Change history** for orders (including their items and tax & shipping), tasks and meetings: who changed which field, from what to what, and when. Open **History** on an order, task card or meeting, or pick “Changes to orders, tasks and meetings” on the Audit log. Changes made from Discord count as the linked member's; background jobs show as System. History is kept for a year (the hourly job removes older entries)
-- **Member changes** are in the change history too: name, email, phone, account status (approved, suspended, deleted), roles, volunteer clearance and password changes (never the password). Each member has a History list on Team members; deleting a member erases their name and contact details from it
-- **Audit log**: one place to find it — your profile menu (the links on Tools and Safety are gone) — and **Export CSV** for the dates and filter you're viewing
-- **Clear notifications**: ✕ on each one, or Clear all, in the bell menu and on the Notifications page. Marking all as read from the bell now works (it didn't clear the badge before)
-- New or edited order: Enter no longer submits the order — it moves to the next item's Link box (adding an item after the last one), so you can paste link after link
-- Meetings can be linked directly (`/calendar?meeting=…`), and the meeting card shows its date correctly in every time zone
+## 1.7.0 — 2026-10-30
+
+**Volunteers**
+- Every meeting needs enough adults — two confirmed adults by default. The new **Volunteers** page shows each upcoming meeting's coverage, and meetings that are short are flagged there and (for coordinators) on the calendar
+- **Parent** role: sees what a Team Member sees, but view-only (enforced for every change, not just hidden buttons); a banner says so. Parents can still help pack for competitions and scan tools into their locations, and don't see Orders, Fleet or the robot picker
+- **Volunteer coordinator** role: asks cleared adults to cover meetings, takes people off shifts, sets the default shift instructions and how many adults a meeting needs, gives a meeting its own special instructions, and gets a morning list of the next two weeks' gaps
+- Head Mentors mark adults **Cleared to volunteer** (optionally until a date) on Team members. Only cleared adults can sign up; ones asked by the coordinator confirm or decline
+- Reminders: the day before each shift (with the instructions), morning nudges for unanswered asks, and a heads-up to coordinators when someone drops out of a meeting that's now short
+- Volunteer notifications can also come by **email** (on by default; each person can turn it off in Settings → Notifications)
+- Phone number on your profile (optional), shown only to coordinators and Head Mentors
+- Regenerating the meeting schedule keeps meetings that adults have signed up for
+
+**Orders & budget**
 - **Order approver** replaces the Treasurer role (existing Treasurers become Order approvers). It approves, denies and edits open orders only; setting up the budget, logging expenses and recording funding are now for Head Mentors, and vendors for Head Mentors and Inventory Admins
-- Orders have **tax & shipping per vendor**: once an order is approved, the Buyer enters each vendor's tax and shipping on the order's page. Tax counts as spend in the categories of that vendor's items; shipping goes to a new **Shipping** budget category. The order's total cost includes them, and spend already in the budget is updated when they change
-- Date ranges: picking a start date fills an empty end (or due) date with the same day, so its picker opens on the right month — seasons, competitions, tasks, the Kanban custom range and the audit log filter. Optional end dates that mean something when blank (a certification's expiry, the season kickoff) are left alone
-- Adding a Week competition explains to use the official FRC week number (Week 2 = 2, Week 5 = 5) and why it matters for Week 0; the number is no longer pre-filled with the next in sequence. The guide has a new “Week numbers and Week 0” section
+- **Tax & shipping per vendor**: once an order is approved, the Buyer enters each vendor's tax and shipping on the order's page. Tax counts as spend in the categories of that vendor's items; shipping goes to a new **Shipping** budget category. The order's total cost includes them, and spend already in the budget is updated when they change
+- New or edited order: Enter no longer submits the order — it moves to the next item's Link box (adding an item after the last one), so you can paste link after link
+
+**Change history & audit log**
+- **Change history** for orders (including their items and tax & shipping), tasks, meetings and members: who changed which field, from what to what, and when. Open **History** on an order, task card, meeting or member. Changes made from Discord count as the linked member's; background jobs show as System. Kept for a year
+- Member history covers name, email, phone, account status, roles, volunteer clearance and password changes (never the password); deleting a member erases their name and contact details from it
+- **Audit log**: one place to find it — your profile menu — with changes alongside tool check-outs and safety reports, and **Export CSV** for the dates and filter you're viewing
+
+**Team & notifications**
+- **Team email**: Head Mentors can connect the team's own email account (Gmail, Outlook, Yahoo, iCloud, Zoho or any mail server) in Settings → Team email. Notifications, invites and welcome emails then come from the team; account emails still come from FRC Manager, which also sends anything the team's server fails to. The password is stored encrypted
+- **Clear notifications**: ✕ on each one, or Clear all, in the bell menu and on the Notifications page. Marking all as read from the bell now works
+- Roles explained and the guide list the new roles; the guide's Mentor row now matches what Mentors can do (Team Member access)
+- The test site (frc-manager.vercel.app) is marked: an amber hazard stripe along the top, a TEST tag beside the logo, and “TEST ·” in the tab title
+
+**Seasons & forms**
+- Date ranges: picking a start date fills an empty end (or due) date with the same day — seasons, competitions, tasks, the Kanban custom range and the audit log filter
+- Adding a Week competition explains to use the official FRC week number and why it matters for Week 0; the guide has a new “Week numbers and Week 0” section
+- Meetings can be linked directly (`/calendar?meeting=…`)
+
+**Fixes**
+- First visit on a phone: the “turn on notifications” question and the “add to home screen” steps take turns instead of opening on top of each other
+- iPhone: the bottom tab bar (and top bar) stay put while scrolling long pages
+- Team members on phones: names no longer get squeezed into a one-letter column
+- The meeting card shows its date correctly in every time zone
 
 ## 1.6.0 — 2026-10-24
 
