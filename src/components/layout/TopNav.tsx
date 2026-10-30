@@ -73,7 +73,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
       {/* ── Top navigation bar ── */}
       {/* CSS grid with 1fr | auto | 1fr ensures the center nav is always viewport-centered
           regardless of how wide the left logo or right controls are */}
-      <header className="fixed inset-x-0 top-0 z-40 h-safe-nav safe-top-pad transition-colors"
+      <header className="fixed inset-x-0 top-0 z-40 h-safe-nav safe-top-pad transition-colors pinned-layer"
         style={{
           // Fully opaque: a translucent/blurred header showed scrolling content as a
           // faded band at the top on iOS
@@ -205,7 +205,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
         {/* More popup sheet */}
         {moreOpen && (
           <div
-            className="fixed bottom-14 inset-x-0 z-50 lg:hidden rounded-t-2xl safe-bottom"
+            className="fixed bottom-14 inset-x-0 z-50 lg:hidden rounded-t-2xl safe-bottom pinned-layer"
             style={{
               backgroundColor: "var(--color-surface)",
               boxShadow: "0 -8px 32px -4px rgb(0 0 0 / .25)",
@@ -246,7 +246,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
         )}
 
         <nav
-          className="fixed bottom-0 inset-x-0 z-50 lg:hidden safe-bottom"
+          className="fixed bottom-0 inset-x-0 z-50 lg:hidden safe-bottom pinned-layer"
           style={{
             backgroundColor: "color-mix(in srgb, var(--color-surface) 92%, transparent)",
             backdropFilter: "blur(20px) saturate(180%)",
@@ -449,6 +449,15 @@ function UserMenu({ user, canManageTeam, canManageSeason, canManageDiscord, canM
               className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-(--color-text-primary) hover:bg-(--color-surface-overlay) transition-colors">
               <CalendarIcon className="w-4 h-4 text-(--color-text-secondary)" />
               Season settings
+            </Link>
+          )}
+          {canManageSeason && (
+            <Link href="/settings/email" role="menuitem" onClick={() => setOpen(false)}
+              className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-(--color-text-primary) hover:bg-(--color-surface-overlay) transition-colors">
+              <svg className="w-4 h-4 text-(--color-text-secondary)" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+              </svg>
+              Team email
             </Link>
           )}
           {/* Same audience as Discord: Head Mentor + Team Leadership (view); editing is Head Mentor only */}

@@ -105,8 +105,8 @@ export default async function MembersPage() {
           {active.map((u) => (
             // Name + email with Edit roles beside them; the roles wrap underneath at any width
             <div key={u.id} className="space-y-2 py-3 first:pt-0 last:pb-0">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
+              <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
+                <div className="min-w-48 flex-1">
                   <p className="font-medium text-(--color-text-primary) break-words">
                     {u.name}
                     {u.id === session.user.id && (
@@ -116,12 +116,12 @@ export default async function MembersPage() {
                   <p className="text-small text-(--color-text-secondary) break-all">{u.email}{u.phone && <> · {u.phone}</>}</p>
                 </div>
                 {isHeadMentor && u.id === session.user.id && (
-                  <div className="flex shrink-0 items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
                     <ClearanceEditor userId={u.id} name={u.name} cleared={!!u.volunteerClearedAt} until={u.volunteerClearedUntil?.toISOString() ?? null} />
                   </div>
                 )}
                 {u.id !== session.user.id && (
-                  <div className="flex shrink-0 items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
                     <DeleteMemberButton userId={u.id} name={u.name} />
                     {isHeadMentor && <ClearanceEditor userId={u.id} name={u.name} cleared={!!u.volunteerClearedAt} until={u.volunteerClearedUntil?.toISOString() ?? null} />}
                     <MemberRoleEditor userId={u.id} currentRoles={u.roles.map((r) => r.role as Role)} />

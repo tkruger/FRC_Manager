@@ -53,6 +53,7 @@ export async function notifyUsers(userIds: string[], n: OutgoingNotification): P
     where: { id: { in: ids }, status: "ACTIVE" },
     select: {
       id: true, email: true, name: true, timezone: true, quietHoursStart: true, quietHoursEnd: true,
+      teamId: true,
       team: { select: { timezone: true, teamNumber: true } },
       notificationPrefs: { where: { topic: n.topic }, select: { inApp: true, push: true, email: true } },
       pushSubscriptions: { select: { id: true, endpoint: true, p256dh: true, auth: true } },
@@ -60,7 +61,7 @@ export async function notifyUsers(userIds: string[], n: OutgoingNotification): P
   });
 
   const inAppIds: string[] = [];
-  const emailTo: { email: string; name: string; teamNumber: number | null }[] = [];
+  const emailTo: { email: string; name: string; teamNumber: number | null; teamId: string | null }[] = [];
   const pushTargets: { id: string; endpoint: string; p256dh: string; auth: string }[] = [];
   const now = new Date();
 
@@ -71,7 +72,7 @@ export async function notifyUsers(userIds: string[], n: OutgoingNotification): P
     if (wantsInApp) inAppIds.push(u.id);
     // Email: only topics that can send it, and never to placeholder addresses
     const wantsEmail = topic?.defaultEmail !== undefined && (pref?.email ?? topic.defaultEmail);
-    if (wantsEmail && !u.email.endsWith(".invalid")) emailTo.push({ email: u.email, name: u.name, teamNumber: u.team?.teamNumber ?? null });
+    if (wantsEmail && !u.email.endsWith(".invalid")) emailTo.push({ email: u.email, name: u.name, teamNumber: u.team?.teamNumber ?? null, teamId: u.teamId });
 
     if (wantsPush && u.pushSubscriptions.length > 0) {
       const tz = [u.timezone, u.team?.timezone].find(isValidTimezone) ?? FALLBACK_TIMEZONE;
@@ -93,7 +94,7 @@ export async function notifyUsers(userIds: string[], n: OutgoingNotification): P
 }
 
 /** The notification as a short email with a button back to the app */
-async function sendEmails(to: { email: string; name: string; teamNumber: number | null }[], n: OutgoingNotification): Promise<number> {
+async function sendEmails(to: { email: string; name: string; teamNumber: number | null; teamId: string | null }[], n: OutgoingNotification): Promise<number> {
   if (to.length === 0) return 0;
   const url = `${appUrl()}${n.url ?? "/notifications"}`;
   // Emoji at the start of a title read oddly as a subject line
@@ -113,7 +114,7 @@ async function sendEmails(to: { email: string; name: string; teamNumber: number 
         <p><a href="${url}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-weight:600">Open in FRC Manager</a></p>
         <p style="font-size:12px;color:#666">Sent by FRC Manager for ${escapeHtml(team)}. To stop these emails, turn email off for this notification in Settings → Notifications.</p>
       </div>`,
-    });
+    }, { teamId: r.teamId });
   }));
   return results.filter((x) => x.status === "fulfilled" && x.value.sent).length;
 }

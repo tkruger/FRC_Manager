@@ -10,6 +10,9 @@
   - Volunteer notifications can also come by **email** (on by default; each person can turn it off in Settings → Notifications)
   - Phone number on your profile (optional), shown only to coordinators and Head Mentors
   - Regenerating the meeting schedule keeps meetings that adults have signed up for
+- **Team email**: Head Mentors can connect the team's own email account (Gmail, Outlook, Yahoo, iCloud, Zoho or any mail server) in Settings → Team email, with the From name and address. Notifications, invites and welcome emails then come from the team; account emails (address confirmation, password reset) still come from FRC Manager, which also sends anything the team's server fails to. Saving checks the login; "Send me a test email" checks sending. The password is stored encrypted
+- Team members on phones: a member's name no longer gets squeezed into a one-letter column by the buttons beside it
+- iPhone: the bottom tab bar (and top bar) stay put while scrolling long pages
 - Roles explained and the guide list the new roles; the guide's Mentor row now matches what Mentors can do (Team Member access)
 - **Change history** for orders (including their items and tax & shipping), tasks and meetings: who changed which field, from what to what, and when. Open **History** on an order, task card or meeting, or pick “Changes to orders, tasks and meetings” on the Audit log. Changes made from Discord count as the linked member's; background jobs show as System. History is kept for a year (the hourly job removes older entries)
 - Meetings can be linked directly (`/calendar?meeting=…`), and the meeting card shows its date correctly in every time zone

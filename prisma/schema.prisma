@@ -235,6 +235,7 @@ model Team {
   packSessions  PackSession[]
   changeLogs    ChangeLog[]
   volunteerSettings VolunteerSettings?
+  emailServer   TeamEmailServer?
   discordConfig DiscordConfig?
   timezone      String?   // IANA zone used for meeting times and daily reminders
   /// Next number for auto-assigned tool asset tags (TOOL-0001, …)
@@ -1524,6 +1525,33 @@ model Meeting {
   volunteerNote MeetingVolunteerNote?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+/// The team's own outgoing mail server (e.g. its Gmail), used for team emails — notifications,
+/// invites, welcomes — instead of the app's. Account emails (verification, password reset)
+/// always use the app's. If a send through it fails, the app's service sends it instead.
+model TeamEmailServer {
+  id           String    @id @default(cuid())
+  teamId       String    @unique
+  team         Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  /// Preset it was set up from: gmail, outlook, yahoo, icloud, zoho or custom
+  provider     String
+  host         String
+  port         Int
+  /// "ssl" (TLS from the start, usually 465) or "starttls" (usually 587)
+  security     String
+  username     String
+  /// Encrypted (src/lib/security/secret-box.ts) — never sent to the browser
+  passwordEnc  String
+  fromName     String?
+  fromEmail    String
+  enabled      Boolean   @default(true)
+  lastSentAt   DateTime?
+  lastError    String?
+  lastErrorAt  DateTime?
+  updatedById  String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
 
 // ─────────────────────────────────────────────

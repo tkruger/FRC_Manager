@@ -94,7 +94,7 @@ export async function sendEmailInvitesAction(raw: string, pickedRoles: string[] 
         <p><a href="${url}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-weight:600">Accept the invite</a></p>
         <p style="font-size:13px;color:#555">The link works for ${EMAIL_INVITE_DAYS} days. If the button doesn't work, open: ${url}</p>
       </div>`,
-    });
+    }, { teamId });
     if (sent.sent) {
       await prisma.invite.update({ where: { id: invite.id }, data: { emailSent: true } });
       results.push({ email, status: "sent" });

@@ -1,14 +1,61 @@
-// Sending email (Resend — https://resend.com). Server-only.
+// Sending email. Server-only.
 //
-//   RESEND_API_KEY  the API key; without it nothing is sent (callers fall back to showing links)
+// Team emails (notifications, invites, welcomes — callers pass the team) go through the
+// team's own mail server when it has one (Settings → Email); if that fails, or for account
+// emails (verification, password reset — no team passed), the app's service sends it:
+//
+//   RESEND_API_KEY  the API key (Resend — https://resend.com); without it nothing is sent
+//                   (callers fall back to showing links)
 //   EMAIL_FROM      the sender, e.g. "FRC Manager <invites@frcmanager.com>" — the domain must be
 //                   verified in Resend. Until then Resend's test sender only reaches your own address.
+
+import { prisma } from "@/lib/prisma";
+import { open } from "@/lib/security/secret-box";
+import { sendViaMailServer } from "@/lib/team-mail";
+import type { MailSecurity } from "@/lib/email-providers";
 
 export function emailConfigured(): boolean {
   return !!process.env.RESEND_API_KEY;
 }
 
-export async function sendEmail(msg: { to: string; subject: string; html: string; text: string }): Promise<{ sent: boolean; error?: string }> {
+type Mail = { to: string; subject: string; html: string; text: string };
+
+/**
+ * Send an email. Pass `teamId` for team emails: they go through the team's mail server first.
+ * Leave it out for account emails, which always use the app's service.
+ */
+export async function sendEmail(msg: Mail, opts: { teamId?: string | null } = {}): Promise<{ sent: boolean; error?: string }> {
+  if (opts.teamId) {
+    const viaTeam = await sendViaTeam(opts.teamId, msg);
+    if (viaTeam) return { sent: true };
+  }
+  return sendViaService(msg);
+}
+
+/** Through the team's own server; false when it has none (or it failed — the error is kept for Settings → Email) */
+async function sendViaTeam(teamId: string, msg: Mail): Promise<boolean> {
+  try {
+    const server = await prisma.teamEmailServer.findUnique({ where: { teamId } });
+    if (!server?.enabled) return false;
+    const password = open(server.passwordEnc);
+    if (!password) {
+      await prisma.teamEmailServer.update({ where: { teamId }, data: { lastError: "The saved password can't be read anymore — enter it again.", lastErrorAt: new Date() } });
+      return false;
+    }
+    const res = await sendViaMailServer({ ...server, security: server.security as MailSecurity, password }, msg);
+    await prisma.teamEmailServer.update({
+      where: { teamId },
+      data:  res.sent ? { lastSentAt: new Date() } : { lastError: res.error, lastErrorAt: new Date() },
+    });
+    if (!res.sent) console.warn(`[email] Team mail server failed for team ${teamId}, using the app's instead: ${res.error}`);
+    return res.sent;
+  } catch (e) {
+    console.error("[email] Team mail server:", e);
+    return false;
+  }
+}
+
+async function sendViaService(msg: Mail): Promise<{ sent: boolean; error?: string }> {
   const key = process.env.RESEND_API_KEY;
   if (!key) {
     console.warn("[email] RESEND_API_KEY isn't set in this deployment — nothing sent (redeploy after adding it)");

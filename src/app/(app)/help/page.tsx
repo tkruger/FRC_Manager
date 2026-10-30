@@ -341,6 +341,14 @@ export default function HelpPage() {
           <li><b>Volunteers</b> — requests to cover a meeting, sign-up confirmations and the day-before reminder with instructions; for coordinators, meetings short of adults. These are emailed too unless you turn email off.</li>
           <li><b>Team</b> — new members waiting for approval, and your own account.</li>
         </ul>
+        <H3>Team email</H3>
+        <p>
+          Emails come from FRC Manager unless a Head Mentor connects the team&apos;s own email account in <b>Settings → Team email</b>
+          (Gmail, Outlook, Yahoo, iCloud, Zoho or any mail server). Then notifications, invites and welcome emails come from the
+          team&apos;s address. Gmail, Yahoo and iCloud need an <b>app password</b> (not the normal one). Account emails — confirming an
+          address, resetting a password — always come from FRC Manager, and if the team&apos;s server fails, FRC Manager sends the
+          message instead and the problem shows on the Team email page.
+        </p>
         <H3>Quiet hours &amp; time zone</H3>
         <p>
           No push notifications arrive during your quiet hours (9 PM–7 AM unless you change them); reminders wait until they end.

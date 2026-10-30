@@ -11,7 +11,7 @@ export async function sendApprovalEmail(userId: string, opts: { newTeam?: boolea
   try {
     const user = await prisma.user.findUnique({
       where:  { id: userId },
-      select: { name: true, email: true, roles: { select: { role: true } }, team: { select: { teamNumber: true, name: true } } },
+      select: { name: true, email: true, teamId: true, roles: { select: { role: true } }, team: { select: { teamNumber: true, name: true } } },
     });
     if (!user?.team || user.email.endsWith(".invalid")) return;
 
@@ -24,6 +24,7 @@ export async function sendApprovalEmail(userId: string, opts: { newTeam?: boolea
       ? `${team} (${user.team.name}) is approved on FRC Manager, and you're its Head Mentor. Sign in to set up your season and invite your team.`
       : `You've been approved to join ${team} (${user.team.name}) on FRC Manager as ${roles}.`;
 
+    // Welcomes come from the team (its own mail server, if set up); a new team's approval is the platform's
     const res = await sendEmail({
       to:      user.email,
       subject: opts.newTeam ? `${team} is approved on FRC Manager` : `You're approved — welcome to ${team}`,
@@ -34,7 +35,7 @@ export async function sendApprovalEmail(userId: string, opts: { newTeam?: boolea
         <p><a href="${url}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-weight:600">Sign in to FRC Manager</a></p>
         <p style="font-size:13px;color:#555">If the button doesn't work, open: ${url}</p>
       </div>`,
-    });
+    }, { teamId: opts.newTeam ? null : user.teamId });
     if (!res.sent) console.warn(`[email] Approval email to user ${userId} not sent: ${res.error}`);
   } catch (e) {
     console.error("[email] Approval email failed:", e);

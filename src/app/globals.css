@@ -357,6 +357,16 @@ input::-webkit-date-and-time-value { text-align: left; }
 ::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-text-disabled); }
 
+/* Fixed bars (top header, bottom tabs): their own GPU layer, so iOS keeps them pinned while a
+   long page scrolls. Without it, Safari/the home-screen app sometimes draws a blurred fixed bar
+   mid-screen during momentum scrolling. */
+.pinned-layer {
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
 /* ─── Safe area ─── */
 .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
 
