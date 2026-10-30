@@ -9,6 +9,7 @@ import { ApproveDialog } from "./ApproveDialog";
 import { DenyButton } from "./DenyButton";
 import { MemberRoleEditor } from "./MemberRoleEditor";
 import { ClearanceEditor } from "./ClearanceEditor";
+import { ChangeHistory } from "@/components/history/ChangeHistory";
 import { isAdult, isCleared } from "@/lib/volunteers";
 import { DeleteMemberButton } from "./DeleteMemberButton";
 import { AccessCodeForm } from "./AccessCodeForm";
@@ -104,7 +105,7 @@ export default async function MembersPage() {
         <div className="card divide-y divide-(--color-border)">
           {active.map((u) => (
             // Name + email with Edit roles beside them; the roles wrap underneath at any width
-            <div key={u.id} className="space-y-2 py-3 first:pt-0 last:pb-0">
+            <div key={u.id} id={`member-${u.id}`} className="space-y-2 py-3 first:pt-0 last:pb-0 scroll-mt-24">
               <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
                 <div className="min-w-48 flex-1">
                   <p className="font-medium text-(--color-text-primary) break-words">
@@ -138,6 +139,7 @@ export default async function MembersPage() {
                     ? <Badge variant="warning">Volunteer clearance ended {u.volunteerClearedUntil ? dayText(u.volunteerClearedUntil) : ""}</Badge>
                     : isAdult(u.roles.map((r) => r.role)) && <Badge variant="neutral">Not cleared to volunteer</Badge>}
               </div>
+              <ChangeHistory entityType="member" entityId={u.id} />
             </div>
           ))}
         </div>

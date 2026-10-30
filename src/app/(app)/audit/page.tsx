@@ -7,14 +7,15 @@ import { PrintButton } from "@/components/PrintButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canSeeAudit } from "@/lib/packing";
-import { localParts, zonedTimeToUtc, calendarDayKey, FALLBACK_TIMEZONE, isValidTimezone } from "@/lib/notify/time";
+import { calendarDayKey } from "@/lib/notify/time";
+import { addDays, auditRange, loadAudit, SHOWS } from "@/lib/audit/report";
 import { LinkedDates } from "@/components/ui/linked-dates";
 import { ChangeEntries } from "@/components/history/ChangeHistory";
 import { toHistoryEntries } from "@/lib/audit/history";
 import { CHANGE_LOG_DAYS } from "@/lib/audit/changes";
 
 // Audit log for mentors and leadership: every tool check-out and check-in, every safety
-// report, and who changed what on orders, tasks and meetings, in a date range — printable.
+// report, and who changed what on orders, tasks, meetings and members, in a date range — printable.
 
 const SEVERITY: Record<string, { label: string; variant: "danger" | "warning" | "info" }> = {
   SIGNIFICANT_INJURY: { label: "Significant injury", variant: "danger" },
@@ -26,25 +27,10 @@ const CONDITION: Record<string, string> = {
   OUT_OF_SERVICE: "out of service", OUT_FOR_MAINTENANCE: "out for maintenance",
 };
 
-const DAY = /^\d{4}-\d{2}-\d{2}$/;
-
-function addDays(key: string, n: number) {
-  return new Date(Date.parse(key) + n * 86_400_000).toISOString().slice(0, 10);
-}
 function dayText(key: string) {
   return new Date(`${key}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 }
 
-const SHOWS = {
-  all:      "Everything",
-  tools:    "Tool check-outs and check-ins",
-  safety:   "Safety reports",
-  changes:  "Changes to orders, tasks and meetings",
-  order:    "Changes to orders",
-  task:     "Changes to tasks",
-  meeting:  "Changes to meetings",
-} as const;
-type Show = keyof typeof SHOWS;
 /** Most changes listed at once (narrow the dates to see the rest) */
 const CHANGE_LIMIT = 500;
 
@@ -64,67 +50,20 @@ export default async function AuditLogPage({ searchParams }: { searchParams: Pro
   }
 
   const team = await prisma.team.findUnique({ where: { id: teamId }, select: { teamNumber: true, timezone: true } });
-  const tz = isValidTimezone(team?.timezone) ? team!.timezone! : FALLBACK_TIMEZONE;
 
-  // Range of local calendar days (inclusive); default: the last 30 days
-  const today = localParts(new Date(), tz).dateKey;
-  let to   = sp.to && DAY.test(sp.to) ? sp.to : today;
-  let from = sp.from && DAY.test(sp.from) ? sp.from : addDays(to, -29);
-  if (from > to) [from, to] = [to, from];
-  const show: Show = sp.show && sp.show in SHOWS ? (sp.show as Show) : "all";
-  const showTools   = show === "all" || show === "tools";
-  const showSafety  = show === "all" || show === "safety";
-  const showChanges = show === "all" || show === "changes" || show === "order" || show === "task" || show === "meeting";
-
-  const [fy, fm, fd] = from.split("-").map(Number);
-  const [ty, tm, td] = addDays(to, 1).split("-").map(Number);
-  const start = zonedTimeToUtc(fy, fm, fd, 0, 0, tz);
-  const end   = zonedTimeToUtc(ty, tm, td, 0, 0, tz); // exclusive
-
-  const [checkouts, incidents, changeRows] = await Promise.all([
-    !showTools ? [] : prisma.toolCheckout.findMany({
-      where: {
-        tool: { teamId },
-        OR: [{ checkedOutAt: { gte: start, lt: end } }, { returnedAt: { gte: start, lt: end } }],
-      },
-      include: {
-        tool: { select: { name: true, assetTag: true } },
-        user: { select: { name: true } },
-      },
-    }),
-    !showSafety ? [] : prisma.safetyIncident.findMany({
-      // Incident dates are calendar days (stored at UTC midnight)
-      where:   { reportedBy: { teamId }, incidentDate: { gte: new Date(from), lt: new Date(addDays(to, 1)) } },
-      include: { reportedBy: { select: { name: true } } },
-      orderBy: [{ incidentDate: "asc" }, { createdAt: "asc" }],
-    }),
-    !showChanges ? [] : prisma.changeLog.findMany({
-      where: {
-        teamId, createdAt: { gte: start, lt: end },
-        ...(show === "order" || show === "task" || show === "meeting" ? { entityType: show } : {}),
-      },
-      orderBy: { createdAt: "desc" },
-      take:    CHANGE_LIMIT + 1,
-      include: { actor: { select: { name: true, deletedAt: true } } },
-    }),
-  ]);
-  const changes = toHistoryEntries(changeRows.slice(0, CHANGE_LIMIT));
+  // The range and filter (default: the last 30 days, everything) — the same as the CSV export
+  const range = auditRange(sp, team?.timezone);
+  const { tz, today, from, to, show, showTools, showSafety, showChanges } = range;
+  const { checkouts, events, incidents, changeRows, moreChanges } = await loadAudit(teamId, range, CHANGE_LIMIT);
+  const changes = toHistoryEntries(changeRows);
 
   const now = new Date();
   const fmt = new Intl.DateTimeFormat("en-US", { timeZone: tz, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 
-  // One row per check-out and per check-in that falls in the range, oldest first
-  type Event = { at: Date; kind: "out" | "in"; c: (typeof checkouts)[number] };
-  const events: Event[] = [];
-  for (const c of checkouts) {
-    if (c.checkedOutAt >= start && c.checkedOutAt < end) events.push({ at: c.checkedOutAt, kind: "out", c });
-    if (c.returnedAt && c.returnedAt >= start && c.returnedAt < end) events.push({ at: c.returnedAt, kind: "in", c });
-  }
-  events.sort((a, b) => a.at.getTime() - b.at.getTime() || (a.kind === "out" ? -1 : 1));
 
   const outs = events.filter((e) => e.kind === "out").length;
   const ins  = events.length - outs;
-  const stillOut = checkouts.filter((c) => !c.returnedAt && c.checkedOutAt < end).length;
+  const stillOut = checkouts.filter((c) => !c.returnedAt && c.checkedOutAt < range.end).length;
 
   const quick = [
     { label: "Last 7 days",  from: addDays(today, -6),  to: today },
@@ -139,7 +78,12 @@ export default async function AuditLogPage({ searchParams }: { searchParams: Pro
       <PageHeader
         title="Audit log"
         subtitle={<>Team {team?.teamNumber} · {dayText(from)} – {dayText(to)}</>}
-        actions={<PrintButton />}
+        actions={<>
+          <a href={`/api/audit/csv?from=${from}&to=${to}&show=${show}`} download>
+            <Button variant="outline" size="sm">Export CSV</Button>
+          </a>
+          <PrintButton />
+        </>}
       />
 
       {/* Filters */}
@@ -178,7 +122,7 @@ export default async function AuditLogPage({ searchParams }: { searchParams: Pro
             { label: "Still out", value: stillOut },
           ] : []),
           ...(showSafety ? [{ label: "Safety reports", value: incidents.length }] : []),
-          ...(showChanges ? [{ label: "Changes", value: changeRows.length > CHANGE_LIMIT ? `${CHANGE_LIMIT}+` : changes.length }] : []),
+          ...(showChanges ? [{ label: "Changes", value: moreChanges ? `${CHANGE_LIMIT}+` : changes.length }] : []),
         ].map((s) => (
           <div key={s.label} className="card py-3 text-center">
             <p className="text-h2 text-(--color-text-primary)">{s.value}</p>
@@ -198,7 +142,7 @@ export default async function AuditLogPage({ searchParams }: { searchParams: Pro
             </div>
           )}
           <p className="text-small text-(--color-text-secondary)">
-            Newest first.{changeRows.length > CHANGE_LIMIT ? ` Showing the latest ${CHANGE_LIMIT} — pick fewer days to see the rest.` : ""} Changes are kept for {CHANGE_LOG_DAYS / 365 === 1 ? "a year" : `${CHANGE_LOG_DAYS} days`}.
+            Newest first.{moreChanges ? ` Showing the latest ${CHANGE_LIMIT} — pick fewer days to see the rest.` : ""} Changes are kept for {CHANGE_LOG_DAYS / 365 === 1 ? "a year" : `${CHANGE_LOG_DAYS} days`}.
           </p>
         </section>
       )}

@@ -21,6 +21,18 @@ async function requireAdmin() {
 
 const ROLE_VALUES: Role[] = ALL_ROLES;
 
+/** The writes that give someone exactly `roles` — only removing and adding what changes, so the
+ *  member's history shows the real change */
+async function setRoles(userId: string, roles: Role[]) {
+  const current = (await prisma.userRole.findMany({ where: { userId }, select: { role: true } })).map((r) => r.role);
+  const add = roles.filter((r) => !current.includes(r));
+  const remove = current.filter((r) => !roles.includes(r));
+  return [
+    ...(remove.length ? [prisma.userRole.deleteMany({ where: { userId, role: { in: remove } } })] : []),
+    ...(add.length ? [prisma.userRole.createMany({ data: add.map((role) => ({ userId, role })) })] : []),
+  ];
+}
+
 /**
  * Shared checks for any role assignment: the target must be on the caller's team,
  * roles must be real, only Head Mentors can grant or remove Head Mentor, and the
@@ -68,8 +80,7 @@ export async function approveMemberAction(
         where: { id: userId, teamId: session.user.teamId },
         data: { status: "ACTIVE", approvedAt: new Date(), approvedBy: session.user.id },
       }),
-      prisma.userRole.deleteMany({ where: { userId } }),
-      prisma.userRole.createMany({ data: roles.map((role) => ({ userId, role })) }),
+      ...await setRoles(userId, roles),
     ]);
 
     await createNotification({
@@ -120,10 +131,7 @@ export async function updateMemberRolesAction(
     const invalid = await checkRoleChange({ id: session.user.id, teamId: session.user.teamId!, roles: session.user.roles }, userId, roles);
     if (invalid) return { success: false, error: invalid };
 
-    await prisma.$transaction([
-      prisma.userRole.deleteMany({ where: { userId } }),
-      prisma.userRole.createMany({ data: roles.map((role) => ({ userId, role })) }),
-    ]);
+    await prisma.$transaction(await setRoles(userId, roles));
 
     revalidatePath("/settings/members");
     return { success: true };

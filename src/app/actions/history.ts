@@ -6,7 +6,7 @@ import { auth } from "@/lib/auth";
 import { toHistoryEntries, type HistoryEntry } from "@/lib/audit/history";
 
 const Input = z.object({
-  entityType: z.enum(["order", "task", "meeting"]),
+  entityType: z.enum(["order", "task", "meeting", "member"]),
   entityId:   z.string().min(1).max(100),
 });
 
@@ -16,6 +16,10 @@ export async function getChangeHistoryAction(entityType: string, entityId: strin
   if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
   const parsed = Input.safeParse({ entityType, entityId });
   if (!parsed.success) return { success: false, error: "Unknown item." };
+  // A member's history is for the people who manage members and see the audit log
+  if (parsed.data.entityType === "member" && !session.user.roles.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP", "SAFETY_CAPTAIN"].includes(r))) {
+    return { success: false, error: "Only Head Mentors and Team Leadership can see a member's history." };
+  }
 
   const rows = await prisma.changeLog.findMany({
     where:   { teamId: session.user.teamId, ...parsed.data },

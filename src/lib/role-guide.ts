@@ -72,7 +72,7 @@ export const CAPABILITIES: { area: string; items: { action: string; who: Who }[]
     items: [
       { action: "Report incidents, run PRECHECK and inspections",        who: "everyone" },
       { action: "Award and revoke certifications",                       who: ["SAFETY_CAPTAIN", "INVENTORY_ADMIN"] },
-      { action: "See and print the audit log (tool check-outs and safety reports)", who: ["SAFETY_CAPTAIN", "TEAM_LEADERSHIP"] },
+      { action: "See, print and export the audit log (tools, safety reports, changes)", who: ["SAFETY_CAPTAIN", "TEAM_LEADERSHIP"] },
     ],
   },
   {

@@ -1,4 +1,4 @@
-// Change history for orders, tasks and meetings. Server-only.
+// Change history for orders, tasks, meetings and members. Server-only.
 //
 // A Prisma client extension (applied in src/lib/prisma.ts) watches every create, update and
 // delete on the models below and writes a ChangeLog row: who, which order/task/meeting, and
@@ -18,6 +18,7 @@ import { STATUS_CONFIG, PRIORITY_CONFIG, SUBTEAM_OPTIONS } from "@/lib/schedule-
 import { statusLabel } from "@/lib/procurement-helpers";
 import { ITEM_STATUS_INFO, IMPORTANCE_OPTIONS, itemRef } from "@/lib/orders/constants";
 import { BUDGET_CATEGORY_LABELS } from "@/lib/budget-categories";
+import { ROLE_LABELS } from "@/lib/rbac";
 import { requestUser } from "@/lib/request-user";
 
 import type { EntityType, FieldChange } from "./changes-types";
@@ -31,7 +32,11 @@ export const CHANGE_LOG_DAYS = 365;
 type Kind =
   | "text" | "long" | "date" | "money" | "number" | "bool" | "time"
   | { enum: Record<string, string> }
-  | "robot";
+  | "robot"
+  /** Never shown — only that it was set or changed (passwords) */
+  | "secret"
+  /** A date that means "yes since then" (cleared to volunteer) */
+  | "since";
 
 const labels = (opts: readonly { value: string; label: string }[]) => Object.fromEntries(opts.map((o) => [o.value, o.label]));
 const ORDER_STATUS = Object.fromEntries(
@@ -55,6 +60,12 @@ interface Spec {
   skip?: (row: Row) => boolean;
   /** Parent lookup for creates (the row itself can't be read yet) */
   parent: { key: string; find: (base: PrismaClient, id: string) => Promise<Row | null> };
+  /** A part's own wording when it's added or removed (a member's role) */
+  partChange?: (row: Row, added: boolean) => FieldChange;
+  /** An update that erases the record's personal details (a member deleted, keeping history) */
+  erases?: (data: Row) => boolean;
+  /** Personal fields scrubbed from the history once the record is erased or deleted */
+  personal?: string[];
 }
 
 type Row = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -154,6 +165,37 @@ const SPECS: Record<string, Spec> = {
     part: (r) => `${r.orderNumber ? itemRef(r as { id: string; orderNumber: number }) + " " : ""}${r.name ?? "Item"}`,
     parent: { key: "requestId", find: findOrder },
   },
+  user: {
+    entity: "member",
+    fields: {
+      name:                  { label: "Name",          kind: "text" },
+      email:                 { label: "Email",         kind: "text" },
+      phone:                 { label: "Phone",         kind: "text" },
+      status:                { label: "Account",       kind: { enum: { PENDING: "Waiting for approval", ACTIVE: "Active", SUSPENDED: "Suspended", DENIED: "Denied" } } },
+      password:              { label: "Password",      kind: "secret" },
+      volunteerClearedAt:    { label: "Cleared to volunteer", kind: "since" },
+      volunteerClearedUntil: { label: "Volunteer clearance ends", kind: "date" },
+      isSuperAdmin:          { label: "Super admin",   kind: "bool" },
+    },
+    select: { id: true, name: true, teamId: true },
+    teamOf: (r) => r.teamId ?? undefined,
+    idOf: (r) => r.id,
+    labelOf: (r) => r.name,
+    parent: { key: "teamId", find: (base, id) => base.team.findUnique({ where: { id }, select: { id: true } }).then((t) => (t ? { teamId: t.id } : null)) },
+    erases: (data) => !!data.deletedAt,
+    personal: ["Name", "Email", "Phone"],
+  },
+  userRole: {
+    entity: "member",
+    fields: { role: { label: "Role", kind: { enum: ROLE_LABELS } } },
+    select: { id: true, userId: true, user: { select: { name: true, teamId: true } } },
+    teamOf: (r) => r.user?.teamId ?? undefined,
+    idOf: (r) => r.userId,
+    labelOf: (r) => r.user?.name ?? "Member",
+    part: () => "Role",
+    partChange: (r, added) => ({ field: "Role", from: added ? EMPTY : ROLE_LABELS[r.role as keyof typeof ROLE_LABELS] ?? r.role, to: added ? ROLE_LABELS[r.role as keyof typeof ROLE_LABELS] ?? r.role : EMPTY }),
+    parent: { key: "userId", find: (base, id) => base.user.findUnique({ where: { id }, select: { name: true, teamId: true } }).then((u) => (u ? { userId: id, user: u } : null)) },
+  },
   orderVendorCharge: {
     entity: "order",
     fields: {
@@ -187,6 +229,8 @@ function show(kind: Kind, v: unknown, names: Map<string, string>): string {
     case "number": return String(Math.round(Number(v) * 100) / 100);
     case "bool":   return v ? "Yes" : "No";
     case "robot":  return names.get(String(v)) ?? "a robot";
+    case "secret": return "set";
+    case "since":  return `Yes (since ${fmtDate(v)})`;
     case "time": {
       const [h, m] = String(v).split(":").map(Number);
       if (Number.isNaN(h)) return String(v);
@@ -275,14 +319,22 @@ async function diffRows(base: PrismaClient, spec: Spec, rows: Row[], data: Row):
   rows.forEach((row, i) => {
     const teamId = spec.teamOf(row);
     if (!teamId || spec.skip?.(row)) return;
+    // Erased (a member deleted, history kept): one entry, none of the personal details
+    if (spec.erases?.(data)) {
+      out.push({ teamId, entityType: spec.entity, entityId: spec.idOf(row), entityLabel: ERASED, action: "deleted", changes: [{ field: "Account", from: "Member", to: "Deleted — personal details erased" }] });
+      return;
+    }
     const changes: FieldChange[] = [];
     const prefix = spec.part ? `${spec.part(row)} — ` : "";
     for (const [f, def] of Object.entries(spec.fields)) {
       const nv = newValue(data, f);
       if (!nv) continue;
-      const from = show(def.kind, row[f], names), to = show(def.kind, nv.value, names);
-      // Long text: compare the full values, show a shortened version
-      const same = def.kind === "long" ? String(row[f] ?? "").trim() === String(nv.value ?? "").trim() : from === to;
+      let from = show(def.kind, row[f], names), to = show(def.kind, nv.value, names);
+      // Long text: compare the full values, show a shortened version. Secrets: compare, never show
+      const same = def.kind === "long" ? String(row[f] ?? "").trim() === String(nv.value ?? "").trim()
+        : def.kind === "secret" ? (row[f] ?? null) === (nv.value ?? null)
+        : from === to;
+      if (def.kind === "secret" && !same && from !== EMPTY && to !== EMPTY) { from = "set"; to = "changed"; }
       if (!same) changes.push({ field: prefix + def.label, from, to });
     }
     for (const [l, { from, to }] of Object.entries(after[i])) {
@@ -305,7 +357,9 @@ function lifecycle(spec: Spec, row: Row, action: "created" | "deleted"): Entry |
   }
   const added = action === "created";
   let changes: FieldChange[];
-  if ("tax" in spec.fields) {
+  if (spec.partChange) {
+    changes = [spec.partChange(row, added)];
+  } else if ("tax" in spec.fields) {
     // A vendor's tax & shipping: each amount that was set appears or goes
     changes = Object.entries(spec.fields)
       .filter(([f]) => Number(row[f]) > 0)
@@ -318,6 +372,18 @@ function lifecycle(spec: Spec, row: Row, action: "created" | "deleted"): Entry |
     changes = [{ field: spec.part!(row), from: added ? EMPTY : "on the order", to: added ? `added${what}` : "removed" }];
   }
   return changes.length ? { teamId, entityType: spec.entity, entityId: spec.idOf(row), entityLabel: spec.labelOf(row), action: "updated", changes } : null;
+}
+
+const ERASED = "Former member";
+
+/** A member was deleted: their name and contact details leave their history too */
+async function scrub(base: PrismaClient, spec: Spec, entityId: string) {
+  const rows = await base.changeLog.findMany({ where: { entityType: spec.entity, entityId }, select: { id: true, changes: true } });
+  for (const r of rows) {
+    const changes = (Array.isArray(r.changes) ? r.changes : []) as unknown as FieldChange[];
+    const clean = changes.map((c) => (spec.personal?.includes(c.field) ? { ...c, from: c.from === EMPTY ? EMPTY : "(erased)", to: c.to === EMPTY ? EMPTY : "(erased)" } : c));
+    await base.changeLog.update({ where: { id: r.id }, data: { entityLabel: ERASED, changes: clean as unknown as Prisma.InputJsonValue } });
+  }
 }
 
 async function write(base: PrismaClient, entries: Entry[]) {
@@ -368,6 +434,7 @@ export function withChangeLog(base: PrismaClient) {
             if (!parent) continue;
             if (spec.part) {
               for (const r of list) { const e = lifecycle(spec, { ...r, ...parent }, "created"); if (e) entries.push(e); }
+              entries.splice(0, entries.length, ...merge(entries));
             } else {
               const teamId = spec.teamOf(parent);
               const live = list.filter((r) => !spec.skip?.(r));
@@ -382,7 +449,10 @@ export function withChangeLog(base: PrismaClient) {
         let before: Row | null = null;
         await safely(`${model}.update (before)`, async () => { before = await delegate().findUnique({ where: args.where, select: sel }); });
         const result = await query(args);
-        if (before) await safely(`${model}.update`, async () => write(base, await diffRows(base, spec, [before!], args.data)));
+        if (before) await safely(`${model}.update`, async () => {
+          await write(base, await diffRows(base, spec, [before!], args.data));
+          if (spec.erases?.(args.data)) await scrub(base, spec, spec.idOf(before!));
+        });
         return result;
       },
       async updateMany({ args, query }: { args: Row; query: (a: Row) => Promise<Row> }) {
@@ -409,7 +479,12 @@ export function withChangeLog(base: PrismaClient) {
         let before: Row | null = null;
         await safely(`${model}.delete (before)`, async () => { before = await delegate().findUnique({ where: args.where, select: sel }); });
         const result = await query(args);
-        if (before) await safely(`${model}.delete`, async () => { const e = lifecycle(spec, before!, "deleted"); if (e) await write(base, [e]); });
+        if (before) await safely(`${model}.delete`, async () => {
+          const e = lifecycle(spec, before!, "deleted");
+          if (e && spec.personal) e.entityLabel = ERASED;
+          if (e) await write(base, [e]);
+          if (spec.personal) await scrub(base, spec, spec.idOf(before!));
+        });
         return result;
       },
       async deleteMany({ args, query }: { args: Row; query: (a: Row) => Promise<Row> }) {

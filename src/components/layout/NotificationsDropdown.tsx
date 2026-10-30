@@ -5,32 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatDate } from "@/lib/utils";
 
-const TYPE_ICONS: Record<string, string> = {
-  REORDER_TRIGGERED:       "📦",
-  PURCHASE_SUBMITTED:      "🛒",
-  PURCHASE_APPROVED:       "✅",
-  PURCHASE_DENIED:         "❌",
-  ORDER_RECEIVED:          "📬",
-  TASK_DUE_SOON:           "📅",
-  TASK_OVERDUE:            "⚠️",
-  TASK_BLOCKED:            "🚧",
-  CRITICAL_ISSUE:          "🔴",
-  WEIGHT_WARNING:          "⚖️",
-  BOM_CAP_WARNING:         "📋",
-  TOOL_OVERDUE:            "🔧",
-  CERT_EXPIRING:           "🎓",
-  SAFETY_INCIDENT:         "🚨",
-  COMPETITION_APPROACHING: "🏆",
-  MEMBER_APPROVAL_NEEDED:  "👤",
-  ACCOUNT_APPROVED:        "✅",
-  ACCOUNT_DENIED:          "❌",
-  PURCHASE_REMINDER:       "⏰",
-  MEETING_REMINDER:        "📅",
-  MEETING_CHANGED:         "🗓️",
-  COMPETITION_COUNTDOWN:   "🏁",
-  TASK_ASSIGNED:           "📌",
-  TOOL_DUE:                "🔧",
-};
 
 interface Notification {
   id: string;
@@ -42,6 +16,8 @@ interface Notification {
   createdAt: string;
 }
 
+import { NOTIFICATION_ICONS } from "@/lib/notification-icons";
+
 export function NotificationsDropdown({ unreadCount }: { unreadCount: number }) {
   const router = useRouter();
   const [open, setOpen]           = useState(false);
@@ -49,6 +25,14 @@ export function NotificationsDropdown({ unreadCount }: { unreadCount: number }) 
   const [loading, setLoading]     = useState(false);
   const [localUnread, setLocalUnread] = useState(unreadCount);
   const ref = useRef<HTMLDivElement>(null);
+
+  /** Clear one notification, or all of them (no id) */
+  function clear(id?: string) {
+    setNotifications((list) => (id ? list.filter((n) => n.id !== id) : []));
+    fetch("/api/notifications", { method: "DELETE", body: JSON.stringify({ ids: id ? [id] : [] }) })
+      .then(() => router.refresh())
+      .catch(() => {});
+  }
 
   // Fetch on open
   useEffect(() => {
@@ -116,10 +100,15 @@ export function NotificationsDropdown({ unreadCount }: { unreadCount: number }) 
           <div className="flex items-center justify-between px-4 py-3 border-b border-(--color-border)">
             <p className="text-sm font-semibold text-(--color-text-primary)">Notifications</p>
             {notifications.length > 0 && (
-              <Link href="/notifications" onClick={() => setOpen(false)}
-                className="text-xs text-(--color-secondary) hover:underline">
-                View all
-              </Link>
+              <span className="flex items-center gap-3">
+                <button type="button" onClick={() => clear()} className="text-xs text-(--color-text-secondary) hover:text-(--color-text-primary) hover:underline">
+                  Clear all
+                </button>
+                <Link href="/notifications" onClick={() => setOpen(false)}
+                  className="text-xs text-(--color-secondary) hover:underline">
+                  View all
+                </Link>
+              </span>
             )}
           </div>
 
@@ -139,7 +128,7 @@ export function NotificationsDropdown({ unreadCount }: { unreadCount: number }) 
             {!loading && notifications.map((n) => {
               const content = (
                 <>
-                  <span className="text-base shrink-0 mt-0.5">{TYPE_ICONS[n.type] ?? "🔔"}</span>
+                  <span className="text-base shrink-0 mt-0.5">{NOTIFICATION_ICONS[n.type] ?? "🔔"}</span>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-(--color-text-primary) leading-snug">{n.title}</p>
                     {n.body && <p className="text-small text-(--color-text-secondary) mt-0.5 truncate">{n.body}</p>}
@@ -152,15 +141,25 @@ export function NotificationsDropdown({ unreadCount }: { unreadCount: number }) 
                   )}
                 </>
               );
-              const rowClass = `flex gap-3 px-4 py-3 transition-colors ${!n.read ? "bg-(--color-primary)/4" : ""}`;
-              // The whole notification opens what it's about
-              return n.linkUrl ? (
-                <Link key={n.id} href={n.linkUrl} onClick={() => setOpen(false)}
-                  className={`${rowClass} hover:bg-(--color-surface-overlay) focus-visible:bg-(--color-surface-overlay) focus-visible:outline-none`}>
-                  {content}
-                </Link>
-              ) : (
-                <div key={n.id} className={rowClass}>{content}</div>
+              const rowClass = "flex flex-1 min-w-0 gap-3 pl-4 pr-1 py-3 transition-colors";
+              // The whole notification opens what it's about; ✕ clears it
+              return (
+                <div key={n.id} className={`flex items-start ${!n.read ? "bg-(--color-primary)/4" : ""}`}>
+                  {n.linkUrl ? (
+                    <Link href={n.linkUrl} onClick={() => setOpen(false)}
+                      className={`${rowClass} hover:bg-(--color-surface-overlay) focus-visible:bg-(--color-surface-overlay) focus-visible:outline-none`}>
+                      {content}
+                    </Link>
+                  ) : (
+                    <div className={rowClass}>{content}</div>
+                  )}
+                  <button type="button" onClick={() => clear(n.id)} aria-label="Clear this notification" title="Clear"
+                    className="shrink-0 self-center mr-1 h-8 w-8 rounded-md flex items-center justify-center text-(--color-text-secondary) hover:bg-(--color-surface-overlay) hover:text-(--color-text-primary)">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
               );
             })}
           </div>

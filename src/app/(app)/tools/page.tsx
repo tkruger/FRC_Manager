@@ -8,7 +8,7 @@ import { ToolsClient } from "./ToolsClient";
 import { toolGroups } from "./tool-helpers";
 import type { ToolRow } from "./tool-helpers";
 import { PageHeader } from "@/components/PageHeader";
-import { canSeeAudit, packProgress } from "@/lib/packing";
+import { packProgress } from "@/lib/packing";
 
 const TOOL_EDIT_ROLES = ["INVENTORY_ADMIN", "BUILD_LEAD", "TEAM_LEADERSHIP", "HEAD_MENTOR"];
 
@@ -97,7 +97,6 @@ export default async function ToolsPage({ searchParams }: { searchParams: Promis
           </Link>
           <Link href="/tools/pack"><Button variant="outline" size="sm">Pack lists</Button></Link>
           <Link href="/tools/locations"><Button variant="outline" size="sm">Locations</Button></Link>
-          {canSeeAudit(session.user.roles) && <Link href="/audit"><Button variant="outline" size="sm">Audit log</Button></Link>}
           <AddToolDialog names={groups.names} />
         </>}
       />

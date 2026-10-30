@@ -4,33 +4,9 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { formatDate } from "@/lib/utils";
 import { MarkAllReadButton } from "./MarkAllReadButton";
+import { ClearNotificationButton } from "./ClearNotificationButton";
+import { NOTIFICATION_ICONS } from "@/lib/notification-icons";
 
-const TYPE_ICONS: Record<string, string> = {
-  REORDER_TRIGGERED:       "📦",
-  PURCHASE_SUBMITTED:      "🛒",
-  PURCHASE_APPROVED:       "✅",
-  PURCHASE_DENIED:         "❌",
-  ORDER_RECEIVED:          "📬",
-  TASK_DUE_SOON:           "📅",
-  TASK_OVERDUE:            "⚠️",
-  TASK_BLOCKED:            "🚧",
-  CRITICAL_ISSUE:          "🔴",
-  WEIGHT_WARNING:          "⚖️",
-  BOM_CAP_WARNING:         "📋",
-  TOOL_OVERDUE:            "🔧",
-  CERT_EXPIRING:           "🎓",
-  SAFETY_INCIDENT:         "🚨",
-  COMPETITION_APPROACHING: "🏆",
-  MEMBER_APPROVAL_NEEDED:  "👤",
-  ACCOUNT_APPROVED:        "✅",
-  ACCOUNT_DENIED:          "❌",
-  PURCHASE_REMINDER:       "⏰",
-  MEETING_REMINDER:        "📅",
-  MEETING_CHANGED:         "🗓️",
-  COMPETITION_COUNTDOWN:   "🏁",
-  TASK_ASSIGNED:           "📌",
-  TOOL_DUE:                "🔧",
-};
 
 export default async function NotificationsPage() {
   const session = await auth();
@@ -64,6 +40,7 @@ export default async function NotificationsPage() {
             Settings
           </Link>
           {unread.length > 0 && <MarkAllReadButton />}
+          {notifications.length > 0 && <ClearNotificationButton all />}
         </div>
       </div>
 
@@ -76,7 +53,7 @@ export default async function NotificationsPage() {
           {notifications.map((n) => {
             const content = (
               <>
-                <span className="text-xl shrink-0">{TYPE_ICONS[n.type] ?? "🔔"}</span>
+                <span className="text-xl shrink-0">{NOTIFICATION_ICONS[n.type] ?? "🔔"}</span>
                 <div className="flex-1 min-w-0">
                   <p className={`text-sm font-medium ${!n.read ? "text-(--color-text-primary)" : "text-(--color-text-secondary)"}`}>
                     {n.title}
@@ -89,14 +66,17 @@ export default async function NotificationsPage() {
                 </div>
               </>
             );
-            const rowClass = `px-5 py-4 flex gap-3 transition-colors ${!n.read ? "bg-(--color-primary)/5" : ""}`;
-            // The whole notification opens what it's about
-            return n.linkUrl ? (
-              <Link key={n.id} href={n.linkUrl} className={`${rowClass} hover:bg-(--color-surface-overlay)`}>
-                {content}
-              </Link>
-            ) : (
-              <div key={n.id} className={rowClass}>{content}</div>
+            const rowClass = "px-5 py-4 flex flex-1 min-w-0 gap-3 transition-colors";
+            // The whole notification opens what it's about; ✕ clears it
+            return (
+              <div key={n.id} className={`flex items-start ${!n.read ? "bg-(--color-primary)/5" : ""}`}>
+                {n.linkUrl ? (
+                  <Link href={n.linkUrl} className={`${rowClass} hover:bg-(--color-surface-overlay)`}>{content}</Link>
+                ) : (
+                  <div className={rowClass}>{content}</div>
+                )}
+                <ClearNotificationButton id={n.id} />
+              </div>
             );
           })}
         </div>
