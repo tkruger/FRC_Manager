@@ -11,7 +11,6 @@ import {
   packScanAction, packToolAction, tickPackItemAction, setPackEntryLocationAction,
   unpackEntryAction, finishPackingAction, deletePackSessionAction,
 } from "@/app/actions/packing";
-import { useViewOnly } from "@/components/access/ViewOnly";
 
 interface Item { id: string; toolName: string | null; label: string | null; quantity: number; notes: string | null }
 interface Entry {
@@ -41,10 +40,7 @@ type LogLine = { text: string; tone: "ok" | "info" | "error" };
 
 const selectCls = "h-9 max-w-[11rem] rounded-md border border-(--color-border) bg-(--color-surface) text-(--color-text-primary) px-2 text-sm focus:outline-none focus:ring-2 focus:ring-(--color-primary)/40";
 
-export function PackSessionClient({ sessionId, title, subtitle, finished: isFinished, manager, items, entries, tools, locations }: Props) {
-  // View-only accounts see it as if packing were finished: nothing to tick, pack or unpack
-  const viewOnly = useViewOnly();
-  const finished = isFinished || viewOnly;
+export function PackSessionClient({ sessionId, title, subtitle, finished, manager, items, entries, tools, locations }: Props) {
   const router = useRouter();
   const [scanning, setScanning] = useState(false);
   const [into, setInto]         = useState<string>("");
@@ -139,15 +135,15 @@ export function PackSessionClient({ sessionId, title, subtitle, finished: isFini
         <div className="min-w-0">
           <PageTitle help="tools">{title}</PageTitle>
           <p className="text-body text-(--color-text-secondary) mt-1">
-            {subtitle}{isFinished && <> · <Badge variant="neutral">Finished</Badge></>}
+            {subtitle}{finished && <> · <Badge variant="neutral">Finished</Badge></>}
           </p>
         </div>
         <div className="no-print flex flex-wrap gap-2 sm:justify-end">
           <Button variant="outline" size="sm" onClick={() => window.print()}>Print</Button>
           {manager && (
             <Button variant="outline" size="sm" isLoading={isPending}
-              onClick={() => act(() => finishPackingAction(sessionId, !isFinished))}>
-              {isFinished ? "Reopen" : "Finish packing"}
+              onClick={() => act(() => finishPackingAction(sessionId, !finished))}>
+              {finished ? "Reopen" : "Finish packing"}
             </Button>
           )}
           {manager && (

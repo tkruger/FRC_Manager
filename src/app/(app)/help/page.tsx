@@ -358,7 +358,7 @@ export default function HelpPage() {
       </Section>
 
       <Section id="roles" title="Roles & permissions">
-        <p>Head Mentors and Team Leadership approve new members and assign roles. <b>Mentor</b> has the same access as Team Member — give a mentor Team Leadership (or other roles) for more. <b>Parents</b> are view-only: they see what a Team Member sees but can&apos;t change anything, apart from their own settings and volunteering. A member can have several roles. <Link href="/settings/roles" className="link">Roles explained</Link> has the full list of who can do what.</p>
+        <p>Head Mentors and Team Leadership approve new members and assign roles. <b>Mentor</b> has the same access as Team Member — give a mentor Team Leadership (or other roles) for more. <b>Parents</b> are view-only: they see what a Team Member sees (except orders and robots) but can&apos;t change anything, apart from their own settings, volunteering, helping pack for competitions and scanning tools into their locations. A member can have several roles. <Link href="/settings/roles" className="link">Roles explained</Link> has the full list of who can do what.</p>
         <p><b>Inviting people:</b> Head Mentors and Team Leadership can invite people from <b>Settings → Invite people</b> — by email (separate addresses with commas) or with a join link the bot posts in a Discord channel. Pick the roles they'll get (Team Member by default — you can give roles up to your own; only Head Mentors can invite Head Mentors). Anyone who accepts joins the team straight away with those roles.</p>
         <Table
           head={["Role", "Can also…"]}
@@ -371,7 +371,7 @@ export default function HelpPage() {
             ["Buyer", "Get approved items to order, export the purchasing CSV, add tracking links and set item statuses."],
             ["Team Leadership", "Approve members and assign roles (except Head Mentor), invite people, manage meetings, Discord and the team time zone; act as captains on orders (Buyer page, item statuses); view the purchase workflow."],
             ["Mentor", "The same as Team Member — add other roles for more."],
-            ["Parent", "View-only: see everything a Team Member sees. Once cleared, sign up to volunteer at meetings."],
+            ["Parent", "View-only: see tasks, tools, inventory, the calendar and safety (not orders or robots), help pack for competitions and scan tools into locations. Once cleared, sign up to volunteer at meetings."],
             ["Volunteer coordinator", "Make sure every meeting has enough adults: ask volunteers to cover meetings, set shift instructions and adults per meeting; hears about meetings that are short."],
             ["Head Mentor", "Everything: seasons, robots, applying templates, editing the purchase workflow, acting on any purchase step, and clearing adults to volunteer. Only Head Mentors can grant or remove the Head Mentor role."],
           ]}

@@ -44,7 +44,9 @@ export default function RolesPage() {
                 <li key={item.action} className="flex flex-col gap-2 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
                   <span className="text-sm text-(--color-text-primary)">{item.action}</span>
                   <span className="flex flex-wrap gap-1.5 sm:justify-end sm:max-w-[55%]">
-                    {item.who === "everyone"
+                    {item.who === "all"
+                      ? <Badge variant="success">Everyone, including Parents</Badge>
+                      : item.who === "everyone"
                       ? <Badge variant="success">Everyone but Parents</Badge>
                       : item.who === "cleared"
                       ? <Badge variant="success">Adults cleared to volunteer</Badge>

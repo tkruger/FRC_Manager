@@ -1,4 +1,5 @@
 ﻿import { auth } from "@/lib/auth";
+import { hiddenForViewOnly, isViewOnly } from "@/lib/access/read-only";
 import { prisma } from "@/lib/prisma";
 import { nextUp } from "@/lib/competition";
 import { FALLBACK_TIMEZONE, isValidTimezone, localParts } from "@/lib/notify/time";
@@ -11,6 +12,7 @@ import { BudgetTile } from "@/components/budget/BudgetTile";
 
 export default async function DashboardPage() {
   const session = await auth();
+  const viewOnly = isViewOnly(session?.user?.roles);
 
   const activeSeason = session?.user?.teamId
     ? await prisma.season.findFirst({
@@ -135,7 +137,7 @@ export default async function DashboardPage() {
               href: "/procurement",
               accent: "#D97706",
             },
-          ].map((s) => (
+          ].filter((s) => !viewOnly || !hiddenForViewOnly(s.href)).map((s) => (
             <Link key={s.label} href={s.href} className="card group no-underline block"
               style={{ borderLeftWidth: "3px", borderLeftColor: s.accent }}>
               <p className="text-small text-(--color-text-secondary) group-hover:text-(--color-text-primary) transition-colors">{s.label}</p>
@@ -160,7 +162,7 @@ export default async function DashboardPage() {
           { title: "Safety",        href: "/safety",          desc: "Certs & checklists",      color: "#0891B2",              icon: "🛡️" },
           { title: "Season",        href: "/settings/season", desc: "Season configuration",   color: "#64748B",              icon: "⚙️" },
           { title: "Calendar",      href: "/calendar",        desc: "Meeting schedule",        color: "#7C3AED",              icon: "📅" },
-        ].map((mod) => (
+        ].filter((mod) => !viewOnly || !hiddenForViewOnly(mod.href)).map((mod) => (
           <Link key={mod.href} href={mod.href} className="block no-underline">
             <TiltCard
               className="flex flex-col gap-3 h-full cursor-pointer"

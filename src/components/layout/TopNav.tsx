@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import type { Session } from "next-auth";
 import { NotificationsDropdown } from "./NotificationsDropdown";
 import { canCoordinate, isAdult } from "@/lib/volunteers";
+import { hiddenForViewOnly, isViewOnly } from "@/lib/access/read-only";
 
 const MODULE_TABS = [
   { label: "Home",        href: "/dashboard",   icon: HomeIcon,        exact: true },
@@ -65,7 +66,9 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
   const isSuperAdmin      = session?.user?.isSuperAdmin === true;
   // Volunteers: for adults and volunteer coordinators
   const showVolunteers    = isAdult(roles) || canCoordinate(roles);
-  const navShown          = (href: string) => href !== "/volunteers" || showVolunteers;
+  // View-only accounts (Parents): no Orders or Fleet, and no robot to pick
+  const viewOnly          = isViewOnly(roles);
+  const navShown          = (href: string) => (href !== "/volunteers" || showVolunteers) && !(viewOnly && hiddenForViewOnly(href));
   const canInvite         = roles.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP"].includes(r)); // same as INVITE_ROLES in lib/invites
   const canManageTemplates = roles.some((r) => ["HEAD_MENTOR", "BUILD_LEAD", "INVENTORY_ADMIN"].includes(r));
   const [moreOpen, setMoreOpen] = useState(false);
@@ -134,7 +137,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
 
           {/* Right: controls */}
           <div className="flex items-center gap-0.5 justify-end">
-          {robots.length > 0 && (
+          {robots.length > 0 && !viewOnly && (
             <RobotSelector robots={robots} activeRobotId={activeRobotId} activeRobot={activeRobot} />
           )}
           <button
@@ -177,7 +180,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
           </div>
           {/* min-w-0 + flex-1 let the robot picker shrink so the row never exceeds the screen */}
           <div className="flex min-w-0 flex-1 items-center justify-end gap-1">
-            {robots.length > 0 && <RobotSelector robots={robots} activeRobotId={activeRobotId} activeRobot={activeRobot} />}
+            {robots.length > 0 && !viewOnly && <RobotSelector robots={robots} activeRobotId={activeRobotId} activeRobot={activeRobot} />}
             {/* Phones: theme lives in Profile & appearance, calendar in the bottom bar */}
             <button onClick={toggle} aria-label="Toggle light/dark mode" className="hidden sm:flex h-9 w-9 shrink-0 rounded-md items-center justify-center text-(--color-text-secondary) hover:bg-(--color-surface-overlay) transition-colors">
               {resolvedTheme === "dark" ? <SunIcon /> : <MoonIcon />}

@@ -27,7 +27,7 @@ export function CanEdit({ children, fallback = null }: { children: React.ReactNo
 export function ViewOnlyBanner({ canVolunteer }: { canVolunteer: boolean }) {
   return (
     <div className="no-print border-b border-(--color-border) bg-(--color-info)/10 px-4 py-2 text-center text-small text-(--color-text-primary)">
-      <b>View-only.</b> You can see everything the team sees, but not change it.{" "}
+      <b>View-only.</b> You can see everything the team sees and help pack and put tools away, but not change anything else.{" "}
       {canVolunteer
         ? <Link href="/volunteers" className="font-medium text-(--color-primary) hover:underline">Sign up to volunteer →</Link>
         : <>Volunteering opens once a Head Mentor clears you.</>}

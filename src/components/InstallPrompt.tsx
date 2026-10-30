@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Share, MoreVertical, Menu, PlusSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { isIos, isStandalone } from "@/lib/push-client";
+import { releasePrompt, whenFree } from "@/lib/prompt-queue";
 
 // Once signed in, on a phone or tablet browser (not the installed app), explain how to add FRC Manager to
 // the home screen — only the steps for this device and browser. Android Chrome gets a
@@ -52,6 +53,14 @@ export function InstallPrompt() {
   const [open, setOpen]         = useState(false);
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
 
+  // Taking turns with the other first-visit prompt (src/lib/prompt-queue.ts)
+  const shown = useRef(false);
+  useEffect(() => {
+    if (open) shown.current = true;
+    else if (shown.current) { shown.current = false; releasePrompt("install"); }
+  }, [open]);
+  useEffect(() => () => releasePrompt("install"), []);
+
   useEffect(() => {
     if (isStandalone() || snoozed()) return;
     const p = detect();
@@ -66,7 +75,8 @@ export function InstallPrompt() {
     window.addEventListener("beforeinstallprompt", onBeforeInstall);
     window.addEventListener("appinstalled", onInstalled);
 
-    const timer = setTimeout(() => { setPlatform(p); setOpen(true); }, SHOW_AFTER);
+    // After the notifications question if that's showing — never on top of it
+    const timer = setTimeout(() => { setPlatform(p); whenFree("install", () => setOpen(true)); }, SHOW_AFTER);
     return () => {
       clearTimeout(timer);
       window.removeEventListener("beforeinstallprompt", onBeforeInstall);

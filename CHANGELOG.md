@@ -3,7 +3,7 @@
 ## Unreleased
 
 - **Volunteers.** Every meeting needs enough adults — two confirmed adults by default. The new Volunteers page shows each upcoming meeting's coverage, and meetings that are short are flagged there and (for coordinators) on the calendar
-  - **Parent** role: sees everything a Team Member sees, but view-only (enforced for every change, not just hidden buttons); a banner says so
+  - **Parent** role: sees everything a Team Member sees, but view-only (enforced for every change, not just hidden buttons); a banner says so. Parents can still help pack for competitions and scan tools into their locations, and don't see Orders, Fleet or the robot picker
   - **Volunteer coordinator** role: asks cleared adults to cover meetings, takes people off shifts, sets the default shift instructions and how many adults a meeting needs, gives a meeting its own special instructions, and gets a morning list of the next two weeks' gaps
   - Head Mentors mark adults **Cleared to volunteer** (optionally until a date) on Team members. Only cleared adults can sign up; ones asked by the coordinator confirm or decline
   - Reminders: the day before each shift (with the instructions), morning nudges for unanswered asks, and a heads-up to coordinators when someone drops out of a meeting that's now short
@@ -13,6 +13,7 @@
 - **Team email**: Head Mentors can connect the team's own email account (Gmail, Outlook, Yahoo, iCloud, Zoho or any mail server) in Settings → Team email, with the From name and address. Notifications, invites and welcome emails then come from the team; account emails (address confirmation, password reset) still come from FRC Manager, which also sends anything the team's server fails to. Saving checks the login; "Send me a test email" checks sending. The password is stored encrypted
 - Team members on phones: a member's name no longer gets squeezed into a one-letter column by the buttons beside it
 - The test site (frc-manager.vercel.app) is marked: an amber hazard stripe along the top, a TEST tag beside the logo, and “TEST ·” in the tab title (“FRC Test” on the home screen). TEST_SITE=1/0 in a deployment overrides it
+- First visit on a phone: the “turn on notifications” question and the “add to home screen” steps take turns instead of opening on top of each other (closing one used to close both)
 - iPhone: the bottom tab bar (and top bar) stay put while scrolling long pages
 - Roles explained and the guide list the new roles; the guide's Mentor row now matches what Mentors can do (Team Member access)
 - **Change history** for orders (including their items and tax & shipping), tasks and meetings: who changed which field, from what to what, and when. Open **History** on an order, task card or meeting, or pick “Changes to orders, tasks and meetings” on the Audit log. Changes made from Discord count as the linked member's; background jobs show as System. History is kept for a year (the hourly job removes older entries)

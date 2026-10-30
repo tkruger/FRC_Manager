@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { checkoutToolAction, checkinToolAction } from "@/app/actions/tools";
 import { moveToolToLocationAction } from "@/app/actions/tool-locations";
 import { useViewOnly } from "@/components/access/ViewOnly";
-import { VIEW_ONLY_MESSAGE } from "@/lib/access/read-only";
 
 interface ScannedTool {
   kind: "tool";
@@ -99,14 +98,12 @@ export function ScanClient({ locations }: { locations: LocationOption[] }) {
     const data = await lookup(code);
     if ("error" in data) { setPutAwayLog((l) => [{ text: data.error, ok: false }, ...l]); return; }
     if (data.kind !== "tool") { setPutAwayLog((l) => [{ text: `${data.name} is a location — scan tools to put in ${loc.name}.`, ok: false }, ...l]); return; }
-    if (viewOnly) { setPutAwayLog((l) => [{ text: VIEW_ONLY_MESSAGE, ok: false }, ...l]); return; }
     const res = await moveToolToLocationAction(data.id, loc.id);
     setPutAwayLog((l) => [{ text: res.success ? res.message ?? "Moved." : res.error, ok: res.success }, ...l]);
   }
 
   function move(t: ScannedTool, locationId: string, locationName: string) {
     setActionError(null);
-    if (viewOnly) { setFound(t); setActionError(VIEW_ONLY_MESSAGE); return; }
     startTransition(async () => {
       const res = await moveToolToLocationAction(t.id, locationId);
       if (res.success) setActionDone(`✓ ${t.name}${t.assetTag ? ` ${t.assetTag}` : ""} is now in ${locationName}.`);
@@ -334,7 +331,7 @@ export function ScanClient({ locations }: { locations: LocationOption[] }) {
         )}
 
         {/* Move — scan where it's going, or pick */}
-        {locations.length > 0 && !viewOnly && (
+        {locations.length > 0 && (
           <div className="card space-y-3">
             <p className="text-h3 text-(--color-text-primary)">Move it</p>
             <Button variant="secondary" className="w-full" onClick={() => { setLookupError(null); setMode({ kind: "where", tool }); }}>

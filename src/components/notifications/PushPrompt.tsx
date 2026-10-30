@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { pushSupport, hasSubscription, enablePush, isIos } from "@/lib/push-client";
+import { releasePrompt, whenFree } from "@/lib/prompt-queue";
 
 // Asks once per device whether to turn on push notifications. The answer is
 // remembered in this device's storage, so a new phone or browser is asked again.
@@ -31,6 +32,14 @@ export function PushPrompt({ vapidPublicKey }: { vapidPublicKey: string | null }
   const [busy, setBusy]       = useState(false);
   const [error, setError]     = useState<string | null>(null);
 
+  // Taking turns with the other first-visit prompt (src/lib/prompt-queue.ts)
+  const shown = useRef(false);
+  useEffect(() => {
+    if (open) shown.current = true;
+    else if (shown.current) { shown.current = false; releasePrompt("push"); }
+  }, [open]);
+  useEffect(() => () => releasePrompt("push"), []);
+
   useEffect(() => {
     // Nothing to offer without server keys; no need to ask on the settings page itself
     if (!vapidPublicKey || remembered() || pathname.startsWith("/settings/notifications")) return;
@@ -46,7 +55,7 @@ export function PushPrompt({ vapidPublicKey }: { vapidPublicKey: string | null }
       if (Notification.permission === "granted" && await hasSubscription().catch(() => false)) {
         remember("enabled"); return;
       }
-      if (!cancelled) { setStep("ask"); setOpen(true); }
+      if (!cancelled) { setStep("ask"); whenFree("push", () => setOpen(true)); }
     }, SHOW_AFTER_MS);
 
     return () => { cancelled = true; clearTimeout(timer); };

@@ -18,13 +18,14 @@ export const ROLE_SUMMARY: Record<Role, { who: string; summary: string }> = {
   TEAM_LEADERSHIP: { who: "Captains and student leaders",   summary: "Runs the team: approves members and assigns roles, invites people, manages meetings, Discord and the team time zone, and acts as captain on orders." },
   MENTOR:          { who: "Mentors",                        summary: "Marks someone as a mentor. Same access as Team Member — add Team Leadership or other roles for more." },
   HEAD_MENTOR:     { who: "The lead mentor (one or more)",  summary: "Everything, including seasons, robots, the purchase workflow, granting the Head Mentor role and clearing adults to volunteer." },
-  PARENT:          { who: "Students' parents",              summary: "Sees what a Team Member sees, but view-only. Once a Head Mentor clears them, they can sign up to volunteer at meetings." },
+  PARENT:          { who: "Students' parents",              summary: "Sees what a Team Member sees (apart from orders and robots), but view-only — except helping pack for competitions and scanning tools into locations. Once a Head Mentor clears them, they can sign up to volunteer at meetings." },
   VOLUNTEER_COORDINATOR: { who: "Whoever organizes adult volunteers", summary: "Makes sure every meeting has enough cleared adults: assigns volunteers, sets the shift instructions and hears about meetings that are short. View-only elsewhere unless they have other roles." },
 };
 
 /** Roles that can do something, besides Head Mentor (who can do everything). "everyone":
- *  every role but Parent (view-only); "cleared": any adult a Head Mentor cleared to volunteer */
-type Who = Role[] | "everyone" | "cleared";
+ *  every role but Parent (view-only); "all": Parents too; "cleared": any adult a Head Mentor
+ *  cleared to volunteer */
+type Who = Role[] | "everyone" | "all" | "cleared";
 
 export const CAPABILITIES: { area: string; items: { action: string; who: Who }[] }[] = [
   {
@@ -42,7 +43,7 @@ export const CAPABILITIES: { area: string; items: { action: string; who: Who }[]
       { action: "See low stock and the order queue",                     who: ["BUILD_LEAD", "INVENTORY_ADMIN", "TEAM_LEADERSHIP"] },
       { action: "Add, edit and retire inventory items",                  who: ["INVENTORY_ADMIN"] },
       { action: "Add and edit tools and tool locations",                 who: ["BUILD_LEAD", "INVENTORY_ADMIN", "TEAM_LEADERSHIP"] },
-      { action: "Help pack for competitions, scan tools into locations", who: "everyone" },
+      { action: "Help pack for competitions, scan tools into locations", who: "all" },
       { action: "Edit the competition pack list, start and finish packing", who: ["TEAM_LEADERSHIP"] },
       { action: "Manage vendors",                                        who: ["INVENTORY_ADMIN"] },
     ],
