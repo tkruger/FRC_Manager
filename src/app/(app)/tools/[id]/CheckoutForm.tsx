@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import { checkoutToolAction } from "@/app/actions/tools";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
+import { useViewOnly } from "@/components/access/ViewOnly";
 
 export function CheckoutForm({ toolId, onDone }: { toolId: string; onDone?: () => void }) {
+  const viewOnly = useViewOnly();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -25,6 +27,7 @@ export function CheckoutForm({ toolId, onDone }: { toolId: string; onDone?: () =
   // Default return = 7 days from now
   const defaultReturn = new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0];
 
+  if (viewOnly) return null;
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && <div className="text-sm text-(--color-danger) bg-(--color-danger)/10 rounded px-3 py-2">{error}</div>}

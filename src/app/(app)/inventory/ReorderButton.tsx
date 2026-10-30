@@ -9,6 +9,7 @@ import { Select } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
 import { createPurchaseRequestAction } from "@/app/actions/procurement";
 import { OrderSubmitted } from "./OrderSubmitted";
+import { useViewOnly } from "@/components/access/ViewOnly";
 
 interface Props {
   itemId:     string;
@@ -25,6 +26,7 @@ const PRIORITY_OPTS = [
 ];
 
 export function ReorderButton({ itemId, itemName, reorderQty, unitCost, supplier }: Props) {
+  const viewOnly = useViewOnly();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [state, action, isPending] = useActionState(createPurchaseRequestAction, null);
@@ -36,6 +38,7 @@ export function ReorderButton({ itemId, itemName, reorderQty, unitCost, supplier
     if (state?.success) router.refresh();
   }
 
+  if (viewOnly) return null;
   return (
     <>
       <Button size="sm" variant="outline" onClick={() => setOpen(true)}>

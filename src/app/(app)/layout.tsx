@@ -7,6 +7,9 @@ import { AnimatedBackground } from "@/components/providers/AnimatedBackground";
 import { PushPrompt } from "@/components/notifications/PushPrompt";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { Toaster } from "@/components/ui/toast";
+import { ViewOnlyBanner, ViewOnlyProvider } from "@/components/access/ViewOnly";
+import { isViewOnly } from "@/lib/access/read-only";
+import { isCleared } from "@/lib/volunteers";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -19,11 +22,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   let unreadNotificationCount = 0;
   let activeSeasonName: string | null = null;
   let activeRobotId: string | null = null;
+  const viewOnly = isViewOnly(session.user.roles);
+  let canVolunteer = false;
 
   if (session.user.teamId) {
     const isAdmin = session.user.roles.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP"].includes(r));
 
-    const [activeSeason, pendingCount, unreadCount, savedRobotId] = await Promise.all([
+    const [activeSeason, pendingCount, unreadCount, savedRobotId, me] = await Promise.all([
       prisma.season.findFirst({
         where: { teamId: session.user.teamId, isActive: true },
         include: {
@@ -39,7 +44,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         : Promise.resolve(0),
       prisma.notification.count({ where: { userId: session.user.id, read: false } }),
       getActiveRobotId(),
+      viewOnly
+        ? prisma.user.findUnique({ where: { id: session.user.id }, select: { volunteerClearedAt: true, volunteerClearedUntil: true } })
+        : Promise.resolve(null),
     ]);
+    canVolunteer = !!me && isCleared(me);
 
     robots = activeSeason?.robots ?? [];
     pendingMemberCount = pendingCount;
@@ -67,7 +76,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           activeSeasonName={activeSeasonName}
         />
         {/* pt-14 clears the top nav; pb-14 clears the mobile bottom tab bar (hidden on lg+) */}
-        <main className="pt-safe-nav pb-14 lg:pb-0">{children}</main>
+        <main className="pt-safe-nav pb-14 lg:pb-0">
+          {viewOnly && <ViewOnlyBanner canVolunteer={canVolunteer} />}
+          <ViewOnlyProvider viewOnly={viewOnly}>{children}</ViewOnlyProvider>
+        </main>
         {/* First visit on a device: offer push notifications (once) */}
         <PushPrompt vapidPublicKey={process.env.VAPID_PUBLIC_KEY ?? null} />
         <InstallPrompt />

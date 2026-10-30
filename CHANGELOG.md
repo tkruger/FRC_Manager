@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- **Volunteers.** Every meeting needs enough adults — two confirmed adults by default. The new Volunteers page shows each upcoming meeting's coverage, and meetings that are short are flagged there and (for coordinators) on the calendar
+  - **Parent** role: sees everything a Team Member sees, but view-only (enforced for every change, not just hidden buttons); a banner says so
+  - **Volunteer coordinator** role: asks cleared adults to cover meetings, takes people off shifts, sets the default shift instructions and how many adults a meeting needs, gives a meeting its own special instructions, and gets a morning list of the next two weeks' gaps
+  - Head Mentors mark adults **Cleared to volunteer** (optionally until a date) on Team members. Only cleared adults can sign up; ones asked by the coordinator confirm or decline
+  - Reminders: the day before each shift (with the instructions), morning nudges for unanswered asks, and a heads-up to coordinators when someone drops out of a meeting that's now short
+  - Volunteer notifications can also come by **email** (on by default; each person can turn it off in Settings → Notifications)
+  - Phone number on your profile (optional), shown only to coordinators and Head Mentors
+  - Regenerating the meeting schedule keeps meetings that adults have signed up for
+- Roles explained and the guide list the new roles; the guide's Mentor row now matches what Mentors can do (Team Member access)
 - **Change history** for orders (including their items and tax & shipping), tasks and meetings: who changed which field, from what to what, and when. Open **History** on an order, task card or meeting, or pick “Changes to orders, tasks and meetings” on the Audit log. Changes made from Discord count as the linked member's; background jobs show as System. History is kept for a year (the hourly job removes older entries)
 - Meetings can be linked directly (`/calendar?meeting=…`), and the meeting card shows its date correctly in every time zone
 - **Order approver** replaces the Treasurer role (existing Treasurers become Order approvers). It approves, denies and edits open orders only; setting up the budget, logging expenses and recording funding are now for Head Mentors, and vendors for Head Mentors and Inventory Admins

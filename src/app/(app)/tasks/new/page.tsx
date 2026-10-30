@@ -1,12 +1,15 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { isViewOnly } from "@/lib/access/read-only";
+import { ViewOnlyNotice } from "@/components/access/ViewOnly";
 import Link from "next/link";
 import { NewTaskForm } from "./NewTaskForm";
 
 export default async function NewTaskPage() {
   const session = await auth();
   if (!session?.user?.teamId) redirect("/dashboard");
+  if (isViewOnly(session.user.roles)) return <ViewOnlyNotice what="New task" />;
 
   const activeSeason = await prisma.season.findFirst({
     where: { teamId: session.user.teamId, isActive: true },

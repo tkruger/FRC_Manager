@@ -60,17 +60,19 @@ export async function removePushSubscriptionAction(endpoint: string): Promise<Re
   return { success: true };
 }
 
-export async function setTopicPreferenceAction(topic: string, inApp: boolean, push: boolean): Promise<Result> {
+export async function setTopicPreferenceAction(topic: string, inApp: boolean, push: boolean, email?: boolean): Promise<Result> {
   const session = await currentUser();
   if (!session) return { success: false, error: "Not authenticated." };
   const def = TOPIC_BY_ID[topic];
   if (!def) return { success: false, error: "Unknown notification type." };
 
   const effectiveInApp = def.required ? true : inApp;
+  // Email only for topics that can send it
+  const mail = def.defaultEmail !== undefined && typeof email === "boolean" ? { email } : {};
   await prisma.notificationPreference.upsert({
     where:  { userId_topic: { userId: session.user.id, topic } },
-    create: { userId: session.user.id, topic, inApp: effectiveInApp, push },
-    update: { inApp: effectiveInApp, push },
+    create: { userId: session.user.id, topic, inApp: effectiveInApp, push, ...mail },
+    update: { inApp: effectiveInApp, push, ...mail },
   });
   return { success: true };
 }

@@ -10,7 +10,7 @@ import {
   handleOrderRequest, handleOrderStatus, handleOrderPending, handleOrderApprove,
 } from "@/lib/discord-commands";
 import { prisma } from "@/lib/prisma";
-import { runAs } from "@/lib/audit/changes";
+import { runAs } from "@/lib/request-user";
 
 export const runtime = "nodejs";
 // Slow commands finish in after() — give them time beyond Discord's 3-second window

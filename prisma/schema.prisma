@@ -39,6 +39,13 @@ model User {
   registrationNote String?
 
   // Profile
+  /// Optional; shown to volunteer coordinators and Head Mentors so they can reach volunteers
+  phone         String?
+  /// A Head Mentor marked this adult cleared to volunteer (e.g. background check done)
+  volunteerClearedAt    DateTime?
+  volunteerClearedById  String?
+  /// Clearance runs out after this calendar day (null: no end date)
+  volunteerClearedUntil DateTime?
   teamId        String?
   team          Team?     @relation(fields: [teamId], references: [id])
   roles         UserRole[]
@@ -70,6 +77,8 @@ model User {
   incidentReports      SafetyIncident[]
   activityLogs         ActivityLog[]
   changeLogs           ChangeLog[]
+  volunteerShifts      MeetingVolunteer[]  @relation("Volunteer")
+  volunteersAssigned   MeetingVolunteer[]  @relation("VolunteerAssignedBy")
   notifications        Notification[]
   maintenanceLogs      ToolMaintenanceLog[]
   discordLink          DiscordLink?
@@ -124,6 +133,12 @@ enum Role {
   HEAD_MENTOR
   /// Places approved orders, exports them to the purchasing spreadsheet, adds tracking links
   BUYER
+  /// A student's parent: sees what a Team Member sees, but can't change anything (they can
+  /// still sign up for volunteer shifts once cleared)
+  PARENT
+  /// Makes sure every meeting has enough cleared adults: assigns volunteers, sets the shift
+  /// instructions and hears about meetings that are short
+  VOLUNTEER_COORDINATOR
 }
 
 model Account {
@@ -219,6 +234,7 @@ model Team {
   packListItems PackListItem[]
   packSessions  PackSession[]
   changeLogs    ChangeLog[]
+  volunteerSettings VolunteerSettings?
   discordConfig DiscordConfig?
   timezone      String?   // IANA zone used for meeting times and daily reminders
   /// Next number for auto-assigned tool asset tags (TOOL-0001, …)
@@ -1343,6 +1359,8 @@ enum NotificationType {
   COMPETITION_COUNTDOWN
   TASK_ASSIGNED
   TOOL_DUE
+  VOLUNTEER_SHIFT
+  VOLUNTEER_COVERAGE
 }
 
 /// A browser/device that has opted in to web push for a user
@@ -1368,6 +1386,8 @@ model NotificationPreference {
   topic  String
   inApp  Boolean
   push   Boolean
+  /// Only for topics that can email; null = the topic's default
+  email  Boolean?
 
   @@unique([userId, topic])
 }
@@ -1499,7 +1519,62 @@ model Meeting {
   /// Someone set this meeting's date/time by hand (edited or added it) — schedule changes leave it alone
   customTime   Boolean  @default(false)
   tasks        Task[]   @relation("MeetingTasks")
+  volunteers   MeetingVolunteer[]
+  /// Shift instructions for this meeting only (instead of the team's default)
+  volunteerNote MeetingVolunteerNote?
   createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// VOLUNTEERS — cleared adults covering meetings
+// ─────────────────────────────────────────────
+
+/// A team's volunteer setup: the default shift instructions and how many adults each meeting needs
+model VolunteerSettings {
+  id           String   @id @default(cuid())
+  teamId       String   @unique
+  team         Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  /// Where to go, when to arrive, what to do (Markdown) — sent with sign-ups and reminders
+  instructions String?
+  /// Confirmed adults a meeting needs; fewer is flagged to the volunteer coordinators
+  minAdults    Int      @default(2)
+  updatedById  String?
+  updatedAt    DateTime @updatedAt
+}
+
+/// An adult on a meeting's volunteer shift. Signing yourself up is CONFIRMED straight away;
+/// someone assigned by a coordinator is PENDING until they confirm or decline.
+model MeetingVolunteer {
+  id           String          @id @default(cuid())
+  meetingId    String
+  meeting      Meeting         @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User            @relation("Volunteer", fields: [userId], references: [id], onDelete: Cascade)
+  status       VolunteerStatus @default(CONFIRMED)
+  /// Who assigned them (null: they signed themselves up)
+  assignedById String?
+  assignedBy   User?           @relation("VolunteerAssignedBy", fields: [assignedById], references: [id], onDelete: SetNull)
+  respondedAt  DateTime?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@unique([meetingId, userId])
+  @@index([userId])
+}
+
+enum VolunteerStatus {
+  PENDING
+  CONFIRMED
+  DECLINED
+}
+
+/// Shift instructions for one meeting (a special event), instead of the team's default
+model MeetingVolunteerNote {
+  meetingId    String   @id
+  meeting      Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  instructions String
+  updatedById  String?
   updatedAt    DateTime @updatedAt
 }
 

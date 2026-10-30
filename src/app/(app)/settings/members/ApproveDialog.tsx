@@ -5,10 +5,9 @@ import { useRouter } from "next/navigation";
 import { approveMemberAction } from "@/app/actions/members";
 import { Dialog, DialogContent, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ROLE_LABELS } from "@/lib/rbac";
+import { ALL_ROLES, ROLE_LABELS } from "@/lib/rbac";
 import type { Role } from "@/generated/prisma";
 
-const ALL_ROLES: Role[] = ["TEAM_MEMBER", "BUILD_LEAD", "INVENTORY_ADMIN", "ORDER_APPROVER", "SAFETY_CAPTAIN", "BUYER", "TEAM_LEADERSHIP", "MENTOR", "HEAD_MENTOR"];
 
 export function ApproveDialog({ userId, userName }: { userId: string; userName: string }) {
   const router = useRouter();

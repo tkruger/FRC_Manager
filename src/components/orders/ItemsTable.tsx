@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { cn, formatCurrency } from "@/lib/utils";
 import { addTrackingAction, markArrivedAction, setItemStatusAction } from "@/app/actions/orders";
 import { ITEM_STATUSES, ITEM_STATUS_INFO, itemRef, type ItemStatus } from "@/lib/orders/constants";
+import { useViewOnly } from "@/components/access/ViewOnly";
 
 export interface OrderItemRow {
   id:          string;
@@ -56,6 +57,7 @@ export function ItemsTable({ items, canTrack, canOverride, showOrder, emptyText 
   const [status, setStatus]     = useState<ItemStatus>("ORDERED");
   const [msg, setMsg]           = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start]        = useTransition();
+  const viewOnly = useViewOnly();
 
   const chosen = items.filter((i) => selected.has(i.id));
   const canArriveChosen = chosen.some((i) => i.status === "TO_ORDER" || i.status === "ORDERED");
@@ -85,7 +87,7 @@ export function ItemsTable({ items, canTrack, canOverride, showOrder, emptyText 
   return (
     <div className="space-y-3">
       {/* Selection / bulk actions */}
-      <div className="flex flex-wrap items-center gap-2">
+      {!viewOnly && <div className="flex flex-wrap items-center gap-2">
         <label className="flex items-center gap-2 text-sm text-(--color-text-secondary) cursor-pointer">
           <input
             type="checkbox"
@@ -110,7 +112,7 @@ export function ItemsTable({ items, canTrack, canOverride, showOrder, emptyText 
             {canOverride && <Button size="sm" variant="outline" onClick={() => setPanel(panel === "status" ? null : "status")}>Set status</Button>}
           </div>
         )}
-      </div>
+      </div>}
 
       {panel === "tracking" && selected.size > 0 && (
         <form
@@ -155,13 +157,13 @@ export function ItemsTable({ items, canTrack, canOverride, showOrder, emptyText 
           const total = (i.unitCost ?? 0) * i.quantity;
           return (
             <li key={i.id} className={cn("flex gap-3 px-3 py-3 sm:px-4", selected.has(i.id) && "bg-(--color-primary)/5")}>
-              <input
+              {!viewOnly && <input
                 type="checkbox"
                 aria-label={`Select item ${itemRef(i)}`}
                 className="mt-1 accent-(--color-primary)"
                 checked={selected.has(i.id)}
                 onChange={() => toggle(i.id)}
-              />
+              />}
               <div className="min-w-0 flex-1 space-y-1">
                 <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                   <p className="min-w-0 text-sm text-(--color-text-primary)">

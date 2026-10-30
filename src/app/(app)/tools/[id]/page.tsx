@@ -7,6 +7,7 @@ import { formatDate } from "@/lib/utils";
 import { CheckoutForm } from "./CheckoutForm";
 import { CheckinButton } from "../CheckinButton";
 import { BarcodePanel } from "./BarcodePanel";
+import { isViewOnly } from "@/lib/access/read-only";
 
 const CONDITION_BADGE: Record<string, "success"|"warning"|"danger"|"neutral"> = {
   EXCELLENT: "success", GOOD: "success", FAIR: "warning",
@@ -69,7 +70,7 @@ export default async function ToolCheckoutPage({ params }: { params: Promise<{ i
         </div>
       )}
 
-      {available && hasCert && (
+      {available && hasCert && !isViewOnly(session.user.roles) && (
         <div className="card">
           <h2 className="text-h3 text-(--color-text-primary) mb-4">Check out</h2>
           <CheckoutForm toolId={tool.id} />

@@ -8,6 +8,7 @@ import { useTheme } from "@/components/providers/ThemeProvider";
 import { cn } from "@/lib/utils";
 import type { Session } from "next-auth";
 import { NotificationsDropdown } from "./NotificationsDropdown";
+import { canCoordinate, isAdult } from "@/lib/volunteers";
 
 const MODULE_TABS = [
   { label: "Home",        href: "/dashboard",   icon: HomeIcon,        exact: true },
@@ -18,6 +19,7 @@ const MODULE_TABS = [
   { label: "Budget",      href: "/budget",      icon: BudgetIcon,      exact: false },
   { label: "Fleet",        href: "/fleet",       icon: FleetIcon,       exact: false },
   { label: "Safety",      href: "/safety",      icon: SafetyIcon,      exact: false },
+  { label: "Volunteers",  href: "/volunteers",  icon: VolunteersIcon,  exact: false },
   { label: "Season",      href: "/settings/season", icon: SettingsNavIcon, exact: false },
 ];
 
@@ -36,6 +38,7 @@ const MOBILE_MORE = [
   { label: "Inventory",  href: "/inventory",      icon: InventoryIcon },
   { label: "Orders",     href: "/procurement",    icon: ProcurementIcon },
   { label: "Budget",     href: "/budget",         icon: BudgetIcon },
+  { label: "Volunteers", href: "/volunteers",     icon: VolunteersIcon },
   { label: "Season",     href: "/settings/season", icon: SettingsNavIcon },
 ];
 
@@ -58,6 +61,9 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
   const canManageSeason   = roles.includes("HEAD_MENTOR" as any);
   const canManageDiscord  = roles.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP"].includes(r));
   const isSuperAdmin      = session?.user?.isSuperAdmin === true;
+  // Volunteers: for adults and volunteer coordinators
+  const showVolunteers    = isAdult(roles) || canCoordinate(roles);
+  const navShown          = (href: string) => href !== "/volunteers" || showVolunteers;
   const canInvite         = roles.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP"].includes(r)); // same as INVITE_ROLES in lib/invites
   const canManageTemplates = roles.some((r) => ["HEAD_MENTOR", "BUILD_LEAD", "INVENTORY_ADMIN"].includes(r));
   const [moreOpen, setMoreOpen] = useState(false);
@@ -95,7 +101,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
 
           {/* Center: module tabs — always perfectly centered */}
           <nav className="flex items-center" aria-label="Modules">
-            {MODULE_TABS.map(({ label, href, exact, icon: Icon }) => {
+            {MODULE_TABS.filter((t) => navShown(t.href)).map(({ label, href, exact, icon: Icon }) => {
               const active = exact ? pathname === href : (pathname.startsWith(href) && href !== "/dashboard");
               const isDashboard = href === "/dashboard" && pathname === "/dashboard";
               const isActive = isDashboard || (!exact && pathname.startsWith(href)) || (exact && pathname === href);
@@ -215,7 +221,7 @@ export function TopNav({ session, robots = [], activeRobotId, pendingMemberCount
                 >×</button>
               </div>
               <div className="grid grid-cols-3 gap-2">
-                {MOBILE_MORE.map(({ label, href, icon: Icon }) => {
+                {MOBILE_MORE.filter((t) => navShown(t.href)).map(({ label, href, icon: Icon }) => {
                   const active = href === "/dashboard" ? pathname === href : pathname.startsWith(href);
                   return (
                     <Link
@@ -600,6 +606,14 @@ function UserCircleIcon({ className }: { className?: string }) {
   return (
     <svg className={cn("w-4 h-4", className)} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
       <path strokeLinecap="round" strokeLinejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  );
+}
+
+function VolunteersIcon({ className }: { className?: string }) {
+  return (
+    <svg className={cn("w-4 h-4", className)} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
     </svg>
   );
 }

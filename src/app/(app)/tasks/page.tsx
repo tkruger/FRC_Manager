@@ -2,6 +2,7 @@
 import { prisma } from "@/lib/prisma";
 import { competitionCountdown } from "@/lib/competition";
 import { redirect } from "next/navigation";
+import { isViewOnly } from "@/lib/access/read-only";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { daysBetween, isOverdue, SUBTEAM_OPTIONS } from "@/lib/schedule-helpers";
@@ -173,9 +174,11 @@ export default async function SchedulePage({
               <Button variant="outline" size="sm">Templates</Button>
             </Link>
           )}
-          <Link href="/tasks/new">
-            <Button size="sm">+ New task</Button>
-          </Link>
+          {!isViewOnly(session.user.roles) && (
+            <Link href="/tasks/new">
+              <Button size="sm">+ New task</Button>
+            </Link>
+          )}
         </>}
       />
 

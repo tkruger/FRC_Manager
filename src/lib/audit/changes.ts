@@ -5,7 +5,7 @@
 // each watched field from → to, formatted for display. Because it sits in the client, every
 // path is covered — server actions, the order workflow, Discord commands and background jobs.
 //
-// Who made the change: runAs(userId, fn) when the caller knows (Discord commands); otherwise
+// Who made the change: runAs(userId, fn) in src/lib/request-user.ts when the caller knows (Discord commands); otherwise
 // the signed-in user of the current request; otherwise nobody (shown as "System").
 //
 // Reads of the "before" state and the log writes use the plain client, outside any
@@ -13,39 +13,18 @@
 // same transaction created can't be seen from there and isn't logged — the "created" entry
 // (or none, for rows made together with a new season) covers it.
 
-import { AsyncLocalStorage } from "node:async_hooks";
 import { Prisma, type PrismaClient } from "@/generated/prisma";
 import { STATUS_CONFIG, PRIORITY_CONFIG, SUBTEAM_OPTIONS } from "@/lib/schedule-helpers";
 import { statusLabel } from "@/lib/procurement-helpers";
 import { ITEM_STATUS_INFO, IMPORTANCE_OPTIONS, itemRef } from "@/lib/orders/constants";
 import { BUDGET_CATEGORY_LABELS } from "@/lib/budget-categories";
+import { requestUser } from "@/lib/request-user";
 
 import type { EntityType, FieldChange } from "./changes-types";
 export type { EntityType, FieldChange };
 
 /** How long change history is kept (the hourly job removes older rows) */
 export const CHANGE_LOG_DAYS = 365;
-
-// ── Who is making the change ────────────────────────────────────────────────
-
-const actorStore = new AsyncLocalStorage<{ userId: string | null }>();
-
-/** Run `fn` with changes credited to `userId` (for callers outside a signed-in request) */
-export function runAs<T>(userId: string | null, fn: () => T): T {
-  return actorStore.run({ userId }, fn);
-}
-
-async function currentActor(): Promise<string | null> {
-  const set = actorStore.getStore();
-  if (set) return set.userId;
-  try {
-    // Imported here: auth.ts itself uses the Prisma client
-    const { auth } = await import("@/lib/auth");
-    return (await auth())?.user?.id ?? null;
-  } catch {
-    return null; // Not in a request (cron, scripts)
-  }
-}
 
 // ── What is watched, and how values are shown ───────────────────────────────
 
@@ -343,7 +322,7 @@ function lifecycle(spec: Spec, row: Row, action: "created" | "deleted"): Entry |
 
 async function write(base: PrismaClient, entries: Entry[]) {
   if (!entries.length) return;
-  const actorId = await currentActor();
+  const actorId = (await requestUser(base))?.id ?? null;
   await base.changeLog.createMany({
     data: entries.map((e) => ({ ...e, changes: e.changes as unknown as Prisma.InputJsonValue, actorId })),
   });

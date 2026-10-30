@@ -9,6 +9,7 @@ import { toast } from "@/components/ui/toast";
 import { updatePrecheckAction } from "@/app/actions/safety";
 import { PRECHECK_HOME, PRECHECK_STATUSES, PRECHECK_STATUS_INFO, isPrecheckUrl, type PrecheckStatusValue } from "@/lib/precheck";
 import { formatDate } from "@/lib/utils";
+import { useViewOnly } from "@/components/access/ViewOnly";
 
 export interface PrecheckRobot {
   id:          string;
@@ -27,6 +28,7 @@ export function PrecheckCard({ robot, showName = true }: { robot: PrecheckRobot;
   const router = useRouter();
   const [url, setUrl]       = useState(robot.url ?? "");
   const [pending, start]    = useTransition();
+  const viewOnly = useViewOnly();
   const info = PRECHECK_STATUS_INFO[robot.status];
   const urlChanged = url.trim() !== (robot.url ?? "");
 
@@ -53,7 +55,7 @@ export function PrecheckCard({ robot, showName = true }: { robot: PrecheckRobot;
         </a>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+      {!viewOnly && <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
         <label className="block space-y-1.5">
           <span className="block text-small font-medium text-(--color-text-secondary)">PRECHECK link</span>
           <div className="flex gap-2">
@@ -85,7 +87,7 @@ export function PrecheckCard({ robot, showName = true }: { robot: PrecheckRobot;
             {PRECHECK_STATUSES.map((s) => <option key={s} value={s}>{PRECHECK_STATUS_INFO[s].label}</option>)}
           </select>
         </label>
-      </div>
+      </div>}
 
       {url.trim() && !isPrecheckUrl(url) && (
         <p className="text-small text-(--color-danger)">That doesn&apos;t look like a PRECHECK link — it should start with https://precheck.frc.nexus/</p>

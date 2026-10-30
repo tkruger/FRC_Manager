@@ -2,6 +2,8 @@
 
 import { useState, useTransition, useCallback } from "react";
 import { ChangeHistory } from "@/components/history/ChangeHistory";
+import { MeetingVolunteers, type VolunteerView } from "@/components/calendar/MeetingVolunteers";
+import { coverage, type VolunteerStatus } from "@/lib/volunteers";
 import { useRouter } from "next/navigation";
 import {
   updateMeetingAction, cancelMeetingAction, restoreMeetingAction,
@@ -23,6 +25,7 @@ interface Meeting {
   id: string; date: string; startTime: string; endTime: string;
   title: string | null; notes: string | null; cancelled: boolean; cancelReason: string | null;
   tasks: MeetingTask[];
+  volunteers: { userId: string; name: string; status: VolunteerStatus }[];
 }
 interface TaskOption { id: string; name: string; status: string; subTeam: string | null; dueDate: string | null; }
 interface Season {
@@ -38,6 +41,8 @@ interface Props {
   nextauthUrl: string;
   /** Open this meeting (links from reminders and the Audit log: /calendar?meeting=…) */
   openMeetingId?: string;
+  /** Adults and coordinators: volunteer coverage on each meeting (null for everyone else) */
+  volunteerView: VolunteerView | null;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -57,7 +62,7 @@ const DOW_LABELS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export function CalendarClient({ season, meetings, allTasks, isLeadership, openMeetingId }: Props) {
+export function CalendarClient({ season, meetings, allTasks, isLeadership, openMeetingId, volunteerView }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -87,6 +92,10 @@ export function CalendarClient({ season, meetings, allTasks, isLeadership, openM
 
   // Special day lookup
   const kickoffKey = ymd(kickoff);
+  const todayKey   = ymd(today);
+  // Coordinators: upcoming meetings without enough confirmed adults are flagged
+  const isShort = (m: Meeting) => !!volunteerView?.coordinating && !m.cancelled && m.date.slice(0, 10) >= todayKey &&
+    !coverage(m.volunteers, volunteerView.minAdults).covered;
   const endKey     = ymd(seasonEnd);
 
   // Month navigation
@@ -282,8 +291,9 @@ export function CalendarClient({ season, meetings, allTasks, isLeadership, openM
                                 "w-full text-left text-[10px] font-medium px-1.5 py-0.5 rounded-sm truncate leading-relaxed transition-opacity",
                                 m.cancelled ? "line-through opacity-40 bg-(--color-surface-overlay) text-(--color-text-secondary)" : "text-white hover:opacity-85",
                               ].join(" ")}
-                              style={!m.cancelled ? { backgroundColor: "var(--color-secondary)" } : undefined}>
-                              {fmt12(m.startTime)} {m.title ?? "Build meeting"}
+                              style={!m.cancelled ? { backgroundColor: isShort(m) ? "var(--color-danger)" : "var(--color-secondary)" } : undefined}
+                              title={isShort(m) ? "Needs adult volunteers" : undefined}>
+                              {isShort(m) && "⚠ "}{fmt12(m.startTime)} {m.title ?? "Build meeting"}
                             </button>
                           ))}
                           {dayMeetings.length > MAX_CHIPS && (
@@ -354,6 +364,8 @@ export function CalendarClient({ season, meetings, allTasks, isLeadership, openM
           meeting={selected}
           allTasks={allTasks}
           isLeadership={isLeadership}
+          volunteerView={volunteerView}
+          upcoming={!selected.cancelled && selected.date.slice(0, 10) >= todayKey}
           onCancel={handleCancel}
           onRestore={handleRestore}
           onClose={() => setSelected(null)}
@@ -390,11 +402,13 @@ export function CalendarClient({ season, meetings, allTasks, isLeadership, openM
 // ─── Meeting detail / edit dialog ─────────────────────────────────────────────
 
 function MeetingDialog({
-  meeting, allTasks, isLeadership, onCancel, onRestore, onClose, onSave,
+  meeting, allTasks, isLeadership, volunteerView, upcoming, onCancel, onRestore, onClose, onSave,
 }: {
   meeting: Meeting;
   allTasks: TaskOption[];
   isLeadership: boolean;
+  volunteerView: VolunteerView | null;
+  upcoming: boolean;
   onCancel: (id: string, reason?: string) => void;
   onRestore: (id: string) => void;
   onClose: () => void;
@@ -473,6 +487,10 @@ function MeetingDialog({
                     </Button>
                   </div>
                 </div>
+              )}
+
+              {volunteerView && (
+                <MeetingVolunteers meetingId={meeting.id} volunteers={meeting.volunteers} upcoming={upcoming} view={volunteerView} />
               )}
 
               <ChangeHistory entityType="meeting" entityId={meeting.id} />

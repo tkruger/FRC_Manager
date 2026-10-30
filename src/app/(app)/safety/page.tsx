@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { isViewOnly } from "@/lib/access/read-only";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -50,7 +51,7 @@ export default async function SafetyPage() {
           {canSeeAudit(session.user.roles) && <Link href="/audit"><Button variant="outline" size="sm">Audit log</Button></Link>}
           <Link href="/safety/certifications"><Button variant="outline" size="sm">Cert matrix</Button></Link>
           <Link href="/safety/inspection"><Button variant="outline" size="sm">Inspection</Button></Link>
-          <Link href="/safety/incidents/new"><Button size="sm">+ File incident</Button></Link>
+          {!isViewOnly(session.user.roles) && <Link href="/safety/incidents/new"><Button size="sm">+ File incident</Button></Link>}
         </>}
       />
 

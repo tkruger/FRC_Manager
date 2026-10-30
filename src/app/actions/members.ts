@@ -8,7 +8,7 @@ import type { Role } from "@/generated/prisma";
 import { createNotification } from "@/lib/notifications";
 import { sendApprovalEmail } from "@/lib/notify/approval-email";
 import { after } from "next/server";
-import { LEADERSHIP_ROLES } from "@/lib/rbac";
+import { ALL_ROLES, LEADERSHIP_ROLES } from "@/lib/rbac";
 import { ActionError, userMessage } from "@/lib/action-error";
 
 async function requireAdmin() {
@@ -19,9 +19,7 @@ async function requireAdmin() {
   return session;
 }
 
-const ROLE_VALUES: Role[] = [
-  "TEAM_MEMBER", "BUILD_LEAD", "INVENTORY_ADMIN", "ORDER_APPROVER", "SAFETY_CAPTAIN", "BUYER", "TEAM_LEADERSHIP", "MENTOR", "HEAD_MENTOR",
-];
+const ROLE_VALUES: Role[] = ALL_ROLES;
 
 /**
  * Shared checks for any role assignment: the target must be on the caller's team,

@@ -17,6 +17,7 @@ import { STATUS_CONFIG, PRIORITY_CONFIG, SUBTEAM_COLORS, SUBTEAM_OPTIONS, PRIORI
 import { formatDate } from "@/lib/utils";
 import type { TaskStatus, TaskPriority, SubTeam } from "@/generated/prisma";
 import { toast } from "@/components/ui/toast";
+import { useViewOnly } from "@/components/access/ViewOnly";
 
 export interface TaskModalData {
   id: string;
@@ -67,6 +68,7 @@ interface Props {
 }
 
 export function TaskModal({ task, allTasks = [], allMembers = [], allRobots = [], kickoffDate, endDate, onClose, onUpdated }: Props) {
+  const viewOnly = useViewOnly();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [editing, setEditing] = useState(false);
@@ -126,7 +128,7 @@ export function TaskModal({ task, allTasks = [], allMembers = [], allRobots = []
                 <select
                   value={localStatus}
                   onChange={(e) => handleStatusChange(e.target.value)}
-                  disabled={isPending}
+                  disabled={isPending || viewOnly}
                   className="text-sm font-medium bg-transparent border-none focus:outline-none cursor-pointer text-(--color-text-primary)"
                 >
                   {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -242,8 +244,8 @@ export function TaskModal({ task, allTasks = [], allMembers = [], allRobots = []
 
               {/* Actions — pinned to the bottom of the card while the rest scrolls behind */}
               <DialogFooter>
-                <Button size="sm" onClick={() => setEditing(true)}>Edit task</Button>
-                <Button variant="danger" size="sm" onClick={handleDelete} isLoading={isPending}>Delete</Button>
+                {!viewOnly && <Button size="sm" onClick={() => setEditing(true)}>Edit task</Button>}
+                {!viewOnly && <Button variant="danger" size="sm" onClick={handleDelete} isLoading={isPending}>Delete</Button>}
                 <DialogClose asChild>
                   <Button variant="outline" size="sm">Close</Button>
                 </DialogClose>

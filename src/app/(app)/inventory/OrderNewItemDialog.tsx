@@ -9,6 +9,7 @@ import { Select } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
 import { orderNewItemAction } from "@/app/actions/procurement";
 import { OrderSubmitted } from "./OrderSubmitted";
+import { useViewOnly } from "@/components/access/ViewOnly";
 
 const CATEGORY_OPTS = [
   { value: "HARDWARE",    label: "Hardware" },
@@ -41,6 +42,7 @@ const PRIORITY_OPTS = [
  * (0 in stock) so it can be tracked, puts it in the order queue and submits the request.
  */
 export function OrderNewItemDialog({ variant = "outline" }: { variant?: "primary" | "outline" }) {
+  const viewOnly = useViewOnly();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   // Remount the form on each open so a finished order doesn't stay on screen
@@ -51,6 +53,7 @@ export function OrderNewItemDialog({ variant = "outline" }: { variant?: "primary
     router.refresh();
   }
 
+  if (viewOnly) return null;
   return (
     <>
       <Button size="sm" variant={variant} onClick={() => { setFormKey((k) => k + 1); setOpen(true); }}>

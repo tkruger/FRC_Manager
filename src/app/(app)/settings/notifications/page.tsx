@@ -8,6 +8,8 @@ import { PushDeviceCard } from "./PushDeviceCard";
 import { TopicPreferences } from "./TopicPreferences";
 import { DeliverySettings } from "./DeliverySettings";
 import { PageTitle } from "@/components/PageHeader";
+import type { TopicDef } from "@/lib/notify/topics";
+import { canCoordinate, isAdult } from "@/lib/volunteers";
 
 export default async function NotificationSettingsPage() {
   const session = await auth();
@@ -23,12 +25,19 @@ export default async function NotificationSettingsPage() {
   ]);
 
   const byTopic = new Map(prefs.map((p) => [p.topic, p]));
-  // Platform-admin topics only appear for super admins
-  const topics = TOPICS.filter((t) => !("superAdminOnly" in t && t.superAdminOnly) || session.user.isSuperAdmin).map((t) => ({
+  // Platform-admin topics only appear for super admins; volunteer ones for adults and coordinators
+  const roles = session.user.roles;
+  const shown = (t: TopicDef) =>
+    (!t.superAdminOnly || session.user.isSuperAdmin) &&
+    (t.volunteers !== "adults" || isAdult(roles) || canCoordinate(roles)) &&
+    (t.volunteers !== "coordinators" || canCoordinate(roles));
+  const topics = (TOPICS as readonly TopicDef[]).filter(shown).map((t) => ({
     id: t.id, group: t.group, label: t.label, description: t.description, audience: t.audience,
-    required: "required" in t && t.required,
+    required: !!t.required,
     inApp: byTopic.get(t.id)?.inApp ?? t.defaultInApp,
     push:  byTopic.get(t.id)?.push  ?? t.defaultPush,
+    // null: this topic doesn't email
+    email: t.defaultEmail === undefined ? null : byTopic.get(t.id)?.email ?? t.defaultEmail,
   }));
 
   const isLeadership = session.user.roles.some((r) => LEADERSHIP_ROLES.includes(r));
@@ -38,7 +47,7 @@ export default async function NotificationSettingsPage() {
       <div>
         <PageTitle help="notifications">Notifications</PageTitle>
         <p className="text-body text-(--color-text-secondary) mt-1">
-          Choose what you hear about, and whether it shows up in the app, as a push notification, or both.
+          Choose what you hear about, and whether it shows up in the app, as a push notification, or both. Volunteer shifts can also come by email.
         </p>
       </div>
 

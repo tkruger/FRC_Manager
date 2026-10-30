@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { isViewOnly } from "@/lib/access/read-only";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   }
 
   const isAdmin = session.user.roles.some((r) => ORDER_ADMIN_ROLES.includes(r));
+  const viewOnly = isViewOnly(session.user.roles);
   const where = {
     seasonId: activeSeason.id,
     ...(view === "open" ? { status: { in: [...OPEN] } } : {}),
@@ -95,7 +97,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
           {isAdmin && <Link href="/procurement/buyer"><Button variant="secondary" size="sm">Buyer</Button></Link>}
           <ExportCsvButton view={view} title="Every order on this tab, one item per line" />
           <Link href="/procurement/vendors"><Button variant="outline" size="sm">Vendors</Button></Link>
-          <Link href="/procurement/requests/new"><Button size="sm">+ New order</Button></Link>
+          {!viewOnly && <Link href="/procurement/requests/new"><Button size="sm">+ New order</Button></Link>}
         </>}
       />
 
@@ -155,7 +157,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
       ) : rows.length === 0 ? (
         <div className="card text-center py-10">
           <p className="text-body text-(--color-text-secondary) mb-4">{view === "open" ? "No open orders." : "No orders yet."}</p>
-          <Link href="/procurement/requests/new"><Button size="sm">+ New order</Button></Link>
+          {!viewOnly && <Link href="/procurement/requests/new"><Button size="sm">+ New order</Button></Link>}
         </div>
       ) : (
         <div className="grid gap-3 md:grid-cols-2">

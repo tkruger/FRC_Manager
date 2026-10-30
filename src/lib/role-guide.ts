@@ -1,13 +1,12 @@
 // What each team role is for and what it can do — shown on Settings → Roles explained.
 // Keep in step with the permission checks in the app (rbac.ts, actions, pages). Head
-// Mentors can do everything; Mentor has Team Member access unless given other roles.
+// Mentors can do everything; Mentor has Team Member access unless given other roles;
+// Parents see what Team Members see but can't change anything (src/lib/access/read-only.ts).
 
 import type { Role } from "@/generated/prisma";
+import { ALL_ROLES } from "@/lib/rbac";
 
-export const ROLE_ORDER: Role[] = [
-  "TEAM_MEMBER", "BUILD_LEAD", "INVENTORY_ADMIN", "ORDER_APPROVER", "SAFETY_CAPTAIN",
-  "BUYER", "TEAM_LEADERSHIP", "MENTOR", "HEAD_MENTOR",
-];
+export const ROLE_ORDER: Role[] = ALL_ROLES;
 
 export const ROLE_SUMMARY: Record<Role, { who: string; summary: string }> = {
   TEAM_MEMBER:     { who: "Every student and mentor",       summary: "Uses the app day to day: tasks, tools, inventory, the calendar, orders and safety reports." },
@@ -18,11 +17,14 @@ export const ROLE_SUMMARY: Record<Role, { who: string; summary: string }> = {
   BUYER:           { who: "Whoever places the orders",      summary: "Buys what's approved: works the To order list, exports the purchasing spreadsheet, adds tracking links and sets item statuses." },
   TEAM_LEADERSHIP: { who: "Captains and student leaders",   summary: "Runs the team: approves members and assigns roles, invites people, manages meetings, Discord and the team time zone, and acts as captain on orders." },
   MENTOR:          { who: "Mentors",                        summary: "Marks someone as a mentor. Same access as Team Member — add Team Leadership or other roles for more." },
-  HEAD_MENTOR:     { who: "The lead mentor (one or more)",  summary: "Everything, including seasons, robots, the purchase workflow and granting the Head Mentor role." },
+  HEAD_MENTOR:     { who: "The lead mentor (one or more)",  summary: "Everything, including seasons, robots, the purchase workflow, granting the Head Mentor role and clearing adults to volunteer." },
+  PARENT:          { who: "Students' parents",              summary: "Sees what a Team Member sees, but view-only. Once a Head Mentor clears them, they can sign up to volunteer at meetings." },
+  VOLUNTEER_COORDINATOR: { who: "Whoever organizes adult volunteers", summary: "Makes sure every meeting has enough cleared adults: assigns volunteers, sets the shift instructions and hears about meetings that are short. View-only elsewhere unless they have other roles." },
 };
 
-/** Roles that can do something, besides Head Mentor (who can do everything) */
-type Who = Role[] | "everyone";
+/** Roles that can do something, besides Head Mentor (who can do everything). "everyone":
+ *  every role but Parent (view-only); "cleared": any adult a Head Mentor cleared to volunteer */
+type Who = Role[] | "everyone" | "cleared";
 
 export const CAPABILITIES: { area: string; items: { action: string; who: Who }[] }[] = [
   {
@@ -54,6 +56,14 @@ export const CAPABILITIES: { area: string; items: { action: string; who: Who }[]
       { action: "Buyer page: to-order list, CSV export, tracking",  who: ["BUYER", "TEAM_LEADERSHIP"] },
       { action: "Set any item's status by hand",                         who: ["BUYER", "TEAM_LEADERSHIP"] },
       { action: "Set up the budget, log expenses and record funding",   who: [] },
+    ],
+  },
+  {
+    area: "Volunteers",
+    items: [
+      { action: "Sign up for (or confirm) a meeting's volunteer shift",   who: "cleared" },
+      { action: "Assign volunteers, set shift instructions, see coverage", who: ["VOLUNTEER_COORDINATOR"] },
+      { action: "Clear an adult to volunteer",                             who: [] },
     ],
   },
   {

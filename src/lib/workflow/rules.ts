@@ -1,7 +1,7 @@
 // Pure workflow rules — no database access, safe to import anywhere (and to test).
 
 import type { PurchaseStatus } from "@/generated/prisma";
-import type { WorkflowDef, WorkflowStep, WorkflowRole } from "./types";
+import type { WorkflowDef, WorkflowStep } from "./types";
 
 export type WorkflowAction = "approve" | "deny" | "order" | "receive" | "cancel";
 
@@ -12,7 +12,7 @@ interface StepState {
 
 interface ActorRef {
   id:    string;
-  roles: WorkflowRole[];
+  roles: string[]; // the member's roles (any role, not just ones a workflow step can name)
 }
 
 const TERMINAL: PurchaseStatus[] = ["RECEIVED", "DENIED", "CANCELLED", "DRAFT"];
@@ -81,7 +81,7 @@ export function availableActions(
  * Who can edit an open order: anyone who can approve it or order it (the roles on the
  * workflow's approval and order steps), and Head Mentors.
  */
-export function canEditOrder(def: WorkflowDef, r: StepState, roles: WorkflowRole[]): boolean {
+export function canEditOrder(def: WorkflowDef, r: StepState, roles: string[]): boolean {
   if (TERMINAL.includes(r.status)) return false;
   if (roles.includes("HEAD_MENTOR")) return true;
   return def.steps

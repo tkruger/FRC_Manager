@@ -13,6 +13,7 @@ import {
   isValidTimezone, localParts, zonedTimeToUtc, type LocalParts,
 } from "./time";
 import { definitionFor, resolveCurrentStep } from "@/lib/workflow/engine";
+import { coverage, DEFAULT_MIN_ADULTS, shiftWhen } from "@/lib/volunteers";
 
 const HOUR = 3_600_000;
 /** Cron drift allowance so an "every 3h" reminder doesn't slip to 4h */
@@ -76,6 +77,7 @@ export async function runReminders(now = new Date()): Promise<ReminderRunResult>
     candidates.push(
       ...await purchaseReminders(seasonId, awake, now),
       ...await meetingReminders(seasonId, teamTz, awake, now),
+      ...await volunteerReminders(team.id, seasonId, teamTz, members, now),
       ...await taskDigests(seasonId, awake.filter((m) => m.dailySlot)),
       ...await competitionCountdowns(seasonId, awake.filter((m) => m.dailySlot)),
       ...await toolReminders(team.id, members, now),
@@ -197,6 +199,99 @@ async function meetingReminders(seasonId: string, teamTz: string, awake: Member[
           body:  `${mt.startTime}–${mt.endTime}`,
           url:   "/calendar",
           tag:   `meeting-${mt.id}`,
+        },
+      });
+    }
+  }
+  return out;
+}
+
+// ── Volunteers: shift reminders, unanswered asks, and gaps for coordinators ──
+
+export async function volunteerReminders(teamId: string, seasonId: string, teamTz: string, members: Member[], now: Date): Promise<Candidate[]> {
+  const today = localParts(now, teamTz).dateKey;
+  const from  = new Date(`${today}T00:00:00Z`);
+  const to    = new Date(from.getTime() + 14 * 24 * HOUR);
+  const [settings, meetings] = await Promise.all([
+    prisma.volunteerSettings.findUnique({ where: { teamId }, select: { instructions: true, minAdults: true } }),
+    prisma.meeting.findMany({
+      where:   { seasonId, cancelled: false, date: { gte: from, lt: to } },
+      orderBy: [{ date: "asc" }, { startTime: "asc" }],
+      select: {
+        id: true, date: true, startTime: true, endTime: true, title: true,
+        volunteerNote: { select: { instructions: true } },
+        volunteers: { select: { userId: true, status: true } },
+      },
+    }),
+  ]);
+  const minAdults = settings?.minAdults ?? DEFAULT_MIN_ADULTS;
+  const byId = new Map(members.map((m) => [m.id, m]));
+  const out: Candidate[] = [];
+
+  for (const mt of meetings) {
+    const [y, mo, d] = calendarDayKey(mt.date).split("-").map(Number);
+    const [hh, mm]   = mt.startTime.split(":").map(Number);
+    const start      = zonedTimeToUtc(y, mo, d, hh, mm, teamTz);
+    const msUntil    = start.getTime() - now.getTime();
+    if (msUntil <= 0) continue;
+    const what = `${mt.title || "Team meeting"} — ${shiftWhen(mt)}`;
+    const instructions = mt.volunteerNote?.instructions ?? settings?.instructions ?? null;
+    const details = instructions ? `Shift instructions:\n${instructions}` : undefined;
+    const url = `/volunteers?meeting=${mt.id}`;
+
+    for (const v of mt.volunteers) {
+      const m = byId.get(v.userId);
+      if (!m || m.quiet) continue;
+      // Confirmed: once, the day before (within 26 hours of the start)
+      if (v.status === "CONFIRMED" && msUntil <= 26 * HOUR) {
+        out.push({
+          key: `shift:${mt.id}:${start.toISOString()}:${v.userId}`,
+          userId: v.userId,
+          n: {
+            topic: "volunteers.shifts", type: "VOLUNTEER_SHIFT",
+            title: `🙋 You're volunteering ${localParts(start, teamTz).dateKey === m.local.dateKey ? "today" : "tomorrow"}`,
+            body: `${what}. Thank you!`,
+            details, url, tag: `shift-${mt.id}`,
+          },
+        });
+      }
+      // Asked but no answer yet: a morning nudge while the meeting is under four days away
+      if (v.status === "PENDING" && m.dailySlot && msUntil <= 4 * 24 * HOUR) {
+        out.push({
+          key: `shift-ask:${mt.id}:${v.userId}`,
+          everyMs: 24 * HOUR,
+          userId: v.userId,
+          n: {
+            topic: "volunteers.shifts", type: "VOLUNTEER_SHIFT",
+            title: `Can you volunteer? ${mt.title || "Team meeting"}`,
+            body: `You were asked to cover ${what}. Please confirm or say you can't make it.`,
+            details, url, tag: `shift-${mt.id}`,
+          },
+        });
+      }
+    }
+  }
+
+  // Coordinators (or Head Mentors when the team has none): a morning list of the gaps
+  const short = meetings
+    .map((mt) => ({ mt, c: coverage(mt.volunteers, minAdults) }))
+    .filter(({ mt, c }) => !c.covered && calendarDayKey(mt.date) >= today);
+  if (short.length) {
+    const coordinators = members.filter((m) => m.roles.includes("VOLUNTEER_COORDINATOR"));
+    const to = coordinators.length ? coordinators : members.filter((m) => m.roles.includes("HEAD_MENTOR"));
+    const lines = short.slice(0, 6).map(({ mt, c }) => `• ${shiftWhen(mt)}${mt.title ? ` (${mt.title})` : ""}: ${c.confirmed}/${minAdults} confirmed${c.pending ? `, ${c.pending} asked` : ""}`);
+    if (short.length > 6) lines.push(`…and ${short.length - 6} more`);
+    const soonest = shiftWhen(short[0].mt);
+    for (const m of to.filter((x) => x.dailySlot)) {
+      out.push({
+        key: `coverage:${teamId}:${m.local.dateKey}:${m.id}`,
+        userId: m.id,
+        n: {
+          topic: "volunteers.coverage", type: "VOLUNTEER_COVERAGE",
+          title: `⚠️ ${short.length} meeting${short.length === 1 ? "" : "s"} need adult volunteers`,
+          body: `Next: ${soonest}. Tap to find adults.`,
+          details: lines.join("\n"),
+          url: "/volunteers", tag: `coverage-${teamId}`,
         },
       });
     }

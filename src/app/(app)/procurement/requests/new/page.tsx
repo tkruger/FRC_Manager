@@ -1,6 +1,8 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { isViewOnly } from "@/lib/access/read-only";
+import { ViewOnlyNotice } from "@/components/access/ViewOnly";
 import Link from "next/link";
 import { PageTitle } from "@/components/PageHeader";
 import { OrderForm, type DraftItem } from "./OrderForm";
@@ -9,6 +11,7 @@ export default async function NewOrderPage({ searchParams }: { searchParams: Pro
   const { draft: draftId } = await searchParams;
   const session = await auth();
   if (!session?.user?.teamId) redirect("/dashboard");
+  if (isViewOnly(session.user.roles)) return <ViewOnlyNotice what="New order" />;
 
   const [activeSeason, vendors, draft] = await Promise.all([
     prisma.season.findFirst({ where: { teamId: session.user.teamId, isActive: true }, select: { id: true } }),

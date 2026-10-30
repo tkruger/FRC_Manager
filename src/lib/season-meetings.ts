@@ -58,7 +58,7 @@ async function upcomingMeetings(seasonId: string, tz: string, onlyRegular: boole
   from.setUTCDate(from.getUTCDate() - 1);
   const rows = await prisma.meeting.findMany({
     where:  { seasonId, date: { gte: from }, ...(onlyRegular ? { customTime: false } : {}) },
-    select: { id: true, date: true, startTime: true, endTime: true, title: true, notes: true, cancelled: true, _count: { select: { tasks: true } } },
+    select: { id: true, date: true, startTime: true, endTime: true, title: true, notes: true, cancelled: true, _count: { select: { tasks: true, volunteers: { where: { status: { not: "DECLINED" } } } } }, volunteerNote: { select: { meetingId: true } } },
   });
   return rows
     .map((m) => ({ ...m, day: calendarDayKey(m.date) }))
@@ -71,7 +71,7 @@ async function upcomingMeetings(seasonId: string, tz: string, onlyRegular: boole
  * - each meeting day's time slots (a day can have several) get one meeting each; regular
  *   meetings take their slot's current times
  * - meetings with no slot (a day that's no longer a meeting day, or a slot that's gone) are
- *   removed, unless someone has added a title, notes or tasks to them, or canceled them
+ *   removed, unless someone has added a title, notes, tasks or volunteers to them, or canceled them
  * - slots without a meeting get one
  * Meetings whose time someone set by hand (customTime) are left alone.
  */
@@ -103,7 +103,7 @@ export async function syncSeasonMeetings(seasonId: string): Promise<{ added: num
   marginStart.setUTCDate(marginStart.getUTCDate() - 1);
   const existing = (await prisma.meeting.findMany({
     where:  { seasonId, date: { gte: marginStart } },
-    select: { id: true, date: true, startTime: true, endTime: true, customTime: true, title: true, notes: true, cancelled: true, _count: { select: { tasks: true } } },
+    select: { id: true, date: true, startTime: true, endTime: true, customTime: true, title: true, notes: true, cancelled: true, _count: { select: { tasks: true, volunteers: { where: { status: { not: "DECLINED" } } } } }, volunteerNote: { select: { meetingId: true } } },
   })).map((m) => ({ ...m, day: calendarDayKey(m.date) }));
   const byDay = new Map<string, typeof existing>();
   for (const m of existing) byDay.set(m.day, [...(byDay.get(m.day) ?? []), m]);
@@ -124,7 +124,7 @@ export async function syncSeasonMeetings(seasonId: string): Promise<{ added: num
     for (const m of onDay.filter((m) => !m.customTime && !started(m))) {
       const sl = claim(m.startTime);
       if (!sl) {
-        const inUse = m.title || m.notes || m.cancelled || m._count.tasks > 0;
+        const inUse = m.title || m.notes || m.cancelled || m._count.tasks > 0 || m._count.volunteers > 0 || m.volunteerNote;
         if (!inUse) { await prisma.meeting.delete({ where: { id: m.id } }); removed++; }
       } else if (m.startTime !== sl.start || m.endTime !== sl.end) {
         await prisma.meeting.update({ where: { id: m.id }, data: { startTime: sl.start, endTime: sl.end } });
@@ -144,11 +144,13 @@ export async function syncSeasonMeetings(seasonId: string): Promise<{ added: num
 
 /**
  * "Regenerate": rebuild the regular meetings from now to the season end, replacing every
- * meeting that hasn't started yet. Past meetings (and one under way) are kept.
+ * meeting that hasn't started yet. Past meetings (and one under way) are kept, and so are
+ * meetings adults have signed up to volunteer at (or with their own shift instructions) —
+ * they're fitted into the new schedule like any other.
  */
 export async function regenerateFutureMeetings(seasonId: string): Promise<number> {
   const tz = await teamTimezone(seasonId);
-  const upcoming = await upcomingMeetings(seasonId, tz, false);
+  const upcoming = (await upcomingMeetings(seasonId, tz, false)).filter((m) => m._count.volunteers === 0 && !m.volunteerNote);
   if (upcoming.length) await prisma.meeting.deleteMany({ where: { id: { in: upcoming.map((m) => m.id) } } });
   return (await syncSeasonMeetings(seasonId)).added;
 }

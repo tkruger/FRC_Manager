@@ -20,6 +20,7 @@ import { TaskModal, clearOpenTaskParam } from "./TaskModal";
 import { useFinePointer, useTouchDrag } from "./useTouchDrag";
 import type { TaskModalData } from "./TaskModal";
 import type { TaskStatus } from "@/generated/prisma";
+import { useViewOnly } from "@/components/access/ViewOnly";
 
 interface KanbanTask extends TaskModalData {}
 
@@ -81,6 +82,7 @@ export function KanbanView({
   const [customTo,        setCustomTo]       = useState("");
   // DnD state
   const [draggingId,    setDraggingId]    = useState<string | null>(null);
+  const viewOnly = useViewOnly();
   const [dragOverColId, setDragOverColId] = useState<string | null>(null);
   const [localStatuses, setLocalStatuses] = useState<Record<string, string>>({});
   const [localStarts,   setLocalStarts]   = useState<Record<string, string>>({});
@@ -171,6 +173,7 @@ export function KanbanView({
 
   /** Move a task to a column (shared by mouse and touch dragging) */
   function moveTask(taskId: string, colId: string) {
+    if (viewOnly) return;
     if (colId === "FUTURE") {
       const t = tasks.find((x) => x.id === taskId);
       if (!t) return;
@@ -401,7 +404,8 @@ function KanbanCard({
 
   const { style, color } = useKanbanStyle();
   // Mouse/trackpad: the browser's drag and drop. Touch: our tap-and-hold (see useTouchDrag).
-  const mouseDrag = useFinePointer();
+  const viewOnly  = useViewOnly();
+  const mouseDrag = useFinePointer() && !viewOnly;
 
   const dragProps = {
     draggable: mouseDrag,
@@ -414,7 +418,7 @@ function KanbanCard({
     },
     onDragEnd,
     onClick,
-    onTouchStart: (e: React.TouchEvent<HTMLElement>) => onTouchHold(e.currentTarget, e),
+    onTouchStart: (e: React.TouchEvent<HTMLElement>) => { if (!viewOnly) onTouchHold(e.currentTarget, e); },
     // No long-press menu or text selection — holding a card picks it up
     onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
     role: "button" as const,

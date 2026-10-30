@@ -1,6 +1,7 @@
 import { PrismaClient } from "@/generated/prisma";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { withChangeLog } from "@/lib/audit/changes";
+import { withViewOnlyGuard } from "@/lib/access/guard";
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 
@@ -19,9 +20,10 @@ function createPrismaClient() {
     adapter,
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
   });
-  // Records who changed what on orders, tasks and meetings. Only adds query hooks — the
-  // client's API is unchanged, so it keeps the plain client's type.
-  return withChangeLog(base) as unknown as PrismaClient;
+  // Query hooks only — the client's API is unchanged, so it keeps the plain client's type.
+  // The view-only guard is added last so it runs first: a blocked write is never logged.
+  const logged = withChangeLog(base) as unknown as PrismaClient;
+  return withViewOnlyGuard(logged, base);
 }
 
 export const prisma = globalForPrisma.prisma ?? createPrismaClient();

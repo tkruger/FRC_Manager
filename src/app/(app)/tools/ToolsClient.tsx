@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ToolDialog, type ToolTab } from "./ToolDialog";
 import { CheckinButton } from "./CheckinButton";
 import { CONDITION_BADGE, groupKey, isAvailable, type ToolRow } from "./tool-helpers";
+import { useViewOnly } from "@/components/access/ViewOnly";
 
 interface Props {
   tools:         ToolRow[];
@@ -27,6 +28,7 @@ function shortDate(iso: string) {
 export function ToolsClient({ tools, canEdit, currentUserId, myCertNames, now, names, groupSizes }: Props) {
   const [search, setSearch] = useState("");
   const [open, setOpen]     = useState<{ id: string; tab: ToolTab } | null>(null);
+  const viewOnly = useViewOnly();
 
   const q = search.trim().toLowerCase();
   const displayed = q
@@ -111,7 +113,7 @@ export function ToolsClient({ tools, canEdit, currentUserId, myCertNames, now, n
                       <div className="flex gap-1.5">
                         {c ? (
                           (mine || canEdit) && <CheckinButton checkoutId={c.id} toolName={`${t.name} ${t.assetTag ?? ""}`.trim()} />
-                        ) : isAvailable(t) ? (
+                        ) : isAvailable(t) && !viewOnly ? (
                           <Button size="sm" variant="outline" onClick={() => setOpen({ id: t.id, tab: "checkout" })}>Check out</Button>
                         ) : null}
                       </div>

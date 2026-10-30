@@ -10,7 +10,15 @@ const ROLE_RANK: Record<Role, number> = {
   TEAM_LEADERSHIP:8,
   MENTOR:         1, // same access as Team Member (add other roles for more)
   HEAD_MENTOR:    10,
+  PARENT:         0, // view-only
+  VOLUNTEER_COORDINATOR: 3,
 };
+
+/** Every role, in the order they're listed (role pickers, the role guide) */
+export const ALL_ROLES: Role[] = [
+  "TEAM_MEMBER", "BUILD_LEAD", "INVENTORY_ADMIN", "ORDER_APPROVER", "SAFETY_CAPTAIN",
+  "BUYER", "TEAM_LEADERSHIP", "MENTOR", "PARENT", "VOLUNTEER_COORDINATOR", "HEAD_MENTOR",
+];
 
 export function hasRole(userRoles: Role[], required: Role): boolean {
   if (userRoles.includes("HEAD_MENTOR")) return true;
@@ -37,6 +45,8 @@ export const ROLE_LABELS: Record<Role, string> = {
   TEAM_LEADERSHIP:"Team Leadership",
   MENTOR:         "Mentor",
   HEAD_MENTOR:    "Head Mentor",
+  PARENT:         "Parent",
+  VOLUNTEER_COORDINATOR: "Volunteer coordinator",
 };
 
 // Roles that can manage team members and Discord

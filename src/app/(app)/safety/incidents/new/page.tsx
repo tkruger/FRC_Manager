@@ -2,10 +2,13 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import Link from "next/link";
 import { IncidentForm } from "./IncidentForm";
+import { ViewOnlyNotice } from "@/components/access/ViewOnly";
+import { isViewOnly } from "@/lib/access/read-only";
 
 export default async function NewIncidentPage() {
   const session = await auth();
   if (!session) redirect("/login");
+  if (isViewOnly(session.user.roles)) return <ViewOnlyNotice what="File safety incident" />;
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <nav className="text-small text-(--color-text-secondary) mb-3">

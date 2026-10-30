@@ -13,6 +13,7 @@ import { BarcodePanel } from "./[id]/BarcodePanel";
 import { ToolImageUploadPanel } from "./[id]/ToolImageUploadPanel";
 import { CheckinButton } from "./CheckinButton";
 import { CONDITION_BADGE, isAvailable, type ToolRow } from "./tool-helpers";
+import { useViewOnly } from "@/components/access/ViewOnly";
 
 export type ToolTab = "details" | "checkout" | "edit";
 
@@ -30,7 +31,8 @@ interface Props {
 /** Everything about one physical tool, in a window over the tools list. */
 export function ToolDialog({ tool, initialTab, canEdit, currentUserId, hasCert, onClose, names = [], groupSize = 1 }: Props) {
   const router = useRouter();
-  const available = isAvailable(tool);
+  const viewOnly = useViewOnly();
+  const available = isAvailable(tool) && !viewOnly;
   const tabs: { id: ToolTab; label: string }[] = [
     { id: "details", label: "Details" },
     ...(available ? [{ id: "checkout" as const, label: "Check out" }] : []),

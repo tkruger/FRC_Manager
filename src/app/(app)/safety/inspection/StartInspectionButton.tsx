@@ -6,8 +6,10 @@ import { createInspectionChecklistAction } from "@/app/actions/safety";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
+import { useViewOnly } from "@/components/access/ViewOnly";
 
 export function StartInspectionButton({ robots }: { robots: { id: string; displayName: string }[] }) {
+  const viewOnly = useViewOnly();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [eventName, setEventName] = useState("");
@@ -23,6 +25,7 @@ export function StartInspectionButton({ robots }: { robots: { id: string; displa
     });
   }
 
+  if (viewOnly) return null;
   return (
     <div className="flex gap-3 items-end">
       {robots.length > 1 && (

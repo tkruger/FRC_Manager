@@ -8,6 +8,8 @@ import { ROLE_LABELS } from "@/lib/rbac";
 import { ApproveDialog } from "./ApproveDialog";
 import { DenyButton } from "./DenyButton";
 import { MemberRoleEditor } from "./MemberRoleEditor";
+import { ClearanceEditor } from "./ClearanceEditor";
+import { isAdult, isCleared } from "@/lib/volunteers";
 import { DeleteMemberButton } from "./DeleteMemberButton";
 import { AccessCodeForm } from "./AccessCodeForm";
 import type { Role } from "@/generated/prisma";
@@ -19,6 +21,8 @@ export default async function MembersPage() {
 
   const isAdmin = session.user.roles.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP"].includes(r));
   if (!isAdmin) redirect("/dashboard");
+  const isHeadMentor = session.user.roles.includes("HEAD_MENTOR");
+  const dayText = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 
   const [team, users] = await Promise.all([
     prisma.team.findUnique({ where: { id: session.user.teamId }, select: { teamNumber: true, name: true, accessCode: true } }),
@@ -109,11 +113,17 @@ export default async function MembersPage() {
                       <span className="ml-2 text-xs font-normal text-(--color-text-secondary)">(you)</span>
                     )}
                   </p>
-                  <p className="text-small text-(--color-text-secondary) break-all">{u.email}</p>
+                  <p className="text-small text-(--color-text-secondary) break-all">{u.email}{u.phone && <> · {u.phone}</>}</p>
                 </div>
+                {isHeadMentor && u.id === session.user.id && (
+                  <div className="flex shrink-0 items-center gap-3">
+                    <ClearanceEditor userId={u.id} name={u.name} cleared={!!u.volunteerClearedAt} until={u.volunteerClearedUntil?.toISOString() ?? null} />
+                  </div>
+                )}
                 {u.id !== session.user.id && (
                   <div className="flex shrink-0 items-center gap-3">
                     <DeleteMemberButton userId={u.id} name={u.name} />
+                    {isHeadMentor && <ClearanceEditor userId={u.id} name={u.name} cleared={!!u.volunteerClearedAt} until={u.volunteerClearedUntil?.toISOString() ?? null} />}
                     <MemberRoleEditor userId={u.id} currentRoles={u.roles.map((r) => r.role as Role)} />
                   </div>
                 )}
@@ -122,6 +132,11 @@ export default async function MembersPage() {
                 {u.roles.map((r) => (
                   <Badge key={r.role} variant="info">{ROLE_LABELS[r.role as Role]}</Badge>
                 ))}
+                {isCleared(u)
+                  ? <Badge variant="success">Cleared to volunteer{u.volunteerClearedUntil ? ` until ${dayText(u.volunteerClearedUntil)}` : ""}</Badge>
+                  : u.volunteerClearedAt
+                    ? <Badge variant="warning">Volunteer clearance ended {u.volunteerClearedUntil ? dayText(u.volunteerClearedUntil) : ""}</Badge>
+                    : isAdult(u.roles.map((r) => r.role)) && <Badge variant="neutral">Not cleared to volunteer</Badge>}
               </div>
             </div>
           ))}

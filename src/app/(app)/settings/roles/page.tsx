@@ -45,7 +45,9 @@ export default function RolesPage() {
                   <span className="text-sm text-(--color-text-primary)">{item.action}</span>
                   <span className="flex flex-wrap gap-1.5 sm:justify-end sm:max-w-[55%]">
                     {item.who === "everyone"
-                      ? <Badge variant="success">Everyone</Badge>
+                      ? <Badge variant="success">Everyone but Parents</Badge>
+                      : item.who === "cleared"
+                      ? <Badge variant="success">Adults cleared to volunteer</Badge>
                       : item.who.length === 0
                         ? <Badge variant="neutral">Head Mentor only</Badge>
                         : item.who.map((r) => <Badge key={r} variant="info">{ROLE_LABELS[r]}</Badge>)}

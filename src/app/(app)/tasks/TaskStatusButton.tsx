@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import { updateTaskStatusAction } from "@/app/actions/tasks";
 import { STATUS_CONFIG, STATUS_OPTIONS } from "@/lib/schedule-helpers";
 import type { TaskStatus } from "@/generated/prisma";
+import { useViewOnly } from "@/components/access/ViewOnly";
 
 export function TaskStatusButton({ taskId, currentStatus }: { taskId: string; currentStatus: string }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const viewOnly = useViewOnly();
   const cfg = STATUS_CONFIG[currentStatus as TaskStatus];
 
   function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
@@ -27,6 +29,7 @@ export function TaskStatusButton({ taskId, currentStatus }: { taskId: string; cu
     neutral: "text-(--color-text-secondary)",
   };
 
+  if (viewOnly) return <span className={`text-sm font-medium ${variantClasses[cfg.variant]}`}>{cfg.label}</span>;
   return (
     <select
       value={currentStatus}

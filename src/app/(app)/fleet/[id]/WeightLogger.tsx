@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import { logWeightSnapshotAction } from "@/app/actions/fleet";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
+import { useViewOnly } from "@/components/access/ViewOnly";
 
 export function WeightLogger({ robotId }: { robotId: string }) {
+  const viewOnly = useViewOnly();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -30,6 +32,7 @@ export function WeightLogger({ robotId }: { robotId: string }) {
     </Button>
   );
 
+  if (viewOnly) return null;
   return (
     <form onSubmit={handleSubmit} className="flex gap-2 items-end mt-1">
       <Field label="Weight (lbs)" name="weight" type="number" step="0.1" required placeholder="108.5" className="flex-1" />

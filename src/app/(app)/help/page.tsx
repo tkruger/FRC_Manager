@@ -18,6 +18,7 @@ const SECTIONS: { id: HelpTopic; title: string }[] = [
   { id: "tools",           title: "Tools" },
   { id: "safety",          title: "Safety" },
   { id: "fleet",           title: "Robot fleet" },
+  { id: "volunteers",      title: "Volunteers" },
   { id: "notifications",   title: "Notifications & reminders" },
   { id: "roles",           title: "Roles & permissions" },
   { id: "discord",         title: "Discord" },
@@ -295,10 +296,33 @@ export default function HelpPage() {
         </ul>
       </Section>
 
+      <Section id="volunteers" title="Volunteers">
+        <p>Every meeting needs enough adults there — two confirmed adults unless the volunteer coordinator changes it. The <Link href="/volunteers" className="link">Volunteers</Link> page shows each upcoming meeting&apos;s coverage.</p>
+        <H3>Getting cleared</H3>
+        <ul className="list">
+          <li>Adults (Parents, Mentors, Head Mentors, Volunteer coordinators) need a Head Mentor to mark them <b>Cleared to volunteer</b> — on <b>Settings → Team members → Volunteer clearance</b>, usually once the school&apos;s background check is done. A clearance can have an end date (e.g. when the check runs out); the coordinator sees it coming up.</li>
+          <li>Add your phone number under <b>Profile</b> so the coordinator can reach you on the day — only coordinators and Head Mentors see it.</li>
+        </ul>
+        <H3>Signing up</H3>
+        <ul className="list">
+          <li>Once cleared, tap <b>Sign up</b> on any upcoming meeting (on the Volunteers page or the meeting in the calendar) — you&apos;re confirmed straight away.</li>
+          <li>If the coordinator asks you to cover a meeting, you&apos;ll get a notification (and an email); <b>Confirm</b> or tap <b>Can&apos;t make it</b>. Unanswered asks get a morning nudge in the last four days.</li>
+          <li>The day before each shift you get a reminder with the <b>shift instructions</b> — where to go, when, and what to do.</li>
+          <li>Can&apos;t make it after all? Tap <b>Can&apos;t make it</b> under Your shifts; the coordinator hears about it if the meeting is now short.</li>
+        </ul>
+        <H3>Coordinating (Volunteer coordinators and Head Mentors)</H3>
+        <ul className="list">
+          <li>Meetings without enough confirmed adults are marked in red on the Volunteers page and the calendar. <b>Only meetings that need adults</b> narrows the list.</li>
+          <li><b>Ask someone to cover…</b> sends a cleared adult a request to confirm. The × next to a name takes them off the shift.</li>
+          <li><b>Volunteer settings</b> sets how many confirmed adults a meeting needs and the default <b>shift instructions</b>. A meeting can have its own <b>special instructions</b> (a competition, an outreach event) instead.</li>
+          <li>Each morning, coordinators get a list of the next two weeks&apos; meetings that are short (Head Mentors get it if the team has no coordinator).</li>
+        </ul>
+      </Section>
+
       <Section id="notifications" title="Notifications & reminders">
         <p>
           Choose what you hear about in <Link href="/settings/notifications" className="link">Settings → Notifications</Link>. Each
-          type can show <b>in the app</b>, as a <b>push notification</b>, or both.
+          type can show <b>in the app</b>, as a <b>push notification</b>, or both. Volunteer shifts and coverage can also come by <b>email</b>.
         </p>
         <H3>Turning on push notifications</H3>
         <p>The first time you open the app on a device, it asks whether to turn on notifications. If you choose <b>Not now</b>, it won&apos;t ask again on that device — you can turn them on any time here:</p>
@@ -314,6 +338,7 @@ export default function HelpPage() {
           <li><b>Tasks</b> — when you&apos;re assigned, a morning digest of overdue and upcoming tasks, and blocked tasks.</li>
           <li><b>Competitions</b> — a daily countdown each morning for the 30 days before every event.</li>
           <li><b>Tools &amp; safety</b> — tool returns, expiring certifications, safety incidents.</li>
+          <li><b>Volunteers</b> — requests to cover a meeting, sign-up confirmations and the day-before reminder with instructions; for coordinators, meetings short of adults. These are emailed too unless you turn email off.</li>
           <li><b>Team</b> — new members waiting for approval, and your own account.</li>
         </ul>
         <H3>Quiet hours &amp; time zone</H3>
@@ -325,7 +350,7 @@ export default function HelpPage() {
       </Section>
 
       <Section id="roles" title="Roles & permissions">
-        <p>Head Mentors and Team Leadership approve new members and assign roles. <b>Mentor</b> has the same access as Team Member — give a mentor Team Leadership (or other roles) for more. A member can have several roles. <Link href="/settings/roles" className="link">Roles explained</Link> has the full list of who can do what.</p>
+        <p>Head Mentors and Team Leadership approve new members and assign roles. <b>Mentor</b> has the same access as Team Member — give a mentor Team Leadership (or other roles) for more. <b>Parents</b> are view-only: they see what a Team Member sees but can&apos;t change anything, apart from their own settings and volunteering. A member can have several roles. <Link href="/settings/roles" className="link">Roles explained</Link> has the full list of who can do what.</p>
         <p><b>Inviting people:</b> Head Mentors and Team Leadership can invite people from <b>Settings → Invite people</b> — by email (separate addresses with commas) or with a join link the bot posts in a Discord channel. Pick the roles they'll get (Team Member by default — you can give roles up to your own; only Head Mentors can invite Head Mentors). Anyone who accepts joins the team straight away with those roles.</p>
         <Table
           head={["Role", "Can also…"]}
@@ -337,8 +362,10 @@ export default function HelpPage() {
             ["Safety Captain", "Award and revoke certifications; notified of safety incidents."],
             ["Buyer", "Get approved items to order, export the purchasing CSV, add tracking links and set item statuses."],
             ["Team Leadership", "Approve members and assign roles (except Head Mentor), invite people, manage meetings, Discord and the team time zone; act as captains on orders (Buyer page, item statuses); view the purchase workflow."],
-            ["Mentor", "The same as Team Leadership."],
-            ["Head Mentor", "Everything: seasons, robots, applying templates, editing the purchase workflow, and acting on any purchase step. Only Head Mentors can grant or remove the Head Mentor role."],
+            ["Mentor", "The same as Team Member — add other roles for more."],
+            ["Parent", "View-only: see everything a Team Member sees. Once cleared, sign up to volunteer at meetings."],
+            ["Volunteer coordinator", "Make sure every meeting has enough adults: ask volunteers to cover meetings, set shift instructions and adults per meeting; hears about meetings that are short."],
+            ["Head Mentor", "Everything: seasons, robots, applying templates, editing the purchase workflow, acting on any purchase step, and clearing adults to volunteer. Only Head Mentors can grant or remove the Head Mentor role."],
           ]}
         />
         <p>Role changes and suspensions take effect immediately.</p>

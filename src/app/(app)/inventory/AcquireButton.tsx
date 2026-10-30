@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogTrigger, DialogClose } from "@/components/
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
+import { useViewOnly } from "@/components/access/ViewOnly";
 
 interface Props {
   itemId: string;
@@ -24,6 +25,7 @@ const SUBSYSTEM_OPTS = [
 ];
 
 export function AcquireButton({ itemId, itemName, robots, maxQty }: Props) {
+  const viewOnly = useViewOnly();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +44,7 @@ export function AcquireButton({ itemId, itemName, robots, maxQty }: Props) {
 
   const robotOpts = robots.map((r) => ({ value: r.id, label: r.displayName }));
 
+  if (viewOnly) return null;
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>

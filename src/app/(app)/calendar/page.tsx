@@ -1,6 +1,7 @@
 ﻿import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { canCoordinate, DEFAULT_MIN_ADULTS, isAdult, isCleared } from "@/lib/volunteers";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CalendarClient } from "./CalendarClient";
@@ -20,12 +21,25 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
     include: {
       meetings: {
         orderBy: { date: "asc" },
-        include: { tasks: { select: { id: true, name: true, status: true, subTeam: true } } },
+        include: {
+          tasks: { select: { id: true, name: true, status: true, subTeam: true } },
+          volunteers: { orderBy: { createdAt: "asc" }, select: { userId: true, status: true, user: { select: { name: true } } } },
+        },
       },
     },
   });
 
   if (!activeSeason) redirect("/settings/season");
+
+  // Volunteers: adults and coordinators see each meeting's coverage
+  const roles = session.user.roles as string[];
+  const [volunteerSettings, me] = await Promise.all([
+    prisma.volunteerSettings.findUnique({ where: { teamId: session.user.teamId }, select: { minAdults: true } }),
+    prisma.user.findUnique({ where: { id: session.user.id }, select: { volunteerClearedAt: true, volunteerClearedUntil: true } }),
+  ]);
+  const volunteerView = isAdult(roles) || canCoordinate(roles)
+    ? { myId: session.user.id, cleared: !!me && isCleared(me), coordinating: canCoordinate(roles), minAdults: volunteerSettings?.minAdults ?? DEFAULT_MIN_ADULTS }
+    : null;
 
   const isLeadership = session.user.roles.some((r) =>
     ["HEAD_MENTOR", "TEAM_LEADERSHIP", "BUILD_LEAD"].includes(r)
@@ -86,7 +100,9 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
           cancelled:    m.cancelled,
           cancelReason: m.cancelReason,
           tasks:        m.tasks,
+          volunteers:   m.volunteers.map((v) => ({ userId: v.userId, name: v.user.name, status: v.status })),
         }))}
+        volunteerView={volunteerView}
         allTasks={calendarTasks.map((t) => ({
           id:      t.id,
           name:    t.name,

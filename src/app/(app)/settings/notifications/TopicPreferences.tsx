@@ -13,6 +13,8 @@ interface Topic {
   required:    boolean;
   inApp:       boolean;
   push:        boolean;
+  /** null: this topic doesn't email */
+  email:       boolean | null;
 }
 
 export function TopicPreferences({ topics: initial }: { topics: Topic[] }) {
@@ -21,13 +23,15 @@ export function TopicPreferences({ topics: initial }: { topics: Topic[] }) {
   const [, start]           = useTransition();
   const groups = [...new Set(topics.map((t) => t.group))];
 
-  function toggle(id: string, field: "inApp" | "push") {
+  const anyEmail = topics.some((t) => t.email !== null);
+
+  function toggle(id: string, field: "inApp" | "push" | "email") {
     const t = topics.find((x) => x.id === id)!;
     const next = { ...t, [field]: !t[field] };
     setTopics((all) => all.map((x) => (x.id === id ? next : x))); // optimistic
     setError(null);
     start(async () => {
-      const res = await setTopicPreferenceAction(id, next.inApp, next.push);
+      const res = await setTopicPreferenceAction(id, next.inApp, next.push, next.email ?? undefined);
       if (!res.success) {
         setTopics((all) => all.map((x) => (x.id === id ? t : x)));
         setError(res.error);
@@ -42,6 +46,7 @@ export function TopicPreferences({ topics: initial }: { topics: Topic[] }) {
         <div className="hidden sm:flex gap-6 pr-1 text-xs font-semibold uppercase tracking-wide text-(--color-text-secondary)">
           <span className="w-12 text-center">In app</span>
           <span className="w-12 text-center">Push</span>
+          {anyEmail && <span className="w-12 text-center">Email</span>}
         </div>
       </div>
       {error && <p className="text-sm text-(--color-danger)">{error}</p>}
@@ -60,6 +65,9 @@ export function TopicPreferences({ topics: initial }: { topics: Topic[] }) {
                 <div className="flex gap-6 shrink-0">
                   <Toggle label="In app" checked={t.inApp} disabled={t.required} onChange={() => toggle(t.id, "inApp")} />
                   <Toggle label="Push"   checked={t.push}  onChange={() => toggle(t.id, "push")} />
+                  {t.email !== null
+                    ? <Toggle label="Email" checked={t.email} onChange={() => toggle(t.id, "email")} />
+                    : anyEmail && <span className="hidden sm:block w-12" aria-hidden />}
                 </div>
               </li>
             ))}

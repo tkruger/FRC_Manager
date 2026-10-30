@@ -5,11 +5,10 @@ import { useRouter } from "next/navigation";
 import { updateMemberRolesAction, suspendMemberAction } from "@/app/actions/members";
 import { Dialog, DialogContent, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ROLE_LABELS } from "@/lib/rbac";
+import { ALL_ROLES, ROLE_LABELS } from "@/lib/rbac";
 import type { Role } from "@/generated/prisma";
 import { toast } from "@/components/ui/toast";
 
-const ALL_ROLES: Role[] = ["TEAM_MEMBER", "BUILD_LEAD", "INVENTORY_ADMIN", "ORDER_APPROVER", "SAFETY_CAPTAIN", "BUYER", "TEAM_LEADERSHIP", "MENTOR", "HEAD_MENTOR"];
 
 export function MemberRoleEditor({ userId, currentRoles }: { userId: string; currentRoles: Role[] }) {
   const router = useRouter();

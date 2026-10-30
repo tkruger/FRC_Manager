@@ -6,6 +6,7 @@ import { checkinToolAction } from "@/app/actions/tools";
 import { Dialog, DialogContent, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
+import { useViewOnly } from "@/components/access/ViewOnly";
 
 const CONDITION_OPTIONS = [
   { value: "EXCELLENT",    label: "Excellent — like new" },
@@ -15,6 +16,7 @@ const CONDITION_OPTIONS = [
 ];
 
 export function CheckinButton({ checkoutId, toolName }: { checkoutId: string; toolName: string }) {
+  const viewOnly = useViewOnly();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [condition, setCondition] = useState("GOOD");
@@ -28,6 +30,7 @@ export function CheckinButton({ checkoutId, toolName }: { checkoutId: string; to
     });
   }
 
+  if (viewOnly) return null;
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>

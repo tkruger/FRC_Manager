@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { updateCheckItemAction } from "@/app/actions/safety";
 import { cn } from "@/lib/utils";
+import { useViewOnly } from "@/components/access/ViewOnly";
 
 type Status = "PASS" | "FAIL" | "NOT_CHECKED";
 
@@ -12,6 +13,7 @@ export function CheckItemButton({ itemId, currentStatus, status, label }: {
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const viewOnly = useViewOnly();
   const isActive = currentStatus === status;
 
   function handle() {
@@ -25,7 +27,7 @@ export function CheckItemButton({ itemId, currentStatus, status, label }: {
   return (
     <button
       onClick={handle}
-      disabled={isPending}
+      disabled={isPending || viewOnly}
       className={cn(
         "w-8 h-8 rounded font-bold text-sm transition-colors disabled:opacity-50",
         status === "PASS"

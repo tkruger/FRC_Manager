@@ -14,6 +14,10 @@ export interface TopicDef {
   required?:   boolean;
   /** Only shown to (and sent to) super admins */
   superAdminOnly?: boolean;
+  /** Can also go by email (set = email-capable; the value is the default) */
+  defaultEmail?: boolean;
+  /** Only shown to adults who volunteer, or to volunteer coordinators */
+  volunteers?: "adults" | "coordinators";
 }
 
 export const TOPICS = [
@@ -61,6 +65,22 @@ export const TOPICS = [
     description: "A meeting is added, moved, canceled or reinstated.",
     audience: "Everyone on the team",
     defaultInApp: true, defaultPush: true,
+  },
+
+  // Volunteers
+  {
+    id: "volunteers.shifts", group: "Volunteers",
+    label: "My volunteer shifts",
+    description: "You're asked to cover a meeting, your sign-up is confirmed or changed, and a reminder with the shift instructions the day before.",
+    audience: "Adults cleared to volunteer",
+    defaultInApp: true, defaultPush: true, defaultEmail: true, volunteers: "adults",
+  },
+  {
+    id: "volunteers.coverage", group: "Volunteers",
+    label: "Meetings short of adults",
+    description: "A morning list of the next two weeks' meetings without enough confirmed adults, and when a volunteer drops out or declines.",
+    audience: "Volunteer coordinators (Head Mentors if the team has none)",
+    defaultInApp: true, defaultPush: true, defaultEmail: true, volunteers: "coordinators",
   },
 
   // Tasks
