@@ -28,7 +28,7 @@ import {
 type Tx = Prisma.TransactionClient;
 
 export type { WorkflowAction, AvailableAction } from "./rules";
-export { resolveCurrentStep, availableActions, canActOnStep, canEditOrder } from "./rules";
+export { resolveCurrentStep, availableActions, canActOnStep, canEditOrder, canResubmitOrder } from "./rules";
 
 export interface Actor {
   id:     string;
@@ -218,6 +218,11 @@ async function syncReorders(tx: Tx, requestId: string, status: PurchaseStatus) {
   });
 }
 
+/** A denied or canceled order's committed spend leaves the budget (money actually spent stays) */
+async function dropCommitments(tx: Tx, requestId: string) {
+  await tx.expense.deleteMany({ where: { purchaseRequestId: requestId, isCommitment: true } });
+}
+
 // ── Public API ──────────────────────────────────────────────────────────────
 
 /**
@@ -236,6 +241,46 @@ export async function startWorkflow(requestId: string, actor: Actor): Promise<vo
     });
     await logEvent(tx, requestId, {
       action:  "created",
+      actorId: actor.id,
+      note:    active.id ? `Following workflow version ${active.version}.` : "Following the default workflow.",
+    });
+    await enterNextStep(tx, r, active.def, 0, actor.teamId, outbox);
+  });
+
+  await flush(outbox);
+}
+
+/**
+ * A denied or canceled order, fixed: back to the start of the team's current workflow, as if
+ * just submitted. Items that hadn't arrived wait for approval again (tracking cleared);
+ * arrived items stay as they are.
+ */
+export async function resubmitWorkflow(requestId: string, actor: Actor): Promise<void> {
+  const active = await getActiveWorkflow(actor.teamId);
+  const outbox: Outbox = [];
+
+  await prisma.$transaction(async (tx) => {
+    await tx.purchaseLineItem.updateMany({
+      where: { requestId, status: { not: "ARRIVED" } },
+      data:  { status: "QUEUED", trackingId: null, orderedAt: null },
+    });
+    await dropCommitments(tx, requestId);
+    // Restocks it was for went back to the order queue when it was denied/canceled — take them back
+    const restocked = await tx.purchaseLineItem.findMany({ where: { requestId, baseItemId: { not: null }, status: { not: "ARRIVED" } }, select: { baseItemId: true } });
+    const baseIds = [...new Set(restocked.map((l) => l.baseItemId!))];
+    if (baseIds.length) {
+      await tx.reorderRequest.updateMany({
+        where: { baseItemId: { in: baseIds }, status: "PENDING", purchaseRequestId: null },
+        data:  { purchaseRequestId: requestId },
+      });
+    }
+    const r = await tx.purchaseRequest.update({
+      where:  { id: requestId },
+      data:   { workflowDefinitionId: active.id, status: "SUBMITTED", currentStepKey: null, approverId: null, approvalNotes: null },
+      select: STATE_SELECT,
+    });
+    await logEvent(tx, requestId, {
+      action:  "resubmitted",
       actorId: actor.id,
       note:    active.id ? `Following workflow version ${active.version}.` : "Following the default workflow.",
     });
@@ -316,6 +361,7 @@ export async function performAction(
             data:  { status: "DENIED", currentStepKey: null, approverId: actor.id, approvalNotes: input.note || null },
           });
           await syncReorders(tx, r.id, "DENIED");
+          await dropCommitments(tx, r.id);
           await logEvent(tx, r.id, { step, action: "deny", actorId: actor.id, note: input.note });
           if (step.notify.requester) {
             outbox.push(() => createNotification({
@@ -383,6 +429,7 @@ export async function performAction(
         case "cancel": {
           await tx.purchaseRequest.update({ where: { id: r.id }, data: { status: "CANCELLED", currentStepKey: null } });
           await syncReorders(tx, r.id, "CANCELLED");
+          await dropCommitments(tx, r.id);
           await logEvent(tx, r.id, { step, action: "cancel", actorId: actor.id, note: input.note });
           if (actor.id !== r.requestedById) {
             outbox.push(() => createNotification({

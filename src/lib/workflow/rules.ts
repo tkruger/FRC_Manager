@@ -78,6 +78,18 @@ export function availableActions(
 
 
 /**
+ * Who can fix and resubmit a denied or canceled order: the person who placed it, anyone
+ * who could edit it while open, and Head Mentors.
+ */
+export function canResubmitOrder(def: WorkflowDef, r: StepState & { requestedById: string }, actor: ActorRef): boolean {
+  if (r.status !== "DENIED" && r.status !== "CANCELLED") return false;
+  if (actor.id === r.requestedById || actor.roles.includes("HEAD_MENTOR")) return true;
+  return def.steps
+    .filter((s) => s.type === "approval" || s.type === "order")
+    .some((s) => s.roles.some((role) => actor.roles.includes(role)));
+}
+
+/**
  * Who can edit an open order: anyone who can approve it or order it (the roles on the
  * workflow's approval and order steps), and Head Mentors.
  */

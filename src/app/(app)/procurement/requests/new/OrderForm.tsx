@@ -63,6 +63,8 @@ export interface OrderFormEdit {
   items:     Omit<Item, "key" | "lookup">[];
   /** Arrived items: shown, but can't be changed or removed */
   locked:    { ref: string; name: string; quantity: number }[];
+  /** A denied or canceled order being fixed: saving sends it for approval again */
+  resubmit?: boolean;
 }
 
 export function OrderForm({ vendors, edit, draft }: {
@@ -185,9 +187,9 @@ export function OrderForm({ vendors, edit, draft }: {
     };
     start(async () => {
       if (edit) {
-        const res = await editOrderAction({ ...payload, requestId: edit.requestId });
+        const res = await editOrderAction({ ...payload, requestId: edit.requestId, resubmit: edit.resubmit });
         if (!res.success) { setError(res.error); return; }
-        toast.success("Order saved");
+        toast.success(edit.resubmit ? "Order resubmitted" : "Order saved");
         router.push(`/procurement/requests/${edit.requestId}`);
         return;
       }
@@ -379,7 +381,7 @@ export function OrderForm({ vendors, edit, draft }: {
           {!edit && (
             <Button type="button" variant="outline" onClick={saveDraft} isLoading={savingDraft}>Save draft</Button>
           )}
-          <Button type="submit" isLoading={pending}>{edit ? "Save changes" : "Submit order"}</Button>
+          <Button type="submit" isLoading={pending}>{edit ? (edit.resubmit ? "Resubmit order" : "Save changes") : "Submit order"}</Button>
         </div>
       </div>
     </form>

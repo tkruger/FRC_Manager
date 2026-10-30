@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { statusBadgeVariant, statusLabel } from "@/lib/procurement-helpers";
-import { definitionFor, resolveCurrentStep, availableActions, canEditOrder } from "@/lib/workflow/engine";
+import { definitionFor, resolveCurrentStep, availableActions, canEditOrder, canResubmitOrder } from "@/lib/workflow/engine";
 import { Button } from "@/components/ui/button";
 import { describeCondition, describeRoles, evaluateCondition } from "@/lib/workflow/types";
 import { ITEM_STATUSES, ITEM_STATUS_INFO, ORDER_ADMIN_ROLES, STATUS_OVERRIDE_ROLES } from "@/lib/orders/constants";
@@ -79,6 +79,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   const total = items.reduce((s, i) => s + (i.unitCost ?? 0) * i.quantity, 0);
   const counts = ITEM_STATUSES.map((s) => ({ s, n: items.filter((i) => i.status === s).length })).filter((c) => c.n > 0);
   const closed = order.status === "DENIED" || order.status === "CANCELLED";
+  const canResubmit = closed && canResubmitOrder(def, order, { id: session.user.id, roles });
 
   // Items grouped by vendor (trimmed, any case — as the budget matches them), with each one's tax & shipping
   const vendorKey = (v: string | null | undefined) => (v ?? "").trim().toLowerCase();
@@ -113,8 +114,9 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             {counts.map(({ s, n }) => <Badge key={s} variant={ITEM_STATUS_INFO[s].badge}>{n} {ITEM_STATUS_INFO[s].label.toLowerCase()}</Badge>)}
           </div>
         }
-        actions={(canEdit || actions.length > 0) && <>
+        actions={(canEdit || canResubmit || actions.length > 0) && <>
           {canEdit && <Link href={`/procurement/requests/${order.id}/edit`}><Button variant="outline" size="sm">Edit order</Button></Link>}
+          {canResubmit && <Link href={`/procurement/requests/${order.id}/edit`}><Button size="sm">Fix and resubmit</Button></Link>}
           {actions.length > 0 && <RequestActions requestId={order.id} actions={actions} />}
         </>}
       />
@@ -149,7 +151,9 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           <ExportCsvButton order={order.id} />
         </div>
         {closed && (
-          <p className="text-small text-(--color-text-secondary)">This order was {order.status.toLowerCase().replace("cancelled", "canceled")}; its items won&apos;t be ordered.</p>
+          <p className="text-small text-(--color-text-secondary)">
+            This order was {order.status.toLowerCase().replace("cancelled", "canceled")}{order.approvalNotes ? <> — &ldquo;{order.approvalNotes}&rdquo;</> : ""}; its items won&apos;t be ordered{canResubmit ? <>. Use <b>Fix and resubmit</b> to correct it and send it for approval again</> : ""}.
+          </p>
         )}
         <ItemsTable
           items={items}

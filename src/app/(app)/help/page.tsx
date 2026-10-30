@@ -236,6 +236,7 @@ export default function HelpPage() {
         <ul className="list">
           <li><b>Export CSV</b> on an order, or on the Orders list (for every order on the tab you&apos;re viewing), downloads the items in the same spreadsheet format (no header row). In the iPhone app it opens in Safari so you can save the file.</li>
           <li>The order moves along by itself: it&apos;s ordered once every item is ordered, and complete once every item has arrived.</li>
+          <li><b>Denied or canceled?</b> The person who placed the order (or its approvers, the Buyer and Head Mentors) can open it and tap <b>Fix and resubmit</b>: correct the items, then resubmit — it goes through approval again from the start, keeping its history.</li>
           <li>Captains (Team Leadership) and the Buyer can set any item&apos;s status by hand. Arrived items can&apos;t be changed back, because their stock has already been added.</li>
           <li>Each order page shows a <b>Waiting on</b> banner and a timeline of who did what and when.</li>
           <li>Whoever an order is waiting on is reminded until they act — daily for routine orders, every 3 hours for urgent and emergency ones.</li>

@@ -152,9 +152,12 @@ const EditOrderSchema = z.object({
   name:      z.string().trim().max(300).min(1, "Give the order a name.").max(120),
   // Arrived items aren't sent (they're locked), so an order may come back with none here
   items:     z.array(ItemSchema.extend({ id: z.string().optional() })).max(100),
+  /** A denied or canceled order: save the fixes and send it for approval again */
+  resubmit:  z.boolean().optional(),
 });
 
-/** Anyone who can approve or order this order (and Head Mentors) — checked in editOrder. */
+/** Anyone who can approve or order this order (and Head Mentors) — checked in editOrder. With
+ *  `resubmit`, a denied or canceled order is fixed and sent for approval again (its requester too). */
 export async function editOrderAction(input: unknown): Promise<Result> {
   const who = await actor();
   if (!who) return { success: false, error: "Not authenticated." };

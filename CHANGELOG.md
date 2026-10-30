@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Fix and resubmit**: a denied or canceled order can be corrected and sent for approval again from its page — by the person who placed it, its approvers, the Buyer or Head Mentors. It keeps its history and goes through the workflow from the start; restocks it was for are picked back up from the order queue
+- Denying or canceling an order takes its committed spend off the budget (it used to stay)
+
 ## 1.7.1 — 2026-10-30
 
 - The robot picker is gone from the top bar. Tasks and the Gantt chart have a **Robot** filter beside their buttons instead (the BOM already had its own), and it only appears when the season has more than one robot — with one robot nothing is filtered

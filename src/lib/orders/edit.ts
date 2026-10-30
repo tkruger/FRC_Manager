@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 import type { BudgetCategoryType, RequestPriority, SubTeam } from "@/generated/prisma";
 import { BUDGET_CATEGORY_LABELS } from "@/lib/budget-categories";
 import { syncOrderSpend } from "./spend";
-import { definitionFor, canEditOrder, type Actor } from "@/lib/workflow/engine";
+import { definitionFor, canEditOrder, canResubmitOrder, resubmitWorkflow, type Actor } from "@/lib/workflow/engine";
 import { highestImportance, itemRef, type Importance } from "./constants";
 import { assignItemNumbers } from "./numbers";
 import { syncOrders } from "./items";
@@ -24,13 +24,15 @@ export async function editOrder(input: {
   items:     EditedItem[];
   /** The order's budget category */
   budgetCategory: BudgetCategoryType;
+  /** A denied or canceled order: save the fixes, then start it through the workflow again */
+  resubmit?: boolean;
 }): Promise<{ success: true } | { success: false; error: string }> {
   const { actor, requestId } = input;
 
   const order = await prisma.purchaseRequest.findFirst({
     where:  { id: requestId, season: { teamId: actor.teamId } },
     select: {
-      id: true, title: true, status: true, currentStepKey: true, workflowDefinitionId: true, budgetCategory: true,
+      id: true, title: true, status: true, currentStepKey: true, workflowDefinitionId: true, budgetCategory: true, requestedById: true,
       lineItems: { select: { id: true, orderNumber: true, status: true, name: true, vendorName: true, partNumber: true,
         vendorProductUrl: true, unitCost: true, quantity: true, subTeam: true, importance: true, reasoning: true,
         notes: true, baseItemId: true, budgetCategory: true } },
@@ -39,7 +41,14 @@ export async function editOrder(input: {
   if (!order) return { success: false, error: "Order not found." };
 
   const def = await definitionFor(order.workflowDefinitionId);
-  if (!canEditOrder(def, order, actor.roles)) {
+  const resubmit = !!input.resubmit;
+  if (resubmit) {
+    if (!canResubmitOrder(def, order, actor)) {
+      return { success: false, error: order.status === "DENIED" || order.status === "CANCELLED"
+        ? "Only the person who placed this order, its approvers, the Buyer and Head Mentors can resubmit it."
+        : "Only a denied or canceled order can be resubmitted." };
+    }
+  } else if (!canEditOrder(def, order, actor.roles)) {
     return { success: false, error: "Only people who can approve or order this can edit it — and only while it's open." };
   }
 
@@ -55,7 +64,7 @@ export async function editOrder(input: {
   const keptIds = new Set(items.map((i) => i.id).filter(Boolean));
   const removed = order.lineItems.filter((l) => l.status !== "ARRIVED" && !keptIds.has(l.id));
   // New items join where the order is: still waiting on approval, or already approved
-  const newStatus = order.status === "SUBMITTED" ? "QUEUED" : "TO_ORDER";
+  const newStatus = order.status === "SUBMITTED" || resubmit ? "QUEUED" : "TO_ORDER";
 
   const changes: string[] = [];
   if (name !== order.title) changes.push(`renamed it to "${name}"`);
@@ -140,11 +149,15 @@ export async function editOrder(input: {
 
     if (changes.length) {
       await tx.purchaseRequestEvent.create({
-        data: { requestId: order.id, action: "effect", actorId: actor.id, note: `${actor.name} edited the order: ${changes.join("; ")}.` },
+        data: { requestId: order.id, action: "effect", actorId: actor.id, note: `${actor.name} ${resubmit ? "fixed" : "edited"} the order: ${changes.join("; ")}.` },
       });
     }
   }, { timeout: 20_000 });
 
+  if (resubmit) {
+    await resubmitWorkflow(order.id, actor);
+    return { success: true };
+  }
   // Removing the last item that wasn't ordered/arrived can complete a step
   await syncOrders([order.id], actor);
   return { success: true };
