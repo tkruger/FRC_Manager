@@ -352,10 +352,15 @@ export async function setOrderChargesAction(input: unknown): Promise<Result> {
       const vendorName = vendors.get(key(c.vendorName));
       if (vendorName === undefined) continue;
       const tax = money(c.tax), shipping = money(c.shipping);
-      // Replace what's there for this vendor (however its name was spelled then)
-      const old = order.vendorCharges.filter((x) => key(x.vendorName) === key(vendorName)).map((x) => x.id);
-      if (old.length) await tx.orderVendorCharge.deleteMany({ where: { id: { in: old } } });
-      if (tax > 0 || shipping > 0) {
+      // Update what's there for this vendor (however its name was spelled then), so the
+      // order's history shows each amount from → to
+      const [keep, ...extra] = order.vendorCharges.filter((x) => key(x.vendorName) === key(vendorName)).map((x) => x.id);
+      if (extra.length) await tx.orderVendorCharge.deleteMany({ where: { id: { in: extra } } });
+      if (tax === 0 && shipping === 0) {
+        if (keep) await tx.orderVendorCharge.delete({ where: { id: keep } });
+      } else if (keep) {
+        await tx.orderVendorCharge.update({ where: { id: keep }, data: { tax, shipping, updatedById: who.id } });
+      } else {
         await tx.orderVendorCharge.create({ data: { requestId, vendorName, tax, shipping, updatedById: who.id } });
       }
       parts.push(`${vendorName || "No vendor"}: ${tax > 0 || shipping > 0 ? `${tax.toFixed(2)} tax, ${shipping.toFixed(2)} shipping` : "none"}`);

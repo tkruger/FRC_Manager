@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Change history** for orders (including their items and tax & shipping), tasks and meetings: who changed which field, from what to what, and when. Open **History** on an order, task card or meeting, or pick “Changes to orders, tasks and meetings” on the Audit log. Changes made from Discord count as the linked member's; background jobs show as System. History is kept for a year (the hourly job removes older entries)
+- Meetings can be linked directly (`/calendar?meeting=…`), and the meeting card shows its date correctly in every time zone
 - **Order approver** replaces the Treasurer role (existing Treasurers become Order approvers). It approves, denies and edits open orders only; setting up the budget, logging expenses and recording funding are now for Head Mentors, and vendors for Head Mentors and Inventory Admins
 - Orders have **tax & shipping per vendor**: once an order is approved, the Buyer enters each vendor's tax and shipping on the order's page. Tax counts as spend in the categories of that vendor's items; shipping goes to a new **Shipping** budget category. The order's total cost includes them, and spend already in the budget is updated when they change
 - Date ranges: picking a start date fills an empty end (or due) date with the same day, so its picker opens on the right month — seasons, competitions, tasks, the Kanban custom range and the audit log filter. Optional end dates that mean something when blank (a certification's expiry, the season kickoff) are left alone

@@ -19,6 +19,7 @@ import { itemRef } from "@/lib/orders/constants";
 import { canSetOrderBudget } from "@/lib/orders/spend";
 import { OrderBudgetCard } from "./OrderBudgetCard";
 import { OrderChargesCard } from "./OrderChargesCard";
+import { ChangeHistory } from "@/components/history/ChangeHistory";
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -179,6 +180,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       <section className="space-y-3">
         <h2 className="text-h2 text-(--color-text-primary)">Progress</h2>
         <RequestTimeline entries={timeline} upcoming={upcoming} />
+        <ChangeHistory entityType="order" entityId={order.id} />
       </section>
     </div>
   );

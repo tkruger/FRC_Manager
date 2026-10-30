@@ -274,7 +274,8 @@ export default function HelpPage() {
           <li><b>Scan</b> reads a tool&apos;s QR code or asset tag to check it in or out quickly — or to move it: scan the tool, then <b>Scan where it&apos;s going</b> and scan a location.</li>
           <li><b>Locations</b> are the shelves, cabinets, totes and cases tools live in. Each has its own barcode (LOC-0001, …) to print and stick on. Scan a location to see what&apos;s there, or to scan tools into it one after another. Build Leads, Inventory Admins, Team Leadership and Head Mentors add and rename locations.</li>
           <li><b>Pack lists</b>: Team Leadership and Head Mentors keep a master list of what comes to every competition — tool groups (&ldquo;Drill × 2&rdquo;; any drills count) and other items (&ldquo;Battery cart&rdquo;) — and <b>start packing</b> for an event. While packing, a banner on the Tools page lets anyone help: scan a tote or case, then every tool going into it, and tick off the other items. Packing is a checklist only; it doesn&apos;t check tools out. Print it to see what&apos;s in each tote at the event.</li>
-          <li><b>Audit log</b> (Team Leadership, Head Mentors and the Safety Captain): every tool check-out and check-in plus every safety report between two dates, ready to print. Find it on the Tools and Safety pages.</li>
+          <li><b>Audit log</b> (Team Leadership, Head Mentors and the Safety Captain): every tool check-out and check-in, every safety report, and every change to orders, tasks and meetings between two dates, ready to print. Find it on the Tools and Safety pages.</li>
+          <li><b>History</b> — every order, task and meeting has a <b>History</b> list (at the bottom of the order page, task card or meeting): who changed what, from what to what, and when. Changes are kept for a year.</li>
           <li>You&apos;ll get a reminder when a tool is due back today and each day it&apos;s overdue.</li>
         </ul>
       </Section>

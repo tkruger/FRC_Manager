@@ -1,5 +1,6 @@
 import { PrismaClient } from "@/generated/prisma";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { withChangeLog } from "@/lib/audit/changes";
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 
@@ -14,10 +15,13 @@ export function withStrictSsl(url: string): string {
 
 function createPrismaClient() {
   const adapter = new PrismaPg({ connectionString: withStrictSsl(process.env.DATABASE_URL!) });
-  return new PrismaClient({
+  const base = new PrismaClient({
     adapter,
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
   });
+  // Records who changed what on orders, tasks and meetings. Only adds query hooks — the
+  // client's API is unchanged, so it keeps the plain client's type.
+  return withChangeLog(base) as unknown as PrismaClient;
 }
 
 export const prisma = globalForPrisma.prisma ?? createPrismaClient();

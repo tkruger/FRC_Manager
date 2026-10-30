@@ -10,6 +10,7 @@ import {
   handleOrderRequest, handleOrderStatus, handleOrderPending, handleOrderApprove,
 } from "@/lib/discord-commands";
 import { prisma } from "@/lib/prisma";
+import { runAs } from "@/lib/audit/changes";
 
 export const runtime = "nodejs";
 // Slow commands finish in after() — give them time beyond Discord's 3-second window
@@ -99,8 +100,17 @@ export async function POST(req: NextRequest) {
   return new NextResponse("Unsupported interaction type", { status: 400 });
 }
 
-/** Runs one slash command and builds its reply. */
+/** Runs one slash command, with any changes it makes credited to the linked member */
 async function dispatch(body: any): Promise<Response> {
+  const discordUserId = body.member?.user?.id ?? body.user?.id ?? "";
+  const link = discordUserId
+    ? await prisma.discordLink.findUnique({ where: { discordUserId }, select: { userId: true, revokedAt: true } })
+    : null;
+  return runAs(link && !link.revokedAt ? link.userId : null, () => runCommand(body));
+}
+
+/** Runs one slash command and builds its reply. */
+async function runCommand(body: any): Promise<Response> {
   const guildId       = body.guild_id ?? "";
   const discordUserId = body.member?.user?.id ?? body.user?.id ?? "";
   const discordUser   = body.member?.user ?? body.user ?? {};

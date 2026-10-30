@@ -3,6 +3,7 @@
 import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogClose, DialogFooter } from "@/components/ui/dialog";
+import { ChangeHistory } from "@/components/history/ChangeHistory";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
@@ -236,6 +237,8 @@ export function TaskModal({ task, allTasks = [], allMembers = [], allRobots = []
                   </p>
                 </div>
               )}
+
+              <ChangeHistory entityType="task" entityId={task.id} />
 
               {/* Actions — pinned to the bottom of the card while the rest scrolls behind */}
               <DialogFooter>

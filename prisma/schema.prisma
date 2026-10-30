@@ -69,6 +69,7 @@ model User {
   createdTasks         Task[]              @relation("TaskCreator")
   incidentReports      SafetyIncident[]
   activityLogs         ActivityLog[]
+  changeLogs           ChangeLog[]
   notifications        Notification[]
   maintenanceLogs      ToolMaintenanceLog[]
   discordLink          DiscordLink?
@@ -217,6 +218,7 @@ model Team {
   toolLocations ToolLocation[]
   packListItems PackListItem[]
   packSessions  PackSession[]
+  changeLogs    ChangeLog[]
   discordConfig DiscordConfig?
   timezone      String?   // IANA zone used for meeting times and daily reminders
   /// Next number for auto-assigned tool asset tags (TOOL-0001, …)
@@ -1375,6 +1377,30 @@ model ReminderLog {
   key        String   @id
   lastSentAt DateTime
   count      Int      @default(1)
+}
+
+/// Who changed what on an order, task or meeting — each field from → to. Written by the
+/// Prisma client extension in src/lib/audit/changes.ts; the hourly job removes rows over a year old.
+model ChangeLog {
+  id          String   @id @default(cuid())
+  teamId      String
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  /// "order" | "task" | "meeting"
+  entityType  String
+  /// null for a bulk change (e.g. the meeting schedule regenerated)
+  entityId    String?
+  /// The order/task/meeting's name when it changed
+  entityLabel String
+  /// "created" | "updated" | "deleted"
+  action      String
+  /// [{ field, from, to }] — values already formatted for display
+  changes     Json
+  actorId     String?
+  actor       User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+
+  @@index([teamId, createdAt])
+  @@index([entityType, entityId, createdAt])
 }
 
 model ActivityLog {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition, useCallback } from "react";
+import { ChangeHistory } from "@/components/history/ChangeHistory";
 import { useRouter } from "next/navigation";
 import {
   updateMeetingAction, cancelMeetingAction, restoreMeetingAction,
@@ -35,6 +36,8 @@ interface Props {
   allTasks: TaskOption[];
   isLeadership: boolean;
   nextauthUrl: string;
+  /** Open this meeting (links from reminders and the Audit log: /calendar?meeting=…) */
+  openMeetingId?: string;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -54,7 +57,7 @@ const DOW_LABELS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export function CalendarClient({ season, meetings, allTasks, isLeadership }: Props) {
+export function CalendarClient({ season, meetings, allTasks, isLeadership, openMeetingId }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -62,14 +65,15 @@ export function CalendarClient({ season, meetings, allTasks, isLeadership }: Pro
   const seasonEnd = new Date(season.endDate);
   const today   = new Date();
 
-  // Always open on the current month
-  const defaultYear  = today.getFullYear();
-  const defaultMonth = today.getMonth();
+  // Open on the current month, or the linked meeting's
+  const linked = openMeetingId ? meetings.find((m) => m.id === openMeetingId) ?? null : null;
+  const defaultYear  = linked ? new Date(linked.date).getUTCFullYear() : today.getFullYear();
+  const defaultMonth = linked ? new Date(linked.date).getUTCMonth() : today.getMonth();
 
   const [viewYear,    setViewYear]    = useState(defaultYear);
   const [viewMonth,   setViewMonth]   = useState(defaultMonth);
   const [fullSeason,  setFullSeason]  = useState(false);
-  const [selected,    setSelected]    = useState<Meeting | null>(null);
+  const [selected,    setSelected]    = useState<Meeting | null>(linked);
   const [showAdd,   setShowAdd]   = useState(false);
   const [addDate,   setAddDate]   = useState("");
 
@@ -397,7 +401,7 @@ function MeetingDialog({
   onSave: (id: string, data: any) => void;
 }) {
   const date = new Date(meeting.date);
-  const dateLabel = date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+  const dateLabel = date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
 
   const [editing,    setEditing]    = useState(false);
   const [cancelling, setCancelling] = useState(false);
@@ -470,6 +474,8 @@ function MeetingDialog({
                   </div>
                 </div>
               )}
+
+              <ChangeHistory entityType="meeting" entityId={meeting.id} />
 
               <div className="flex gap-2 pt-1">
                 {isLeadership && !cancelling && (

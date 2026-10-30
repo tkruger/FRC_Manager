@@ -10,7 +10,8 @@ import { PageHeader } from "@/components/PageHeader";
 import { appUrl } from "@/lib/app-url";
 import { kickoffOf } from "@/lib/competition";
 
-export default async function CalendarPage() {
+export default async function CalendarPage({ searchParams }: { searchParams: Promise<{ meeting?: string }> }) {
+  const { meeting: openMeetingId } = await searchParams;
   const session = await auth();
   if (!session?.user?.teamId) redirect("/dashboard");
 
@@ -95,6 +96,7 @@ export default async function CalendarPage() {
         }))}
         isLeadership={isLeadership}
         nextauthUrl={baseUrl}
+        openMeetingId={openMeetingId}
       />
     </div>
   );
