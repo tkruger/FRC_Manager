@@ -7,7 +7,7 @@ import { SeedVendorsButton } from "./SeedVendorsButton";
 import { AddVendorDialog } from "./AddVendorDialog";
 import { EditVendorDialog } from "./EditVendorDialog";
 
-const ADMIN_ROLES = ["HEAD_MENTOR", "INVENTORY_ADMIN", "TREASURER"];
+const ADMIN_ROLES = ["HEAD_MENTOR", "INVENTORY_ADMIN"];
 
 export default async function VendorsPage() {
   const session = await auth();
@@ -41,7 +41,7 @@ export default async function VendorsPage() {
       {/* Admin notice for non-admins */}
       {!isAdmin && vendors.length > 0 && (
         <div className="rounded-md bg-(--color-surface-overlay) border border-(--color-border) px-4 py-3 text-small text-(--color-text-secondary)">
-          Vendor management is restricted to admins (Head Mentor, Inventory Admin, Treasurer).
+          Vendor management is restricted to admins (Head Mentor, Inventory Admin).
         </div>
       )}
 

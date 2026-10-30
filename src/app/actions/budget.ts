@@ -8,13 +8,13 @@ import type { BudgetCategoryType, FundingType } from "@/generated/prisma";
 import { ActionError, userMessage } from "@/lib/action-error";
 import { issueMessage } from "@/lib/validation";
 
-const BUDGET_ROLES = ["HEAD_MENTOR", "TREASURER"] as const;
+const BUDGET_ROLES = ["HEAD_MENTOR"] as const;
 
 async function requireBudgetRole() {
   const session = await auth();
   if (!session?.user?.teamId) throw new ActionError("Not authenticated.");
   if (!session.user.roles.some((r) => BUDGET_ROLES.includes(r as any)))
-    throw new ActionError("Only Head Mentors and Treasurers can modify the budget.");
+    throw new ActionError("Only Head Mentors can change the budget.");
   return session;
 }
 
@@ -35,6 +35,7 @@ const DEFAULT_CATEGORIES: { type: BudgetCategoryType; label: string }[] = [
   { type: "FOOD_MEALS",         label: "Food & Meals" },
   { type: "AWARDS_OUTREACH",    label: "Awards & Outreach" },
   { type: "CONTINGENCY",        label: "Contingency Reserve" },
+  { type: "SHIPPING",           label: "Shipping" },
 ];
 
 export async function setupBudgetAction(

@@ -18,6 +18,7 @@ import { ExportCsvButton } from "@/components/orders/ExportCsvButton";
 import { itemRef } from "@/lib/orders/constants";
 import { canSetOrderBudget } from "@/lib/orders/spend";
 import { OrderBudgetCard } from "./OrderBudgetCard";
+import { OrderChargesCard } from "./OrderChargesCard";
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -29,6 +30,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
     include: {
       requestedBy: { select: { name: true } },
       lineItems:   { orderBy: [{ orderNumber: "asc" }, { id: "asc" }], select: ITEM_ROW_SELECT },
+      vendorCharges: { select: { vendorName: true, tax: true, shipping: true } },
       events:      { orderBy: { createdAt: "asc" }, include: { actor: { select: { name: true } } } },
     },
   });
@@ -77,6 +79,22 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   const counts = ITEM_STATUSES.map((s) => ({ s, n: items.filter((i) => i.status === s).length })).filter((c) => c.n > 0);
   const closed = order.status === "DENIED" || order.status === "CANCELLED";
 
+  // Items grouped by vendor (trimmed, any case — as the budget matches them), with each one's tax & shipping
+  const vendorKey = (v: string | null | undefined) => (v ?? "").trim().toLowerCase();
+  const vendors = new Map<string, { name: string; items: number; subtotal: number; tax: number; shipping: number }>();
+  for (const i of items) {
+    const v = vendors.get(vendorKey(i.vendorName)) ?? { name: (i.vendorName ?? "").trim(), items: 0, subtotal: 0, tax: 0, shipping: 0 };
+    v.items += 1;
+    v.subtotal += (i.unitCost ?? 0) * i.quantity;
+    vendors.set(vendorKey(i.vendorName), v);
+  }
+  for (const c of order.vendorCharges) {
+    const v = vendors.get(vendorKey(c.vendorName));
+    if (v) { v.tax += c.tax; v.shipping += c.shipping; }
+  }
+  const extras = [...vendors.values()].reduce((s, v) => s + v.tax + v.shipping, 0);
+  const beforeApproval = order.status === "DRAFT" || order.status === "SUBMITTED";
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       <nav className="text-small text-(--color-text-secondary)">
@@ -114,11 +132,12 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           { label: "Requested by", value: order.requestedBy.name },
           { label: "Order date",   value: formatDate(order.submittedAt) },
           { label: "Items",        value: String(items.length) },
-          { label: "Total cost",   value: formatCurrency(total) },
+          { label: "Total cost",   value: formatCurrency(total + extras), note: extras > 0 ? `incl. ${formatCurrency(extras)} tax & shipping` : undefined },
         ].map((m) => (
           <div key={m.label} className="card py-3">
             <p className="text-label text-(--color-text-secondary)">{m.label}</p>
             <p className="text-sm font-medium text-(--color-text-primary) mt-0.5">{m.value}</p>
+            {m.note && <p className="text-xs text-(--color-text-secondary)">{m.note}</p>}
           </div>
         ))}
       </div>
@@ -137,6 +156,15 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           canOverride={!closed && roles.some((r) => STATUS_OVERRIDE_ROLES.includes(r))}
         />
       </section>
+
+      {items.length > 0 && (
+        <OrderChargesCard
+          requestId={order.id}
+          vendors={[...vendors.values()]}
+          canChange={!closed && !beforeApproval && roles.some((r) => ORDER_ADMIN_ROLES.includes(r))}
+          beforeApproval={beforeApproval}
+        />
+      )}
 
       <OrderBudgetCard
         requestId={order.id}

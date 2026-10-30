@@ -5,7 +5,7 @@
 import type { Role } from "@/generated/prisma";
 
 export const ROLE_ORDER: Role[] = [
-  "TEAM_MEMBER", "BUILD_LEAD", "INVENTORY_ADMIN", "TREASURER", "SAFETY_CAPTAIN",
+  "TEAM_MEMBER", "BUILD_LEAD", "INVENTORY_ADMIN", "ORDER_APPROVER", "SAFETY_CAPTAIN",
   "BUYER", "TEAM_LEADERSHIP", "MENTOR", "HEAD_MENTOR",
 ];
 
@@ -13,7 +13,7 @@ export const ROLE_SUMMARY: Record<Role, { who: string; summary: string }> = {
   TEAM_MEMBER:     { who: "Every student and mentor",       summary: "Uses the app day to day: tasks, tools, inventory, the calendar, orders and safety reports." },
   BUILD_LEAD:      { who: "Students running the build",     summary: "Runs the build: manages meetings and task templates, and edits robots and tools." },
   INVENTORY_ADMIN: { who: "Whoever looks after the shop",   summary: "Looks after parts and tools: manages and retires inventory, edits tools, manages vendors and templates, awards certifications." },
-  TREASURER:       { who: "Whoever looks after the money",  summary: "Owns the money: sets up the budget, logs expenses and approves orders over the budget threshold." },
+  ORDER_APPROVER:  { who: "Whoever signs off on spending",  summary: "Approves or denies orders (above the auto-approve limit) and can edit open orders. The budget itself is the Head Mentor's." },
   SAFETY_CAPTAIN:  { who: "Safety lead",                    summary: "Keeps the shop safe: awards and revokes certifications and hears about every safety incident." },
   BUYER:           { who: "Whoever places the orders",      summary: "Buys what's approved: works the To order list, exports the purchasing spreadsheet, adds tracking links and sets item statuses." },
   TEAM_LEADERSHIP: { who: "Captains and student leaders",   summary: "Runs the team: approves members and assigns roles, invites people, manages meetings, Discord and the team time zone, and acts as captain on orders." },
@@ -42,18 +42,18 @@ export const CAPABILITIES: { area: string; items: { action: string; who: Who }[]
       { action: "Add and edit tools and tool locations",                 who: ["BUILD_LEAD", "INVENTORY_ADMIN", "TEAM_LEADERSHIP"] },
       { action: "Help pack for competitions, scan tools into locations", who: "everyone" },
       { action: "Edit the competition pack list, start and finish packing", who: ["TEAM_LEADERSHIP"] },
-      { action: "Manage vendors",                                        who: ["INVENTORY_ADMIN", "TREASURER"] },
+      { action: "Manage vendors",                                        who: ["INVENTORY_ADMIN"] },
     ],
   },
   {
     area: "Orders & budget",
     items: [
       { action: "Place orders and mark items arrived",                   who: "everyone" },
-      { action: "Approve or deny orders (default workflow)",             who: ["TREASURER"] },
-      { action: "Edit open orders",                                      who: ["TREASURER", "BUYER"] },
+      { action: "Approve or deny orders (default workflow)",             who: ["ORDER_APPROVER"] },
+      { action: "Edit open orders",                                      who: ["ORDER_APPROVER", "BUYER"] },
       { action: "Buyer page: to-order list, CSV export, tracking",  who: ["BUYER", "TEAM_LEADERSHIP"] },
       { action: "Set any item's status by hand",                         who: ["BUYER", "TEAM_LEADERSHIP"] },
-      { action: "Set up the budget and log expenses",                    who: ["TREASURER"] },
+      { action: "Set up the budget, log expenses and record funding",   who: [] },
     ],
   },
   {

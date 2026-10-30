@@ -21,7 +21,7 @@ export const DEFAULT_PURCHASE_WORKFLOW: WorkflowDef = {
       type: "approval",
       name: "Budget approval",
       description: "Small routine purchases skip this step and are approved automatically.",
-      roles: ["TREASURER", "HEAD_MENTOR"],
+      roles: ["ORDER_APPROVER", "HEAD_MENTOR"],
       when: {
         match: "any",
         rules: [
@@ -30,7 +30,7 @@ export const DEFAULT_PURCHASE_WORKFLOW: WorkflowDef = {
         ],
       },
       allowSelfApproval: true,
-      notify:  { roles: ["TREASURER", "HEAD_MENTOR"], requester: true, discord: true },
+      notify:  { roles: ["ORDER_APPROVER", "HEAD_MENTOR"], requester: true, discord: true },
       effects: {},
     },
     {
@@ -47,7 +47,7 @@ export const DEFAULT_PURCHASE_WORKFLOW: WorkflowDef = {
       type: "receive",
       name: "Arrive & stock",
       description: "Anyone marks items Arrived as they show up; each is added to inventory. Done when every item has arrived.",
-      roles: ["TEAM_MEMBER", "BUILD_LEAD", "INVENTORY_ADMIN", "TREASURER", "SAFETY_CAPTAIN", "BUYER", "TEAM_LEADERSHIP", "MENTOR", "HEAD_MENTOR"],
+      roles: ["TEAM_MEMBER", "BUILD_LEAD", "INVENTORY_ADMIN", "ORDER_APPROVER", "SAFETY_CAPTAIN", "BUYER", "TEAM_LEADERSHIP", "MENTOR", "HEAD_MENTOR"],
       notify:  { roles: [], requester: true, discord: false },
       effects: { addStock: true, recordExpense: true },
     },

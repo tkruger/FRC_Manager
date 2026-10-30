@@ -228,8 +228,8 @@ export default function HelpPage() {
         />
         <H3>What happens next</H3>
         <Steps>
-          <li><b>Approval</b> — Treasurers or Head Mentors approve or deny the order. Routine orders of $50 or less are approved automatically; emergencies always need approval. Approved items become <b>To order</b>.</li>
-          <li><b>Buyer orders</b> — on <b>Orders → Buyer</b>, the Buyer copies or downloads the to-order items as CSV for the purchasing spreadsheet (no header; grouped by vendor; columns #XXXX item ID, Vendor, Part Name, Link, Unit Price, Qty, Order Notes, Order Date), places the orders, then selects the items that shipped together and adds one <b>tracking link</b> — they become <b>Ordered</b>.</li>
+          <li><b>Approval</b> — Order approvers or Head Mentors approve or deny the order. Routine orders of $50 or less are approved automatically; emergencies always need approval. Approved items become <b>To order</b>.</li>
+          <li><b>Buyer orders</b> — on <b>Orders → Buyer</b>, the Buyer copies or downloads the to-order items as CSV for the purchasing spreadsheet (no header; grouped by vendor; columns #XXXX item ID, Vendor, Part Name, Link, Unit Price, Qty, Order Notes, Order Date), places the orders, then selects the items that shipped together and adds one <b>tracking link</b> — they become <b>Ordered</b>. On each order&apos;s page, under <b>Tax &amp; shipping</b>, the Buyer enters the tax and shipping charged by each vendor (the approved total is the items only).</li>
           <li><b>Arrival</b> — when a box shows up, anyone can tick the items and tap <b>Mark arrived</b>. Each item is added to inventory (matched by its inventory link, part number or name, or created new) and becomes <b>Arrived</b>.</li>
         </Steps>
         <ul className="list">
@@ -257,9 +257,9 @@ export default function HelpPage() {
               <li><b>Spent</b> — expenses, including orders placed but not yet received.</li>
             </ul>
           </li>
-          <li>Treasurers and Head Mentors add funding with <b>+ Add funding</b> and use <b>Edit</b> on a source to mark a pledge received (with the date it came in, so it shows on the chart at the right time). The chart shows the goal, raised and spent week by week over the season.</li>
-          <li>Purchases update the budget automatically: when ordered they appear as <b>Committed — on order</b>, and become a regular expense once received. Each item counts toward its order&apos;s budget category (or its own), so one order can show in several categories.</li>
-          <li>Spend without a category shows as <b>Uncategorized</b> with links to the orders. Open one and use <b>Budget → Change</b> to fix it. That works at any stage, even after the items arrive, and moves the spend already recorded. The person who placed the order, its approvers, the Buyer, the Treasurer, Team Leadership and Head Mentors can change it.</li>
+          <li>Head Mentors add funding with <b>+ Add funding</b> and use <b>Edit</b> on a source to mark a pledge received (with the date it came in, so it shows on the chart at the right time). The chart shows the goal, raised and spent week by week over the season.</li>
+          <li>Purchases update the budget automatically: when ordered they appear as <b>Committed — on order</b>, and become a regular expense once received. Each item counts toward its order&apos;s budget category (or its own), so one order can show in several categories. A vendor&apos;s <b>tax</b> counts toward the categories of that vendor&apos;s items; its <b>shipping</b> goes to the <b>Shipping</b> category.</li>
+          <li>Spend without a category shows as <b>Uncategorized</b> with links to the orders. Open one and use <b>Budget → Change</b> to fix it. That works at any stage, even after the items arrive, and moves the spend already recorded. The person who placed the order, its approvers, the Buyer, Team Leadership and Head Mentors can change it.</li>
         </ul>
       </Section>
 
@@ -332,7 +332,7 @@ export default function HelpPage() {
             ["Team Member", "Use tasks, tools, inventory and the calendar; place orders and mark items arrived; report incidents."],
             ["Build Lead", "Manage meetings and task templates, edit robots and tools."],
             ["Inventory Admin", "Manage inventory and tools, manage task templates, award certifications."],
-            ["Treasurer", "Manage the budget and approve orders."],
+            ["Order approver", "Approve or deny orders, and edit open ones. (The budget is the Head Mentor's.)"],
             ["Safety Captain", "Award and revoke certifications; notified of safety incidents."],
             ["Buyer", "Get approved items to order, export the purchasing CSV, add tracking links and set item statuses."],
             ["Team Leadership", "Approve members and assign roles (except Head Mentor), invite people, manage meetings, Discord and the team time zone; act as captains on orders (Buyer page, item statuses); view the purchase workflow."],

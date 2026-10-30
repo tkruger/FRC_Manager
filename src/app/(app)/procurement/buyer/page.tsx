@@ -39,7 +39,7 @@ export default async function OrderAdminPage() {
         </nav>
         <PageTitle help="purchasing">Buyer</PageTitle>
         <p className="text-body text-(--color-text-secondary) mt-1">
-          Approved items to purchase. Add a tracking link to mark items ordered — one link can cover several items that ship together.
+          Approved items to purchase. Add a tracking link to mark items ordered — one link can cover several items that ship together. Add each vendor&apos;s tax and shipping on the order&apos;s page (<b>Tax &amp; shipping</b>).
         </p>
       </div>
 

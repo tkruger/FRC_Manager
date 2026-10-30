@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { BudgetSetupForm } from "./BudgetSetupForm";
 
-const BUDGET_ROLES = ["HEAD_MENTOR", "TREASURER"];
+const BUDGET_ROLES = ["HEAD_MENTOR"];
 
 export default async function BudgetSetupPage() {
   const session = await auth();

@@ -115,7 +115,7 @@ enum Role {
   TEAM_MEMBER
   BUILD_LEAD
   INVENTORY_ADMIN
-  TREASURER
+  ORDER_APPROVER
   SAFETY_CAPTAIN
   TEAM_LEADERSHIP
   /// Can see and manage everything Team Leadership can (it implies TEAM_LEADERSHIP)
@@ -797,6 +797,7 @@ model PurchaseRequest {
   currentStepKey       String?
 
   lineItems       PurchaseLineItem[]
+  vendorCharges   OrderVendorCharge[]
   events          PurchaseRequestEvent[]
   reorderRequests ReorderRequest[]
 }
@@ -966,6 +967,7 @@ enum BudgetCategoryType {
   FOOD_MEALS
   AWARDS_OUTREACH
   CONTINGENCY
+  SHIPPING            // vendors' shipping charges on orders
   OTHER
 }
 
@@ -1526,4 +1528,21 @@ model Invite {
 enum InviteKind {
   EMAIL
   LINK
+}
+
+/// Tax and shipping for the items in an order that come from one vendor, entered by the
+/// Buyer when placing it. Tax counts toward the categories of that vendor's items (split by
+/// cost); shipping goes to the Shipping category.
+model OrderVendorCharge {
+  id          String          @id @default(cuid())
+  requestId   String
+  request     PurchaseRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  /// The items' vendor name as entered ("" for items with no vendor)
+  vendorName  String
+  tax         Float           @default(0)
+  shipping    Float           @default(0)
+  updatedById String?
+  updatedAt   DateTime        @updatedAt
+
+  @@unique([requestId, vendorName])
 }

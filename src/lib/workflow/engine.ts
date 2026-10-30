@@ -485,8 +485,8 @@ async function recordSpend(tx: Tx, r: RequestState, step: WorkflowStep, actorId:
   await logEvent(tx, r.id, {
     step, action: "effect", actorId,
     note: commitment
-      ? `$${amount.toFixed(2)} logged as committed spend in the budget${where}.`
-      : `$${amount.toFixed(2)} recorded as an expense in the budget${where}.`,
-    data: { effect: commitment ? "recordCommitment" : "recordExpense", amount },
+      ? `${res.total.toFixed(2)} logged as committed spend in the budget${where}${res.total > amount + 0.004 ? " (including tax and shipping)" : ""}.`
+      : `${res.total.toFixed(2)} recorded as an expense in the budget${where}${res.total > amount + 0.004 ? " (including tax and shipping)" : ""}.`,
+    data: { effect: commitment ? "recordCommitment" : "recordExpense", amount: res.total },
   });
 }

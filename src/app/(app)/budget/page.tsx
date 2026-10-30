@@ -14,7 +14,7 @@ import { LogExpenseDialog } from "./LogExpenseDialog";
 import { BudgetBurndownCard } from "./BudgetBurndownCard";
 import { PageHeader } from "@/components/PageHeader";
 
-const BUDGET_ROLES = ["HEAD_MENTOR", "TREASURER"];
+const BUDGET_ROLES = ["HEAD_MENTOR"];
 
 export default async function BudgetDashboard() {
   const session = await auth();
@@ -56,7 +56,7 @@ export default async function BudgetDashboard() {
           <p className="text-body text-(--color-text-secondary) mb-4">No budget configured for {activeSeason.name}.</p>
           {canEdit
             ? <Link href="/budget/setup"><Button>Set up budget</Button></Link>
-            : <p className="text-small text-(--color-text-disabled)">A Treasurer or Head Mentor can set up the budget.</p>}
+            : <p className="text-small text-(--color-text-disabled)">A Head Mentor can set up the budget.</p>}
         </div>
       </div>
     );

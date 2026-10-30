@@ -16,10 +16,12 @@ export const BUDGET_CATEGORY_LABELS: Record<BudgetCategoryType, string> = {
   FOOD_MEALS:        "Food & Meals",
   AWARDS_OUTREACH:   "Awards & Outreach",
   CONTINGENCY:       "Contingency Reserve",
+  SHIPPING:          "Shipping",
   OTHER:             "Other",
 };
 
-/** What an order (or one of its items) can be charged to — robot and shop first */
+/** What an order (or one of its items) can be charged to — robot and shop first. (Not
+ *  Shipping: that's filled from the shipping the Buyer enters per vendor.) */
 export const ORDER_BUDGET_CATEGORIES: BudgetCategoryType[] = [
   "ROBOT_MECHANICAL", "ROBOT_ELECTRICAL", "ROBOT_PNEUMATICS", "RAW_MATERIALS",
   "TOOLS_EQUIPMENT", "CONSUMABLES", "SAFETY_EQUIPMENT",

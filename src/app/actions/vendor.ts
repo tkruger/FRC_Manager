@@ -6,7 +6,7 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { ActionError, userMessage } from "@/lib/action-error";
 
-const ADMIN_ROLES = ["HEAD_MENTOR", "INVENTORY_ADMIN", "TREASURER"] as const;
+const ADMIN_ROLES = ["HEAD_MENTOR", "INVENTORY_ADMIN"] as const;
 
 async function requireAdmin() {
   const session = await auth();

@@ -284,7 +284,7 @@ export async function setOrderBudgetAction(input: unknown): Promise<Result> {
   if (!order) return { success: false, error: "Order not found." };
   const def = await definitionFor(order.workflowDefinitionId);
   if (!canSetOrderBudget(who.roles, who.id, order, canEditOrder(def, order, who.roles))) {
-    return { success: false, error: "Only whoever placed the order, its approvers, the Buyer, the Treasurer, Team Leadership and Head Mentors can change its budget category." };
+    return { success: false, error: "Only whoever placed the order, its approvers, the Buyer, Team Leadership and Head Mentors can change its budget category." };
   }
 
   const own = new Set(order.lineItems.map((l) => l.id));
@@ -303,5 +303,69 @@ export async function setOrderBudgetAction(input: unknown): Promise<Result> {
     });
   });
   refresh([order.id]);
+  return { success: true };
+}
+
+// ── Tax & shipping per vendor (the Buyer, when placing the order) ──────────
+
+const ChargesSchema = z.object({
+  requestId: z.string().max(100),
+  charges:   z.array(z.object({
+    vendorName: z.string().trim().max(120),
+    tax:        z.number().min(0, "Tax can't be negative.").max(1_000_000),
+    shipping:   z.number().min(0, "Shipping can't be negative.").max(1_000_000),
+  })).max(50),
+});
+
+/**
+ * Set the tax and shipping for each vendor on an order (Buyer, Team Leadership, Head
+ * Mentors). Tax counts toward the categories of that vendor's items, shipping toward
+ * Shipping; spend already in the budget is updated to match.
+ */
+export async function setOrderChargesAction(input: unknown): Promise<Result> {
+  const who = await actor();
+  if (!who) return { success: false, error: "Not authenticated." };
+  if (!who.roles.some((r) => ORDER_ADMIN_ROLES.includes(r))) {
+    return { success: false, error: "Only the Buyer, Team Leadership and Head Mentors can set tax and shipping." };
+  }
+  const parsed = ChargesSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: issueMessage(parsed.error) };
+  const { requestId, charges } = parsed.data;
+
+  const order = await prisma.purchaseRequest.findFirst({
+    where:  { id: requestId, season: { teamId: who.teamId } },
+    select: { id: true, status: true, lineItems: { select: { vendorName: true } }, vendorCharges: { select: { id: true, vendorName: true } } },
+  });
+  if (!order) return { success: false, error: "Order not found." };
+  if (order.status === "DENIED" || order.status === "CANCELLED") return { success: false, error: "This order is closed." };
+  if (order.status === "DRAFT" || order.status === "SUBMITTED") return { success: false, error: "Tax and shipping are added once the order is approved." };
+
+  // Only the vendors on the order (matched like the budget does: trimmed, any case)
+  const key = (v: string | null | undefined) => (v ?? "").trim().toLowerCase();
+  const vendors = new Map<string, string>();
+  for (const l of order.lineItems) if (!vendors.has(key(l.vendorName))) vendors.set(key(l.vendorName), (l.vendorName ?? "").trim());
+  const money = (n: number) => Math.round(n * 100) / 100;
+  const parts: string[] = [];
+
+  await prisma.$transaction(async (tx) => {
+    for (const c of charges) {
+      const vendorName = vendors.get(key(c.vendorName));
+      if (vendorName === undefined) continue;
+      const tax = money(c.tax), shipping = money(c.shipping);
+      // Replace what's there for this vendor (however its name was spelled then)
+      const old = order.vendorCharges.filter((x) => key(x.vendorName) === key(vendorName)).map((x) => x.id);
+      if (old.length) await tx.orderVendorCharge.deleteMany({ where: { id: { in: old } } });
+      if (tax > 0 || shipping > 0) {
+        await tx.orderVendorCharge.create({ data: { requestId, vendorName, tax, shipping, updatedById: who.id } });
+      }
+      parts.push(`${vendorName || "No vendor"}: ${tax > 0 || shipping > 0 ? `${tax.toFixed(2)} tax, ${shipping.toFixed(2)} shipping` : "none"}`);
+    }
+    // Spend already recorded follows (nothing recorded yet: it's included when it is)
+    await syncOrderSpend(tx, requestId);
+    if (parts.length) {
+      await tx.purchaseRequestEvent.create({ data: { requestId, action: "charges", actorId: who.id, note: parts.join(" · ") } });
+    }
+  });
+  refresh([requestId]);
   return { success: true };
 }

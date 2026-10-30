@@ -20,6 +20,7 @@ const DEFAULT_CATEGORIES = [
   { type: "FOOD_MEALS",         label: "Food & Meals",                      suggested: 500  },
   { type: "AWARDS_OUTREACH",    label: "Awards & Outreach",                 suggested: 300  },
   { type: "CONTINGENCY",        label: "Contingency Reserve (10–15%)",      suggested: 1500 },
+  { type: "SHIPPING",           label: "Shipping (orders' shipping charges)", suggested: 400 },
 ];
 
 interface Props {
