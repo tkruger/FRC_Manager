@@ -2,10 +2,14 @@
 
 ## Unreleased
 
-- iPhone: the bottom tab bar no longer floats up the screen while scrolling long pages (it's solid now, like the top bar — the see-through blur is what iOS drew in the wrong place)
+## 1.7.2 — 2026-10-31
 
+**Orders**
 - **Fix and resubmit**: a denied or canceled order can be corrected and sent for approval again from its page — by the person who placed it, its approvers, the Buyer or Head Mentors. It keeps its history and goes through the workflow from the start; restocks it was for are picked back up from the order queue
 - Denying or canceling an order takes its committed spend off the budget (it used to stay)
+
+**Fixes**
+- iPhone: the bottom tab bar no longer floats up the screen while scrolling long pages (it's solid now, like the top bar — the see-through blur is what iOS drew in the wrong place)
 
 ## 1.7.1 — 2026-10-30
 
