@@ -27,8 +27,8 @@ export default async function ProfilePage() {
   const volunteerStatus = isCleared(me)
     ? `You're cleared to volunteer${untilText ? ` until ${untilText}` : ""}.`
     : me.volunteerClearedAt
-      ? `Your volunteer clearance ended ${untilText}. Ask a Head Mentor to renew it.`
-      : "A Head Mentor needs to clear you to volunteer before you can sign up for shifts.";
+      ? `Your volunteer clearance ended ${untilText}. Talk to a Head Mentor to renew it.`
+      : "You're not cleared to volunteer yet — talk to a Head Mentor about getting cleared before signing up for shifts.";
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 space-y-8">

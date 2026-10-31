@@ -30,7 +30,7 @@ export function ViewOnlyBanner({ canVolunteer }: { canVolunteer: boolean }) {
       <b>View-only.</b> You can see everything the team sees and help pack and put tools away, but not change anything else.{" "}
       {canVolunteer
         ? <Link href="/volunteers" className="font-medium text-(--color-primary) hover:underline">Sign up to volunteer →</Link>
-        : <>Volunteering opens once a Head Mentor clears you.</>}
+        : <>To volunteer, talk to a Head Mentor about getting cleared.</>}
     </div>
   );
 }

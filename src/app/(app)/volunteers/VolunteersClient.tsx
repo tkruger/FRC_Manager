@@ -39,7 +39,9 @@ export interface AdultRow {
 }
 
 interface Props {
-  me: { id: string; cleared: boolean; adult: boolean; clearedUntil: string | null; hasPhone: boolean };
+  me: { id: string; cleared: boolean; lapsed: boolean; adult: boolean; clearedUntil: string | null; hasPhone: boolean };
+  /** The team's Head Mentors — who to talk to about getting cleared */
+  headMentors: string[];
   coordinating: boolean;
   isHeadMentor: boolean;
   minAdults: number;
@@ -51,9 +53,12 @@ interface Props {
 
 type Result = { success: true } | { success: false; error: string };
 
+/** "A", "A or B", "A, B or C" */
+const listNames = (names: string[]) => names.length <= 1 ? names.join("") : `${names.slice(0, -1).join(", ")} or ${names[names.length - 1]}`;
+
 const fmtDay = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 
-export function VolunteersClient({ me, coordinating, isHeadMentor, minAdults, defaultInstructions, meetings, adults, focusId }: Props) {
+export function VolunteersClient({ me, headMentors, coordinating, isHeadMentor, minAdults, defaultInstructions, meetings, adults, focusId }: Props) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [busy, setBusy] = useState<string | null>(null);
@@ -86,11 +91,15 @@ export function VolunteersClient({ me, coordinating, isHeadMentor, minAdults, de
   return (
     <div className="space-y-6">
       {/* Where you stand */}
-      {!me.cleared && (me.adult || coordinating) && (
-        <div className="card text-sm text-(--color-text-primary)">
-          {coordinating && !me.adult
-            ? "You coordinate volunteers. To sign up for shifts yourself, a Head Mentor needs to clear you to volunteer."
-            : <>A Head Mentor needs to <b>clear you to volunteer</b> (usually after the school&apos;s background check) before you can sign up for shifts.</>}
+      {!me.cleared && (
+        <div className="card border-l-4 border-l-(--color-warning) space-y-1">
+          <p className="text-sm font-semibold text-(--color-text-primary)">
+            {me.lapsed ? "Your volunteer clearance has ended" : "You're not cleared to volunteer yet"}
+          </p>
+          <p className="text-sm text-(--color-text-primary)">
+            {me.lapsed ? "To renew it, talk" : "Talk"} to a Head Mentor{headMentors.length ? <> (<b>{listNames(headMentors)}</b>)</> : ""} about getting cleared — usually once the school&apos;s background check is done.
+            {coordinating ? " You can still coordinate everyone else's shifts." : " Until then you can see which meetings need adults, but you can't sign up for shifts."}
+          </p>
         </div>
       )}
       {me.cleared && !me.hasPhone && (
@@ -182,6 +191,7 @@ export function VolunteersClient({ me, coordinating, isHeadMentor, minAdults, de
                     <span className="flex flex-wrap items-center gap-2">
                       <Badge variant={c.covered ? "success" : "danger"}>{c.confirmed} / {minAdults} adults</Badge>
                       {c.pending > 0 && <Badge variant="warning">{c.pending} waiting</Badge>}
+                      {!me.cleared && <span className="text-small text-(--color-text-secondary)">Cleared adults only</span>}
                       {canSignUp && (
                         <Button size="sm" isLoading={busy === `up-${m.id}` && pending} onClick={() => run(`up-${m.id}`, () => signUpForShiftAction(m.id), "You're signed up — thank you!")}>
                           Sign up

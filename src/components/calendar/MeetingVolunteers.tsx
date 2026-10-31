@@ -41,6 +41,9 @@ export function MeetingVolunteers({ meetingId, volunteers, upcoming, view }: {
         : <p className="text-small text-(--color-text-secondary)">No one yet.</p>}
       {upcoming && (
         <div className="flex flex-wrap items-center gap-3">
+          {!view.cleared && (
+            <p className="w-full text-small text-(--color-text-secondary)">You&apos;re not cleared to volunteer yet — talk to a Head Mentor about getting cleared.</p>
+          )}
           {view.cleared && (!mine || mine.status === "DECLINED") && (
             <Button size="sm" isLoading={pending} onClick={() => start(async () => {
               const res = await signUpForShiftAction(meetingId);

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Volunteers: adults who aren't cleared yet (or whose clearance ended) are told to talk to a Head Mentor about getting cleared — naming the team's Head Mentors on the Volunteers page, where each meeting shows “Cleared adults only” instead of Sign up — and the same note appears on the meeting in the calendar, the view-only banner and their profile
+
 - iPhone: after the keyboard closes, the bottom tab bar (and the background) go back to the bottom of the screen. iOS sometimes left the screen a keyboard short, drawing them two-thirds of the way down until the app was reloaded
 
 ## 1.7.2 — 2026-10-31

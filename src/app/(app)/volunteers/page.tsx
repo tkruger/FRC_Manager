@@ -20,10 +20,16 @@ export default async function VolunteersPage({ searchParams }: { searchParams: P
   const roles = session.user.roles as string[];
   const coordinating = canCoordinate(roles);
 
-  const [team, me, season] = await Promise.all([
+  const [team, me, season, headMentors] = await Promise.all([
     prisma.team.findUnique({ where: { id: teamId }, select: { timezone: true, volunteerSettings: { select: { instructions: true, minAdults: true } } } }),
     prisma.user.findUnique({ where: { id: session.user.id }, select: { volunteerClearedAt: true, volunteerClearedUntil: true, phone: true } }),
     prisma.season.findFirst({ where: { teamId, isActive: true }, select: { id: true, name: true } }),
+    // Who to ask about getting cleared
+    prisma.user.findMany({
+      where:   { teamId, status: "ACTIVE", deletedAt: null, roles: { some: { role: "HEAD_MENTOR" } } },
+      orderBy: { name: "asc" },
+      select:  { name: true },
+    }),
   ]);
   const tz = isValidTimezone(team?.timezone) ? team!.timezone! : FALLBACK_TIMEZONE;
   const todayKey = localParts(new Date(), tz).dateKey;
@@ -85,7 +91,8 @@ export default async function VolunteersPage({ searchParams }: { searchParams: P
       </div>
 
       <VolunteersClient
-        me={{ id: session.user.id, cleared: !!me && isCleared(me), adult: isAdult(roles), clearedUntil: me?.volunteerClearedUntil?.toISOString() ?? null, hasPhone: !!me?.phone }}
+        me={{ id: session.user.id, cleared: !!me && isCleared(me), lapsed: !!me?.volunteerClearedAt && !isCleared(me), adult: isAdult(roles), clearedUntil: me?.volunteerClearedUntil?.toISOString() ?? null, hasPhone: !!me?.phone }}
+        headMentors={headMentors.map((h) => h.name)}
         coordinating={coordinating}
         isHeadMentor={roles.includes("HEAD_MENTOR")}
         minAdults={minAdults}
