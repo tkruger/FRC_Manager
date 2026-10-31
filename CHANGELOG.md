@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- iPhone: after the keyboard closes, the bottom tab bar (and the background) go back to the bottom of the screen. iOS sometimes left the screen a keyboard short, drawing them two-thirds of the way down until the app was reloaded
+
 ## 1.7.2 — 2026-10-31
 
 **Orders**

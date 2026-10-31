@@ -207,7 +207,7 @@ export function TopNav({ session, pendingMemberCount = 0, unreadNotificationCoun
         {/* More popup sheet */}
         {moreOpen && (
           <div
-            className="fixed bottom-14 inset-x-0 z-50 lg:hidden rounded-t-2xl safe-bottom pinned-layer"
+            className="fixed bottom-14 inset-x-0 z-50 lg:hidden rounded-t-2xl safe-bottom pinned-bottom"
             style={{
               backgroundColor: "var(--color-surface)",
               boxShadow: "0 -8px 32px -4px rgb(0 0 0 / .25)",
@@ -248,7 +248,7 @@ export function TopNav({ session, pendingMemberCount = 0, unreadNotificationCoun
         )}
 
         <nav
-          className="fixed bottom-0 inset-x-0 z-50 lg:hidden safe-bottom pinned-layer"
+          className="fixed bottom-0 inset-x-0 z-50 lg:hidden safe-bottom pinned-bottom"
           style={{
             // Opaque, no blur — like the header. On iOS a blurred (backdrop-filter) fixed bar
             // gets drawn mid-screen during momentum scrolling.

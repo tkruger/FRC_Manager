@@ -6,6 +6,7 @@ import { AnimatedBackground } from "@/components/providers/AnimatedBackground";
 import { PushPrompt } from "@/components/notifications/PushPrompt";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { Toaster } from "@/components/ui/toast";
+import { ViewportFix } from "@/components/layout/ViewportFix";
 import { ViewOnlyBanner, ViewOnlyProvider } from "@/components/access/ViewOnly";
 import { isViewOnly } from "@/lib/access/read-only";
 import { isCleared } from "@/lib/volunteers";
@@ -65,6 +66,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         {/* First visit on a device: offer push notifications (once) */}
         <PushPrompt vapidPublicKey={process.env.VAPID_PUBLIC_KEY ?? null} />
         <InstallPrompt />
+        {/* iOS: keeps the tab bar at the bottom after the keyboard closes */}
+        <ViewportFix />
         {/* "Saved" confirmations after edits */}
         <Toaster />
       </div>
