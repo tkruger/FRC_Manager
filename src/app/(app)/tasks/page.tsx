@@ -169,6 +169,10 @@ export default async function SchedulePage({
         </>}
         actions={<>
           <RobotFilterSelect robots={robots.robots} robotId={activeRobotId} />
+          {/* The board and an 11-day timeline for a TV (refreshes itself) */}
+          <Link href="/tasks/present" className="hidden sm:inline-flex">
+            <Button variant="outline" size="sm">Present on TV</Button>
+          </Link>
           {canEdit && (
             <Link href="/tasks/templates">
               <Button variant="outline" size="sm">Templates</Button>

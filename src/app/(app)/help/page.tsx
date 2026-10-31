@@ -77,6 +77,7 @@ export default function HelpPage() {
           <li><b>Gantt</b> — tasks on a timeline from the season start to its end (only tasks with start and due dates appear).</li>
           <li><b>List</b> — a sortable table.</li>
         </ul>
+        <p><b>Present on TV</b> (top of Tasks or Gantt) shows the board and an 11-day timeline — today on the left, the next 10 days to the right — laid out for a 16:9 TV. Open it on the shop TV's browser and leave it running: it switches between the two every 20 seconds, picks up changes every minute and rolls forward each day. Move the mouse for the controls: pause, Board only, Timeline only, full screen (or press P, F and the arrow keys).</p>
         <ul className="list">
           <li><b>My tasks / All tasks</b> switches between tasks assigned to you and the whole team. Your choice is remembered.</li>
           <li>Filter by sub-team, priority, assignee or due date (next 7, 14 or 30 days, or a custom range).</li>
