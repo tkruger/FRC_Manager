@@ -1,17 +1,26 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { LegalPage, LegalContact } from "@/components/legal/LegalPage";
+import { LegalPage, LegalContact, SOURCE_URL } from "@/components/legal/LegalPage";
 
 export const metadata: Metadata = { title: "Terms of Service — FRC Manager" };
 
 export default function TermsPage() {
   return (
-    <LegalPage title="Terms of Service" updated="October 4, 2026">
+    <LegalPage title="Terms of Service" updated="October 31, 2026">
       <p>
         These terms apply to the FRC Manager web app and the FRC Manager Discord bot (together, &ldquo;the service&rdquo;).
         By creating an account, signing in, or using the bot, you agree to these terms. If you don&apos;t agree, please
         don&apos;t use the service.
       </p>
+
+      <h2>The short version</h2>
+      <ul>
+        <li><b>It&apos;s free, open-source software, run on a best-effort basis.</b> There&apos;s no guaranteed uptime.</li>
+        <li><b>Features can change, break or go away</b> at any time, without notice.</li>
+        <li><b>You use it at your own risk and discretion.</b> Keep your own copies of anything important.</li>
+        <li><b>You can host it yourself</b> — the source is on <a href={SOURCE_URL} target="_blank" rel="noopener noreferrer">GitHub</a>.</li>
+        <li><b>Please don&apos;t use it to make money</b> — see below.</li>
+      </ul>
 
       <h2>Who can use it</h2>
       <p>
@@ -57,23 +66,47 @@ export default function TermsPage() {
         <code>/unlink</code>.
       </p>
 
-      <h2>Availability</h2>
+      <h2>No guarantees: availability and features</h2>
       <p>
-        We work to keep the service running, but it&apos;s provided &ldquo;as is&rdquo; and may sometimes be unavailable,
-        change, or have mistakes. Don&apos;t rely on it as your team&apos;s only copy of important records, such as robot
-        inspection or safety documentation required by FIRST.
+        FRC Manager is maintained by volunteers in their spare time. It&apos;s provided &ldquo;as is&rdquo; and &ldquo;as
+        available&rdquo;:
+      </p>
+      <ul>
+        <li><b>There is no guaranteed uptime.</b> The service may be slow, unavailable or down for maintenance — including during build season or at a competition.</li>
+        <li><b>Features aren&apos;t guaranteed to stay the same or to stay at all.</b> Anything may change, be removed or stop working, with or without notice, and the service itself may be discontinued.</li>
+        <li><b>Data may be lost.</b> Export or keep your own copies of anything that matters, and don&apos;t rely on the service as your team&apos;s only record of important information, such as robot inspection or safety documentation required by FIRST.</li>
+      </ul>
+      <p>You&apos;re welcome to use it — but using it is at your own risk and discretion.</p>
+
+      <h2>Open source, and hosting it yourself</h2>
+      <p>
+        FRC Manager is open-source software. If you want more control — your own uptime, your own data, your own
+        changes — you&apos;re welcome to take the source code from{" "}
+        <a href={SOURCE_URL} target="_blank" rel="noopener noreferrer">{SOURCE_URL.replace("https://", "")}</a>{" "}
+        and run it yourself, under the terms of its license (Apache License 2.0, included with the code). A copy you host
+        is yours to run; these terms cover only this hosted service.
+      </p>
+
+      <h2>Please don&apos;t use it to make money</h2>
+      <p>
+        FRC Manager is built for the FIRST community and given away for free. We ask that you don&apos;t charge others for
+        it or use it to make money — for example, by selling access to it, reselling hosting of it, or bundling it into a
+        paid product. This is a request in the spirit of the project; it doesn&apos;t change the open-source license the
+        code is shared under.
       </p>
 
       <h2>Limitation of liability</h2>
       <p>
-        To the fullest extent allowed by law, the service is provided without warranties of any kind, and its operators are
-        not liable for indirect or consequential losses, lost data, or missed deadlines arising from using it.
+        To the fullest extent allowed by law, the service is provided without warranties of any kind, express or implied —
+        including that it will be available, error-free, secure, or fit for a particular purpose. Its operators are not
+        liable for any losses arising from using it or from being unable to use it, including lost data, missed deadlines,
+        or orders, inspections or events affected by it.
       </p>
 
       <h2>Ending use</h2>
       <p>
         You can stop using the service at any time. Access may be suspended or ended for anyone who breaks these terms or
-        puts the service or other teams at risk.
+        puts the service or other teams at risk, and the service as a whole may be shut down.
       </p>
 
       <h2>Changes</h2>

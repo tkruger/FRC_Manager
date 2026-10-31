@@ -24,7 +24,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
   const { team, invite } = usable;
   const session = await auth();
   const me = session?.user?.id
-    ? await prisma.user.findUnique({ where: { id: session.user.id }, select: { name: true, email: true, teamId: true, status: true } })
+    ? await prisma.user.findUnique({ where: { id: session.user.id }, select: { name: true, email: true, teamId: true, status: true, termsAcceptedAt: true } })
     : null;
 
   return (
@@ -53,7 +53,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
         ) : (
           <div className="space-y-3">
             <p className="text-body text-(--color-text-secondary) text-center">Signed in as {me.name} ({me.email}).</p>
-            <JoinTeamButton token={token} teamNumber={team.teamNumber} />
+            <JoinTeamButton token={token} teamNumber={team.teamNumber} needsTerms={!me.termsAcceptedAt} />
           </div>
         )
       ) : (

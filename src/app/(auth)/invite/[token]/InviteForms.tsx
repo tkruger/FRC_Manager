@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { OAuthButtons, type OAuthProvider } from "@/components/auth/OAuthButtons";
 import { acceptInviteAsCurrentUserAction, acceptInviteWithNewAccountAction } from "@/app/actions/invites";
+import { TermsCheckbox } from "@/components/legal/TermsCheckbox";
 
 /** Signed out: create an account from the invite (or sign in to an existing one). */
 export function InviteSignup({ token, email, teamNumber, providers }: { token: string; email: string | null; teamNumber: number; providers: OAuthProvider[] }) {
@@ -22,6 +23,7 @@ export function InviteSignup({ token, email, teamNumber, providers }: { token: s
     start(async () => {
       const res = await acceptInviteWithNewAccountAction(token, {
         name: data.get("name"), email: email ?? data.get("email"), password: data.get("password"),
+        acceptTerms: data.get("acceptTerms") === "on",
       });
       if (!res.success) { setError(res.error); return; }
       router.push("/dashboard");
@@ -38,6 +40,7 @@ export function InviteSignup({ token, email, teamNumber, providers }: { token: s
           ? <Field label="Email" name="email" type="email" value={email} readOnly hint="This invite is for this address" />
           : <Field label="Email" name="email" type="email" required autoComplete="email" />}
         <Field label="Password" name="password" type="password" required minLength={8} autoComplete="new-password" hint="At least 8 characters" />
+        <TermsCheckbox />
         <Button type="submit" className="w-full" isLoading={pending}>Create account &amp; join Team {teamNumber}</Button>
       </form>
 
@@ -53,18 +56,21 @@ export function InviteSignup({ token, email, teamNumber, providers }: { token: s
 }
 
 /** Signed in, not on a team yet: one tap to join. */
-export function JoinTeamButton({ token, teamNumber }: { token: string; teamNumber: number }) {
+export function JoinTeamButton({ token, teamNumber, needsTerms = false }: { token: string; teamNumber: number; needsTerms?: boolean }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
+  const [agreed, setAgreed] = useState(false);
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {error && <div className="rounded-md bg-(--color-danger)/10 px-3 py-2 text-sm text-(--color-danger)">{error}</div>}
+      {needsTerms && <TermsCheckbox checked={agreed} onChange={setAgreed} />}
       <Button
         className="w-full"
         isLoading={pending}
+        disabled={needsTerms && !agreed}
         onClick={() => start(async () => {
-          const res = await acceptInviteAsCurrentUserAction(token);
+          const res = await acceptInviteAsCurrentUserAction(token, agreed);
           if (!res.success) { setError(res.error); return; }
           router.push("/dashboard");
           router.refresh();

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SOURCE_URL } from "@/components/legal/LegalPage";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -23,6 +24,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           <Link href="/terms" className="hover:text-(--color-primary)">Terms of Service</Link>
           <span className="mx-2">·</span>
           <Link href="/privacy" className="hover:text-(--color-primary)">Privacy Policy</Link>
+          <span className="mx-2">·</span>
+          <a href={SOURCE_URL} target="_blank" rel="noopener noreferrer" className="hover:text-(--color-primary)">Source code</a>
         </p>
       </div>
     </div>

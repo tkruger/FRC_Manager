@@ -11,6 +11,7 @@ import { clientIp } from "@/lib/security/request";
 import { safeEqual } from "@/lib/security/crypto";
 import { sendVerificationEmail } from "@/lib/notify/auth-emails";
 import { after } from "next/server";
+import { TERMS_REQUIRED } from "@/components/legal/TermsCheckbox";
 
 const RegisterSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name is too long"),
@@ -38,6 +39,7 @@ export async function registerAction(
     registrationNote: formData.get("registrationNote") || undefined,
   };
 
+  if (formData.get("acceptTerms") !== "on") return { success: false, error: TERMS_REQUIRED };
   const parsed = RegisterSchema.safeParse(raw);
   if (!parsed.success) {
     return {
@@ -106,6 +108,8 @@ async function joinTeamOnRegistration(opts: {
     name,
     teamId: team.id,
     registrationNote,
+    // Both callers check the Terms checkbox first
+    termsAcceptedAt: new Date(),
     status: codeMatch ? ("ACTIVE" as const) : ("PENDING" as const),
     ...(codeMatch ? { approvedAt: new Date() } : {}),
   };
@@ -145,6 +149,7 @@ export async function finishRegistrationAction(
   if (!me) return { success: false, error: "Account not found." };
   if (me.teamId) return { success: false, error: "You've already chosen a team." };
   if (me.status !== "PENDING") return { success: false, error: "This account can't join a team." };
+  if (formData.get("acceptTerms") !== "on") return { success: false, error: TERMS_REQUIRED };
 
   const parsed = FinishSchema.safeParse({
     name: formData.get("name"),

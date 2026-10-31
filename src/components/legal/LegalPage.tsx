@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+/** Where the source code lives (for anyone who wants to host it themselves) */
+export const SOURCE_URL = "https://github.com/tkruger/FRC_Manager";
+
 /** Shared layout for the public Terms of Service and Privacy Policy pages. */
 export function LegalPage({ title, updated, children }: { title: string; updated: string; children: React.ReactNode }) {
   return (
@@ -9,6 +12,7 @@ export function LegalPage({ title, updated, children }: { title: string; updated
           <Link href="/" className="font-semibold text-(--color-text-primary) hover:text-(--color-primary)">FRC Manager</Link>
           <Link href="/terms" className="hover:text-(--color-primary)">Terms of Service</Link>
           <Link href="/privacy" className="hover:text-(--color-primary)">Privacy Policy</Link>
+          <a href={SOURCE_URL} target="_blank" rel="noopener noreferrer" className="hover:text-(--color-primary)">Source code</a>
         </nav>
         <header>
           <h1 className="text-h1 text-(--color-text-primary)">{title}</h1>

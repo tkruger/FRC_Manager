@@ -3,6 +3,7 @@
 // Inviting people to a team (by email, or a join link posted to Discord) and accepting
 // an invite. Accepting makes the person an approved member with the invite's roles.
 
+import { TERMS_REQUIRED } from "@/components/legal/TermsCheckbox";
 import { z } from "zod";
 import { issueMessage } from "@/lib/validation";
 import bcrypt from "bcryptjs";
@@ -161,6 +162,7 @@ export async function revokeInviteAction(inviteId: string): Promise<{ success: t
 // ── Accepting ───────────────────────────────────────────────────────────────
 
 const NewAccountSchema = z.object({
+  acceptTerms: z.literal(true, { message: TERMS_REQUIRED }),
   name:     z.string().trim().min(2, "Enter your name.").max(100, "That name is too long."),
   email:    z.string().trim().toLowerCase().email("Enter a valid email address.").max(254),
   password: z.string().min(8, "Password must be at least 8 characters.").max(200, "That password is too long."),
@@ -193,6 +195,7 @@ export async function acceptInviteWithNewAccountAction(token: string, input: unk
       status:     "ACTIVE",
       approvedAt: new Date(),
       registrationNote: "Joined with an invite",
+      termsAcceptedAt: new Date(),
       roles:      { create: usable.invite.roles.map((role) => ({ role })) },
     },
   });
@@ -210,15 +213,17 @@ export async function acceptInviteWithNewAccountAction(token: string, input: unk
 }
 
 /** Already signed in (e.g. with Google): join the team from the invite. */
-export async function acceptInviteAsCurrentUserAction(token: string): Promise<{ success: true } | Fail> {
+export async function acceptInviteAsCurrentUserAction(token: string, acceptTerms = false): Promise<{ success: true } | Fail> {
   const session = await auth();
   if (!session?.user?.id) return { success: false, error: "Sign in first." };
 
   const usable = await findUsableInvite(token);
   if (!usable.ok) return { success: false, error: usable.reason };
 
-  const me = await prisma.user.findUnique({ where: { id: session.user.id }, select: { teamId: true, status: true } });
+  const me = await prisma.user.findUnique({ where: { id: session.user.id }, select: { teamId: true, status: true, termsAcceptedAt: true } });
   if (!me) return { success: false, error: "Account not found." };
+  // Signed up with Google or Discord straight from the invite: agreeing to the terms is part of joining
+  if (!me.termsAcceptedAt && !acceptTerms) return { success: false, error: TERMS_REQUIRED };
   if (me.teamId === usable.team.id && me.status === "ACTIVE") return { success: true }; // already in
   if (me.teamId && me.teamId !== usable.team.id && me.status === "ACTIVE") {
     return { success: false, error: "Your account already belongs to another team. Use a different account to join this one." };
@@ -229,7 +234,11 @@ export async function acceptInviteAsCurrentUserAction(token: string): Promise<{ 
     prisma.userRole.deleteMany({ where: { userId: session.user.id } }),
     prisma.user.update({
       where: { id: session.user.id },
-      data:  { teamId: usable.team.id, status: "ACTIVE", approvedAt: new Date(), roles: { create: usable.invite.roles.map((role) => ({ role })) } },
+      data:  {
+        teamId: usable.team.id, status: "ACTIVE", approvedAt: new Date(),
+        ...(me.termsAcceptedAt ? {} : { termsAcceptedAt: new Date() }),
+        roles: { create: usable.invite.roles.map((role) => ({ role })) },
+      },
     }),
   ]);
   await markInviteUsed(usable.invite.id);

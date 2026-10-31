@@ -8,6 +8,7 @@ import { registerAction } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { OAuthButtons, OrDivider, type OAuthProvider } from "@/components/auth/OAuthButtons";
+import { TermsCheckbox } from "@/components/legal/TermsCheckbox";
 
 export function RegisterForm({ providers }: { providers: OAuthProvider[] }) {
   const router = useRouter();
@@ -125,6 +126,8 @@ export function RegisterForm({ providers }: { providers: OAuthProvider[] }) {
             className="flex w-full rounded-md border border-(--color-border) bg-(--color-surface) px-3 py-2 text-sm text-(--color-text-primary) placeholder:text-(--color-text-disabled) focus:border-(--color-primary) focus:outline-none focus:ring-2 focus:ring-(--color-primary)/20 resize-none"
           />
         </div>
+
+        <TermsCheckbox />
 
         <Button type="submit" className="w-full" isLoading={pending}>
           Create account

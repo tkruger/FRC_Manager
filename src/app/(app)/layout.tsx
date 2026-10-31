@@ -7,6 +7,9 @@ import { PushPrompt } from "@/components/notifications/PushPrompt";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { Toaster } from "@/components/ui/toast";
 import { ViewportFix } from "@/components/layout/ViewportFix";
+import Link from "next/link";
+import { SOURCE_URL } from "@/components/legal/LegalPage";
+import { APP_VERSION } from "@/lib/version";
 import { ViewOnlyBanner, ViewOnlyProvider } from "@/components/access/ViewOnly";
 import { isViewOnly } from "@/lib/access/read-only";
 import { isCleared } from "@/lib/volunteers";
@@ -62,6 +65,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <main className="pt-safe-nav pb-14 lg:pb-0">
           {viewOnly && <ViewOnlyBanner canVolunteer={canVolunteer} />}
           <ViewOnlyProvider viewOnly={viewOnly}>{children}</ViewOnlyProvider>
+          <footer className="no-print px-4 pb-6 pt-10 text-center text-xs text-(--color-text-secondary)">
+            <Link href="/terms" className="hover:text-(--color-primary)">Terms of Service</Link>
+            <span className="mx-2">·</span>
+            <Link href="/privacy" className="hover:text-(--color-primary)">Privacy Policy</Link>
+            <span className="mx-2">·</span>
+            <a href={SOURCE_URL} target="_blank" rel="noopener noreferrer" className="hover:text-(--color-primary)">Source code</a>
+            <span className="mx-2">·</span>
+            <span>v{APP_VERSION}</span>
+          </footer>
         </main>
         {/* First visit on a device: offer push notifications (once) */}
         <PushPrompt vapidPublicKey={process.env.VAPID_PUBLIC_KEY ?? null} />

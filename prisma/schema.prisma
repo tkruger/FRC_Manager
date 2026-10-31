@@ -37,6 +37,8 @@ model User {
   /// erased and they show as "Former member". Hidden from member lists; can never sign in.
   deletedAt     DateTime?
   registrationNote String?
+  /// When they agreed to the Terms of Service and Privacy Policy (at sign-up). Null: an account from before the checkbox
+  termsAcceptedAt  DateTime?
 
   // Profile
   /// Optional; shown to volunteer coordinators and Head Mentors so they can reach volunteers
