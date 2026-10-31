@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Task board: sticky notes are colored by **sub-team** (Mechanical red, Electrical blue, …) instead of random colors, and that's now the default look. Plain cards are outlined in their sub-team's color. Anyone who picked plain cards or one note color keeps it (Settings → Profile & appearance → Task board)
+
 - Volunteers: adults who aren't cleared yet (or whose clearance ended) are told to talk to a Head Mentor about getting cleared — naming the team's Head Mentors on the Volunteers page, where each meeting shows “Cleared adults only” instead of Sign up — and the same note appears on the meeting in the calendar, the view-only banner and their profile
 
 - iPhone: after the keyboard closes, the bottom tab bar (and the background) go back to the bottom of the screen. iOS sometimes left the screen a keyboard short, drawing them two-thirds of the way down until the app was reloaded

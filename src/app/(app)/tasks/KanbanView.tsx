@@ -395,7 +395,8 @@ function KanbanCard({
   /** Touch screens: a finger went down on the card (may become a tap-and-hold drag) */
   onTouchHold: (el: HTMLElement, e: React.TouchEvent) => void;
 }) {
-  const stColor     = SUBTEAM_COLORS[task.subTeam ?? ""] ?? "#64748B";
+  const teamColor   = SUBTEAM_COLORS[task.subTeam ?? ""] ?? null;
+  const stColor     = teamColor ?? "#64748B";
   const priorityCfg = PRIORITY_CONFIG[task.priority as keyof typeof PRIORITY_CONFIG];
   const overdue     = isOverdue({
     dueDate: task.dueDate ? new Date(task.dueDate) : null,
@@ -466,7 +467,7 @@ function KanbanCard({
 
   if (style !== "plain") {
     // Sticky note: paper color, a slight tilt, folded corner and shadow; the pin shows the sub-team
-    const look = stickyNoteLook(task.id, style, color);
+    const look = stickyNoteLook(task.id, style, color, teamColor);
     return (
       <div
         {...dragProps}
@@ -492,10 +493,13 @@ function KanbanCard({
       className={[
         "w-full text-left rounded-md bg-(--color-surface-raised) border p-3 space-y-2 group select-none [-webkit-touch-callout:none]",
         "cursor-grab active:cursor-grabbing",
-        "hover:border-(--color-primary) hover:shadow-md transition-all",
+        "hover:shadow-md transition-all",
         isDragging ? "opacity-40 scale-95" : "opacity-100",
       ].join(" ")}
-      style={{ borderLeftColor: stColor, borderLeftWidth: "3px" }}
+      // Outlined in its sub-team's color, with a thicker stripe on the left
+      style={teamColor
+        ? { borderColor: teamColor, borderLeftWidth: "3px" }
+        : { borderLeftColor: stColor, borderLeftWidth: "3px" }}
     >
       {body}
     </div>

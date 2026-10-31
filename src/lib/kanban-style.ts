@@ -4,6 +4,7 @@
 
 import { useSyncExternalStore } from "react";
 
+/** "rainbow" is stored for the by-sub-team notes (it used to mean a random color per task) */
 export type KanbanCardStyle = "plain" | "rainbow" | "single";
 
 /** Sticky-note paper colors (light enough for dark text in either theme) */
@@ -31,8 +32,9 @@ function subscribe(onChange: () => void) {
   return () => { window.removeEventListener("storage", onChange); window.removeEventListener(EVENT, onChange); };
 }
 
-const snapshot       = () => `${read(STYLE_KEY) ?? "plain"}|${read(COLOR_KEY) ?? "yellow"}`;
-const serverSnapshot = () => "plain|yellow";
+// Default: sticky notes in each sub-team's color (until someone picks another style)
+const snapshot       = () => `${read(STYLE_KEY) ?? "rainbow"}|${read(COLOR_KEY) ?? "yellow"}`;
+const serverSnapshot = () => "rainbow|yellow";
 
 function save(key: string, value: string) {
   try { localStorage.setItem(key, value); } catch { /* private mode — just this visit */ }
@@ -41,7 +43,7 @@ function save(key: string, value: string) {
 
 export function useKanbanStyle() {
   const [rawStyle, rawColor] = useSyncExternalStore(subscribe, snapshot, serverSnapshot).split("|");
-  const style: KanbanCardStyle = rawStyle === "rainbow" || rawStyle === "single" ? rawStyle : "plain";
+  const style: KanbanCardStyle = rawStyle === "plain" || rawStyle === "single" ? rawStyle : "rainbow";
   const color = (STICKY_COLORS.some((c) => c.id === rawColor) ? rawColor : "yellow") as StickyColorId;
   return {
     style,
@@ -58,10 +60,19 @@ function hash(id: string): number {
   return Math.abs(h);
 }
 
-export function stickyNoteLook(taskId: string, style: KanbanCardStyle, color: StickyColorId) {
+/** A sub-team's color as sticky-note paper: light enough for dark text */
+export function subTeamNote(subTeamHex: string): string {
+  return `color-mix(in srgb, ${subTeamHex} 38%, #fff)`;
+}
+
+/**
+ * A note's paper and tilt. By sub-team: the sub-team's color (yellow when it has none);
+ * one color: the color picked.
+ */
+export function stickyNoteLook(taskId: string, style: KanbanCardStyle, color: StickyColorId, subTeamHex?: string | null) {
   const h = hash(taskId);
   const hex = style === "rainbow"
-    ? STICKY_COLORS[h % STICKY_COLORS.length].hex
+    ? (subTeamHex ? subTeamNote(subTeamHex) : STICKY_COLORS[0].hex)
     : STICKY_COLORS.find((c) => c.id === color)!.hex;
   const tilt = ((h >> 3) % 5 - 2) * 0.6; // -1.2° … 1.2°
   return { hex, tilt };

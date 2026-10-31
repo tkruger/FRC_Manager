@@ -6,7 +6,8 @@ import { Field } from "@/components/ui/field";
 import { updateProfileAction } from "@/app/actions/profile";
 import { useTheme, COLOR_THEMES } from "@/components/providers/ThemeProvider";
 import type { ColorTheme, BgMode } from "@/components/providers/ThemeProvider";
-import { useKanbanStyle, STICKY_COLORS, type KanbanCardStyle } from "@/lib/kanban-style";
+import { useKanbanStyle, STICKY_COLORS, subTeamNote, type KanbanCardStyle } from "@/lib/kanban-style";
+import { SUBTEAM_COLORS } from "@/lib/schedule-helpers";
 
 interface Props {
   initialName: string;
@@ -226,8 +227,8 @@ export function ProfileForm({ initialName }: Props) {
 }
 
 const CARD_STYLES: { id: KanbanCardStyle; label: string; desc: string }[] = [
-  { id: "plain",   label: "Plain cards",            desc: "Clean cards with a sub-team stripe" },
-  { id: "rainbow", label: "Sticky notes — rainbow", desc: "Each task on its own color of note" },
+  { id: "plain",   label: "Plain cards",            desc: "Clean cards outlined in their sub-team's color" },
+  { id: "rainbow", label: "Sticky notes — by sub-team", desc: "Each note in its sub-team's color" },
   { id: "single",  label: "Sticky notes — one color", desc: "Every note the same color you pick" },
 ];
 
@@ -290,11 +291,13 @@ function TaskCardStyle({ mounted }: { mounted: boolean }) {
 function CardPreview({ kind, color }: { kind: KanbanCardStyle; color: string }) {
   if (kind === "plain") {
     return (
-      <span aria-hidden className="block h-10 w-10 shrink-0 rounded-md border border-(--color-border) bg-(--color-surface-raised)"
-        style={{ borderLeftWidth: 3, borderLeftColor: "var(--color-primary)" }} />
+      <span aria-hidden className="block h-10 w-10 shrink-0 rounded-md border bg-(--color-surface-raised)"
+        style={{ borderColor: SUBTEAM_COLORS.ELECTRICAL, borderLeftWidth: 3 }} />
     );
   }
-  const notes = kind === "rainbow" ? [STICKY_COLORS[1].hex, STICKY_COLORS[2].hex, STICKY_COLORS[0].hex] : [color, color, color];
+  const notes = kind === "rainbow"
+    ? [subTeamNote(SUBTEAM_COLORS.MECHANICAL), subTeamNote(SUBTEAM_COLORS.ELECTRICAL), subTeamNote(SUBTEAM_COLORS.PROGRAMMING)]
+    : [color, color, color];
   return (
     <span aria-hidden className="relative block h-10 w-10 shrink-0">
       {notes.map((hex, i) => (
