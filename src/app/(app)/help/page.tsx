@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { APP_VERSION } from "@/lib/version";
+import { SOURCE_URL } from "@/components/legal/LegalPage";
 import { HelpBadge, type HelpTopic } from "@/components/HelpLink";
 
 export const metadata = { title: "Help & guide — FRC Manager" };
@@ -22,6 +23,7 @@ const SECTIONS: { id: HelpTopic; title: string }[] = [
   { id: "notifications",   title: "Notifications & reminders" },
   { id: "roles",           title: "Roles & permissions" },
   { id: "discord",         title: "Discord" },
+  { id: "legal",           title: "Terms, privacy & source" },
 ];
 
 export default function HelpPage() {
@@ -392,7 +394,19 @@ export default function HelpPage() {
         </ul>
       </Section>
 
-      <p className="text-center text-small text-(--color-text-secondary)">FRC Manager v{APP_VERSION}</p>
+      <Section id="legal" title="Terms, privacy & source">
+        <ul className="list">
+          <li><Link href="/terms" className="link">Terms of Service</Link> — FRC Manager is free, open-source and run on a best-effort basis: there&apos;s no guaranteed uptime, features can change or go away, and you use it at your own risk. Please don&apos;t use it to make money.</li>
+          <li><Link href="/privacy" className="link">Privacy Policy</Link> — what information the app keeps, why, and who can see it.</li>
+          <li><a href={SOURCE_URL} target="_blank" rel="noopener noreferrer" className="link">Source code on GitHub</a> — grab it if you&apos;d like to host FRC Manager yourself.</li>
+        </ul>
+      </Section>
+
+      <p className="text-center text-small text-(--color-text-secondary)">
+        FRC Manager v{APP_VERSION}
+        <span className="mx-2">·</span><Link href="/terms" className="hover:text-(--color-primary)">Terms</Link>
+        <span className="mx-2">·</span><Link href="/privacy" className="hover:text-(--color-primary)">Privacy</Link>
+      </p>
     </div>
   );
 }

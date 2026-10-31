@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- **Terms of Service** updated: no guaranteed uptime, features may change or go away, use at your own risk and discretion; how to grab the source from GitHub and host it yourself; and a request not to use it to make money. Every page now has a footer with Terms, Privacy, the source code and the version
+- **Terms of Service** updated: no guaranteed uptime, features may change or go away, use at your own risk and discretion; how to grab the source from GitHub and host it yourself; and a request not to use it to make money. Every page now has a footer with Terms, Privacy, the source code and the version, and the guide ends with a “Terms, privacy & source” section
 - Signing up (email, Google/Discord, or from an invite) needs a tick in “I agree to the Terms of Service and Privacy Policy”; when each member agreed is recorded
 
 ## 1.8.0 — 2026-10-31
