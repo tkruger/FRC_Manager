@@ -250,9 +250,9 @@ export function TopNav({ session, pendingMemberCount = 0, unreadNotificationCoun
         <nav
           className="fixed bottom-0 inset-x-0 z-50 lg:hidden safe-bottom pinned-layer"
           style={{
-            backgroundColor: "color-mix(in srgb, var(--color-surface) 92%, transparent)",
-            backdropFilter: "blur(20px) saturate(180%)",
-            WebkitBackdropFilter: "blur(20px) saturate(180%)",
+            // Opaque, no blur — like the header. On iOS a blurred (backdrop-filter) fixed bar
+            // gets drawn mid-screen during momentum scrolling.
+            backgroundColor: "var(--color-surface)",
             borderTop: "1px solid color-mix(in srgb, var(--color-border) 80%, transparent)",
             boxShadow: "0 -4px 12px -4px rgb(0 0 0 / .06)",
           }}
