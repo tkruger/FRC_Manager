@@ -18,7 +18,8 @@ async function tba<T>(path: string, revalidate: number): Promise<T | null> {
   try {
     const res = await fetch(`${BASE}${path}`, {
       headers: { "X-TBA-Auth-Key": key, Accept: "application/json" },
-      next: { revalidate },
+      // 0: straight from TBA (the live-update job, which must see changes as they happen)
+      ...(revalidate === 0 ? { cache: "no-store" as const } : { next: { revalidate } }),
       signal: AbortSignal.timeout(8_000),
     });
     if (res.status === 404) return null;
@@ -81,11 +82,17 @@ export const teamEvents = (team: number, year: number) =>
 export const event = (eventKey: string) => tba<TbaEvent>(`/event/${eventKey}`, 1800);
 
 /** The team's matches at an event (the schedule, then scores as they're played) */
-export const teamEventMatches = (team: number, eventKey: string) =>
-  tba<TbaMatch[]>(`/team/${teamKey(team)}/event/${eventKey}/matches`, 60);
+export const teamEventMatches = (team: number, eventKey: string, fresh = false) =>
+  tba<TbaMatch[]>(`/team/${teamKey(team)}/event/${eventKey}/matches`, fresh ? 0 : 60);
 
-export async function teamEventStatus(team: number, eventKey: string): Promise<TbaTeamEventStatus | null> {
-  const s = await tba<TbaTeamEventStatus>(`/team/${teamKey(team)}/event/${eventKey}/status`, 60);
+export interface TbaAward { name: string; award_type: number; event_key: string; year: number; recipient_list: { team_key: string | null; awardee: string | null }[] }
+
+/** Awards the team won at an event */
+export const teamEventAwards = (team: number, eventKey: string, fresh = false) =>
+  tba<TbaAward[]>(`/team/${teamKey(team)}/event/${eventKey}/awards`, fresh ? 0 : 300);
+
+export async function teamEventStatus(team: number, eventKey: string, fresh = false): Promise<TbaTeamEventStatus | null> {
+  const s = await tba<TbaTeamEventStatus>(`/team/${teamKey(team)}/event/${eventKey}/status`, fresh ? 0 : 60);
   if (!s) return null;
   return { ...s, overall_status_str: s.overall_status_str?.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim() ?? null };
 }

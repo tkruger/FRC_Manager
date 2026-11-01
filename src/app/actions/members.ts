@@ -8,7 +8,7 @@ import type { Role } from "@/generated/prisma";
 import { createNotification } from "@/lib/notifications";
 import { sendApprovalEmail } from "@/lib/notify/approval-email";
 import { after } from "next/server";
-import { ALL_ROLES, LEADERSHIP_ROLES } from "@/lib/rbac";
+import { ALL_ROLES, LEADERSHIP_ROLES, ROLE_LABELS, grantableRoles, withImpliedRoles } from "@/lib/rbac";
 import { ActionError, userMessage } from "@/lib/action-error";
 
 async function requireAdmin() {
@@ -35,8 +35,9 @@ async function setRoles(userId: string, roles: Role[]) {
 
 /**
  * Shared checks for any role assignment: the target must be on the caller's team,
- * roles must be real, only Head Mentors can grant or remove Head Mentor, and the
- * team can never be left without an active Head Mentor.
+ * roles must be real, only the roles the caller may grant can be added or removed (Team
+ * Leadership: the Team roles; Head Mentors: any), and the team can never be left without
+ * an active Head Mentor.
  */
 async function checkRoleChange(
   actor: { id: string; teamId: string; roles: Role[] },
@@ -57,6 +58,12 @@ async function checkRoleChange(
   if (wasHead !== isHead && !actor.roles.includes("HEAD_MENTOR")) {
     return "Only a Head Mentor can grant or remove the Head Mentor role.";
   }
+  // Roles being added or removed must be ones the caller may hand out
+  const had = target.roles.map((r) => r.role);
+  const changed = [...roles.filter((r) => !had.includes(r)), ...had.filter((r) => !roles.includes(r))];
+  const allowed = grantableRoles(withImpliedRoles(actor.roles));
+  const blocked = changed.filter((r) => !allowed.includes(r));
+  if (blocked.length) return `Only a Head Mentor can give or take away the ${blocked.map((r) => ROLE_LABELS[r]).join(", ")} role${blocked.length === 1 ? "" : "s"}.`;
   if (wasHead && !isHead) {
     const others = await prisma.user.count({
       where: { teamId: actor.teamId, status: "ACTIVE", id: { not: userId }, roles: { some: { role: "HEAD_MENTOR" } } },

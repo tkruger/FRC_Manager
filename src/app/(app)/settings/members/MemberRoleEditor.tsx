@@ -10,7 +10,8 @@ import type { Role } from "@/generated/prisma";
 import { toast } from "@/components/ui/toast";
 
 
-export function MemberRoleEditor({ userId, currentRoles }: { userId: string; currentRoles: Role[] }) {
+/** grantable: the roles the editor may give or take away (others are a Head Mentor's) */
+export function MemberRoleEditor({ userId, currentRoles, grantable }: { userId: string; currentRoles: Role[]; grantable: Role[] }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<Role[]>(currentRoles);
@@ -50,9 +51,10 @@ export function MemberRoleEditor({ userId, currentRoles }: { userId: string; cur
         {error && <div className="text-sm text-(--color-danger) bg-(--color-danger)/10 rounded px-3 py-2 mb-4">{error}</div>}
         <div className="space-y-2 mb-6">
           {ALL_ROLES.map((role) => (
-            <label key={role} className="flex items-center gap-3 cursor-pointer py-1.5 px-2 rounded hover:bg-(--color-surface-overlay)">
-              <input type="checkbox" checked={selected.includes(role)} onChange={() => toggle(role)} className="rounded" />
+            <label key={role} className={`flex items-center gap-3 py-1.5 px-2 rounded ${grantable.includes(role) ? "cursor-pointer hover:bg-(--color-surface-overlay)" : "opacity-60"}`}>
+              <input type="checkbox" checked={selected.includes(role)} onChange={() => toggle(role)} disabled={!grantable.includes(role)} className="rounded" />
               <span className="text-sm text-(--color-text-primary)">{ROLE_LABELS[role]}</span>
+              {!grantable.includes(role) && <span className="ml-auto text-xs text-(--color-text-secondary)">Head Mentor only</span>}
             </label>
           ))}
         </div>

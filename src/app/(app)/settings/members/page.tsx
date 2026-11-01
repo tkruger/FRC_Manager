@@ -4,7 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
-import { ROLE_LABELS } from "@/lib/rbac";
+import { ROLE_LABELS, grantableRoles, withImpliedRoles } from "@/lib/rbac";
 import { ApproveDialog } from "./ApproveDialog";
 import { DenyButton } from "./DenyButton";
 import { MemberRoleEditor } from "./MemberRoleEditor";
@@ -37,6 +37,8 @@ export default async function MembersPage() {
 
   const pending  = users.filter((u) => u.status === "PENDING");
   const active   = users.filter((u) => u.status === "ACTIVE");
+  // Team Leadership can give the Team roles; Head Mentors any role
+  const grantable = grantableRoles(withImpliedRoles(session.user.roles as Role[]));
   // Students have the Team Member role and no adult role; everyone else (mentors, parents, …) is an adult
   const isStudent = (u: (typeof active)[number]) => {
     const roles = u.roles.map((r) => r.role);
@@ -87,7 +89,7 @@ export default async function MembersPage() {
                   )}
                 </div>
                 <div className="flex gap-2 shrink-0">
-                  <ApproveDialog userId={u.id} userName={u.name} />
+                  <ApproveDialog userId={u.id} userName={u.name} grantable={grantable} />
                   <DenyButton userId={u.id} />
                 </div>
               </div>
@@ -140,7 +142,7 @@ export default async function MembersPage() {
                   <div className="flex flex-wrap items-center gap-3">
                     <DeleteMemberButton userId={u.id} name={u.name} />
                     {isHeadMentor && <ClearanceEditor userId={u.id} name={u.name} cleared={!!u.volunteerClearedAt} until={u.volunteerClearedUntil?.toISOString() ?? null} />}
-                    <MemberRoleEditor userId={u.id} currentRoles={u.roles.map((r) => r.role as Role)} />
+                    <MemberRoleEditor userId={u.id} currentRoles={u.roles.map((r) => r.role as Role)} grantable={grantable} />
                   </div>
                 )}
               </div>

@@ -132,6 +132,41 @@ export const TOPICS = [
     audience: "Everyone on the team",
     defaultInApp: false, defaultPush: true,
   },
+  {
+    id: "competitions.schedule", group: "Competitions",
+    label: "Match schedule",
+    description: "Our qualification schedule is posted at an event, or changes.",
+    audience: "Everyone on the team",
+    defaultInApp: true, defaultPush: true,
+  },
+  {
+    id: "competitions.next_match", group: "Competitions",
+    label: "Our next match",
+    description: "Our robot is called to queue, or our match is about 20 minutes away — with our bumper color.",
+    audience: "Everyone on the team",
+    defaultInApp: false, defaultPush: true,
+  },
+  {
+    id: "competitions.results", group: "Competitions",
+    label: "Match results",
+    description: "The score of each of our matches, with our new rank.",
+    audience: "Everyone on the team",
+    defaultInApp: true, defaultPush: true,
+  },
+  {
+    id: "competitions.playoffs", group: "Competitions",
+    label: "Alliance selection & playoffs",
+    description: "We're picked for (or captain) a playoff alliance, win the event, or our playoff run ends.",
+    audience: "Everyone on the team",
+    defaultInApp: true, defaultPush: true,
+  },
+  {
+    id: "competitions.awards", group: "Competitions",
+    label: "Awards",
+    description: "We win an award at an event.",
+    audience: "Everyone on the team",
+    defaultInApp: true, defaultPush: true,
+  },
 
   // Tools & safety
   {

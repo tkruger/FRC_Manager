@@ -16,7 +16,7 @@ import { executionOrder } from "@/lib/template-timeline";
 import { standardTimelineTasks } from "@/lib/standard-template-view";
 import { SUBTEAM_OPTIONS } from "@/lib/schedule-helpers";
 
-const MENTOR_ROLES = ["HEAD_MENTOR", "BUILD_LEAD", "INVENTORY_ADMIN"];
+const MENTOR_ROLES = ["HEAD_MENTOR", "BUILD_LEAD"];
 
 // The standard template's milestones (in the order they happen) and how many tasks it has
 const standard = executionOrder(standardTimelineTasks());

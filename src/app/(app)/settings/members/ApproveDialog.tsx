@@ -9,7 +9,8 @@ import { ALL_ROLES, ROLE_LABELS } from "@/lib/rbac";
 import type { Role } from "@/generated/prisma";
 
 
-export function ApproveDialog({ userId, userName }: { userId: string; userName: string }) {
+/** grantable: the roles the approver may give (others are a Head Mentor's) */
+export function ApproveDialog({ userId, userName, grantable }: { userId: string; userName: string; grantable: Role[] }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<Role[]>(["TEAM_MEMBER"]);
@@ -38,14 +39,16 @@ export function ApproveDialog({ userId, userName }: { userId: string; userName: 
         {error && <div className="text-sm text-(--color-danger) bg-(--color-danger)/10 rounded px-3 py-2 mb-4">{error}</div>}
         <div className="space-y-2 mb-6">
           {ALL_ROLES.map((role) => (
-            <label key={role} className="flex items-center gap-3 cursor-pointer py-1.5 px-2 rounded hover:bg-(--color-surface-overlay)">
+            <label key={role} className={`flex items-center gap-3 py-1.5 px-2 rounded ${grantable.includes(role) ? "cursor-pointer hover:bg-(--color-surface-overlay)" : "opacity-60"}`}>
               <input
                 type="checkbox"
                 checked={selected.includes(role)}
                 onChange={() => toggle(role)}
+                disabled={!grantable.includes(role)}
                 className="rounded"
               />
               <span className="text-sm text-(--color-text-primary)">{ROLE_LABELS[role]}</span>
+              {!grantable.includes(role) && <span className="ml-auto text-xs text-(--color-text-secondary)">Head Mentor only</span>}
             </label>
           ))}
         </div>

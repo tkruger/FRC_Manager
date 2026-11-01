@@ -16,6 +16,8 @@ export interface OurMatch {
   when: number | null;
   /** Scheduled, before any delay (Unix seconds) */
   scheduled: number | null;
+  /** When the score was posted (Unix seconds) */
+  postedAt: number | null;
   playoff: boolean;
 }
 
@@ -28,20 +30,27 @@ export interface EventLive {
   streams: string[];
 }
 
-export async function loadEventLive(team: number, eventKey: string): Promise<EventLive> {
-  const [ev, list, status] = await Promise.all([event(eventKey), teamEventMatches(team, eventKey), teamEventStatus(team, eventKey)]);
+/** fresh: skip the short cache (the live-update job) */
+export async function loadEventLive(team: number, eventKey: string, fresh = false): Promise<EventLive> {
+  const [ev, list, status] = await Promise.all([event(eventKey), teamEventMatches(team, eventKey, fresh), teamEventStatus(team, eventKey, fresh)]);
   const year = Number(eventKey.slice(0, 4));
   const matches: OurMatch[] = sortMatches(list ?? []).map((m) => {
     const s = ourSide(m, team);
     return {
       key: m.key, label: matchLabel(m, year), color: s.color, partners: [...s.partners], opponents: [...s.opponents],
-      ourScore: s.ourScore, theirScore: s.theirScore, result: s.result, when: s.when, scheduled: m.time,
+      ourScore: s.ourScore, theirScore: s.theirScore, result: s.result, when: s.when, scheduled: m.time, postedAt: m.post_result_time,
       playoff: m.comp_level !== "qm",
     };
   });
   const next = (status?.next_match_key && matches.find((m) => m.key === status.next_match_key)) || matches.find((m) => m.result == null) || null;
   const streams = [...new Set((ev?.webcasts ?? []).map(webcastUrl).filter((u): u is string => !!u))];
   return { event: ev, matches, status, next, streams };
+}
+
+/** Unix seconds → "Sat 10:42 AM", in the event's time zone */
+export function matchTime(unix: number | null, tz: string): string | null {
+  if (unix == null) return null;
+  return new Date(unix * 1000).toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit", timeZone: tz });
 }
 
 /** Is the event on now (or within a day of either end), by calendar days in the team's time zone? */

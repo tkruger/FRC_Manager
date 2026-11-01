@@ -62,6 +62,6 @@ export function checkInviteRoles(actorRoles: Role[], picked: string[]): { ok: tr
   const roles = [...new Set(picked)] as Role[];
   if (roles.length === 0) return { ok: false, error: "Pick at least one role." };
   const notAllowed = roles.filter((r) => !allowed.includes(r));
-  if (notAllowed.length) return { ok: false, error: notAllowed.includes("HEAD_MENTOR") ? "Only Head Mentors can invite Head Mentors." : "You can only give roles up to your own." };
+  if (notAllowed.length) return { ok: false, error: notAllowed.includes("HEAD_MENTOR") ? "Only Head Mentors can invite Head Mentors." : "Only a Head Mentor can give roles beyond the Team roles." };
   return { ok: true, roles };
 }

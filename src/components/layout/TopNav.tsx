@@ -72,7 +72,7 @@ export function TopNav({ session, pendingMemberCount = 0, unreadNotificationCoun
   const viewOnly          = isViewOnly(roles);
   const navShown          = (href: string) => (href !== "/volunteers" || showVolunteers) && !(viewOnly && hiddenForViewOnly(href));
   const canInvite         = roles.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP"].includes(r)); // same as INVITE_ROLES in lib/invites
-  const canManageTemplates = roles.some((r) => ["HEAD_MENTOR", "BUILD_LEAD", "INVENTORY_ADMIN"].includes(r));
+  const canManageTemplates = roles.some((r) => ["HEAD_MENTOR", "BUILD_LEAD"].includes(r));
   // Same people as the Audit log page (AUDIT_ROLES in lib/packing)
   const canSeeAudit       = roles.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP", "SAFETY_CAPTAIN"].includes(r));
   const [moreOpen, setMoreOpen] = useState(false);

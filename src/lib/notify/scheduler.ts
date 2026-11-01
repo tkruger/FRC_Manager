@@ -373,7 +373,7 @@ async function competitionCountdowns(seasonId: string, morning: Member[]): Promi
           type:  "COMPETITION_COUNTDOWN",
           title,
           body:  d === 0 ? "Good luck, team!" : ev.location ?? undefined,
-          url:   "/calendar",
+          url:   `/competitions/${ev.id}`,
           tag:   `comp-${ev.id}`,
         },
       });

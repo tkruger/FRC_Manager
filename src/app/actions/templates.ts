@@ -15,7 +15,7 @@ import { scheduleTemplate, wouldLoop, type EventTarget } from "@/lib/template-ti
 import { rescheduleAfter } from "@/lib/task-schedule";
 import { ActionError, userMessage } from "@/lib/action-error";
 
-const MENTOR_ROLES = ["HEAD_MENTOR", "BUILD_LEAD", "INVENTORY_ADMIN"] as const;
+const MENTOR_ROLES = ["HEAD_MENTOR", "BUILD_LEAD"] as const;
 
 async function requireMentor() {
   const session = await auth();

@@ -16,6 +16,8 @@ const PUBLIC_EXACT = new Set([
   "/manifest.webmanifest",
   "/api/manifest",               // Web app manifest (chosen home-screen icon)
   "/api/discord/interactions",   // Called by Discord — authenticated by its Ed25519 signature instead
+  "/api/webhooks/tba",           // Called by The Blue Alliance — authenticated by its HMAC signature instead
+  "/api/webhooks/nexus",         // Called by FRC Nexus — authenticated by its Nexus-Token instead
 ]);
 
 // Whole subtrees that are public (matched with the trailing slash)

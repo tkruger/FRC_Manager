@@ -8,12 +8,19 @@
 - During a competition (and the week before), the Home page shows it at the top with our next match
 - Season settings: each competition takes its **event code** — pick it from **Find on The Blue Alliance** (fills in the name, dates, location and Week number) or paste a TBA, Nexus or FIRST link
 - New guide section: **Competitions — following along**
+- **Live competition notifications**, on for everyone (parents too) and each one can be turned off in Settings → Notifications: **Match schedule** (posted or changed, with our first match and bumper color), **Our next match** (“Now queuing” at events that use FRC Nexus, otherwise about 20 minutes before the predicted time, with our bumper color), **Match results** (score and our new rank), **Alliance selection & playoffs** (our alliance, winning the event, or the end of our run) and **Awards**
+- Updates are checked every 5 minutes during a linked competition; optional The Blue Alliance and Nexus webhooks make them near-instant (Settings → Integrations shows how)
+- The daily competition countdown opens the competition's page
 
 **Menus**
 - The profile menu is shorter: **Discord** and **Team email** are now one **Integrations** page, which shows where each stands (and whether The Blue Alliance is connected)
 - **Expenses & refunds** left the profile menu — it stays under **More** on phones and on the Budget page
 - **Season settings** left the profile menu too — it is the same page as **Season** in the main menu
 - Team members: active members are split into **Students** (the Team Member role) and **Adults**
+
+**Roles**
+- Team Leadership can give and take away only the **Team roles** — Team Member, Build Lead, Inventory Admin, Safety Captain and Team Leadership. Every other role (Mentor, Parent, Treasurer, Buyer, Order Approver, Volunteer Coordinator, Integration Admin, Head Mentor) is given by a Head Mentor; the role pickers mark them “Head Mentor only”
+- Task templates are managed by Head Mentors and Build Leads (no longer Inventory Admins)
 
 ## 1.8.4.1 — 2026-11-01
 

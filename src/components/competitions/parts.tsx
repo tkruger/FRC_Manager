@@ -1,6 +1,7 @@
 // Pieces of the competition pages and home tile. Server-safe (no hooks).
 
 import { links, TBA_APP_ANDROID, TBA_APP_IOS } from "@/lib/frc/links";
+export { matchTime } from "@/lib/frc/event-live";
 
 /** "Red bumpers" / "Blue bumpers" — which side we're on, so people know who to cheer for */
 export function BumperChip({ color, size = "md" }: { color: "red" | "blue"; size?: "sm" | "md" }) {
@@ -18,12 +19,6 @@ export function ResultChip({ result }: { result: "win" | "loss" | "tie" | null }
   if (!result) return null;
   const style = { win: "bg-(--color-success)/15 text-(--color-success)", loss: "bg-(--color-danger)/15 text-(--color-danger)", tie: "bg-(--color-surface-overlay) text-(--color-text-secondary)" }[result];
   return <span className={`rounded px-1.5 py-0.5 text-xs font-bold uppercase ${style}`}>{result === "win" ? "W" : result === "loss" ? "L" : "T"}</span>;
-}
-
-/** Unix seconds → "Sat 10:42 AM", in the event's time zone */
-export function matchTime(unix: number | null, tz: string): string | null {
-  if (unix == null) return null;
-  return new Date(unix * 1000).toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit", timeZone: tz });
 }
 
 type FollowLink = { label: string; href: string; desc: string };

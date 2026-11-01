@@ -19,7 +19,7 @@ import { TemplateCSVImport } from "@/app/(app)/tasks/templates/TemplateCSVImport
 import { Button } from "@/components/ui/button";
 import { kickoffOf } from "@/lib/competition";
 
-const MENTOR_ROLES = ["HEAD_MENTOR", "BUILD_LEAD", "INVENTORY_ADMIN"];
+const MENTOR_ROLES = ["HEAD_MENTOR", "BUILD_LEAD"];
 
 // Rows: one line on wider screens; on phones the name gets the full width and the
 // badges, timing and buttons wrap underneath

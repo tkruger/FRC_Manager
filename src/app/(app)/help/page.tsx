@@ -97,7 +97,7 @@ export default function HelpPage() {
       <Section id="templates" title="Task templates">
         <p>
           A template is a reusable list of tasks — like your standard build-season plan — that can be added to the
-          current season in one click. Head Mentors, Build Leads and Inventory Admins can create and edit templates; Head Mentors apply them.
+          current season in one click. Head Mentors and Build Leads can create and edit templates; Head Mentors apply them.
         </p>
         <H3>When is each task due?</H3>
         <p>When adding a template task, choose <b>Task</b> or <b>Milestone</b>, then say when it&apos;s <b>due</b> — some days <b>before</b>, <b>on</b>, or <b>after</b> a date in the season:</p>
@@ -386,6 +386,16 @@ export default function HelpPage() {
           <li><b>New to FRC competitions? Start here</b> explains qualification matches, alliance selection, playoffs and queuing in plain words.</li>
         </ul>
         <p>During an event the page updates itself every minute, and the Home page shows our next match at the top.</p>
+        <H3>Notifications during an event</H3>
+        <p>Everyone on the team — parents too — gets these by default. Turn any of them off in <Link href="/settings/notifications" className="link">Settings → Notifications</Link> under <b>Competitions</b>:</p>
+        <ul className="list">
+          <li><b>Match schedule</b> — when our qualification schedule is posted (with our first match and bumper color), and if it changes.</li>
+          <li><b>Our next match</b> — “Now queuing” when the drive team is called to the field (at events that use FRC Nexus), or about 20 minutes before the match&apos;s predicted time — with our bumper color.</li>
+          <li><b>Match results</b> — the score of each match and our new rank.</li>
+          <li><b>Alliance selection &amp; playoffs</b> — the alliance we&apos;re on, winning the event, or the end of our playoff run.</li>
+          <li><b>Awards</b> — any award we win.</li>
+        </ul>
+        <p className="text-small text-(--color-text-secondary)">Updates arrive within a few minutes of happening.</p>
         <p className="text-small text-(--color-text-secondary)">The schedule and results appear once a Head Mentor has linked the competition to its event code (see <a href="#season" className="link">Season</a>).</p>
       </Section>
 
@@ -429,24 +439,24 @@ export default function HelpPage() {
       </Section>
 
       <Section id="roles" title="Roles & permissions">
-        <p>Head Mentors and Team Leadership approve new members and assign roles. <b>Mentor</b> has the same access as Team Member — give a mentor Team Leadership (or other roles) for more. <b>Parents</b> are view-only: they see what a Team Member sees (except orders and robots) but can&apos;t change anything, apart from their own settings, volunteering, helping pack for competitions and scanning tools into their locations. A member can have several roles. <Link href="/settings/roles" className="link">Roles explained</Link> has the full list of who can do what.</p>
+        <p>Head Mentors and Team Leadership approve new members and assign roles. Team Leadership can give and take away the <b>Team roles</b> — Team Member, Build Lead, Inventory Admin, Safety Captain and Team Leadership; every other role (Mentor, Parent, Treasurer, Buyer, Order Approver, Head Mentor …) is given by a Head Mentor. <b>Mentor</b> has the same access as Team Member — give a mentor Team Leadership (or other roles) for more. <b>Parents</b> are view-only: they see what a Team Member sees (except orders and robots) but can&apos;t change anything, apart from their own settings, volunteering, helping pack for competitions and scanning tools into their locations. A member can have several roles. <Link href="/settings/roles" className="link">Roles explained</Link> has the full list of who can do what.</p>
         <p><b>Inviting people:</b> Head Mentors and Team Leadership can invite people from <b>Settings → Invite people</b> — by email (separate addresses with commas) or with a join link the bot posts in a Discord channel. Pick the roles they'll get (Team Member by default — you can give roles up to your own; only Head Mentors can invite Head Mentors). Anyone who accepts joins the team straight away with those roles.</p>
         <Table
           head={["Role", "Can also…"]}
           rows={[
             ["Team Member", "Use tasks, tools, inventory and the calendar; place orders and mark items arrived; report incidents."],
             ["Build Lead", "Manage meetings and task templates, edit robots and tools."],
-            ["Inventory Admin", "Manage inventory and tools, manage task templates, award certifications."],
+            ["Inventory Admin", "Manage inventory and tools, award certifications."],
             ["Order Approver", "Approve or deny orders, and edit open ones. (The budget is the Head Mentor's.)"],
             ["Safety Captain", "Award and revoke certifications; notified of safety incidents."],
             ["Buyer", "Get approved items to order, export the purchasing CSV, add tracking links and set item statuses."],
-            ["Team Leadership", "Approve members and assign roles (except Head Mentor), invite people, manage meetings, Discord and the team time zone; act as captains on orders (Buyer page, item statuses); view the purchase workflow."],
+            ["Team Leadership", "Approve members and give the Team roles (Team Member, Build Lead, Inventory Admin, Safety Captain, Team Leadership), invite people, manage meetings, Discord and the team time zone; act as captains on orders (Buyer page, item statuses); view the purchase workflow."],
             ["Mentor", "The same as Team Member — add other roles for more."],
             ["Parent", "View-only: see tasks, tools, inventory, the calendar and safety (not orders or robots), help pack for competitions and scan tools into locations. Once cleared, sign up to volunteer at meetings."],
             ["Treasurer", "Review expense claims: approve them (recording them in the budget) or deny them, and mark refunds paid."],
             ["Integration Admin", "Connect the student and parent Discord servers, and send the team's emails from its own account (Settings → Integrations, in the profile menu)."],
             ["Volunteer Coordinator", "Make sure every meeting has enough adults: ask volunteers to cover meetings, set shift instructions and adults per meeting; hears about meetings that are short."],
-            ["Head Mentor", "Everything: seasons, robots, applying templates, editing the purchase workflow, acting on any purchase step, and clearing adults to volunteer. Only Head Mentors can grant or remove the Head Mentor role."],
+            ["Head Mentor", "Everything: seasons, robots, applying templates, editing the purchase workflow, acting on any purchase step, and clearing adults to volunteer. Only Head Mentors can give the roles beyond the Team roles, including Head Mentor."],
           ]}
         />
         <p>Role changes and suspensions take effect immediately.</p>

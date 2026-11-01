@@ -1456,6 +1456,8 @@ enum NotificationType {
   VOLUNTEER_SHIFT
   VOLUNTEER_COVERAGE
   EXPENSE_CLAIM
+  /// Live competition updates: schedule, next match, results, alliance selection, awards
+  COMPETITION_LIVE
 }
 
 /// A browser/device that has opted in to web push for a user

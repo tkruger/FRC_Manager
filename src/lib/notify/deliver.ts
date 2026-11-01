@@ -24,6 +24,8 @@ export interface OutgoingNotification {
   bypassQuietHours?: boolean;
   /** More for the email only (e.g. a volunteer shift's instructions) — plain text */
   details?: string;
+  /** How long a push may wait for an offline device, in seconds (default 12 hours) */
+  ttl?: number;
 }
 
 export interface DeliveryResult {
@@ -155,7 +157,7 @@ async function sendPush(
       await webpush.sendNotification(
         { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
         payload,
-        { TTL: 60 * 60 * 12, urgency: n.bypassQuietHours ? "high" : "normal" },
+        { TTL: n.ttl ?? 60 * 60 * 12, urgency: n.bypassQuietHours ? "high" : "normal" },
       );
       ok.push(s.id);
     } catch (e) {
