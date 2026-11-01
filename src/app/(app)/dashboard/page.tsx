@@ -12,6 +12,8 @@ import { tbaFor } from "@/lib/frc/team-keys";
 import { eventWindow, loadEventLive } from "@/lib/frc/event-live";
 import { BumperChip, matchTime } from "@/components/competitions/parts";
 import { canCoordinate, coverage, DEFAULT_MIN_ADULTS, isAdult, isCleared, shiftWhen } from "@/lib/volunteers";
+import { meetingName } from "@/lib/meeting-audience";
+import { ShiftAskCard, type ShiftAsk } from "@/components/volunteers/ShiftAskCard";
 
 const MODULES = [
   { title: "Volunteers",    href: "/volunteers",      desc: "Sign up to help at meetings", color: "#DB2777",          icon: "🙋" },
@@ -101,6 +103,35 @@ export default async function DashboardPage() {
   const showVolunteers = isAdult(roles) || canCoordinate(roles);
 
   // Volunteers: your next shift, else how many meetings in the next two weeks still need adults
+  // Volunteer requests waiting on this person: the soonest goes at the very top, with Confirm / Can't make it
+  const asks = session?.user?.id && session.user.teamId
+    ? await prisma.meetingVolunteer.findMany({
+        where:   {
+          userId: session.user.id, status: "PENDING",
+          meeting: { cancelled: false, date: { gte: new Date(`${todayKey}T00:00:00Z`) }, season: { teamId: session.user.teamId } },
+        },
+        orderBy: [{ meeting: { date: "asc" } }, { meeting: { startTime: "asc" } }],
+        select:  {
+          assignedBy: { select: { name: true } },
+          meeting: {
+            select: {
+              id: true, date: true, startTime: true, endTime: true, title: true, subTeam: true,
+              volunteerNote: { select: { instructions: true } },
+              season: { select: { team: { select: { volunteerSettings: { select: { instructions: true } } } } } },
+            },
+          },
+        },
+      })
+    : [];
+  const topAsk: ShiftAsk | null = asks[0] ? {
+    meetingId:    asks[0].meeting.id,
+    title:        meetingName(asks[0].meeting),
+    when:         shiftWhen(asks[0].meeting),
+    askedBy:      asks[0].assignedBy?.name ?? null,
+    instructions: asks[0].meeting.volunteerNote?.instructions ?? asks[0].meeting.season.team.volunteerSettings?.instructions ?? null,
+    days:         Math.round((Date.parse(asks[0].meeting.date.toISOString().slice(0, 10)) - Date.parse(todayKey)) / 86_400_000),
+  } : null;
+
   const volunteer = showVolunteers && activeSeason && session?.user?.id
     ? await (async () => {
         const from = new Date(`${todayKey}T00:00:00Z`);
@@ -208,6 +239,9 @@ export default async function DashboardPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+      {/* Waiting on you: a volunteer request to answer */}
+      {topAsk && <ShiftAskCard ask={topAsk} more={asks.length - 1} />}
 
       {/* Season banner — only shown when no active season */}
       {!activeSeason && (

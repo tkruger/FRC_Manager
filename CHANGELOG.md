@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Home**: when you've been asked to volunteer at a meeting, the request is the first thing on the page — the meeting, its date and time and who asked — with **Confirm** and **Can't make it** right there, the shift instructions, **Details** to open it on the Volunteers page, and a count of any other requests waiting
+
 ## 1.9.0.1 — 2026-11-01
 
 - New **Slice** color scheme — orange and teal — and it's now the default. Anyone who already picked a scheme keeps it; **FRC Classic** (red and blue) is still in Profile → Color theme
