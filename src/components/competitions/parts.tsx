@@ -24,9 +24,9 @@ export function ResultChip({ result }: { result: "win" | "loss" | "tie" | null }
 type FollowLink = { label: string; href: string; desc: string };
 
 /** The sites and apps to follow an event on — mostly for parents new to FRC */
-export function FollowAlong({ team, eventKey, year, streams }: { team: number; eventKey: string | null; year: number; streams: string[] }) {
+export function FollowAlong({ team, eventKey, year, streams }: { team: number; eventKey: string | null; year: number; streams: { url: string; label: string }[] }) {
   const items: FollowLink[] = [
-    ...streams.map((href, i) => ({ label: streams.length > 1 ? `Watch live (${i + 1})` : "Watch live", href, desc: "The event's livestream" })),
+    ...streams.map((s, i) => ({ label: `Watch on ${s.label}${streams.length > 1 ? ` (${i + 1})` : ""}`, href: s.url, desc: "The event's livestream — and its recording afterward" })),
     ...(eventKey ? [
       { label: "Queue & pit times — Nexus", href: links.nexusEvent(eventKey), desc: "When our robot is called to queue, live from the field" },
       { label: "Schedule & results — The Blue Alliance", href: links.tbaEvent(eventKey), desc: "Every match, score and ranking at this event" },

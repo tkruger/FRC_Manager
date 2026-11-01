@@ -75,9 +75,26 @@ export interface TbaTeamEventStatus {
 
 const teamKey = (team: number) => `frc${team}`;
 
+export interface TbaTeam { key: string; team_number: number; nickname: string | null; name: string | null; city: string | null; state_prov: string | null; rookie_year: number | null }
+
+/** Past seasons don't change: cache them for a day */
+const yearCache = (year: number) => (year < new Date().getFullYear() ? 86_400 : 3600);
+
+export const teamInfo = (n: number) => tba<TbaTeam>(`/team/${teamKey(n)}`, 86_400);
+
+/** Every season the team competed in */
+export const yearsParticipated = (n: number) => tba<number[]>(`/team/${teamKey(n)}/years_participated`, 86_400);
+
+/** Every award the team has won */
+export const teamAwards = (n: number) => tba<TbaAward[]>(`/team/${teamKey(n)}/awards`, 21_600);
+
+/** The team's result at each event in a season, by event key */
+export const teamEventStatuses = (n: number, year: number) =>
+  tba<Record<string, TbaTeamEventStatus | null>>(`/team/${teamKey(n)}/events/${year}/statuses`, yearCache(year));
+
 /** The team's events in a season */
 export const teamEvents = (team: number, year: number) =>
-  tba<TbaEvent[]>(`/team/${teamKey(team)}/events/${year}`, 3600);
+  tba<TbaEvent[]>(`/team/${teamKey(team)}/events/${year}`, yearCache(year));
 
 export const event = (eventKey: string) => tba<TbaEvent>(`/event/${eventKey}`, 1800);
 
@@ -117,6 +134,21 @@ export function matchLabel(m: Pick<TbaMatch, "comp_level" | "set_number" | "matc
   }
 }
 
+/** Where to watch a webcast, and on what */
+export function webcastLink(w: TbaWebcast): { url: string; label: string } | null {
+  const url = webcastUrl(w);
+  if (!url) return null;
+  return { url, label: w.type === "youtube" ? "YouTube" : w.type === "twitch" ? "Twitch" : "the stream" };
+}
+
+/** A match's video (TBA lists YouTube uploads; the key may carry a start time like "abc?t=42") */
+export function matchVideoUrl(m: Pick<TbaMatch, "videos">): string | null {
+  const v = m.videos?.find((x) => x.type === "youtube" && x.key);
+  if (!v) return null;
+  const [id, query] = v.key.split("?");
+  return `https://www.youtube.com/watch?v=${encodeURIComponent(id)}${query ? `&${query}` : ""}`;
+}
+
 /** Where to watch a webcast */
 export function webcastUrl(w: TbaWebcast): string | null {
   switch (w.type) {
@@ -144,4 +176,17 @@ export function ourSide(m: TbaMatch, team: number) {
     /** Best guess of when it starts (Unix seconds) */
     when:      m.actual_time ?? m.predicted_time ?? m.time,
   } as const;
+}
+
+/** One line on how an event went for us: "🏆 Event winner", "Alliance 3 captain · Rank 2 of 40" */
+export function eventResultSummary(s: TbaTeamEventStatus | null | undefined): string | null {
+  if (!s) return null;
+  const parts: string[] = [];
+  if (s.playoff?.status === "won" && s.playoff.level === "f") parts.push("🏆 Event winner");
+  else if (s.playoff?.status === "eliminated" && s.playoff.level === "f") parts.push("Finalist");
+  if (s.alliance) parts.push(`${s.alliance.name ?? `Alliance ${s.alliance.number}`} ${s.alliance.pick === 0 ? "captain" : `pick ${s.alliance.pick}`}`);
+  const r = s.qual?.ranking;
+  if (r?.rank != null) parts.push(`Rank ${r.rank}${s.qual?.num_teams ? ` of ${s.qual.num_teams}` : ""}`);
+  if (r?.record) parts.push(`${r.record.wins}–${r.record.losses}–${r.record.ties}`);
+  return parts.length ? parts.join(" · ") : null;
 }

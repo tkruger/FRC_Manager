@@ -11,6 +11,8 @@
 - **Live competition notifications**, on for everyone (parents too) and each one can be turned off in Settings → Notifications: **Match schedule** (posted or changed, with our first match and bumper color), **Our next match** (“Now queuing” at events that use FRC Nexus, otherwise about 20 minutes before the predicted time, with our bumper color), **Match results** (score and our new rank), **Alliance selection & playoffs** (our alliance, winning the event, or the end of our run) and **Awards**
 - Updates are checked every 5 minutes during a linked competition; optional The Blue Alliance and Nexus webhooks make them near-instant (Settings → Integrations shows how)
 - The daily competition countdown opens the competition's page
+- **Watch live** button on an event's page when it has a livestream (YouTube or Twitch), and a **▶ Video** link on each match once its video is up; awards won show at the top
+- **Team history** (Competitions → Team history): every season the team has competed, with each event's rank, record, alliance and wins, and every award — plus a page for each season and each past event with all of our matches, scores and videos
 
 **Menus**
 - The profile menu is shorter: **Discord** and **Team email** are now one **Integrations** page, which shows where each stands (and whether The Blue Alliance is connected)

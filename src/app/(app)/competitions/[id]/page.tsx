@@ -4,12 +4,12 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { PageTitle } from "@/components/PageHeader";
 import { designation } from "@/lib/competition";
-import { links } from "@/lib/frc/links";
-import { tbaConfigured } from "@/lib/frc/tba";
+import { tbaConfigured, teamEventAwards } from "@/lib/frc/tba";
 import { eventWindow, loadEventLive, type EventLive } from "@/lib/frc/event-live";
 import { FALLBACK_TIMEZONE, isValidTimezone, localParts } from "@/lib/notify/time";
 import { AutoRefresh } from "@/components/competitions/AutoRefresh";
-import { BumperChip, EventExplainer, FollowAlong, matchTime, ResultChip } from "@/components/competitions/parts";
+import { EventExplainer, FollowAlong } from "@/components/competitions/parts";
+import { EventDetails } from "@/components/competitions/EventDetails";
 
 const DAY = (d: Date) => d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
 
@@ -30,11 +30,11 @@ export default async function CompetitionPage({ params }: { params: Promise<{ id
 
   const teamTz = isValidTimezone(team.timezone) ? team.timezone! : FALLBACK_TIMEZONE;
   const when = eventWindow(localParts(new Date(), teamTz).dateKey, comp.startDate, comp.endDate);
-  const live: EventLive | null = comp.tbaEventKey && tbaConfigured() ? await loadEventLive(team.teamNumber, comp.tbaEventKey) : null;
+  const [live, awards]: [EventLive | null, Awaited<ReturnType<typeof teamEventAwards>>] = comp.tbaEventKey && tbaConfigured()
+    ? await Promise.all([loadEventLive(team.teamNumber, comp.tbaEventKey), teamEventAwards(team.teamNumber, comp.tbaEventKey)])
+    : [null, null];
   const tz = isValidTimezone(live?.event?.timezone) ? live!.event!.timezone! : teamTz;
   const year = comp.season.year;
-  const status = live?.status;
-  const rank = status?.qual?.ranking;
   const isHeadMentor = session.user.roles.includes("HEAD_MENTOR" as never);
 
   return (
@@ -64,77 +64,11 @@ export default async function CompetitionPage({ params }: { params: Promise<{ id
         </div>
       )}
 
-      {/* Where we stand */}
-      {live && (status || live.next) && (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {live.next && (
-            <section className="card space-y-2 border-l-4" style={{ borderLeftColor: live.next.color === "red" ? "#DC2626" : "#2563EB" }}>
-              <p className="text-small text-(--color-text-secondary)">Our next match</p>
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="text-h2 text-(--color-text-primary)">{live.next.label}</span>
-                <BumperChip color={live.next.color} />
-              </div>
-              {live.next.when && <p className="text-sm text-(--color-text-primary)">About {matchTime(live.next.when, tz)}</p>}
-              <p className="text-small text-(--color-text-secondary)">
-                With {live.next.partners.join(" & ") || "—"} · against {live.next.opponents.join(", ") || "—"}
-              </p>
-              <a href={links.match13Match(live.next.key)} target="_blank" rel="noopener noreferrer" className="text-small text-(--color-secondary) hover:underline">
-                Prediction on Match13 ↗
-              </a>
-            </section>
-          )}
-          {status && (
-            <section className="card space-y-1">
-              <p className="text-small text-(--color-text-secondary)">How we&apos;re doing</p>
-              {rank?.rank != null && (
-                <p className="text-h2 text-(--color-text-primary)">
-                  Rank {rank.rank}{status.qual?.num_teams ? <span className="text-sm font-normal text-(--color-text-secondary)"> of {status.qual.num_teams}</span> : null}
-                </p>
-              )}
-              {rank?.record && <p className="text-sm text-(--color-text-primary)">{rank.record.wins}–{rank.record.losses}–{rank.record.ties} (wins–losses–ties)</p>}
-              {status.alliance && <p className="text-sm text-(--color-text-primary)">{status.alliance.name ?? `Alliance ${status.alliance.number}`} — {status.alliance.pick === 0 ? "captain" : `pick ${status.alliance.pick}`}</p>}
-              {status.overall_status_str && <p className="text-small text-(--color-text-secondary)">{status.overall_status_str}</p>}
-            </section>
-          )}
-        </div>
+      {awards && awards.length > 0 && (
+        <div className="card border-l-4 border-l-(--color-warning) text-sm text-(--color-text-primary)">🏅 {awards.map((a) => a.name).join(" · ")}</div>
       )}
 
-      {/* Our matches */}
-      {live && (
-        <section className="card p-0 overflow-hidden">
-          <h2 className="text-h3 text-(--color-text-primary) px-4 pt-4 pb-2">Our matches</h2>
-          {live.matches.length === 0 ? (
-            <p className="px-4 pb-4 text-small text-(--color-text-secondary)">
-              {when === "after" ? "No matches recorded." : "The match schedule isn't out yet — it's usually posted the evening before or the morning of the first match day."}
-            </p>
-          ) : (
-            <ul className="divide-y divide-(--color-border)">
-              {live.matches.map((m) => (
-                <li key={m.key} className={`flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-2.5 ${live.next?.key === m.key ? "bg-(--color-primary)/5" : ""}`}>
-                  <div className="flex min-w-0 items-center gap-3">
-                    <span className="w-1.5 self-stretch rounded" style={{ backgroundColor: m.color === "red" ? "#DC2626" : "#2563EB" }} aria-hidden />
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-(--color-text-primary)">
-                        {m.label} <span className="sr-only">({m.color})</span>
-                        {live.next?.key === m.key && <span className="ml-2 text-xs font-semibold text-(--color-primary)">Next</span>}
-                      </p>
-                      <p className="text-small text-(--color-text-secondary)">
-                        {m.result == null && m.when ? `${matchTime(m.when, tz)} · ` : ""}with {m.partners.join(" & ")} · vs {m.opponents.join(", ")}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {m.result && <span className="text-sm tabular-nums text-(--color-text-primary)">{m.ourScore}–{m.theirScore}</span>}
-                    <ResultChip result={m.result} />
-                    <a href={links.match13Match(m.key)} target="_blank" rel="noopener noreferrer" className="text-small text-(--color-secondary) hover:underline">Match13</a>
-                    <a href={links.tbaMatch(m.key)} target="_blank" rel="noopener noreferrer" className="text-small text-(--color-secondary) hover:underline">TBA</a>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      )}
+      {live && <EventDetails live={live} tz={tz} when={when} />}
 
       {comp.tbaEventKey && !tbaConfigured() && (
         <p className="text-small text-(--color-text-secondary)">

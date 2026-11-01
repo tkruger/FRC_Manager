@@ -37,7 +37,12 @@ export default async function CompetitionsPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-      <PageHeader title="Competitions" help="competitions" subtitle="Our events — match schedules, bumper colors, results and where to watch" />
+      <PageHeader
+        title="Competitions"
+        help="competitions"
+        subtitle="Our events — match schedules, bumper colors, results and where to watch"
+        actions={<Link href="/competitions/history" className="text-sm font-medium text-(--color-secondary) hover:underline">Team history →</Link>}
+      />
 
       {shown.length === 0 && (
         <div className="card py-6 text-center text-body text-(--color-text-secondary)">No competitions yet. A Head Mentor adds them in Season settings.</div>

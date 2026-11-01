@@ -1,7 +1,7 @@
 // A competition's live picture for our team: the event, our matches (with our side of each),
 // our rank and record, and the next match. Server-only — needs TBA_API_KEY for anything but links.
 
-import { event, matchLabel, ourSide, sortMatches, teamEventMatches, teamEventStatus, webcastUrl, type TbaEvent, type TbaTeamEventStatus } from "./tba";
+import { event, matchLabel, matchVideoUrl, ourSide, sortMatches, teamEventMatches, teamEventStatus, webcastLink, type TbaEvent, type TbaTeamEventStatus } from "./tba";
 
 export interface OurMatch {
   key: string;
@@ -18,6 +18,8 @@ export interface OurMatch {
   scheduled: number | null;
   /** When the score was posted (Unix seconds) */
   postedAt: number | null;
+  /** The match's video on YouTube, once it's uploaded */
+  video: string | null;
   playoff: boolean;
 }
 
@@ -26,8 +28,8 @@ export interface EventLive {
   matches: OurMatch[];
   status: TbaTeamEventStatus | null;
   next: OurMatch | null;
-  /** Where to watch, if the event lists a stream */
-  streams: string[];
+  /** Where to watch, if the event lists a stream (YouTube, Twitch …) */
+  streams: { url: string; label: string }[];
 }
 
 /** fresh: skip the short cache (the live-update job) */
@@ -38,12 +40,13 @@ export async function loadEventLive(team: number, eventKey: string, fresh = fals
     const s = ourSide(m, team);
     return {
       key: m.key, label: matchLabel(m, year), color: s.color, partners: [...s.partners], opponents: [...s.opponents],
-      ourScore: s.ourScore, theirScore: s.theirScore, result: s.result, when: s.when, scheduled: m.time, postedAt: m.post_result_time,
+      ourScore: s.ourScore, theirScore: s.theirScore, result: s.result, when: s.when, scheduled: m.time, postedAt: m.post_result_time, video: matchVideoUrl(m),
       playoff: m.comp_level !== "qm",
     };
   });
   const next = (status?.next_match_key && matches.find((m) => m.key === status.next_match_key)) || matches.find((m) => m.result == null) || null;
-  const streams = [...new Set((ev?.webcasts ?? []).map(webcastUrl).filter((u): u is string => !!u))];
+  const streams = (ev?.webcasts ?? []).map(webcastLink).filter((w): w is { url: string; label: string } => !!w)
+    .filter((w, i, all) => all.findIndex((x) => x.url === w.url) === i);
   return { event: ev, matches, status, next, streams };
 }
 

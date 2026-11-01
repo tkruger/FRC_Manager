@@ -385,7 +385,13 @@ export default function HelpPage() {
           <li><b>Follow along</b> — the livestream, the Nexus queue page (when our robot is called to the field), The Blue Alliance, Match13 rankings and predictions, and FIRST&apos;s official results. The Blue Alliance app for iPhone and Android can alert you before each of our matches.</li>
           <li><b>New to FRC competitions? Start here</b> explains qualification matches, alliance selection, playoffs and queuing in plain words.</li>
         </ul>
-        <p>During an event the page updates itself every minute, and the Home page shows our next match at the top.</p>
+        <p>During an event the page updates itself every minute, and the Home page shows our next match at the top. When the event has a livestream, a <b>Watch live</b> button sits at the top of the page; once match videos are uploaded, each match has a <b>▶ Video</b> link.</p>
+        <H3>Team history</H3>
+        <p>
+          <Link href="/competitions/history" className="link">Team history</Link> (on the Competitions page) shows every season the team has
+          competed: each event with our rank, record, playoff alliance and wins, and every award. Open a season for more, and an event for
+          all of our matches with scores and videos.
+        </p>
         <H3>Notifications during an event</H3>
         <p>Everyone on the team — parents too — gets these by default. Turn any of them off in <Link href="/settings/notifications" className="link">Settings → Notifications</Link> under <b>Competitions</b>:</p>
         <ul className="list">
