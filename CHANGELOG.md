@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+## 1.8.3 — 2026-10-31
+
+**Budget**
 - Budget chart: a dotted **raised + pledged** line above the raised line shows money promised but not in yet (from the day each pledge was entered). The expanded chart lists what's pledged, and the home page tile shows “$X raised + $Y pledged”
 
 ## 1.8.2 — 2026-10-31
