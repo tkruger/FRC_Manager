@@ -39,6 +39,8 @@ const MOBILE_MORE = [
   { label: "Inventory",  href: "/inventory",      icon: InventoryIcon },
   { label: "Orders",     href: "/procurement",    icon: ProcurementIcon },
   { label: "Budget",     href: "/budget",         icon: BudgetIcon },
+  // Submit an expense / ask to be paid back (Treasurers: the review queue)
+  { label: "Expenses",   href: "/budget/claims",  icon: ExpensesIcon },
   { label: "Volunteers", href: "/volunteers",     icon: VolunteersIcon },
   { label: "Season",     href: "/settings/season", icon: SettingsNavIcon },
 ];
@@ -225,7 +227,9 @@ export function TopNav({ session, pendingMemberCount = 0, unreadNotificationCoun
               </div>
               <div className="grid grid-cols-3 gap-2">
                 {MOBILE_MORE.filter((t) => navShown(t.href)).map(({ label, href, icon: Icon }) => {
-                  const active = href === "/dashboard" ? pathname === href : pathname.startsWith(href);
+                  // The most specific item wins (Expenses, not Budget, on /budget/claims)
+                  const active = href === "/dashboard" ? pathname === href
+                    : pathname.startsWith(href) && !MOBILE_MORE.some((o) => o.href.length > href.length && o.href.startsWith(href) && pathname.startsWith(o.href));
                   return (
                     <Link
                       key={href}
@@ -532,6 +536,14 @@ function ProcurementIcon({ className }: { className?: string }) {
   return (
     <svg className={cn("w-4 h-4", className)} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
       <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+    </svg>
+  );
+}
+
+function ExpensesIcon({ className }: { className?: string }) {
+  return (
+    <svg className={cn("w-4 h-4", className)} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 14.25l6-6m4.5-3.493V21.75l-3.75-1.5-3.75 1.5-3.75-1.5-3.75 1.5V4.757c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0c1.1.128 1.907 1.077 1.907 2.185zM9.75 9h.008v.008H9.75V9zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 4.5h.008v.008h-.008V13.5zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
     </svg>
   );
 }
