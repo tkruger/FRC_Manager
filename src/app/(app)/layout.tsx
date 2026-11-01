@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { FeedbackDialog, FeedbackLink } from "@/components/feedback/Feedback";
+import { MessageSquareText } from "lucide-react";
 import { TopNav } from "@/components/layout/TopNav";
 import { prisma } from "@/lib/prisma";
 import { AnimatedBackground } from "@/components/providers/AnimatedBackground";
@@ -68,6 +69,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           {viewOnly && <ViewOnlyBanner canVolunteer={canVolunteer} />}
           <ViewOnlyProvider viewOnly={viewOnly}>{children}</ViewOnlyProvider>
           <footer className="no-print px-4 pb-6 pt-10 text-center text-xs text-(--color-text-secondary)">
+            <div className="mb-3">
+              <FeedbackLink className="inline-flex items-center gap-1.5 rounded-full bg-(--color-secondary)/10 px-3 py-1.5 text-sm font-medium text-(--color-secondary) ring-1 ring-(--color-secondary)/30 hover:bg-(--color-secondary)/20">
+                <MessageSquareText className="h-4 w-4" aria-hidden strokeWidth={2} />
+                Give feedback
+              </FeedbackLink>
+            </div>
             <Link href="/terms" className="hover:text-(--color-primary)">Terms of Service</Link>
             <span className="mx-2">·</span>
             <Link href="/privacy" className="hover:text-(--color-primary)">Privacy Policy</Link>
@@ -75,8 +82,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <a href={SOURCE_URL} target="_blank" rel="noopener noreferrer" className="hover:text-(--color-primary)">Source code</a>
             <span className="mx-2">·</span>
             <span>v{APP_VERSION}</span>
-            <span className="mx-2">·</span>
-            <FeedbackLink className="font-medium text-(--color-secondary) hover:underline" />
           </footer>
         </main>
         {/* First visit on a device: offer push notifications (once) */}
