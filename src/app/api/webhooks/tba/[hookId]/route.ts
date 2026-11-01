@@ -9,9 +9,9 @@ import { EVENT_KEY } from "@/lib/frc/links";
 // Settings → Integrations → The Blue Alliance & Nexus).
 //
 // Setting it up in myTBA: you add this URL, TBA makes a secret for it (pasted into the team's
-// settings) and right away sends a verification code here, to type back into myTBA. That first
-// message usually arrives before the secret is saved, so a verification is accepted without one
-// (it only stores the code to show the team's admins). Everything else must be signed:
+// settings) and right away sends a verification code here, to type back into myTBA. That message
+// usually arrives before the secret is saved (or while an old one still is), so verifications are
+// always accepted — they only store a code to show the team's admins. Everything else must be signed:
 // X-TBA-HMAC = HMAC-SHA256(secret, body). A message about an event prompts an immediate check of
 // that team's competition there.
 
@@ -36,8 +36,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ hoo
   try { msg = JSON.parse(body); } catch { return NextResponse.json({ error: "Bad body" }, { status: 400 }); }
 
   if (msg.message_type === "verification") {
-    // With a secret saved, it must match; before then, any verification is shown (it's only a code)
-    if (secret && !signed(secret, body, given)) return NextResponse.json({ error: "Bad signature" }, { status: 401 });
     const code = String(msg.message_data?.verification_key ?? "").slice(0, 100);
     await prisma.teamFrcSettings.update({ where: { hookId }, data: { tbaVerificationCode: code || null, lastWebhookAt: new Date() } });
     return NextResponse.json({ ok: true });

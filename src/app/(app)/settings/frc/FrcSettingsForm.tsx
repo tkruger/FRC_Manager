@@ -93,10 +93,11 @@ export function FrcSettingsForm({ sharedTbaKey, tbaKey, tbaSecret, nexusKey, nex
             </li>
             <li>
               TBA sends a verification code to it. It shows here — refresh this page after adding the webhook — and you enter it back in myTBA.
-              <div className="mt-1.5">
+              <div className="mt-1.5 flex flex-wrap items-center gap-2">
                 {tbaWebhook.verificationCode
-                  ? <Copyable value={tbaWebhook.verificationCode} />
+                  ? <div className="min-w-0 flex-1"><Copyable value={tbaWebhook.verificationCode} /></div>
                   : <span className="italic">No code yet.</span>}
+                <Button type="button" size="sm" variant="ghost" onClick={() => router.refresh()}>Check for code</Button>
               </div>
             </li>
             <li>
@@ -107,7 +108,9 @@ export function FrcSettingsForm({ sharedTbaKey, tbaKey, tbaSecret, nexusKey, nex
           <KeyInput label="Webhook secret (from myTBA)" saved={tbaSecret} value={values.tbaSecret} onChange={set("tbaSecret")}
             onClear={() => clear("tbaSecret", "TBA webhook secret")}
             placeholder="Paste the secret myTBA made for this webhook"
-            help={tbaSecret ? "Saved — updates from TBA are accepted." : "Until it's saved, only the verification code is accepted."} />
+            help={tbaSecret
+              ? "Saved — updates signed with it are accepted. If you set this up before (when the app made the secret), paste the one myTBA shows to replace it."
+              : "Until it's saved, only the verification code is accepted."} />
         </div>
       </section>
 

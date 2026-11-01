@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The Blue Alliance webhook: the verification code now always shows up, even if a secret from the earlier setup is still saved; **Check for code** refreshes it without reloading the page
+
 ## 1.9.0.2 — 2026-11-01
 
 - The Blue Alliance webhook setup now follows how myTBA works: add the URL in myTBA, the **verification code** TBA sends shows up on the settings page (even before anything else is saved) to enter back in myTBA, then paste the **secret myTBA made** into **Webhook secret**. Updates are accepted once the secret is saved
