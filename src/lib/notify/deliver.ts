@@ -54,7 +54,7 @@ export async function notifyUsers(userIds: string[], n: OutgoingNotification): P
   const users = await prisma.user.findMany({
     where: { id: { in: ids }, status: "ACTIVE" },
     select: {
-      id: true, email: true, name: true, timezone: true, quietHoursStart: true, quietHoursEnd: true,
+      id: true, email: true, name: true, timezone: true, quietHoursStart: true, quietHoursEnd: true, competitionSnoozeUntil: true,
       teamId: true,
       team: { select: { timezone: true, teamNumber: true } },
       notificationPrefs: { where: { topic: n.topic }, select: { inApp: true, push: true, email: true } },
@@ -69,11 +69,13 @@ export async function notifyUsers(userIds: string[], n: OutgoingNotification): P
 
   for (const u of users) {
     const pref = u.notificationPrefs[0];
+    // Snoozed competition alerts (not at the event): still in the app, but no push or email
+    const snoozed = n.topic.startsWith("competitions.") && !!u.competitionSnoozeUntil && u.competitionSnoozeUntil > now;
     const wantsInApp = topic?.required || (pref?.inApp ?? topic?.defaultInApp ?? true);
-    const wantsPush  = pref?.push ?? topic?.defaultPush ?? false;
+    const wantsPush  = !snoozed && (pref?.push ?? topic?.defaultPush ?? false);
     if (wantsInApp) inAppIds.push(u.id);
     // Email: only topics that can send it, and never to placeholder addresses
-    const wantsEmail = topic?.defaultEmail !== undefined && (pref?.email ?? topic.defaultEmail);
+    const wantsEmail = !snoozed && topic?.defaultEmail !== undefined && (pref?.email ?? topic.defaultEmail);
     if (wantsEmail && !u.email.endsWith(".invalid")) emailTo.push({ email: u.email, name: u.name, teamNumber: u.team?.teamNumber ?? null, teamId: u.teamId });
 
     if (wantsPush && u.pushSubscriptions.length > 0) {

@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { LEADERSHIP_ROLES } from "@/lib/rbac";
 import { TOPICS } from "@/lib/notify/topics";
-import { FALLBACK_TIMEZONE } from "@/lib/notify/time";
 import { PushDeviceCard } from "./PushDeviceCard";
 import { TopicPreferences } from "./TopicPreferences";
 import { DeliverySettings } from "./DeliverySettings";
@@ -11,6 +10,9 @@ import { PageTitle } from "@/components/PageHeader";
 import type { TopicDef } from "@/lib/notify/topics";
 import { canCoordinate, isAdult } from "@/lib/volunteers";
 import { canReviewClaims } from "@/lib/expense-claims";
+import { SnoozeAlerts } from "@/components/competitions/SnoozeAlerts";
+import { eventWindow } from "@/lib/frc/event-live";
+import { FALLBACK_TIMEZONE, isValidTimezone, localParts } from "@/lib/notify/time";
 
 export default async function NotificationSettingsPage() {
   const session = await auth();
@@ -19,7 +21,7 @@ export default async function NotificationSettingsPage() {
   const [user, prefs, deviceCount] = await Promise.all([
     prisma.user.findUniqueOrThrow({
       where:  { id: session.user.id },
-      select: { timezone: true, quietHoursStart: true, quietHoursEnd: true, team: { select: { timezone: true } } },
+      select: { timezone: true, quietHoursStart: true, quietHoursEnd: true, competitionSnoozeUntil: true, team: { select: { timezone: true } } },
     }),
     prisma.notificationPreference.findMany({ where: { userId: session.user.id } }),
     prisma.pushSubscription.count({ where: { userId: session.user.id } }),
@@ -44,6 +46,15 @@ export default async function NotificationSettingsPage() {
 
   const isLeadership = session.user.roles.some((r) => LEADERSHIP_ROLES.includes(r));
 
+  // A competition on now? (offers snoozing until it ends)
+  const now = new Date();
+  const tz = [user.timezone, user.team?.timezone].find(isValidTimezone) ?? FALLBACK_TIMEZONE;
+  const comps = session.user.teamId ? await prisma.competitionEvent.findMany({
+    where:  { season: { teamId: session.user.teamId }, endDate: { gte: new Date(now.getTime() - 2 * 86_400_000) }, startDate: { lte: new Date(now.getTime() + 86_400_000) } },
+    select: { startDate: true, endDate: true },
+  }) : [];
+  const eventOn = comps.some((c) => eventWindow(localParts(now, tz).dateKey, c.startDate, c.endDate) === "live");
+
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       <div>
@@ -57,6 +68,15 @@ export default async function NotificationSettingsPage() {
         vapidPublicKey={process.env.VAPID_PUBLIC_KEY ?? null}
         deviceCount={deviceCount}
       />
+
+      <section className="card space-y-2">
+        <h2 className="text-h3 text-(--color-text-primary)">Snooze competition alerts</h2>
+        <p className="text-small text-(--color-text-secondary)">
+          Not at an event? Pause its schedule, next-match, result and award alerts for a while instead of turning them off —
+          they still collect in your notifications, and come back on by themselves.
+        </p>
+        <SnoozeAlerts until={user.competitionSnoozeUntil?.toISOString() ?? null} eventOn={eventOn} />
+      </section>
 
       <TopicPreferences topics={topics} />
 

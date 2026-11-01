@@ -59,6 +59,8 @@ model User {
   timezone        String?
   quietHoursStart Int     @default(21) // local hour push goes quiet
   quietHoursEnd   Int     @default(7)  // local hour push resumes
+  /// Competition alerts snoozed until then (not at the event): no push or email, still in the app
+  competitionSnoozeUntil DateTime?
 
   // NextAuth
   accounts      Account[]

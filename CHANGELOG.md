@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Snooze competition alerts** — for when you're not at the event: on the event's page or in Settings → Notifications, pause schedule, next-match, result and award alerts for **2 hours**, **until tomorrow morning** or **until the event ends**. No push or email while snoozed; they still collect in your notifications and come back on by themselves
+
 ## 1.9.0.5 — 2026-11-01
 
 - Super admins can **Edit roles** on their own row in Team members (Head Mentor stays on — nobody can remove it from a super admin). Everyone else still can't change their own roles

@@ -11,6 +11,7 @@ import { FALLBACK_TIMEZONE, isValidTimezone, localParts } from "@/lib/notify/tim
 import { AutoRefresh } from "@/components/competitions/AutoRefresh";
 import { EventExplainer, FollowAlong } from "@/components/competitions/parts";
 import { EventDetails } from "@/components/competitions/EventDetails";
+import { SnoozeAlerts } from "@/components/competitions/SnoozeAlerts";
 
 const DAY = (d: Date) => d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
 
@@ -20,12 +21,13 @@ export default async function CompetitionPage({ params }: { params: Promise<{ id
   const session = await auth();
   if (!session?.user?.teamId) redirect("/dashboard");
 
-  const [comp, team] = await Promise.all([
+  const [comp, team, me] = await Promise.all([
     prisma.competitionEvent.findFirst({
       where:  { id, season: { teamId: session.user.teamId } },
       select: { id: true, name: true, location: true, startDate: true, endDate: true, stage: true, stageNumber: true, tbaEventKey: true, season: { select: { year: true } } },
     }),
     prisma.team.findUnique({ where: { id: session.user.teamId }, select: { teamNumber: true, timezone: true } }),
+    prisma.user.findUnique({ where: { id: session.user.id }, select: { competitionSnoozeUntil: true } }),
   ]);
   if (!comp || !team) notFound();
 
@@ -64,6 +66,11 @@ export default async function CompetitionPage({ params }: { params: Promise<{ id
               : "A Head Mentor can link it in Season settings."}
           </p>
         </div>
+      )}
+
+      {/* Not at the event? Snooze alerts rather than turning them off */}
+      {when !== "after" && comp.tbaEventKey && (
+        <SnoozeAlerts until={me?.competitionSnoozeUntil?.toISOString() ?? null} eventOn={when === "live"} />
       )}
 
       {awards && awards.length > 0 && (

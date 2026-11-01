@@ -7,7 +7,8 @@ import { revalidatePath } from "next/cache";
 import { LEADERSHIP_ROLES } from "@/lib/rbac";
 import { TOPIC_BY_ID } from "@/lib/notify/topics";
 import { notifyUsers } from "@/lib/notify/deliver";
-import { isValidTimezone } from "@/lib/notify/time";
+import { FALLBACK_TIMEZONE, isValidTimezone, localParts, zonedTimeToUtc } from "@/lib/notify/time";
+import { eventWindow } from "@/lib/frc/event-live";
 
 type Result = { success: true } | { success: false; error: string };
 
@@ -131,4 +132,42 @@ export async function sendTestNotificationAction(): Promise<Result & { pushed?: 
     return { success: false, error: "Couldn't reach any of your devices. Try turning push off and on again." };
   }
   return { success: true, pushed: res.pushed };
+}
+
+/**
+ * Snooze competition alerts — for when you're not at the event. Pushes and emails stop; they still
+ * show in the app. "2h", "morning" (7am tomorrow your time), "event" (until the competition
+ * happening now ends), or "off".
+ */
+export async function snoozeCompetitionAlertsAction(choice: "2h" | "morning" | "event" | "off"): Promise<{ success: true; until: string | null } | { success: false; error: string }> {
+  const session = await currentUser();
+  if (!session?.user.teamId) return { success: false, error: "Not authenticated." };
+  const me = await prisma.user.findUnique({ where: { id: session.user.id }, select: { timezone: true, team: { select: { timezone: true } } } });
+  const tz = [me?.timezone, me?.team?.timezone].find(isValidTimezone) ?? FALLBACK_TIMEZONE;
+  const now = new Date();
+  let until: Date | null = null;
+
+  if (choice === "2h") until = new Date(now.getTime() + 2 * 3_600_000);
+  else if (choice === "morning") {
+    const today = localParts(now, tz).dateKey;
+    const [y, m, d] = today.split("-").map(Number);
+    const tomorrow = new Date(Date.UTC(y, m - 1, d + 1));
+    until = zonedTimeToUtc(tomorrow.getUTCFullYear(), tomorrow.getUTCMonth() + 1, tomorrow.getUTCDate(), 7, 0, tz);
+  } else if (choice === "event") {
+    const todayKey = localParts(now, tz).dateKey;
+    const comps = await prisma.competitionEvent.findMany({
+      where:  { season: { teamId: session.user.teamId }, endDate: { gte: new Date(now.getTime() - 2 * 86_400_000) }, startDate: { lte: new Date(now.getTime() + 86_400_000) } },
+      select: { endDate: true, startDate: true },
+    });
+    const live = comps.find((c) => eventWindow(todayKey, c.startDate, c.endDate) === "live");
+    if (!live) return { success: false, error: "There's no competition on right now." };
+    // Midnight after its last day, in your time zone
+    const last = new Date(live.endDate.getTime() + 86_400_000);
+    until = zonedTimeToUtc(last.getUTCFullYear(), last.getUTCMonth() + 1, last.getUTCDate(), 0, 0, tz);
+  } else if (choice !== "off") return { success: false, error: "Unknown choice." };
+
+  await prisma.user.update({ where: { id: session.user.id }, data: { competitionSnoozeUntil: until } });
+  revalidatePath("/settings/notifications");
+  revalidatePath("/competitions", "layout");
+  return { success: true, until: until?.toISOString() ?? null };
 }
