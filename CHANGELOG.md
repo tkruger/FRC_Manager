@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.9.0.5 — 2026-11-01
+
 - Super admins can **Edit roles** on their own row in Team members (Head Mentor stays on — nobody can remove it from a super admin). Everyone else still can't change their own roles
 
 ## 1.9.0.4 — 2026-11-01
