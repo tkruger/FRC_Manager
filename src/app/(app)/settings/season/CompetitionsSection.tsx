@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
@@ -19,6 +20,28 @@ export interface Competition {
   endDate:     string; // ISO
   stage:       CompetitionStage;
   stageNumber: number | null;
+  /** The Blue Alliance event code, e.g. 2026casnv */
+  tbaEventKey: string | null;
+}
+
+/** One of the team's events on The Blue Alliance, to fill the dialog from */
+export interface TbaEventOption {
+  key: string; name: string; startDate: string; endDate: string; location: string;
+  /** TBA event type: 0 regional, 1 district, 2/5 district championship, 3/4 Championship, 99 offseason, 100 preseason */
+  eventType: number;
+  /** TBA's week, counted from 0 for Week 1 */
+  week: number | null;
+}
+
+/** Our stage and number for a TBA event */
+function stageFor(e: TbaEventOption): { stage: CompetitionStage; number: string } {
+  switch (e.eventType) {
+    case 0: case 1: return { stage: "WEEK", number: e.week != null ? String(e.week + 1) : "" };
+    case 2: case 5: return { stage: "PLAYOFF", number: "" };
+    case 3: case 4: return { stage: "WORLDS", number: "" };
+    case 100:       return { stage: "PRACTICE", number: "" };
+    default:        return { stage: "OFFSEASON", number: "" };
+  }
 }
 
 const STAGE_OPTIONS = COMPETITION_STAGES.map((s) => ({ value: s, label: STAGE_INFO[s].label }));
@@ -29,8 +52,8 @@ function day(iso: string) {
 }
 
 export function CompetitionsSection({
-  seasonId, competitions, canEdit,
-}: { seasonId: string; competitions: Competition[]; canEdit: boolean }) {
+  seasonId, competitions, canEdit, tbaEvents = null,
+}: { seasonId: string; competitions: Competition[]; canEdit: boolean; tbaEvents?: TbaEventOption[] | null }) {
   const sorted = [...competitions].sort((a, b) => a.startDate.localeCompare(b.startDate));
 
   return (
@@ -42,7 +65,7 @@ export function CompetitionsSection({
             Task templates can schedule work relative to these (e.g. 2 days before each Week competition).
           </p>
         </div>
-        {canEdit && <CompetitionDialog seasonId={seasonId} existing={competitions} />}
+        {canEdit && <CompetitionDialog seasonId={seasonId} existing={competitions} tbaEvents={tbaEvents} />}
       </div>
 
       {sorted.length === 0 ? (
@@ -56,16 +79,17 @@ export function CompetitionsSection({
                   {designation(c.stage, c.stageNumber)}
                 </span>
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-(--color-text-primary) truncate">{c.name}</p>
+                  <Link href={`/competitions/${c.id}`} className="block text-sm font-medium text-(--color-text-primary) truncate hover:text-(--color-primary)">{c.name}</Link>
                   <p className="text-small text-(--color-text-secondary) truncate">
                     {day(c.startDate)}{c.endDate.slice(0, 10) !== c.startDate.slice(0, 10) && ` – ${day(c.endDate)}`}
                     {c.location && ` · ${c.location}`}
+                    {c.tbaEventKey && <span className="font-mono"> · {c.tbaEventKey}</span>}
                   </p>
                 </div>
               </div>
               {canEdit && (
                 <div className="flex gap-1.5">
-                  <CompetitionDialog seasonId={seasonId} existing={competitions} competition={c} />
+                  <CompetitionDialog seasonId={seasonId} existing={competitions} competition={c} tbaEvents={tbaEvents} />
                   <DeleteCompetition competition={c} />
                 </div>
               )}
@@ -78,9 +102,10 @@ export function CompetitionsSection({
 }
 
 function CompetitionDialog({
-  seasonId, existing, competition,
-}: { seasonId: string; existing: Competition[]; competition?: Competition }) {
+  seasonId, existing, competition, tbaEvents,
+}: { seasonId: string; existing: Competition[]; competition?: Competition; tbaEvents: TbaEventOption[] | null }) {
   const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
   const [open, setOpen]   = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [stage, setStage] = useState<CompetitionStage>(competition?.stage ?? "WEEK");
@@ -95,6 +120,25 @@ function CompetitionDialog({
     return used.length ? Math.max(...used) + 1 : STAGE_INFO[s].firstNumber;
   }
   const [number, setNumber] = useState<string>(String(competition?.stageNumber ?? nextNumber(competition?.stage ?? "WEEK")));
+
+  // Fill the form from one of the team's events on The Blue Alliance
+  function pickTba(key: string) {
+    const e = tbaEvents?.find((x) => x.key === key);
+    const form = formRef.current;
+    if (!e || !form) return;
+    const set = (name: string, value: string) => {
+      const el = form.elements.namedItem(name) as HTMLInputElement | null;
+      if (el) el.value = value;
+    };
+    set("name", e.name); set("location", e.location); set("tbaEventKey", e.key);
+    set("startDate", e.startDate); set("endDate", e.endDate);
+    const { stage: s, number: n } = stageFor(e);
+    setStage(s);
+    setNumber(STAGE_INFO[s].numbered ? (n || String(nextNumber(s))) : "");
+  }
+  // Events already linked to another competition
+  const taken = new Set(existing.filter((c) => c.id !== competition?.id).map((c) => c.tbaEventKey).filter(Boolean));
+  const tbaChoices = (tbaEvents ?? []).filter((e) => !taken.has(e.key));
 
   function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -121,8 +165,18 @@ function CompetitionDialog({
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent title={competition ? `Edit ${designation(competition.stage, competition.stageNumber)}` : "Add competition"}>
-          <form onSubmit={submit} className="space-y-4">
+          <form ref={formRef} onSubmit={submit} className="space-y-4">
             {error && <div className="text-sm text-(--color-danger) bg-(--color-danger)/10 rounded px-3 py-2">{error}</div>}
+
+            {tbaChoices.length > 0 && (
+              <Select
+                label="Find on The Blue Alliance"
+                options={[{ value: "", label: "Pick one of your team's events…" }, ...tbaChoices.map((e) => ({ value: e.key, label: `${e.name} (${day(e.startDate)})` }))]}
+                defaultValue=""
+                onChange={(e) => pickTba(e.target.value)}
+                hint="Fills in the name, dates, location and event code"
+              />
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Select
@@ -172,6 +226,9 @@ function CompetitionDialog({
               <Field label="End date" name="endDate" type="date" defaultValue={competition?.endDate.slice(0, 10)} hint="Blank = one day" />
               <LinkedDates start="startDate" end="endDate" />
             </div>
+            <Field label="Event code" name="tbaEventKey" maxLength={200}
+              defaultValue={competition?.tbaEventKey ?? ""} placeholder="e.g. 2026casnv — or paste a TBA, Nexus or FIRST link"
+              hint="Links the competition to its live schedule, results and rankings" />
 
             <div className="flex gap-2 pt-1">
               <Button type="submit" isLoading={pending}>{competition ? "Save" : "Add competition"}</Button>

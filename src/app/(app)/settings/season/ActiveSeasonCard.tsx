@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { formatDate, formatTime12 } from "@/lib/utils";
 import { EditSeasonForm } from "./EditSeasonForm";
 import { RobotForm } from "./RobotForm";
-import { CompetitionsSection, type Competition } from "./CompetitionsSection";
+import { CompetitionsSection, type Competition, type TbaEventOption } from "./CompetitionsSection";
 import { EditRobotDialog } from "@/components/fleet/EditRobotDialog";
 import { daySlots, type Slot } from "@/lib/meeting-schedule";
 
@@ -49,8 +49,14 @@ const DAY_SHORT: Record<string, string> = { MON: "Mon", TUE: "Tue", WED: "Wed", 
 
 /** Full season card. Also used for past seasons (isActive=false) on /settings/season/[id]. */
 export function ActiveSeasonCard({
-  season, canEdit = false, isActive = true, upcoming = false,
-}: { season: Season; canEdit?: boolean; isActive?: boolean; /** Not started yet — becomes active on its start date */ upcoming?: boolean }) {
+  season, canEdit = false, isActive = true, upcoming = false, tbaEvents = null,
+}: {
+  season: Season; canEdit?: boolean; isActive?: boolean;
+  /** Not started yet — becomes active on its start date */
+  upcoming?: boolean;
+  /** The team's events on The Blue Alliance this season (null: no TBA key) */
+  tbaEvents?: TbaEventOption[] | null;
+}) {
   const [editing, setEditing] = useState(false);
 
   return (
@@ -124,7 +130,7 @@ export function ActiveSeasonCard({
             {canEdit && <RobotForm seasonId={season.id} />}
           </div>
 
-          <CompetitionsSection seasonId={season.id} competitions={season.competitions} canEdit={canEdit} />
+          <CompetitionsSection seasonId={season.id} competitions={season.competitions} canEdit={canEdit} tbaEvents={tbaEvents} />
         </>
       ) : (
         <>

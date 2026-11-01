@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { tbaConfigured, teamEvents } from "@/lib/frc/tba";
 import { seasonStarted } from "@/lib/season-meetings";
 import { redirect } from "next/navigation";
 import { ActiveSeasonCard } from "./ActiveSeasonCard";
@@ -41,6 +42,19 @@ export default async function SeasonSettingsPage() {
   );
   const statsById = Object.fromEntries(pastSeasonStats.map((s) => [s.id, s]));
 
+  // The team's events on The Blue Alliance this season — to link competitions (Head Mentors, with a TBA key)
+  const tbaTeam = isHeadMentor && activeSeason && tbaConfigured()
+    ? await prisma.team.findUnique({ where: { id: session.user.teamId! }, select: { teamNumber: true } })
+    : null;
+  const tbaEventList = tbaTeam && activeSeason
+    ? ((await teamEvents(tbaTeam.teamNumber, activeSeason.year)) ?? [])
+        .sort((x, y) => x.start_date.localeCompare(y.start_date))
+        .map((e) => ({
+          key: e.key, name: e.name, startDate: e.start_date, endDate: e.end_date, eventType: e.event_type, week: e.week,
+          location: [e.city, e.state_prov].filter(Boolean).join(", "),
+        }))
+    : null;
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Header */}
@@ -72,10 +86,11 @@ export default async function SeasonSettingsPage() {
             meetingDayTimes: activeSeason.meetingDayTimes as Record<string, { start: string; end: string }[] | { start: string; end: string }> | null,
             competitions: activeSeason.competitionEvents.map((c) => ({
               id: c.id, name: c.name, location: c.location, stage: c.stage, stageNumber: c.stageNumber,
-              startDate: c.startDate.toISOString(), endDate: c.endDate.toISOString(),
+              startDate: c.startDate.toISOString(), endDate: c.endDate.toISOString(), tbaEventKey: c.tbaEventKey,
             })),
           }}
           canEdit={isHeadMentor}
+          tbaEvents={tbaEventList}
         />
       )}
 

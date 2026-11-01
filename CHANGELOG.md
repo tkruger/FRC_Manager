@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+**Competitions**
+- **Competitions** page (**Events** in the menu; under **More** on phones), and an event page for each competition: **our next match** with its expected time and our **bumper color** (red or blue — who to cheer for), partners and opponents; **our matches** with scores and wins/losses; our **rank and record** and playoff alliance. It updates itself every minute during the event
+- **Follow along** links on each event: the livestream, the Nexus queue page, The Blue Alliance, Match13 rankings and predictions, FIRST's official results, and The Blue Alliance app — plus a plain-language **New to FRC competitions?** explainer for parents
+- During a competition (and the week before), the Home page shows it at the top with our next match
+- Season settings: each competition takes its **event code** — pick it from **Find on The Blue Alliance** (fills in the name, dates, location and Week number) or paste a TBA, Nexus or FIRST link
+- New guide section: **Competitions — following along**
+
 ## 1.8.4.1 — 2026-11-01
 
 - Role names in title case like the rest: **Order Approver**, **Volunteer Coordinator** and **Integration Admin** (also in saved purchase workflows and order history)

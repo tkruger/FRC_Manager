@@ -74,7 +74,7 @@ export default async function PastSeasonPage({ params }: { params: Promise<{ id:
           meetingDayTimes: season.meetingDayTimes as Record<string, { start: string; end: string }[] | { start: string; end: string }> | null,
           competitions: season.competitionEvents.map((c) => ({
             id: c.id, name: c.name, location: c.location, stage: c.stage, stageNumber: c.stageNumber,
-            startDate: c.startDate.toISOString(), endDate: c.endDate.toISOString(),
+            startDate: c.startDate.toISOString(), tbaEventKey: c.tbaEventKey, endDate: c.endDate.toISOString(),
           })),
         }}
       />

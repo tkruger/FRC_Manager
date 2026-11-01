@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { normalizeEventKey } from "@/lib/frc/links";
 import { issueMessage } from "@/lib/validation";
 import { prisma } from "@/lib/prisma";
 import { seasonStarted, syncSeasonMeetings } from "@/lib/season-meetings";
@@ -306,6 +307,7 @@ const CompetitionSchema = z.object({
   location:    z.string().trim().max(300).max(160).optional(),
   startDate:   z.string().max(300).min(1, "Choose a start date."),
   endDate:     z.string().max(300).optional(),
+  tbaEventKey: z.string().trim().max(200).optional(),
 });
 
 type CompetitionResult = { success: boolean; error?: string };
@@ -328,9 +330,13 @@ async function saveCompetition(
     location:    formData.get("location") || undefined,
     startDate:   formData.get("startDate"),
     endDate:     formData.get("endDate") || undefined,
+    tbaEventKey: formData.get("tbaEventKey") || undefined,
   });
   if (!parsed.success) return { success: false, error: issueMessage(parsed.error) };
   const d = parsed.data;
+  // The event code (a pasted TBA / Nexus / FIRST link works too)
+  const tbaEventKey = d.tbaEventKey ? normalizeEventKey(d.tbaEventKey) : null;
+  if (d.tbaEventKey && !tbaEventKey) return { success: false, error: "That doesn't look like an event code — it's the year then the event, like 2026casnv." };
 
   const info = STAGE_INFO[d.stage];
   const stageNumber = info.numbered ? d.stageNumber ?? null : null;
@@ -349,7 +355,7 @@ async function saveCompetition(
 
   const data = {
     name: d.name, location: d.location || null, startDate: start, endDate: end,
-    stage: d.stage, stageNumber,
+    stage: d.stage, stageNumber, tbaEventKey,
     eventType: d.stage === "WEEK" && stageNumber === 0 ? "WEEK_0" as const : info.eventType,
   };
 

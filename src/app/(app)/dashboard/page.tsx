@@ -9,6 +9,9 @@ import { differenceInCalendarDays } from "date-fns";
 import { TiltCard } from "@/components/ui/TiltCard";
 import { seasonBudgetChart } from "@/lib/budget-summary";
 import { BudgetTile } from "@/components/budget/BudgetTile";
+import { tbaConfigured } from "@/lib/frc/tba";
+import { eventWindow, loadEventLive } from "@/lib/frc/event-live";
+import { BumperChip, matchTime } from "@/components/competitions/parts";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -19,7 +22,7 @@ export default async function DashboardPage() {
         where: { teamId: session.user.teamId, isActive: true },
         include: {
           robots:          { where: { archived: false }, select: { id: true, displayName: true, role: true } },
-          competitionEvents: { select: { name: true, stage: true, stageNumber: true, startDate: true, endDate: true } },
+          competitionEvents: { select: { id: true, name: true, stage: true, stageNumber: true, startDate: true, endDate: true, tbaEventKey: true } },
           _count: {
             select: {
               tasks:           true,
@@ -35,13 +38,23 @@ export default async function DashboardPage() {
   // competition, then the season's end — in the team's time zone
   const [team, upcomingSeasons] = session?.user?.teamId
     ? await Promise.all([
-        prisma.team.findUnique({ where: { id: session.user.teamId }, select: { timezone: true } }),
+        prisma.team.findUnique({ where: { id: session.user.teamId }, select: { timezone: true, teamNumber: true } }),
         prisma.season.findMany({ where: { teamId: session.user.teamId, isActive: false, startDate: { gt: now } }, select: { name: true, startDate: true } }),
       ])
     : [null, []];
   const todayKey = localParts(now, isValidTimezone(team?.timezone) ? team!.timezone! : FALLBACK_TIMEZONE).dateKey;
   const next = nextUp(todayKey, activeSeason && { ...activeSeason, competitions: activeSeason.competitionEvents }, upcomingSeasons);
   const nextDate = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+
+  // A competition on now, or in the next week: its tile, with our next match and bumper color when live
+  const soon = new Date(`${todayKey}T00:00:00Z`).getTime() + 7 * 86_400_000;
+  const eventNow = activeSeason?.competitionEvents
+    .filter((c) => eventWindow(todayKey, c.startDate, c.endDate) !== "after" && c.startDate.getTime() <= soon)
+    .sort((a, b) => a.startDate.getTime() - b.startDate.getTime())[0] ?? null;
+  const eventIsLive = !!eventNow && eventWindow(todayKey, eventNow.startDate, eventNow.endDate) === "live";
+  const eventLive = eventNow?.tbaEventKey && eventIsLive && team && tbaConfigured() ? await loadEventLive(team.teamNumber, eventNow.tbaEventKey) : null;
+  const eventTz = isValidTimezone(eventLive?.event?.timezone) ? eventLive!.event!.timezone! : isValidTimezone(team?.timezone) ? team!.timezone! : FALLBACK_TIMEZONE;
+  const rank = eventLive?.status?.qual?.ranking;
 
   // Overdue tasks count
   const overdueCount = activeSeason
@@ -94,6 +107,30 @@ export default async function DashboardPage() {
         </div>
       )}
 
+      {eventNow && (
+        <Link href={`/competitions/${eventNow.id}`} className="card no-underline flex flex-wrap items-center justify-between gap-4 border-l-4"
+          style={{ borderLeftColor: eventLive?.next ? (eventLive.next.color === "red" ? "#DC2626" : "#2563EB") : "var(--color-primary)" }}>
+          <div className="min-w-0">
+            <p className="text-small text-(--color-text-secondary)">
+              {eventIsLive ? <span className="mr-2 rounded-full bg-(--color-danger) px-2 py-0.5 text-xs font-bold uppercase text-white">Live</span> : "Coming up · "}
+              {eventNow.name}
+            </p>
+            {eventLive?.next ? (
+              <p className="mt-1 flex flex-wrap items-center gap-2 text-h3 text-(--color-text-primary)">
+                Next: {eventLive.next.label} <BumperChip color={eventLive.next.color} size="sm" />
+                {eventLive.next.when && <span className="text-sm font-normal text-(--color-text-secondary)">about {matchTime(eventLive.next.when, eventTz)}</span>}
+              </p>
+            ) : (
+              <p className="mt-1 text-h3 text-(--color-text-primary)">
+                {eventIsLive ? "Follow along — schedule, results and livestream" : `Starts ${nextDate(eventNow.startDate)} — see how to follow along`}
+              </p>
+            )}
+            {rank?.rank != null && <p className="text-small text-(--color-text-secondary)">Rank {rank.rank}{rank.record ? ` · ${rank.record.wins}–${rank.record.losses}–${rank.record.ties}` : ""}</p>}
+          </div>
+          <span className="text-sm font-medium text-(--color-secondary)">Event page →</span>
+        </Link>
+      )}
+
       {/* Season summary — shown when active season exists */}
       {activeSeason && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -109,7 +146,7 @@ export default async function DashboardPage() {
               value: !next ? "Ended" : next.now ? "Now" : next.days === 0 ? "Today" : next.days === 1 ? "Tomorrow" : `${next.days}d away`,
               sub: next ? `${next.name} · ${nextDate(next.date)}` : formatDate(activeSeason.endDate),
               urgent: !!next && next.label !== "Season ends" && next.days <= 14,
-              href: next?.label === "Season starts" ? "/settings/season" : "/tasks",
+              href: next?.label === "Season starts" ? "/settings/season" : next?.label === "Competition" ? "/competitions" : "/tasks",
               accent: "#059669",
             },
             // Robots only when there's no budget tile in its place
@@ -162,6 +199,7 @@ export default async function DashboardPage() {
           { title: "Safety",        href: "/safety",          desc: "Certs & checklists",      color: "#0891B2",              icon: "🛡️" },
           { title: "Season",        href: "/settings/season", desc: "Season configuration",   color: "#64748B",              icon: "⚙️" },
           { title: "Calendar",      href: "/calendar",        desc: "Meeting schedule",        color: "#7C3AED",              icon: "📅" },
+          { title: "Competitions",  href: "/competitions",    desc: "Schedules, results & where to watch", color: "#2563EB", icon: "🏆" },
         ].filter((mod) => !viewOnly || !hiddenForViewOnly(mod.href)).map((mod) => (
           <Link key={mod.href} href={mod.href} className="block no-underline">
             <TiltCard

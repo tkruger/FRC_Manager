@@ -21,6 +21,7 @@ const SECTIONS: { id: HelpTopic; title: string }[] = [
   { id: "safety",          title: "Safety" },
   { id: "fleet",           title: "Robot fleet" },
   { id: "volunteers",      title: "Volunteers" },
+  { id: "competitions",    title: "Competitions — following along" },
   { id: "notifications",   title: "Notifications & reminders" },
   { id: "roles",           title: "Roles & permissions" },
   { id: "discord",         title: "Discord" },
@@ -171,6 +172,11 @@ export default function HelpPage() {
           ]}
         />
         <p>Each designation can only be used once per season. Competitions also drive the daily countdown notification.</p>
+        <p>
+          Give each competition its <b>event code</b> (like <code>2026casnv</code>) so its <a href="#competitions" className="link">event page</a> can
+          show the match schedule, results and links. Pick the event from <b>Find on The Blue Alliance</b> in the competition&apos;s dialog
+          (it fills in the name, dates and location too), or paste a link to the event on The Blue Alliance, Nexus or FIRST.
+        </p>
         <H3>Week numbers and Week 0</H3>
         <ul className="list">
           <li>Number each <b>Week competition</b> with its <b>official FRC week</b>: a Week 2 event is <b>2</b> and a Week 5 event is <b>5</b>, even if they&apos;re the only two you attend. Don&apos;t number them 1, 2 in the order you go.</li>
@@ -365,6 +371,22 @@ export default function HelpPage() {
           <li><b>Volunteer settings</b> sets how many confirmed adults a meeting needs and the default <b>shift instructions</b>. A meeting can have its own <b>special instructions</b> (a competition, an outreach event) instead.</li>
           <li>Each morning, coordinators get a list of the next two weeks&apos; meetings that are short (Head Mentors get it if the team has no coordinator).</li>
         </ul>
+      </Section>
+
+      <Section id="competitions" title="Competitions — following along">
+        <p>
+          <Link href="/competitions" className="link">Competitions</Link> (under <b>More</b> on a phone) lists the season&apos;s events. Each
+          event&apos;s page is made for following along, especially if you&apos;re new to FRC:
+        </p>
+        <ul className="list">
+          <li><b>Our next match</b> — its number, the time the field expects it, and our <b>bumper color</b>: red or blue tells you which side of the field to cheer for. It changes every match.</li>
+          <li><b>Our matches</b> — every match we play, with partners, opponents, scores and wins or losses, and links to each on Match13 and The Blue Alliance.</li>
+          <li><b>How we&apos;re doing</b> — our rank, record and, after alliance selection, our playoff alliance.</li>
+          <li><b>Follow along</b> — the livestream, the Nexus queue page (when our robot is called to the field), The Blue Alliance, Match13 rankings and predictions, and FIRST&apos;s official results. The Blue Alliance app for iPhone and Android can alert you before each of our matches.</li>
+          <li><b>New to FRC competitions? Start here</b> explains qualification matches, alliance selection, playoffs and queuing in plain words.</li>
+        </ul>
+        <p>During an event the page updates itself every minute, and the Home page shows our next match at the top.</p>
+        <p className="text-small text-(--color-text-secondary)">The schedule and results appear once a Head Mentor has linked the competition to its event code (see <a href="#season" className="link">Season</a>).</p>
       </Section>
 
       <Section id="notifications" title="Notifications & reminders">

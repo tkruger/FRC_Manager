@@ -305,6 +305,9 @@ model CompetitionEvent {
   stage       CompetitionStage @default(WEEK)
   /// Practice match / week / playoff / offseason number; null for Worlds
   stageNumber Int?
+  /// The Blue Alliance event code (e.g. 2026casnv) — the same code FIRST, Nexus and Match13 use.
+  /// Links the competition to its live schedule, results and rankings.
+  tbaEventKey String?
 
   packSessions PackSession[]
 
