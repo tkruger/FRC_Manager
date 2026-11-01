@@ -1,5 +1,7 @@
 "use server";
 
+import type { SubTeam } from "@/generated/prisma";
+import { SUBTEAM_OPTIONS } from "@/lib/schedule-helpers";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { regenerateFutureMeetings } from "@/lib/season-meetings";
@@ -27,6 +29,8 @@ async function findTeamMeeting(meetingId: string, teamId: string) {
 }
 
 /** Regenerate the season's regular meetings from now to the season end */
+const isSubTeam = (v: string) => SUBTEAM_OPTIONS.some((o) => o.value === v);
+
 export async function generateMeetingsAction(
   seasonId: string
 ): Promise<{ success: boolean; error?: string; count?: number }> {
@@ -55,10 +59,13 @@ export async function updateMeetingAction(
     title?: string | null;
     notes?: string | null;
     taskIds?: string[];
+    /** Just for one sub-team (null: the whole team) */
+    subTeam?: string | null;
   }
 ): Promise<{ success: boolean; error?: string }> {
   let session;
   try { session = await requireLeadership(); } catch (e) { return { success: false, error: userMessage(e) }; }
+  if (data.subTeam && !isSubTeam(data.subTeam)) return { success: false, error: "Unknown sub-team." };
 
   const before = await findTeamMeeting(meetingId, session.user.teamId!);
   if (!before) return { success: false, error: "Meeting not found." };
@@ -84,6 +91,7 @@ export async function updateMeetingAction(
       ...(data.endTime   ? { endTime:   data.endTime }     : {}),
       ...(data.title !== undefined ? { title: data.title } : {}),
       ...(data.notes !== undefined ? { notes: data.notes } : {}),
+      ...(data.subTeam !== undefined ? { subTeam: (data.subTeam || null) as SubTeam | null } : {}),
       ...(taskIds        ? { tasks: { set: taskIds.map((id) => ({ id })) } } : {}),
       // Its own date/time now — season schedule changes won't move it
       ...(timeSetByHand  ? { customTime: true } : {}),
@@ -144,12 +152,14 @@ export async function addMeetingAction(
   const startTime = formData.get("startTime") as string;
   const endTime   = formData.get("endTime")   as string;
   const title     = formData.get("title") as string || null;
+  const subTeam   = (formData.get("subTeam") as string) || null;
+  if (subTeam && !isSubTeam(subTeam)) return { success: false, error: "Unknown sub-team." };
 
   if (!date || !startTime || !endTime) return { success: false, error: "Date and times are required." };
 
   const meeting = await prisma.meeting.create({
     // Added by hand, so schedule changes leave its time alone
-    data: { seasonId, date: new Date(date), startTime, endTime, title, customTime: true },
+    data: { seasonId, date: new Date(date), startTime, endTime, title, subTeam: subTeam as SubTeam | null, customTime: true },
   });
   await notify.meetingChanged(meeting.id, "added", session.user.id);
 

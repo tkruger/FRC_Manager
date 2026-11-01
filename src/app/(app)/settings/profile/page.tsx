@@ -8,6 +8,8 @@ import { AppIconPicker } from "./AppIconPicker";
 import { APP_ICON_COOKIE, resolveAppIcon } from "@/lib/app-icons";
 import { VolunteerProfile } from "./VolunteerProfile";
 import { canCoordinate, isAdult, isCleared } from "@/lib/volunteers";
+import { isViewOnly } from "@/lib/access/read-only";
+import { SubTeamPicker } from "@/components/SubTeamPicker";
 
 export default async function ProfilePage() {
   const session = await auth();
@@ -17,7 +19,7 @@ export default async function ProfilePage() {
     where:  { id: session.user.id },
     select: {
       name: true, email: true, emailVerified: true, password: true, accounts: { select: { provider: true } },
-      phone: true, volunteerClearedAt: true, volunteerClearedUntil: true,
+      phone: true, volunteerClearedAt: true, volunteerClearedUntil: true, subTeams: true,
     },
   });
   if (!me) redirect("/login");
@@ -40,6 +42,17 @@ export default async function ProfilePage() {
       </div>
 
       <ProfileForm initialName={me.name} />
+
+      {/* Parents aren't in sub-teams */}
+      {!isViewOnly(roles) && (
+        <section className="card space-y-3">
+          <div>
+            <h2 className="text-h3 text-(--color-text-primary)">My sub-teams</h2>
+            <p className="text-small text-(--color-text-secondary) mt-0.5">Pick every sub-team you&apos;re part of — you&apos;ll be reminded about their meetings.</p>
+          </div>
+          <SubTeamPicker userId={session.user.id} current={me.subTeams} />
+        </section>
+      )}
 
       {showVolunteering && <VolunteerProfile phone={me.phone} status={volunteerStatus} />}
 

@@ -8,6 +8,7 @@
 import { createHash } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { notifyRoles, type OutgoingNotification } from "@/lib/notify/deliver";
+import { claimOnce } from "@/lib/notify/claim";
 import { FALLBACK_TIMEZONE, isValidTimezone, localParts } from "@/lib/notify/time";
 import { teamEventAwards, tbaConfigured } from "./tba";
 import { eventWindow, loadEventLive, matchTime, type OurMatch } from "./event-live";
@@ -23,12 +24,6 @@ const teams = (m: OurMatch) => `With ${m.partners.join(" & ") || "—"} · vs ${
 const PICKS = ["captain", "first pick", "second pick", "backup"];
 const LEVELS: Record<string, string> = { qf: "quarterfinals", sf: "playoffs", f: "finals", ef: "eighthfinals" };
 
-/** Claim a notice; false if it was already sent */
-async function claim(key: string): Promise<boolean> {
-  // Insert-if-absent: only one caller gets count 1
-  const { count } = await prisma.reminderLog.createMany({ data: [{ key, lastSentAt: new Date() }], skipDuplicates: true });
-  return count === 1;
-}
 
 interface Comp {
   id: string; name: string; tbaEventKey: string; startDate: Date; endDate: Date;
@@ -44,7 +39,7 @@ export async function syncCompetition(c: Comp): Promise<number> {
   const now = Date.now() / 1000;
   let sent = 0;
   const send = async (key: string, n: Omit<OutgoingNotification, "type" | "url">) => {
-    if (!(await claim(`${p}:${key}`))) return;
+    if (!(await claimOnce(`${p}:${key}`))) return;
     await notifyRoles(c.teamId, "all", { ...n, type: "COMPETITION_LIVE", url });
     sent++;
   };

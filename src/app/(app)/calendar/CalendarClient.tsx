@@ -15,15 +15,26 @@ import { Field } from "@/components/ui/field";
 import { TimeSelect } from "@/components/ui/time-select";
 import { formatTime12 } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
-import { SUBTEAM_COLORS } from "@/lib/schedule-helpers";
+import { SUBTEAM_COLORS, SUBTEAM_OPTIONS } from "@/lib/schedule-helpers";
+import { Select } from "@/components/ui/select";
+import { SUBTEAM_LABEL } from "@/lib/meeting-audience";
 import { toast } from "@/components/ui/toast";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+
+const WHO_OPTIONS = [{ value: "", label: "The whole team" }, ...SUBTEAM_OPTIONS];
+
+/** Its title, else "Programming meeting" for a sub-team, else "Build meeting" */
+function meetingTitle(m: { title: string | null; subTeam: string | null }) {
+  return m.title ?? (m.subTeam ? `${SUBTEAM_LABEL[m.subTeam]} meeting` : "Build meeting");
+}
 
 interface MeetingTask { id: string; name: string; status: string; subTeam: string | null; }
 interface Meeting {
   id: string; date: string; startTime: string; endTime: string;
   title: string | null; notes: string | null; cancelled: boolean; cancelReason: string | null;
+  /** Just for one sub-team (null: the whole team) */
+  subTeam: string | null;
   tasks: MeetingTask[];
   volunteers: { userId: string; name: string; status: VolunteerStatus }[];
 }
@@ -291,9 +302,9 @@ export function CalendarClient({ season, meetings, allTasks, isLeadership, openM
                                 "w-full text-left text-[10px] font-medium px-1.5 py-0.5 rounded-sm truncate leading-relaxed transition-opacity",
                                 m.cancelled ? "line-through opacity-40 bg-(--color-surface-overlay) text-(--color-text-secondary)" : "text-white hover:opacity-85",
                               ].join(" ")}
-                              style={!m.cancelled ? { backgroundColor: isShort(m) ? "var(--color-danger)" : "var(--color-secondary)" } : undefined}
+                              style={!m.cancelled ? { backgroundColor: isShort(m) ? "var(--color-danger)" : m.subTeam ? SUBTEAM_COLORS[m.subTeam] : "var(--color-secondary)" } : undefined}
                               title={isShort(m) ? "Needs adult volunteers" : undefined}>
-                              {isShort(m) && "⚠ "}{fmt12(m.startTime)} {m.title ?? "Build meeting"}
+                              {isShort(m) && "⚠ "}{fmt12(m.startTime)} {meetingTitle(m)}
                             </button>
                           ))}
                           {dayMeetings.length > MAX_CHIPS && (
@@ -421,6 +432,7 @@ function MeetingDialog({
   const [cancelling, setCancelling] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [title,      setTitle]      = useState(meeting.title ?? "");
+  const [subTeam,    setSubTeam]    = useState(meeting.subTeam ?? "");
   const [notes,      setNotes]      = useState(meeting.notes ?? "");
   const [startTime,  setStartTime]  = useState(meeting.startTime);
   const [endTime,    setEndTime]    = useState(meeting.endTime);
@@ -428,7 +440,7 @@ function MeetingDialog({
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent title={meeting.title ?? "Build meeting"} description={dateLabel}>
+      <DialogContent title={meetingTitle(meeting)} description={dateLabel}>
         <div className="space-y-4">
           {meeting.cancelled && (
             <div className="rounded-md bg-(--color-danger)/10 border border-(--color-danger)/20 px-3 py-2 text-sm text-(--color-danger)">
@@ -438,6 +450,12 @@ function MeetingDialog({
 
           {!editing ? (
             <>
+              {meeting.subTeam && (
+                <p className="rounded-md bg-(--color-surface-overlay) px-3 py-2 text-sm text-(--color-text-primary)">
+                  <span className="mr-2 inline-block h-2 w-2 rounded-full" style={{ backgroundColor: SUBTEAM_COLORS[meeting.subTeam] }} aria-hidden />
+                  For <b>{SUBTEAM_LABEL[meeting.subTeam]}</b>, plus mentors and Team Leadership
+                </p>
+              )}
               <div className="grid grid-cols-2 gap-3">
                 {[["Start", fmt12(meeting.startTime)], ["End", fmt12(meeting.endTime)]].map(([l, v]) => (
                   <div key={l} className="rounded-md bg-(--color-surface-overlay) px-3 py-2">
@@ -512,6 +530,8 @@ function MeetingDialog({
           ) : (
             <div className="space-y-4">
               <Field label="Title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Drivetrain sprint" />
+              <Select label="Who's it for" options={WHO_OPTIONS} value={subTeam} onChange={(e) => setSubTeam(e.target.value)}
+                hint="A sub-team meeting reminds that sub-team, mentors and Team Leadership" />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[["Start time","startTime",startTime,setStartTime],["End time","endTime",endTime,setEndTime]].map(([label,,val,setter]:any) => (
                   <div key={label}>
@@ -541,7 +561,7 @@ function MeetingDialog({
                 </div>
               )}
               <div className="flex gap-2">
-                <Button size="sm" onClick={() => onSave(meeting.id, { title: title || null, notes: notes || null, startTime, endTime, taskIds: selectedTasks })}>Save</Button>
+                <Button size="sm" onClick={() => onSave(meeting.id, { title: title || null, notes: notes || null, startTime, endTime, taskIds: selectedTasks, subTeam: subTeam || null })}>Save</Button>
                 <Button variant="outline" size="sm" onClick={() => setEditing(false)}>Cancel</Button>
               </div>
             </div>
@@ -575,6 +595,8 @@ function AddMeetingDialog({ defaultDate, onClose, onSave }: {
             </div>
           </div>
           <Field label="Title (optional)" name="title" placeholder="e.g. Weekend build sprint" />
+          <Select label="Who's it for" name="subTeam" options={WHO_OPTIONS} defaultValue=""
+            hint="A sub-team meeting reminds that sub-team, mentors and Team Leadership" />
           <div className="flex gap-2 pt-2">
             <Button type="submit">Add meeting</Button>
             <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
@@ -612,7 +634,7 @@ function MobileAgenda({ meetings, heading, onOpen }: {
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className={`block truncate text-sm font-medium ${m.cancelled ? "line-through text-(--color-text-secondary)" : "text-(--color-text-primary)"}`}>
-                      {m.title ?? "Build meeting"}
+                      {meetingTitle(m)}
                     </span>
                     <span className="block text-small text-(--color-text-secondary)">
                       {fmt12(m.startTime)} – {fmt12(m.endTime)}{m.cancelled ? " · canceled" : ""}

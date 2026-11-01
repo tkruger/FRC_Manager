@@ -21,6 +21,14 @@
 - Team members: active members are split into **Students** (the Team Member role) and **Adults**
 - **Home** puts first what matters most to each person: parents see Volunteers, Calendar, Competitions and Season first; students Tasks, Calendar and Competitions; mentors Tasks, Orders and Budget. Adults get a **Volunteers** tile and a stat with their next shift or how many meetings in the next two weeks still need adults
 
+**Meetings & sub-teams**
+- Members can be in **any number of sub-teams** — pick yours on your Profile (Head Mentors and Team Leadership can set anyone's in Team members → Edit roles); they show on the Team members list
+- **Sub-team meetings**: a meeting can be just for one sub-team (**Who's it for** when adding or editing it). It shows in the sub-team's color on the calendar, and its reminders and changes go to that sub-team plus mentors and Team Leadership
+- **Your open tasks when a meeting starts**: a push to everyone the meeting is for who has open tasks, listing them (due dates and blocked ones marked). On by default; turn it off in Settings → Notifications
+
+**Feedback**
+- **Give feedback** from anywhere (the footer of every page and the profile menu): an idea, a problem or anything else goes to the app's super admins by email and as a notification — with who sent it, their team and the page they were on. Replying to the email answers the sender
+
 **Roles**
 - Team Leadership can give and take away only the **Team roles** — Team Member, Build Lead, Inventory Admin, Safety Captain and Team Leadership. Every other role (Mentor, Parent, Treasurer, Buyer, Order Approver, Volunteer Coordinator, Integration Admin, Head Mentor) is given by a Head Mentor; the role pickers mark them “Head Mentor only”
 - Task templates are managed by Head Mentors and Build Leads (no longer Inventory Admins)

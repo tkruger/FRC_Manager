@@ -2,6 +2,7 @@
 // All best-effort — a failed notification never fails the action. Server-only.
 
 import { prisma } from "@/lib/prisma";
+import { invitedTo, SUBTEAM_LABEL } from "@/lib/meeting-audience";
 import { notifyUsers, notifyRoles } from "./deliver";
 import { calendarDayKey } from "./time";
 
@@ -23,7 +24,7 @@ export function meetingChanged(
   return safely(async () => {
     const m = await prisma.meeting.findUnique({
       where:  { id: meetingId },
-      select: { date: true, startTime: true, endTime: true, title: true, cancelReason: true, season: { select: { teamId: true } } },
+      select: { date: true, startTime: true, endTime: true, title: true, subTeam: true, cancelReason: true, season: { select: { teamId: true } } },
     });
     // Don't announce changes to meetings that have already happened
     if (!m || calendarDayKey(m.date) < calendarDayKey(new Date())) return;
@@ -34,14 +35,20 @@ export function meetingChanged(
       cancelled: "Meeting canceled",
       restored:  "Meeting back on",
     }[kind];
-    await notifyRoles(m.season.teamId, "all", {
+    // A sub-team meeting: that sub-team, mentors and Team Leadership
+    const members = await prisma.user.findMany({
+      where:  { teamId: m.season.teamId, status: "ACTIVE", id: { not: actorId } },
+      select: { id: true, subTeams: true, roles: { select: { role: true } } },
+    });
+    const to = members.filter((u) => invitedTo(m, { roles: u.roles.map((r) => r.role), subTeams: u.subTeams })).map((u) => u.id);
+    await notifyUsers(to, {
       topic: "meetings.changes",
       type:  "MEETING_CHANGED",
-      title: `${kind === "cancelled" ? "❌ " : "📅 "}${title}`,
+      title: `${kind === "cancelled" ? "❌ " : "📅 "}${title}${m.subTeam ? ` — ${SUBTEAM_LABEL[m.subTeam]}` : ""}`,
       body:  `${meetingLabel(m)}${kind === "cancelled" && m.cancelReason ? ` · ${m.cancelReason}` : ""}`,
       url:   "/calendar",
       tag:   `meeting-${meetingId}`,
-    }, { exclude: [actorId] });
+    });
   });
 }
 

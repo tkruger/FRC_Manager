@@ -97,6 +97,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
           endTime:      m.endTime,
           title:        m.title,
           notes:        m.notes,
+          subTeam:      m.subTeam,
           cancelled:    m.cancelled,
           cancelReason: m.cancelReason,
           tasks:        m.tasks,

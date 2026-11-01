@@ -39,6 +39,8 @@ model User {
   registrationNote String?
   /// When they agreed to the Terms of Service and Privacy Policy (at sign-up). Null: an account from before the checkbox
   termsAcceptedAt  DateTime?
+  /// The sub-teams they're part of (any number) — sub-team meetings remind them
+  subTeams         SubTeam[] @default([])
 
   // Profile
   /// Optional; shown to volunteer coordinators and Head Mentors so they can reach volunteers
@@ -1458,6 +1460,10 @@ enum NotificationType {
   EXPENSE_CLAIM
   /// Live competition updates: schedule, next match, results, alliance selection, awards
   COMPETITION_LIVE
+  /// At the start of a meeting: your open tasks
+  MEETING_TASKS
+  /// Someone sent feedback about the app (super admins)
+  FEEDBACK
 }
 
 /// A browser/device that has opted in to web push for a user
@@ -1622,6 +1628,8 @@ model Meeting {
   endTime      String   // "HH:MM" 24h
   title        String?  // optional topic / agenda headline
   notes        String?  // full agenda / notes (markdown)
+  /// Just for one sub-team (null: the whole team). Its reminders go to that sub-team plus mentors and Team Leadership.
+  subTeam      SubTeam?
   cancelled    Boolean  @default(false)
   cancelReason String?
   /// Someone set this meeting's date/time by hand (edited or added it) — schedule changes leave it alone

@@ -5,8 +5,9 @@
 // Reminders are held back during each person's quiet hours and retried next run.
 
 import { prisma } from "@/lib/prisma";
+import { invitedTo, meetingName } from "@/lib/meeting-audience";
 import { withImpliedRoles } from "@/lib/rbac";
-import type { Role } from "@/generated/prisma";
+import type { Role, SubTeam } from "@/generated/prisma";
 import { notifyUsers, type OutgoingNotification } from "./deliver";
 import {
   FALLBACK_TIMEZONE, DAILY_DIGEST_HOUR, calendarDayKey, daysUntil, inQuietHours,
@@ -23,6 +24,7 @@ export const COUNTDOWN_DAYS = 30;
 interface Member {
   id:     string;
   roles:  Role[];
+  subTeams: SubTeam[];
   tz:     string;
   local:  LocalParts;
   quiet:  boolean;
@@ -55,7 +57,7 @@ export async function runReminders(now = new Date()): Promise<ReminderRunResult>
       seasons: { where: { isActive: true }, select: { id: true }, take: 1 },
       users: {
         where:  { status: "ACTIVE" },
-        select: { id: true, timezone: true, quietHoursStart: true, quietHoursEnd: true, roles: { select: { role: true } } },
+        select: { id: true, timezone: true, quietHoursStart: true, quietHoursEnd: true, subTeams: true, roles: { select: { role: true } } },
       },
     },
   });
@@ -70,7 +72,7 @@ export async function runReminders(now = new Date()): Promise<ReminderRunResult>
       const tz    = isValidTimezone(u.timezone) ? u.timezone : teamTz;
       const local = localParts(now, tz);
       const quiet = inQuietHours(local.hour, u.quietHoursStart, u.quietHoursEnd);
-      return { id: u.id, roles: withImpliedRoles(u.roles.map((r) => r.role)), tz, local, quiet, dailySlot: !quiet && local.hour >= DAILY_DIGEST_HOUR };
+      return { id: u.id, roles: withImpliedRoles(u.roles.map((r) => r.role)), subTeams: u.subTeams, tz, local, quiet, dailySlot: !quiet && local.hour >= DAILY_DIGEST_HOUR };
     });
     const awake = members.filter((m) => !m.quiet);
 
@@ -171,7 +173,7 @@ async function meetingReminders(seasonId: string, teamTz: string, awake: Member[
   const to   = new Date(now.getTime() + 3 * 24 * HOUR);
   const meetings = await prisma.meeting.findMany({
     where:  { seasonId, cancelled: false, date: { gte: from, lte: to } },
-    select: { id: true, date: true, startTime: true, endTime: true, title: true },
+    select: { id: true, date: true, startTime: true, endTime: true, title: true, subTeam: true },
   });
 
   const out: Candidate[] = [];
@@ -185,9 +187,10 @@ async function meetingReminders(seasonId: string, teamTz: string, awake: Member[
     const soon  = msUntil <= 2 * HOUR;
     const base  = `meeting:${mt.id}:${start.toISOString()}`;
     const when  = start.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: teamTz });
-    const what  = mt.title ?? "Team meeting";
+    const what  = meetingName(mt);
 
-    for (const m of awake) {
+    // A sub-team meeting: that sub-team, mentors and Team Leadership
+    for (const m of awake.filter((a) => invitedTo(mt, a))) {
       const sameDay = localParts(start, teamTz).dateKey === m.local.dateKey;
       out.push({
         key:    `${base}:${soon ? "soon" : "day"}:${m.id}`,

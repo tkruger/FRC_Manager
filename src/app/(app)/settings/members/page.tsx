@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
 import { ROLE_LABELS, grantableRoles, withImpliedRoles } from "@/lib/rbac";
+import { SUBTEAM_COLORS } from "@/lib/schedule-helpers";
+import { SUBTEAM_LABEL } from "@/lib/meeting-audience";
 import { ApproveDialog } from "./ApproveDialog";
 import { DenyButton } from "./DenyButton";
 import { MemberRoleEditor } from "./MemberRoleEditor";
@@ -142,13 +144,16 @@ export default async function MembersPage() {
                   <div className="flex flex-wrap items-center gap-3">
                     <DeleteMemberButton userId={u.id} name={u.name} />
                     {isHeadMentor && <ClearanceEditor userId={u.id} name={u.name} cleared={!!u.volunteerClearedAt} until={u.volunteerClearedUntil?.toISOString() ?? null} />}
-                    <MemberRoleEditor userId={u.id} currentRoles={u.roles.map((r) => r.role as Role)} grantable={grantable} />
+                    <MemberRoleEditor userId={u.id} currentRoles={u.roles.map((r) => r.role as Role)} grantable={grantable} subTeams={u.subTeams} />
                   </div>
                 )}
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {u.roles.map((r) => (
                   <Badge key={r.role} variant="info">{ROLE_LABELS[r.role as Role]}</Badge>
+                ))}
+                {u.subTeams.map((s) => (
+                  <span key={s} className="rounded-full px-2 py-0.5 text-xs font-medium text-white" style={{ backgroundColor: SUBTEAM_COLORS[s] }}>{SUBTEAM_LABEL[s]}</span>
                 ))}
                 {isCleared(u)
                   ? <Badge variant="success">Cleared to volunteer{u.volunteerClearedUntil ? ` until ${dayText(u.volunteerClearedUntil)}` : ""}</Badge>

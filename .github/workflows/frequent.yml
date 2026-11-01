@@ -1,7 +1,8 @@
-# Live competition updates (schedule, next match, results, alliance selection, awards) every
-# 5 minutes. Uses the same APP_URL and CRON_SECRET repository secrets as the reminders job.
-# Does nothing until both are set, and returns right away when no competition is on.
-name: Competition updates
+# Every 5 minutes: live competition updates (schedule, next match, results, alliance selection,
+# awards) and each member's open tasks as a meeting starts. Uses the same APP_URL and CRON_SECRET
+# repository secrets as the reminders job. Does nothing until both are set, and returns right away
+# when nothing is on.
+name: Frequent updates
 
 on:
   schedule:
@@ -13,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
-      - name: Check live competitions
+      - name: Competitions and meeting starts
         env:
           APP_URL: ${{ secrets.APP_URL }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
@@ -24,4 +25,4 @@ jobs:
           fi
           curl -fsS --max-time 120 \
             -H "Authorization: Bearer $CRON_SECRET" \
-            "$APP_URL/api/cron/competitions"
+            "$APP_URL/api/cron/frequent"

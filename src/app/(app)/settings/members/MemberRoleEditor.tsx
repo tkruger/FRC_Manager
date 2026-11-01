@@ -8,10 +8,11 @@ import { Button } from "@/components/ui/button";
 import { ALL_ROLES, ROLE_LABELS } from "@/lib/rbac";
 import type { Role } from "@/generated/prisma";
 import { toast } from "@/components/ui/toast";
+import { SubTeamPicker } from "@/components/SubTeamPicker";
 
 
 /** grantable: the roles the editor may give or take away (others are a Head Mentor's) */
-export function MemberRoleEditor({ userId, currentRoles, grantable }: { userId: string; currentRoles: Role[]; grantable: Role[] }) {
+export function MemberRoleEditor({ userId, currentRoles, grantable, subTeams }: { userId: string; currentRoles: Role[]; grantable: Role[]; subTeams: string[] }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<Role[]>(currentRoles);
@@ -57,6 +58,10 @@ export function MemberRoleEditor({ userId, currentRoles, grantable }: { userId: 
               {!grantable.includes(role) && <span className="ml-auto text-xs text-(--color-text-secondary)">Head Mentor only</span>}
             </label>
           ))}
+        </div>
+        <div className="mb-6 space-y-2">
+          <p className="text-sm font-medium text-(--color-text-primary)">Sub-teams <span className="font-normal text-(--color-text-secondary)">(saved as you tap)</span></p>
+          <SubTeamPicker userId={userId} current={subTeams} />
         </div>
         <div className="flex items-center justify-between">
           <div className="flex gap-2">

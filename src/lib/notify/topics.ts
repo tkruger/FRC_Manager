@@ -117,6 +117,13 @@ export const TOPICS = [
     defaultInApp: true, defaultPush: true,
   },
   {
+    id: "tasks.meeting_start", group: "Tasks",
+    label: "My open tasks when a meeting starts",
+    description: "As each meeting you're part of starts, a list of the tasks you still have open.",
+    audience: "Anyone with open tasks, at meetings for their sub-team or the whole team",
+    defaultInApp: false, defaultPush: true,
+  },
+  {
     id: "tasks.blocked", group: "Tasks",
     label: "Blocked tasks",
     description: "A task is marked blocked.",
@@ -208,6 +215,13 @@ export const TOPICS = [
   },
 
   // Platform
+  {
+    id: "admin.feedback", group: "Platform admin",
+    label: "Feedback",
+    description: "Someone sends feedback about the app (it's also emailed to you).",
+    audience: "Super admins",
+    defaultInApp: true, defaultPush: true, superAdminOnly: true,
+  },
   {
     id: "admin.team_requests", group: "Platform admin",
     label: "New teams to approve",

@@ -192,6 +192,9 @@ export default function HelpPage() {
           <li>The calendar opens on the current month; use the arrows or <b>Full season</b> to look around.</li>
           <li>Meeting managers (Head Mentors, Team Leadership, Build Leads) can generate the season&apos;s meetings from the meeting days, add one-off meetings, change times, or cancel a meeting. Everyone is notified of changes to upcoming meetings.</li>
           <li><b>Subscribe</b> adds the team schedule to Google, Apple or Outlook calendar, and keeps it updated.</li>
+          <li><b>Sub-team meetings</b>: when adding or editing a meeting, <b>Who&apos;s it for</b> can pick one sub-team (e.g. Programming). It shows in that sub-team&apos;s color, and its reminders and changes go to that sub-team&apos;s members plus mentors and Team Leadership — not the whole team.</li>
+          <li><b>Your sub-teams</b>: pick every sub-team you&apos;re part of under <Link href="/settings/profile" className="link">Profile</Link> (Head Mentors and Team Leadership can also set them in Team members → Edit roles).</li>
+          <li>As a meeting starts, everyone it&apos;s for who has open tasks gets a push listing them (<b>My open tasks when a meeting starts</b> in Settings → Notifications).</li>
         </ul>
       </Section>
 
@@ -422,7 +425,7 @@ export default function HelpPage() {
         <ul className="list">
           <li><b>Purchasing</b> — orders waiting on you (with reminders until you act), updates on your own orders, low stock.</li>
           <li><b>Meetings</b> — a reminder the day before and shortly before each meeting, and any changes or cancellations.</li>
-          <li><b>Tasks</b> — when you&apos;re assigned, a morning digest of overdue and upcoming tasks, and blocked tasks.</li>
+          <li><b>Tasks</b> — when you&apos;re assigned, a morning digest of overdue and upcoming tasks, blocked tasks, and your open tasks as each meeting starts.</li>
           <li><b>Competitions</b> — a daily countdown each morning for the 30 days before every event.</li>
           <li><b>Tools &amp; safety</b> — tool returns, expiring certifications, safety incidents.</li>
           <li><b>Volunteers</b> — requests to cover a meeting, sign-up confirmations and the day-before reminder with instructions; for coordinators, meetings short of adults. These are emailed too unless you turn email off.</li>

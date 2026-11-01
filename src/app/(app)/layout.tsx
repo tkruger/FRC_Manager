@@ -1,5 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
+import { FeedbackDialog, FeedbackLink } from "@/components/feedback/Feedback";
 import { TopNav } from "@/components/layout/TopNav";
 import { prisma } from "@/lib/prisma";
 import { AnimatedBackground } from "@/components/providers/AnimatedBackground";
@@ -73,6 +75,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <a href={SOURCE_URL} target="_blank" rel="noopener noreferrer" className="hover:text-(--color-primary)">Source code</a>
             <span className="mx-2">·</span>
             <span>v{APP_VERSION}</span>
+            <span className="mx-2">·</span>
+            <FeedbackLink className="font-medium text-(--color-secondary) hover:underline" />
           </footer>
         </main>
         {/* First visit on a device: offer push notifications (once) */}
@@ -82,6 +86,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <ViewportFix />
         {/* "Saved" confirmations after edits */}
         <Toaster />
+        {/* Give feedback — opened from the footer and the profile menu */}
+        <Suspense fallback={null}><FeedbackDialog /></Suspense>
       </div>
     </div>
   );

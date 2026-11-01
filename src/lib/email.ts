@@ -18,7 +18,7 @@ export function emailConfigured(): boolean {
   return !!process.env.RESEND_API_KEY;
 }
 
-type Mail = { to: string; subject: string; html: string; text: string };
+type Mail = { to: string; subject: string; html: string; text: string; /** Replies go here (e.g. feedback → its sender) */ replyTo?: string };
 
 /**
  * Send an email. Pass `teamId` for team emails: they go through the team's mail server first.
@@ -72,6 +72,7 @@ async function sendViaService(msg: Mail): Promise<{ sent: boolean; error?: strin
         subject: msg.subject,
         html:    msg.html,
         text:    msg.text,
+        ...(msg.replyTo ? { reply_to: msg.replyTo } : {}),
       }),
       signal: AbortSignal.timeout(10_000),
     });
