@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.9.0 — 2026-11-01
+
 **Competitions**
 - **Competitions** page (**Events** in the menu; under **More** on phones), and an event page for each competition: **our next match** with its expected time and our **bumper color** (red or blue — who to cheer for), partners and opponents; **our matches** with scores and wins/losses; our **rank and record** and playoff alliance. It updates itself every minute during the event
 - **Follow along** links on each event: the livestream, the Nexus queue page, The Blue Alliance, Match13 rankings and predictions, FIRST's official results, and The Blue Alliance app — plus a plain-language **New to FRC competitions?** explainer for parents
@@ -32,6 +34,7 @@
 
 **Fixes**
 - iPhone home-screen app: the bottom tab bar could float partway up the screen while scrolling a long page (not just after typing) — it now stays at the bottom
+- Phones: the end of each page no longer hides behind the bottom tab bar
 
 **Roles**
 - Team Leadership can give and take away only the **Team roles** — Team Member, Build Lead, Inventory Admin, Safety Captain and Team Leadership. Every other role (Mentor, Parent, Treasurer, Buyer, Order Approver, Volunteer Coordinator, Integration Admin, Head Mentor) is given by a Head Mentor; the role pickers mark them “Head Mentor only”
