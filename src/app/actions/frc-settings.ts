@@ -1,6 +1,5 @@
 "use server";
 
-import crypto from "crypto";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -24,14 +23,16 @@ async function requireAdmin() {
  * checked with TBA first.
  */
 export async function saveFrcKeysAction(input: {
-  tbaKey?: string; nexusKey?: string; nexusToken?: string; clear?: ("tba" | "nexus" | "nexusToken")[];
+  tbaKey?: string; tbaSecret?: string; nexusKey?: string; nexusToken?: string;
+  clear?: ("tba" | "tbaSecret" | "nexus" | "nexusToken")[];
 }): Promise<Result> {
   const teamId = await requireAdmin();
   if (!teamId) return { success: false, error: "Only Head Mentors and Integration Admins can change these." };
   const tbaKey = input.tbaKey?.trim();
+  const tbaSecret = input.tbaSecret?.trim();
   const nexusKey = input.nexusKey?.trim();
   const nexusToken = input.nexusToken?.trim();
-  if ([tbaKey, nexusKey, nexusToken].some((v) => v && v.length > 300)) return { success: false, error: "That's too long for a key." };
+  if ([tbaKey, tbaSecret, nexusKey, nexusToken].some((v) => v && v.length > 300)) return { success: false, error: "That's too long for a key." };
   if (tbaKey && !(await checkTbaKey(tbaKey))) {
     return { success: false, error: "The Blue Alliance didn't accept that key — check it's a Read API key from your account page." };
   }
@@ -41,33 +42,13 @@ export async function saveFrcKeysAction(input: {
     where: { teamId },
     data: {
       ...(tbaKey ? { tbaKeyEnc: seal(tbaKey) } : clear.has("tba") ? { tbaKeyEnc: null } : {}),
+      // The secret myTBA made for the webhook (it signs every message with it)
+      ...(tbaSecret ? { tbaWebhookSecretEnc: seal(tbaSecret) } : clear.has("tbaSecret") ? { tbaWebhookSecretEnc: null, tbaVerificationCode: null } : {}),
       ...(nexusKey ? { nexusKeyEnc: seal(nexusKey) } : clear.has("nexus") ? { nexusKeyEnc: null } : {}),
       ...(nexusToken ? { nexusWebhookTokenEnc: seal(nexusToken) } : clear.has("nexusToken") ? { nexusWebhookTokenEnc: null } : {}),
     },
   });
   revalidatePath("/settings/frc");
   revalidatePath("/settings/integrations");
-  return { success: true };
-}
-
-/** A new secret for the team's TBA webhook (to enter in myTBA). Replaces the old one. */
-export async function newTbaWebhookSecretAction(): Promise<Result> {
-  const teamId = await requireAdmin();
-  if (!teamId) return { success: false, error: "Only Head Mentors and Integration Admins can change these." };
-  await ensureFrcSettings(teamId);
-  await prisma.teamFrcSettings.update({
-    where: { teamId },
-    data:  { tbaWebhookSecretEnc: seal(crypto.randomBytes(24).toString("base64url")), tbaVerificationCode: null },
-  });
-  revalidatePath("/settings/frc");
-  return { success: true };
-}
-
-/** Stop accepting TBA webhook messages */
-export async function removeTbaWebhookAction(): Promise<Result> {
-  const teamId = await requireAdmin();
-  if (!teamId) return { success: false, error: "Only Head Mentors and Integration Admins can change these." };
-  await prisma.teamFrcSettings.updateMany({ where: { teamId }, data: { tbaWebhookSecretEnc: null, tbaVerificationCode: null } });
-  revalidatePath("/settings/frc");
   return { success: true };
 }

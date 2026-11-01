@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/toast";
-import { newTbaWebhookSecretAction, removeTbaWebhookAction, saveFrcKeysAction } from "@/app/actions/frc-settings";
+import { saveFrcKeysAction } from "@/app/actions/frc-settings";
 
-type Field = "tba" | "nexus" | "nexusToken";
+type Field = "tba" | "tbaSecret" | "nexus" | "nexusToken";
 
 function Copyable({ value }: { value: string }) {
   return (
@@ -44,15 +44,15 @@ function KeyInput({ label, help, saved, value, onChange, onClear, placeholder }:
   );
 }
 
-export function FrcSettingsForm({ sharedTbaKey, tbaKey, nexusKey, nexusToken, tbaWebhook, nexusWebhookUrl, lastWebhookAt }: {
+export function FrcSettingsForm({ sharedTbaKey, tbaKey, tbaSecret, nexusKey, nexusToken, tbaWebhook, nexusWebhookUrl, lastWebhookAt }: {
   sharedTbaKey: boolean;
-  tbaKey: string | null; nexusKey: string | null; nexusToken: string | null;
-  tbaWebhook: { url: string; secret: string | null; verificationCode: string | null };
+  tbaKey: string | null; tbaSecret: string | null; nexusKey: string | null; nexusToken: string | null;
+  tbaWebhook: { url: string; verificationCode: string | null };
   nexusWebhookUrl: string;
   lastWebhookAt: string | null;
 }) {
   const router = useRouter();
-  const [values, setValues] = useState({ tba: "", nexus: "", nexusToken: "" });
+  const [values, setValues] = useState({ tba: "", tbaSecret: "", nexus: "", nexusToken: "" });
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const set = (k: Field) => (v: string) => setValues((p) => ({ ...p, [k]: v }));
@@ -63,7 +63,7 @@ export function FrcSettingsForm({ sharedTbaKey, tbaKey, nexusKey, nexusToken, tb
     const res = await fn();
     if (!res.success) { setError(res.error ?? "Couldn't save."); return; }
     toast.success(done);
-    setValues({ tba: "", nexus: "", nexusToken: "" });
+    setValues({ tba: "", tbaSecret: "", nexus: "", nexusToken: "" });
     router.refresh();
   });
   const clear = (k: Field, what: string) => {
@@ -84,37 +84,30 @@ export function FrcSettingsForm({ sharedTbaKey, tbaKey, nexusKey, nexusToken, tb
           placeholder="Paste your TBA Read API key"
           help={<>Free: sign in at <a href="https://www.thebluealliance.com/account" target="_blank" rel="noopener noreferrer" className="text-(--color-secondary) hover:underline">thebluealliance.com/account</a> → Read API Keys → add one.{!tbaKey && sharedTbaKey && " Until you add one, the app's shared key is used."}</>} />
 
-        <div className="space-y-2 border-t border-(--color-border) pt-4">
+        <div className="space-y-3 border-t border-(--color-border) pt-4">
           <p className="text-sm font-medium text-(--color-text-primary)">Webhook <span className="font-normal text-(--color-text-secondary)">(optional — instant updates)</span></p>
-          {tbaWebhook.secret ? (
-            <>
-              <p className="text-small text-(--color-text-secondary)">
-                In <a href="https://www.thebluealliance.com/account" target="_blank" rel="noopener noreferrer" className="text-(--color-secondary) hover:underline">myTBA → Account</a> → Webhooks,
-                add a webhook with this URL and secret, then favorite your team (with notifications on) in myTBA.
-              </p>
-              <span className="block text-xs text-(--color-text-secondary)">URL</span>
-              <Copyable value={tbaWebhook.url} />
-              <span className="block text-xs text-(--color-text-secondary)">Secret</span>
-              <Copyable value={tbaWebhook.secret} />
-              {tbaWebhook.verificationCode
-                ? <><span className="block text-xs text-(--color-text-secondary)">Verification code from TBA — paste it back into myTBA to finish</span><Copyable value={tbaWebhook.verificationCode} /></>
-                : <p className="text-small text-(--color-text-secondary)">After you add it, TBA sends a verification code — refresh this page to see it here.</p>}
-              <div className="flex flex-wrap gap-2 pt-1">
-                <Button type="button" size="sm" variant="outline" disabled={pending}
-                  onClick={() => confirm("Make a new secret? The webhook in myTBA stops working until you update it.") && run(newTbaWebhookSecretAction, "New secret made")}>
-                  New secret
-                </Button>
-                <Button type="button" size="sm" variant="ghost" disabled={pending}
-                  onClick={() => confirm("Stop accepting TBA webhook messages?") && run(removeTbaWebhookAction, "Webhook turned off")}>
-                  Turn off
-                </Button>
+          <ol className="list-decimal space-y-3 pl-5 text-small text-(--color-text-secondary)">
+            <li>
+              In <a href="https://www.thebluealliance.com/account" target="_blank" rel="noopener noreferrer" className="text-(--color-secondary) hover:underline">myTBA → Account</a> → Webhooks, add a webhook with this URL:
+              <div className="mt-1.5"><Copyable value={tbaWebhook.url} /></div>
+            </li>
+            <li>
+              TBA sends a verification code to it. It shows here — refresh this page after adding the webhook — and you enter it back in myTBA.
+              <div className="mt-1.5">
+                {tbaWebhook.verificationCode
+                  ? <Copyable value={tbaWebhook.verificationCode} />
+                  : <span className="italic">No code yet.</span>}
               </div>
-            </>
-          ) : (
-            <Button type="button" size="sm" variant="outline" isLoading={pending} onClick={() => run(newTbaWebhookSecretAction, "Webhook ready")}>
-              Set up a TBA webhook
-            </Button>
-          )}
+            </li>
+            <li>
+              Copy the <b>secret</b> myTBA shows for the webhook and paste it below — TBA signs every update with it.
+            </li>
+            <li>In myTBA, favorite your team with notifications on, so its updates are sent.</li>
+          </ol>
+          <KeyInput label="Webhook secret (from myTBA)" saved={tbaSecret} value={values.tbaSecret} onChange={set("tbaSecret")}
+            onClear={() => clear("tbaSecret", "TBA webhook secret")}
+            placeholder="Paste the secret myTBA made for this webhook"
+            help={tbaSecret ? "Saved — updates from TBA are accepted." : "Until it's saved, only the verification code is accepted."} />
         </div>
       </section>
 
@@ -146,7 +139,7 @@ export function FrcSettingsForm({ sharedTbaKey, tbaKey, nexusKey, nexusToken, tb
 
       <div className="flex gap-2">
         <Button type="button" disabled={!dirty} isLoading={pending}
-          onClick={() => run(() => saveFrcKeysAction({ tbaKey: values.tba, nexusKey: values.nexus, nexusToken: values.nexusToken }), "Saved")}>
+          onClick={() => run(() => saveFrcKeysAction({ tbaKey: values.tba, tbaSecret: values.tbaSecret, nexusKey: values.nexus, nexusToken: values.nexusToken }), "Saved")}>
           Save keys
         </Button>
       </div>

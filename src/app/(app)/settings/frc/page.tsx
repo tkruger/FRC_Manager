@@ -41,11 +41,8 @@ export default async function FrcSettingsPage() {
         tbaKey={hint(s.tbaKeyEnc)}
         nexusKey={hint(s.nexusKeyEnc)}
         nexusToken={hint(s.nexusWebhookTokenEnc)}
-        tbaWebhook={{
-          url: `${base}/api/webhooks/tba/${s.hookId}`,
-          secret: s.tbaWebhookSecretEnc ? open(s.tbaWebhookSecretEnc) : null,
-          verificationCode: s.tbaVerificationCode,
-        }}
+        tbaSecret={hint(s.tbaWebhookSecretEnc)}
+        tbaWebhook={{ url: `${base}/api/webhooks/tba/${s.hookId}`, verificationCode: s.tbaVerificationCode }}
         nexusWebhookUrl={`${base}/api/webhooks/nexus/${s.hookId}`}
         lastWebhookAt={s.lastWebhookAt?.toISOString() ?? null}
       />
