@@ -370,28 +370,12 @@ export async function handleTaskUpdate(
   const emojiMap = { done: "✅", start: "🔵", block: "🔴" };
   const labelMap = { done: "marked complete", start: "started", block: "marked as blocked" };
 
-  // Milestone celebration
-  if (newStatus === "COMPLETE" && task.isMilestone && ctx.config.channelMilestones) {
-    const season2 = await prisma.season.findUnique({ where: { id: task.seasonId } });
-    const nextMilestone = await prisma.task.findFirst({
-      where: { seasonId: task.seasonId, isMilestone: true, status: { not: "COMPLETE" }, dueDate: { gte: new Date() } },
-      orderBy: { dueDate: "asc" },
-    });
+  // Milestone celebration — in the team's milestone channels (student server, and parent server if set up)
+  if (newStatus === "COMPLETE" && task.isMilestone) {
     const user = await prisma.user.findUnique({ where: { id: ctx.link!.userId }, select: { name: true } });
-
-    const celebEmbed: DiscordEmbed = {
-      title: "🏆 MILESTONE REACHED",
-      description: [
-        `✅ **${task.name}**`,
-        `Completed by: **${user?.name}**`,
-        nextMilestone ? `\n🏁 Next milestone: **${nextMilestone.name}** (${differenceInCalendarDays(nextMilestone.dueDate!, new Date())} days)` : "",
-      ].join("\n"),
-      color: COLORS.success,
-    };
-
-    import("@/lib/discord").then(({ sendChannelMessage }) =>
-      sendChannelMessage(ctx.config.channelMilestones!, null, [celebEmbed]).catch(() => {})
-    );
+    import("@/lib/discord-notify").then(({ notifyMilestoneComplete }) =>
+      notifyMilestoneComplete(ctx.teamId, task.name, user?.name ?? "Someone", task.seasonId)
+    ).catch(() => {});
   }
 
   return reply(`${emojiMap[subcommand]} **${task.name}** ${labelMap[subcommand]}${reason ? ` — *${reason}*` : ""}.`);

@@ -31,15 +31,17 @@ export default async function InvitesPage() {
       take:    10,
       select:  { id: true, email: true, acceptedAt: true },
     }),
-    prisma.discordConfig.findFirst({ where: { teamId, active: true }, select: { guildId: true, channelGeneral: true } }),
+    prisma.discordConfig.findMany({ where: { teamId, active: true }, orderBy: { audience: "asc" }, select: { guildId: true, channelGeneral: true, audience: true } }),
   ]);
 
-  // The server's text channels, by name (falls back to typing an ID if the bot can't list them)
-  let channels: { id: string; name: string }[] = [];
-  if (discord) {
+  // Each server's text channels, by name (falls back to typing an ID if the bot can't list them).
+  // A parent join link usually goes in the parent server.
+  const channels: { id: string; name: string; server: string }[] = [];
+  for (const d of discord) {
     try {
-      const all = await discordRequest(`/guilds/${discord.guildId}/channels`) as { id: string; name: string; type: number; position: number }[];
-      channels = all.filter((c) => c.type === 0 || c.type === 5).sort((a, b) => a.position - b.position).map((c) => ({ id: c.id, name: c.name }));
+      const all = await discordRequest(`/guilds/${d.guildId}/channels`) as { id: string; name: string; type: number; position: number }[];
+      const server = d.audience === "PARENT" ? "Parent server" : "Student server";
+      channels.push(...all.filter((c) => c.type === 0 || c.type === 5).sort((a, b) => a.position - b.position).map((c) => ({ id: c.id, name: c.name, server })));
     } catch { /* bot can't list channels — the picker takes an ID instead */ }
   }
 
@@ -59,7 +61,7 @@ export default async function InvitesPage() {
 
       <EmailInvites emailReady={emailConfigured()} days={EMAIL_INVITE_DAYS} roles={roleOptions} />
 
-      <DiscordInvite roles={roleOptions} connected={!!discord} channels={channels} defaultChannel={discord?.channelGeneral ?? channels[0]?.id ?? ""} days={LINK_INVITE_DAYS} />
+      <DiscordInvite roles={roleOptions} connected={discord.length > 0} channels={channels} defaultChannel={discord[0]?.channelGeneral ?? channels[0]?.id ?? ""} days={LINK_INVITE_DAYS} />
 
       <InviteList
         invites={open.map((i) => ({

@@ -1,11 +1,16 @@
 // Sends Discord channel notifications triggered by platform events.
 // All sends are best-effort (errors are swallowed) so they never block app actions.
+//
+// A team can have two servers: the students' (every build notification) and the parents'
+// (milestones, and meetings that need adult volunteers).
 
 import { prisma } from "@/lib/prisma";
 import { sendChannelMessage, sendDM, embed, COLORS, type DiscordEmbed } from "@/lib/discord";
+import { appUrl } from "@/lib/app-url";
+import type { DiscordAudience } from "@/generated/prisma";
 
-async function getConfig(teamId: string) {
-  return prisma.discordConfig.findFirst({ where: { teamId, active: true } });
+async function getConfig(teamId: string, audience: DiscordAudience = "STUDENT") {
+  return prisma.discordConfig.findFirst({ where: { teamId, audience, active: true } });
 }
 
 async function getDiscordId(userId: string): Promise<string | null> {
@@ -95,16 +100,17 @@ export async function notifyTaskAssigned(teamId: string, assigneeId: string, tas
 
 export async function notifyMilestoneComplete(teamId: string, milestoneName: string, completedByName: string, seasonId: string) {
   try {
-    const config = await getConfig(teamId);
-    const channelId = config?.channelMilestones ?? config?.channelTasks;
-    if (!channelId) return;
+    const [students, parents] = await Promise.all([getConfig(teamId), getConfig(teamId, "PARENT")]);
+    // Both servers celebrate (the parents' only if it has a milestones channel)
+    const channels = [students?.channelMilestones ?? students?.channelTasks, parents?.channelMilestones].filter(Boolean) as string[];
+    if (!channels.length) return;
 
     const nextMilestone = await prisma.task.findFirst({
       where: { seasonId, isMilestone: true, status: { not: "COMPLETE" } },
       orderBy: { dueDate: "asc" },
     });
 
-    await sendChannelMessage(channelId, null, [
+    const message = [
       embed({
         title: "🏆 MILESTONE REACHED",
         description: [
@@ -114,8 +120,29 @@ export async function notifyMilestoneComplete(teamId: string, milestoneName: str
         ].join("\n"),
         color: COLORS.success,
       }),
-    ]);
+    ];
+    await Promise.allSettled(channels.map((id) => sendChannelMessage(id, null, message)));
   } catch { /* best-effort */ }
+}
+
+// ── Volunteers (parent server) ───────────────────────────────────────────────
+
+/** Meetings that need adult volunteers, posted in the parent server's Volunteers channel. Returns whether it posted. */
+export async function notifyVolunteersNeeded(teamId: string, title: string, lines: string[]): Promise<boolean> {
+  try {
+    const config = await getConfig(teamId, "PARENT");
+    if (!config?.channelVolunteers) return false;
+    await sendChannelMessage(config.channelVolunteers, null, [
+      embed({
+        title,
+        description: `${lines.join("\n")}\n\n**[Sign up in FRC Manager](${appUrl()}/volunteers)** — cleared adults only.`,
+        color: COLORS.warning,
+      }),
+    ]);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // ── Safety ────────────────────────────────────────────────────────────────

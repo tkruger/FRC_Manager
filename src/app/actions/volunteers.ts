@@ -12,6 +12,7 @@ import { issueMessage } from "@/lib/validation";
 import { notifyUsers } from "@/lib/notify/deliver";
 import { calendarDayKey, FALLBACK_TIMEZONE, isValidTimezone, localParts } from "@/lib/notify/time";
 import { canCoordinate, coverage, DEFAULT_MIN_ADULTS, isCleared, shiftWhen } from "@/lib/volunteers";
+import { notifyVolunteersNeeded } from "@/lib/discord-notify";
 
 type Result = { success: true } | { success: false; error: string };
 
@@ -76,6 +77,10 @@ async function warnIfShort(meetingId: string, teamId: string, who: string, verb:
     body: `${info.what}: ${c.confirmed} of ${info.minAdults} adults confirmed${c.pending ? `, ${c.pending} waiting for a reply` : ""}.`,
     url: link(meetingId), tag: `coverage-${meetingId}`,
   }).catch((e) => console.error("[volunteers] coverage notice", e));
+  await notifyVolunteersNeeded(teamId, "🙋 A meeting needs adult volunteers", [
+    `**${info.meeting.title || "Team meeting"}** — ${shiftWhen(info.meeting)}`,
+    `${c.confirmed} of ${info.minAdults} adults confirmed${c.pending ? `, ${c.pending} asked` : ""}.`,
+  ]);
 }
 
 // ── Clearance (Head Mentors) ────────────────────────────────────────────────

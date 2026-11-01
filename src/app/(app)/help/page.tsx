@@ -349,7 +349,7 @@ export default function HelpPage() {
         <H3>Team email</H3>
         <p>
           Emails come from FRC Manager unless a Head Mentor connects the team&apos;s own email account in <b>Settings → Team email</b>
-          (Gmail, Outlook, Yahoo, iCloud, Zoho or any mail server). Then notifications, invites and welcome emails come from the
+          (Gmail, Outlook, Yahoo, iCloud, Zoho or any mail server) — Integration admins can too. Then notifications, invites and welcome emails come from the
           team&apos;s address. Gmail, Yahoo and iCloud need an <b>app password</b> (not the normal one). Account emails — confirming an
           address, resetting a password — always come from FRC Manager, and if the team&apos;s server fails, FRC Manager sends the
           message instead and the problem shows on the Team email page.
@@ -377,6 +377,7 @@ export default function HelpPage() {
             ["Team Leadership", "Approve members and assign roles (except Head Mentor), invite people, manage meetings, Discord and the team time zone; act as captains on orders (Buyer page, item statuses); view the purchase workflow."],
             ["Mentor", "The same as Team Member — add other roles for more."],
             ["Parent", "View-only: see tasks, tools, inventory, the calendar and safety (not orders or robots), help pack for competitions and scan tools into locations. Once cleared, sign up to volunteer at meetings."],
+            ["Integration admin", "Connect the student and parent Discord servers, and send the team's emails from its own account (Settings → Discord and Settings → Team email)."],
             ["Volunteer coordinator", "Make sure every meeting has enough adults: ask volunteers to cover meetings, set shift instructions and adults per meeting; hears about meetings that are short."],
             ["Head Mentor", "Everything: seasons, robots, applying templates, editing the purchase workflow, acting on any purchase step, and clearing adults to volunteer. Only Head Mentors can grant or remove the Head Mentor role."],
           ]}
@@ -387,7 +388,7 @@ export default function HelpPage() {
 
       <Section id="discord" title="Discord">
         <ul className="list">
-          <li>Team Leadership connects the team&apos;s Discord server in <b>Settings → Discord</b>.</li>
+          <li>Team Leadership or an <b>Integration admin</b> connects the team&apos;s Discord servers in <b>Settings → Discord</b>: the <b>student server</b> gets the build notifications (orders, tasks, safety, inventory); an optional <b>parent server</b> gets milestone celebrations and, in its Volunteers channel, a morning list of meetings that still need adults (and a heads-up when a volunteer drops out). Invite the same bot to both.</li>
           <li>You can sign in and sign up with <b>Continue with Discord</b> (or Google). If that account's email matches your FRC Manager account, it signs you into that account. Discord sign-in also connects you for the bot — no <code>/link</code> needed.</li>
           <li>Run <code>/link</code> in Discord to connect your account, then use commands such as <code>/tasks mine</code>, <code>/task done</code>, <code>/milestone next</code>, <code>/tool checkout</code>, <code>/stock check</code> and <code>/order request</code>. <code>/help</code> lists them all.</li>
           <li>Orders follow the same workflow and permissions in Discord as in the app.</li>

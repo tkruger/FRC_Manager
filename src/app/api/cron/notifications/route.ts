@@ -6,6 +6,7 @@ import { pruneAuthTokens } from "@/lib/security/auth-tokens";
 import { syncAllActiveSeasons } from "@/lib/season-active";
 import { prisma } from "@/lib/prisma";
 import { pruneChangeLog } from "@/lib/audit/changes";
+import { postVolunteerDigests } from "@/lib/notify/discord-volunteers";
 
 // Hourly reminder job. Called by Vercel Cron or the GitHub Actions schedule with
 // `Authorization: Bearer $CRON_SECRET`. Safe to call more often — reminders are deduplicated.
@@ -23,8 +24,10 @@ export async function GET(request: Request) {
   // The season today falls in becomes active on its own (a future season on its start date)
   const seasonsSwitched = await syncAllActiveSeasons().catch(() => 0);
   const result = await runReminders();
+  // Parent Discord servers: the morning list of meetings that need adults
+  const volunteerPosts = await postVolunteerDigests().catch((e) => { console.error("[cron] volunteer digests", e); return 0; });
   // Housekeeping: expired rate-limit counters and one-time email links, and change history over a year old
   const [rateLimitsCleared, tokensCleared] = await Promise.all([pruneRateLimits(), pruneAuthTokens()]).catch(() => [0, 0]);
   const changesCleared = await pruneChangeLog(prisma).catch(() => 0);
-  return NextResponse.json({ ...result, seasonsSwitched, rateLimitsCleared, tokensCleared, changesCleared, ms: Date.now() - started });
+  return NextResponse.json({ ...result, seasonsSwitched, rateLimitsCleared, tokensCleared, changesCleared, volunteerPosts, ms: Date.now() - started });
 }

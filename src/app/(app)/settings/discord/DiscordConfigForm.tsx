@@ -9,7 +9,7 @@ import { TimeSelect } from "@/components/ui/time-select";
 import type { DiscordConfig } from "@/generated/prisma";
 import { toast } from "@/components/ui/toast";
 
-const CHANNEL_FIELDS = [
+const STUDENT_CHANNELS = [
   { name: "channelBuildAlerts", label: "Build alerts channel ID",  hint: "#build-alerts — task overdue, critical issues, weight warnings" },
   { name: "channelOrders",      label: "Orders channel ID",        hint: "#orders — orders submitted, approved, received" },
   { name: "channelInventory",   label: "Inventory channel ID",     hint: "#inventory-alerts — items below threshold" },
@@ -19,7 +19,16 @@ const CHANNEL_FIELDS = [
   { name: "channelGeneral",     label: "General channel ID",       hint: "#general — competition approaching announcements" },
 ];
 
-export function DiscordConfigForm({ config }: { config: DiscordConfig | null }) {
+/** The parents' server gets what parents care about */
+const PARENT_CHANNELS = [
+  { name: "channelVolunteers",  label: "Volunteers channel ID",    hint: "#volunteers — each morning, meetings that still need adults; and when a volunteer drops out" },
+  { name: "channelMilestones",  label: "Milestones channel ID",    hint: "#team-news — milestone celebrations, the same as the student server" },
+  { name: "channelGeneral",     label: "General channel ID",       hint: "#general — where the Test server message goes" },
+];
+
+export function DiscordConfigForm({ config, audience = "STUDENT" }: { config: DiscordConfig | null; audience?: "STUDENT" | "PARENT" }) {
+  const parent = audience === "PARENT";
+  const CHANNEL_FIELDS = parent ? PARENT_CHANNELS : STUDENT_CHANNELS;
   const router = useRouter();
   const [state, action, pending] = useActionState(saveDiscordConfigAction, null);
   const [disconnecting, startDisconnect] = useTransition();
@@ -29,15 +38,16 @@ export function DiscordConfigForm({ config }: { config: DiscordConfig | null }) 
   }, [state, router]);
 
   function handleDisconnect() {
-    if (!confirm("Disconnect Discord? This will stop all notifications and disable all commands.")) return;
+    if (!confirm(`Disconnect the ${parent ? "parent" : "student"} server? Its notifications stop and commands there stop working.`)) return;
     startDisconnect(async () => {
-      await disconnectDiscordAction();
+      await disconnectDiscordAction(audience);
       router.refresh();
     });
   }
 
   return (
     <form action={action} className="space-y-6">
+      <input type="hidden" name="audience" value={audience} />
       {state && !state.success && (
         <div className="rounded-md bg-(--color-danger)/10 border border-(--color-danger)/20 px-4 py-3 text-sm text-(--color-danger)">
           {state.error}
@@ -73,6 +83,8 @@ export function DiscordConfigForm({ config }: { config: DiscordConfig | null }) 
         </div>
       </div>
 
+      {/* Build news is for the students' server */}
+      {!parent && (
       <div className="border-t border-(--color-border) pt-5 space-y-4">
         <p className="text-h3 text-(--color-text-primary)">Daily build summary</p>
         <label className="flex items-center gap-2 cursor-pointer">
@@ -87,6 +99,8 @@ export function DiscordConfigForm({ config }: { config: DiscordConfig | null }) 
           </div>
         </div>
       </div>
+
+      )}
 
       <div className="border-t border-(--color-border) pt-5">
         <label className="flex items-center gap-2 cursor-pointer">

@@ -120,7 +120,7 @@ export function EmailInvites({ emailReady, days, roles: roleOptions }: { emailRe
 
 /** Post a team join link to a Discord channel */
 export function DiscordInvite({ connected, channels, defaultChannel, days, roles: roleOptions }: {
-  connected: boolean; channels: { id: string; name: string }[]; defaultChannel: string; days: number; roles: RoleOption[];
+  connected: boolean; channels: { id: string; name: string; server?: string }[]; defaultChannel: string; days: number; roles: RoleOption[];
 }) {
   const router = useRouter();
   const [channel, setChannel] = useState(defaultChannel);
@@ -157,7 +157,14 @@ export function DiscordInvite({ connected, channels, defaultChannel, days, roles
       <div className="flex flex-wrap gap-2">
         {channels.length > 0 ? (
           <select className={`${inputCls} h-11 min-w-0 flex-1`} value={channel} onChange={(e) => setChannel(e.target.value)} aria-label="Channel">
-            {channels.map((c) => <option key={c.id} value={c.id}>#{c.name}</option>)}
+            {/* Grouped by server when both the student and parent servers are connected */}
+            {[...new Set(channels.map((c) => c.server ?? ""))].length > 1
+              ? [...new Set(channels.map((c) => c.server ?? ""))].map((server) => (
+                  <optgroup key={server} label={server}>
+                    {channels.filter((c) => (c.server ?? "") === server).map((c) => <option key={c.id} value={c.id}>#{c.name}</option>)}
+                  </optgroup>
+                ))
+              : channels.map((c) => <option key={c.id} value={c.id}>#{c.name}</option>)}
           </select>
         ) : (
           <input className={`${inputCls} h-11 min-w-0 flex-1`} value={channel} onChange={(e) => setChannel(e.target.value.trim())}

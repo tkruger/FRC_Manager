@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Integration admin** role: sets up the team's integrations — its Discord servers and its own email — without needing to be a Head Mentor or Team Leadership
+- **Parent Discord server**: alongside the student server (which keeps every build notification), a team can connect a parent server. It gets milestone celebrations and a Volunteers channel: a morning list of the next two weeks' meetings that still need adults, and a post when a volunteer drops out of a meeting that's now short. Slash commands work in both; Discord join links can be posted in either. Existing Discord connections become the student server
+
 - **Terms of Service** updated: no guaranteed uptime, features may change or go away, use at your own risk and discretion; how to grab the source from GitHub and host it yourself; and a request not to use it to make money. Every page now has a footer with Terms, Privacy, the source code and the version, and the guide ends with a “Terms, privacy & source” section
 - Signing up (email, Google/Discord, or from an invite) needs a tick in “I agree to the Terms of Service and Privacy Policy”; when each member agreed is recorded
 

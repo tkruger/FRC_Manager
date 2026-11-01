@@ -4,17 +4,21 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { LEADERSHIP_ROLES } from "@/lib/rbac";
+import { DISCORD_ADMIN_ROLES } from "@/lib/rbac";
+import type { DiscordAudience } from "@/generated/prisma";
 import { explainDiscordError } from "@/lib/discord";
 import { ActionError, userMessage } from "@/lib/action-error";
 
 async function requireAdmin() {
   const session = await auth();
   if (!session?.user?.teamId) throw new ActionError("Not authenticated.");
-  if (!session.user.roles.some((r) => LEADERSHIP_ROLES.includes(r as any)))
-    throw new ActionError("Only Head Mentors and Team Leadership can manage Discord settings.");
+  if (!session.user.roles.some((r) => DISCORD_ADMIN_ROLES.includes(r)))
+    throw new ActionError("Only Head Mentors, Team Leadership and Integration admins can manage Discord settings.");
   return session;
 }
+
+/** Which of the team's servers: the students' (default) or the parents' */
+const audienceOf = (v: unknown): DiscordAudience => (v === "PARENT" ? "PARENT" : "STUDENT");
 
 const ConfigSchema = z.object({
   guildId:              z.string().max(300).min(1),
@@ -25,6 +29,7 @@ const ConfigSchema = z.object({
   channelSafety:        z.string().max(300).optional(),
   channelGeneral:       z.string().max(300).optional(),
   channelMilestones:    z.string().max(300).optional(),
+  channelVolunteers:    z.string().max(300).optional(),
   dailySummaryEnabled:  z.coerce.boolean().optional(),
   dailySummaryChannel:  z.string().max(300).optional(),
   dailySummaryTime:     z.string().max(300).optional(),
@@ -47,6 +52,7 @@ export async function saveDiscordConfigAction(
     channelSafety:       formData.get("channelSafety") || undefined,
     channelGeneral:      formData.get("channelGeneral") || undefined,
     channelMilestones:   formData.get("channelMilestones") || undefined,
+    channelVolunteers:   formData.get("channelVolunteers") || undefined,
     dailySummaryEnabled: formData.get("dailySummaryEnabled") === "on",
     dailySummaryChannel: formData.get("dailySummaryChannel") || undefined,
     dailySummaryTime:    formData.get("dailySummaryTime") || undefined,
@@ -55,10 +61,16 @@ export async function saveDiscordConfigAction(
 
   if (!parsed.success) return { success: false, error: "Please fill in all required fields." };
   const d = parsed.data;
+  const audience = audienceOf(formData.get("audience"));
+  const teamId = session.user.teamId!;
+
+  // One server can't be both the students' and the parents'
+  const other = await prisma.discordConfig.findFirst({ where: { teamId, guildId: d.guildId, active: true, audience: { not: audience } } });
+  if (other) return { success: false, error: `That server is already connected as the ${other.audience === "PARENT" ? "parent" : "student"} server. Use a different server for each.` };
 
   await prisma.discordConfig.upsert({
-    where:  { teamId: session.user.teamId! },
-    create: { teamId: session.user.teamId!, ...d, active: true },
+    where:  { teamId_audience: { teamId, audience } },
+    create: { teamId, audience, ...d, active: true },
     update: { ...d, active: true },
   });
 
@@ -66,12 +78,12 @@ export async function saveDiscordConfigAction(
   return { success: true };
 }
 
-export async function disconnectDiscordAction(): Promise<{ success: boolean }> {
+export async function disconnectDiscordAction(audienceIn: string = "STUDENT"): Promise<{ success: boolean }> {
   let session;
   try { session = await requireAdmin(); } catch { return { success: false }; }
 
   await prisma.discordConfig.updateMany({
-    where: { teamId: session.user.teamId! },
+    where: { teamId: session.user.teamId!, audience: audienceOf(audienceIn) },
     data:  { active: false },
   });
 
@@ -100,17 +112,17 @@ const TEST_MESSAGE = "Thank you for installing the FRC Manager, this message mea
  * Post a test message to the team's server: the General channel, else the first
  * configured channel, else the server's system channel.
  */
-export async function sendDiscordTestAction(): Promise<{ success: true; channel: string } | { success: false; error: string }> {
+export async function sendDiscordTestAction(audienceIn: string = "STUDENT"): Promise<{ success: true; channel: string } | { success: false; error: string }> {
   let session;
   try { session = await requireAdmin(); } catch (e) { return { success: false, error: userMessage(e) }; }
 
-  const config = await prisma.discordConfig.findUnique({ where: { teamId: session.user.teamId! } });
+  const config = await prisma.discordConfig.findUnique({ where: { teamId_audience: { teamId: session.user.teamId!, audience: audienceOf(audienceIn) } } });
   if (!config) return { success: false, error: "Connect a Discord server first." };
 
   const { discordRequest, sendChannelMessage } = await import("@/lib/discord");
   try {
     let channelId =
-      config.channelGeneral || config.channelBuildAlerts || config.channelOrders || config.channelTasks ||
+      config.channelGeneral || config.channelVolunteers || config.channelBuildAlerts || config.channelOrders || config.channelTasks ||
       config.channelInventory || config.channelSafety || config.channelMilestones || config.dailySummaryChannel || null;
     if (!channelId) {
       const guild = await discordRequest(`/guilds/${config.guildId}`);

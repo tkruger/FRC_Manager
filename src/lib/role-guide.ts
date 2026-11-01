@@ -19,6 +19,7 @@ export const ROLE_SUMMARY: Record<Role, { who: string; summary: string }> = {
   MENTOR:          { who: "Mentors",                        summary: "Marks someone as a mentor. Same access as Team Member — add Team Leadership or other roles for more." },
   HEAD_MENTOR:     { who: "The lead mentor (one or more)",  summary: "Everything, including seasons, robots, the purchase workflow, granting the Head Mentor role and clearing adults to volunteer." },
   PARENT:          { who: "Students' parents",              summary: "Sees what a Team Member sees (apart from orders and robots), but view-only — except helping pack for competitions and scanning tools into locations. Once a Head Mentor clears them, they can sign up to volunteer at meetings." },
+  INTEGRATION_ADMIN: { who: "Whoever looks after the team's tech", summary: "Sets up the team's integrations: the student and parent Discord servers and the team's own email account." },
   VOLUNTEER_COORDINATOR: { who: "Whoever organizes adult volunteers", summary: "Makes sure every meeting has enough cleared adults: assigns volunteers, sets the shift instructions and hears about meetings that are short. View-only elsewhere unless they have other roles." },
 };
 
@@ -81,7 +82,9 @@ export const CAPABILITIES: { area: string; items: { action: string; who: Who }[]
       { action: "Invite people by email or Discord",                     who: ["TEAM_LEADERSHIP"] },
       { action: "Approve new members and assign roles",                  who: ["TEAM_LEADERSHIP"] },
       { action: "Edit robots",                                           who: ["BUILD_LEAD", "TEAM_LEADERSHIP"] },
-      { action: "Connect Discord, set the team time zone",               who: ["TEAM_LEADERSHIP"] },
+      { action: "Set the team time zone",                                 who: ["TEAM_LEADERSHIP"] },
+      { action: "Connect the student and parent Discord servers",         who: ["TEAM_LEADERSHIP", "INTEGRATION_ADMIN"] },
+      { action: "Send the team's emails from its own account",            who: ["INTEGRATION_ADMIN"] },
       { action: "See the purchase workflow",                             who: ["TEAM_LEADERSHIP"] },
       { action: "Seasons, competitions, adding robots, editing the purchase workflow, granting Head Mentor", who: [] },
     ],

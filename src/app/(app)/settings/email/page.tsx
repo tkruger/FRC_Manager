@@ -3,13 +3,14 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { PageTitle } from "@/components/PageHeader";
 import { EmailServerForm } from "./EmailServerForm";
+import { EMAIL_ADMIN_ROLES } from "@/lib/rbac";
 
-// Settings → Email (Head Mentors): send the team's emails from its own mail account.
+// Settings → Email (Head Mentors, Integration admins): send the team's emails from its own mail account.
 
 export default async function EmailSettingsPage() {
   const session = await auth();
   if (!session?.user?.teamId) redirect("/dashboard");
-  if (!session.user.roles.includes("HEAD_MENTOR")) redirect("/dashboard");
+  if (!session.user.roles.some((r) => EMAIL_ADMIN_ROLES.includes(r))) redirect("/dashboard");
 
   const [server, team] = await Promise.all([
     prisma.teamEmailServer.findUnique({ where: { teamId: session.user.teamId } }),

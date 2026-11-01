@@ -12,12 +12,13 @@ const ROLE_RANK: Record<Role, number> = {
   HEAD_MENTOR:    10,
   PARENT:         0, // view-only
   VOLUNTEER_COORDINATOR: 3,
+  INTEGRATION_ADMIN: 3,
 };
 
 /** Every role, in the order they're listed (role pickers, the role guide) */
 export const ALL_ROLES: Role[] = [
   "TEAM_MEMBER", "BUILD_LEAD", "INVENTORY_ADMIN", "ORDER_APPROVER", "SAFETY_CAPTAIN",
-  "BUYER", "TEAM_LEADERSHIP", "MENTOR", "PARENT", "VOLUNTEER_COORDINATOR", "HEAD_MENTOR",
+  "BUYER", "TEAM_LEADERSHIP", "MENTOR", "PARENT", "VOLUNTEER_COORDINATOR", "INTEGRATION_ADMIN", "HEAD_MENTOR",
 ];
 
 export function hasRole(userRoles: Role[], required: Role): boolean {
@@ -47,7 +48,13 @@ export const ROLE_LABELS: Record<Role, string> = {
   HEAD_MENTOR:    "Head Mentor",
   PARENT:         "Parent",
   VOLUNTEER_COORDINATOR: "Volunteer coordinator",
+  INTEGRATION_ADMIN: "Integration admin",
 };
+
+/** Who connects the team's Discord servers (student and parent) */
+export const DISCORD_ADMIN_ROLES: Role[] = ["HEAD_MENTOR", "TEAM_LEADERSHIP", "INTEGRATION_ADMIN"];
+/** Who sets up the team's own email (Settings → Team email) */
+export const EMAIL_ADMIN_ROLES: Role[] = ["HEAD_MENTOR", "INTEGRATION_ADMIN"];
 
 // Roles that can manage team members and Discord
 export const LEADERSHIP_ROLES: Role[] = ["HEAD_MENTOR", "TEAM_LEADERSHIP"];

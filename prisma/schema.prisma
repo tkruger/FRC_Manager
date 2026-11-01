@@ -141,6 +141,8 @@ enum Role {
   /// Makes sure every meeting has enough cleared adults: assigns volunteers, sets the shift
   /// instructions and hears about meetings that are short
   VOLUNTEER_COORDINATOR
+  /// Sets up the team's integrations: its Discord servers and its own email
+  INTEGRATION_ADMIN
 }
 
 model Account {
@@ -238,7 +240,8 @@ model Team {
   changeLogs    ChangeLog[]
   volunteerSettings VolunteerSettings?
   emailServer   TeamEmailServer?
-  discordConfig DiscordConfig?
+  /// The team's Discord servers (a student one and a parent one)
+  discordConfigs DiscordConfig[]
   timezone      String?   // IANA zone used for meeting times and daily reminders
   /// Next number for auto-assigned tool asset tags (TOOL-0001, …)
   nextToolNumber Int      @default(1)
@@ -1443,8 +1446,10 @@ model ActivityLog {
 
 model DiscordConfig {
   id            String  @id @default(cuid())
-  teamId        String  @unique
+  teamId        String
   team          Team    @relation(fields: [teamId], references: [id])
+  /// Which of the team's servers: the students' (all the build notifications) or the parents'
+  audience      DiscordAudience @default(STUDENT)
 
   guildId       String  // Discord server ID
   guildName     String?
@@ -1458,6 +1463,8 @@ model DiscordConfig {
   channelSafety       String?
   channelGeneral      String?
   channelMilestones   String?
+  /// Parent server: meetings that need adult volunteers
+  channelVolunteers   String?
 
   // Daily build summary
   dailySummaryEnabled Boolean @default(false)
@@ -1471,6 +1478,13 @@ model DiscordConfig {
   updatedAt DateTime @updatedAt
 
   interactionLogs DiscordInteractionLog[]
+
+  @@unique([teamId, audience])
+}
+
+enum DiscordAudience {
+  STUDENT
+  PARENT
 }
 
 model DiscordLink {

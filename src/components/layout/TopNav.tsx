@@ -59,7 +59,8 @@ export function TopNav({ session, pendingMemberCount = 0, unreadNotificationCoun
   const roles             = session?.user?.roles ?? [];
   const canManageTeam     = roles.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP"].includes(r));
   const canManageSeason   = roles.includes("HEAD_MENTOR" as any);
-  const canManageDiscord  = roles.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP"].includes(r));
+  const canManageDiscord  = roles.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP", "INTEGRATION_ADMIN"].includes(r)); // DISCORD_ADMIN_ROLES
+  const canManageEmail    = roles.some((r) => ["HEAD_MENTOR", "INTEGRATION_ADMIN"].includes(r)); // EMAIL_ADMIN_ROLES
   const isSuperAdmin      = session?.user?.isSuperAdmin === true;
   // Volunteers: for adults and volunteer coordinators
   const showVolunteers    = isAdult(roles) || canCoordinate(roles);
@@ -156,7 +157,7 @@ export function TopNav({ session, pendingMemberCount = 0, unreadNotificationCoun
           {/* Notifications dropdown */}
           <NotificationsDropdown unreadCount={unreadNotificationCount} />
 
-          {session?.user && <UserMenu user={session.user} canManageTeam={canManageTeam} canManageSeason={canManageSeason} canManageDiscord={canManageDiscord} canManageTemplates={canManageTemplates} isSuperAdmin={isSuperAdmin} canInvite={canInvite} canSeeAudit={canSeeAudit} pendingMemberCount={pendingMemberCount} />}
+          {session?.user && <UserMenu user={session.user} canManageTeam={canManageTeam} canManageSeason={canManageSeason} canManageDiscord={canManageDiscord} canManageEmail={canManageEmail} canManageTemplates={canManageTemplates} isSuperAdmin={isSuperAdmin} canInvite={canInvite} canSeeAudit={canSeeAudit} pendingMemberCount={pendingMemberCount} />}
         </div>
         </div>
 
@@ -188,7 +189,7 @@ export function TopNav({ session, pendingMemberCount = 0, unreadNotificationCoun
               <CalendarIcon className="w-4 h-4" />
             </Link>
             <NotificationsDropdown unreadCount={unreadNotificationCount} />
-            {session?.user && <UserMenu user={session.user} canManageTeam={canManageTeam} canManageSeason={canManageSeason} canManageDiscord={canManageDiscord} canManageTemplates={canManageTemplates} isSuperAdmin={isSuperAdmin} canInvite={canInvite} canSeeAudit={canSeeAudit} />}
+            {session?.user && <UserMenu user={session.user} canManageTeam={canManageTeam} canManageSeason={canManageSeason} canManageDiscord={canManageDiscord} canManageEmail={canManageEmail} canManageTemplates={canManageTemplates} isSuperAdmin={isSuperAdmin} canInvite={canInvite} canSeeAudit={canSeeAudit} />}
           </div>
         </div>
       </header>
@@ -298,7 +299,8 @@ export function TopNav({ session, pendingMemberCount = 0, unreadNotificationCoun
   );
 }
 
-function UserMenu({ user, canManageTeam, canManageSeason, canManageDiscord, canManageTemplates, isSuperAdmin = false, canInvite = false, canSeeAudit = false, pendingMemberCount = 0 }: {
+function UserMenu({ user, canManageTeam, canManageSeason, canManageDiscord, canManageEmail = false, canManageTemplates, isSuperAdmin = false, canInvite = false, canSeeAudit = false, pendingMemberCount = 0 }: {
+  canManageEmail?:    boolean;
   canSeeAudit?:       boolean;
   user: { name?: string | null; email?: string | null };
   canManageTeam:      boolean;
@@ -423,7 +425,7 @@ function UserMenu({ user, canManageTeam, canManageSeason, canManageDiscord, canM
               Season settings
             </Link>
           )}
-          {canManageSeason && (
+          {canManageEmail && (
             <Link href="/settings/email" role="menuitem" onClick={() => setOpen(false)}
               className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-(--color-text-primary) hover:bg-(--color-surface-overlay) transition-colors">
               <svg className="w-4 h-4 text-(--color-text-secondary)" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
@@ -432,8 +434,8 @@ function UserMenu({ user, canManageTeam, canManageSeason, canManageDiscord, canM
               Team email
             </Link>
           )}
-          {/* Same audience as Discord: Head Mentor + Team Leadership (view); editing is Head Mentor only */}
-          {canManageDiscord && (
+          {/* Head Mentor + Team Leadership (view); editing is Head Mentor only */}
+          {canManageTeam && (
             <Link href="/settings/workflows" role="menuitem" onClick={() => setOpen(false)}
               className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-(--color-text-primary) hover:bg-(--color-surface-overlay) transition-colors">
               <svg className="w-4 h-4 text-(--color-text-secondary)" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>

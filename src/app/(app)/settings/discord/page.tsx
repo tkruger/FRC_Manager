@@ -11,16 +11,17 @@ import { RegisterCommandsButton } from "./RegisterCommandsButton";
 import { TestServerButton } from "./TestServerButton";
 import { PageTitle } from "@/components/PageHeader";
 import { appUrl } from "@/lib/app-url";
+import { DISCORD_ADMIN_ROLES } from "@/lib/rbac";
 
 export default async function DiscordSettingsPage() {
   const session = await auth();
   if (!session?.user?.teamId) redirect("/dashboard");
 
-  const isAdmin = session.user.roles.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP"].includes(r));
+  const isAdmin = session.user.roles.some((r) => DISCORD_ADMIN_ROLES.includes(r));
   if (!isAdmin) redirect("/dashboard");
 
-  const [config, members, recentLogs] = await Promise.all([
-    prisma.discordConfig.findUnique({ where: { teamId: session.user.teamId } }),
+  const [configs, members, recentLogs] = await Promise.all([
+    prisma.discordConfig.findMany({ where: { teamId: session.user.teamId } }),
     prisma.user.findMany({
       where: { teamId: session.user.teamId, status: "ACTIVE" },
       include: { discordLink: true },
@@ -44,35 +45,17 @@ export default async function DiscordSettingsPage() {
         </nav>
         <PageTitle help="discord">Discord Integration</PageTitle>
         <p className="text-body text-(--color-text-secondary) mt-1">
-          Connect your team's Discord server to enable slash commands and proactive notifications.
+          Connect your team&apos;s Discord servers for slash commands and notifications. The <b>student server</b> gets the
+          build notifications (orders, tasks, safety, inventory). An optional <b>parent server</b> gets what parents care
+          about: meetings that need adult volunteers, and milestone celebrations. The same bot serves both, and members
+          run <code>/link</code> once, in either server.
         </p>
       </div>
 
-      {/* Connection status */}
-      <div className="card space-y-4">
-        <div>
-          <h2 className="text-h3 text-(--color-text-primary) mb-2">Connection status</h2>
-          {config?.active ? (
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <Badge variant="success">Connected</Badge>
-              <span className="text-small text-(--color-text-secondary) break-all">Guild ID: <code>{config.guildId}</code></span>
-            </div>
-          ) : (
-            <Badge variant="neutral">Not connected</Badge>
-          )}
-        </div>
-        {/* Actions sit under the status (they used to squeeze in beside it and run off phones) */}
-        {config?.active && (
-          <div className="flex flex-wrap items-center gap-2">
-            <TestServerButton />
-            {/* Slash commands belong to the shared bot, so only platform admins re-register them */}
-            {session.user.isSuperAdmin && <RegisterCommandsButton />}
-          </div>
-        )}
-
-        {/* Setup instructions */}
-        {!config?.active && (
-          <div className="mt-4 rounded-md bg-(--color-info)/10 border border-(--color-info)/20 px-4 py-3 space-y-2">
+      {/* Setup instructions (until any server is connected) */}
+      {!configs.some((c) => c.active) && (
+        <div className="card">
+          <div className="rounded-md bg-(--color-info)/10 border border-(--color-info)/20 px-4 py-3 space-y-2">
             <p className="text-sm font-medium text-(--color-text-primary)">Setup instructions</p>
             <ol className="text-small text-(--color-text-secondary) space-y-1 list-decimal list-inside">
               <li>Create a Discord bot at <a href="https://discord.com/developers/applications" target="_blank" rel="noopener noreferrer" className="text-(--color-secondary) hover:underline">discord.com/developers/applications</a></li>
@@ -80,18 +63,47 @@ export default async function DiscordSettingsPage() {
               <li>Set the Interactions Endpoint URL in your Discord app to: <code className="text-[10px]">{interactionsEndpoint}</code></li>
               <li>Invite the bot to your server, then enter the Guild ID below and save</li>
               <li>Click "Register Commands" to activate all slash commands</li>
+              <li>For a parent server too: invite the same bot to it and connect it under Parent server</li>
             </ol>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Config form */}
-      <div className="card">
-        <h2 className="text-h3 text-(--color-text-primary) mb-4">
-          {config?.active ? "Server configuration" : "Connect a Discord server"}
-        </h2>
-        <DiscordConfigForm config={config} />
-      </div>
+      {/* One card per server */}
+      {(["STUDENT", "PARENT"] as const).map((audience) => {
+        const config = configs.find((c) => c.audience === audience) ?? null;
+        const parent = audience === "PARENT";
+        return (
+          <section key={audience} className="card space-y-5">
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <h2 className="text-h2 text-(--color-text-primary)">{parent ? "Parent server" : "Student server"}</h2>
+                {config?.active
+                  ? <Badge variant="success">Connected</Badge>
+                  : <Badge variant="neutral">{parent ? "Optional — not connected" : "Not connected"}</Badge>}
+              </div>
+              {config?.active && <p className="text-small text-(--color-text-secondary) break-all">Server ID: <code>{config.guildId}</code></p>}
+              {/* Actions sit under the status (they used to squeeze in beside it and run off phones) */}
+              {config?.active && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <TestServerButton audience={audience} />
+                  {/* Slash commands belong to the shared bot, so only platform admins re-register them */}
+                  {!parent && session.user.isSuperAdmin && <RegisterCommandsButton />}
+                </div>
+              )}
+              {parent && !config?.active && (
+                <p className="text-small text-(--color-text-secondary)">
+                  If parents have their own Discord server, connect it here: invite the same bot to it, then enter its server ID.
+                </p>
+              )}
+            </div>
+            <div className="border-t border-(--color-border) pt-5">
+              <h3 className="text-h3 text-(--color-text-primary) mb-4">{config?.active ? "Server configuration" : "Connect the server"}</h3>
+              <DiscordConfigForm config={config} audience={audience} />
+            </div>
+          </section>
+        );
+      })}
 
       {/* Account links */}
       <div>
