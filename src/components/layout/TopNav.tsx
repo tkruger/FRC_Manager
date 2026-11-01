@@ -63,7 +63,6 @@ export function TopNav({ session, pendingMemberCount = 0, unreadNotificationCoun
 
   const roles             = session?.user?.roles ?? [];
   const canManageTeam     = roles.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP"].includes(r));
-  const canManageSeason   = roles.includes("HEAD_MENTOR" as any);
   const canManageDiscord  = roles.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP", "INTEGRATION_ADMIN"].includes(r)); // DISCORD_ADMIN_ROLES
   const canManageEmail    = roles.some((r) => ["HEAD_MENTOR", "INTEGRATION_ADMIN"].includes(r)); // EMAIL_ADMIN_ROLES
   const isSuperAdmin      = session?.user?.isSuperAdmin === true;
@@ -162,7 +161,7 @@ export function TopNav({ session, pendingMemberCount = 0, unreadNotificationCoun
           {/* Notifications dropdown */}
           <NotificationsDropdown unreadCount={unreadNotificationCount} />
 
-          {session?.user && <UserMenu user={session.user} canManageTeam={canManageTeam} canManageSeason={canManageSeason} canManageDiscord={canManageDiscord} canManageEmail={canManageEmail} canManageTemplates={canManageTemplates} isSuperAdmin={isSuperAdmin} canInvite={canInvite} canSeeAudit={canSeeAudit} pendingMemberCount={pendingMemberCount} />}
+          {session?.user && <UserMenu user={session.user} canManageTeam={canManageTeam} canManageDiscord={canManageDiscord} canManageEmail={canManageEmail} canManageTemplates={canManageTemplates} isSuperAdmin={isSuperAdmin} canInvite={canInvite} canSeeAudit={canSeeAudit} pendingMemberCount={pendingMemberCount} />}
         </div>
         </div>
 
@@ -194,7 +193,7 @@ export function TopNav({ session, pendingMemberCount = 0, unreadNotificationCoun
               <CalendarIcon className="w-4 h-4" />
             </Link>
             <NotificationsDropdown unreadCount={unreadNotificationCount} />
-            {session?.user && <UserMenu user={session.user} canManageTeam={canManageTeam} canManageSeason={canManageSeason} canManageDiscord={canManageDiscord} canManageEmail={canManageEmail} canManageTemplates={canManageTemplates} isSuperAdmin={isSuperAdmin} canInvite={canInvite} canSeeAudit={canSeeAudit} />}
+            {session?.user && <UserMenu user={session.user} canManageTeam={canManageTeam} canManageDiscord={canManageDiscord} canManageEmail={canManageEmail} canManageTemplates={canManageTemplates} isSuperAdmin={isSuperAdmin} canInvite={canInvite} canSeeAudit={canSeeAudit} />}
           </div>
         </div>
       </header>
@@ -306,12 +305,11 @@ export function TopNav({ session, pendingMemberCount = 0, unreadNotificationCoun
   );
 }
 
-function UserMenu({ user, canManageTeam, canManageSeason, canManageDiscord, canManageEmail = false, canManageTemplates, isSuperAdmin = false, canInvite = false, canSeeAudit = false, pendingMemberCount = 0 }: {
+function UserMenu({ user, canManageTeam, canManageDiscord, canManageEmail = false, canManageTemplates, isSuperAdmin = false, canInvite = false, canSeeAudit = false, pendingMemberCount = 0 }: {
   canManageEmail?:    boolean;
   canSeeAudit?:       boolean;
   user: { name?: string | null; email?: string | null };
   canManageTeam:      boolean;
-  canManageSeason:    boolean;
   canManageDiscord:   boolean;
   isSuperAdmin?:      boolean;
   canInvite?:         boolean;
@@ -423,13 +421,6 @@ function UserMenu({ user, canManageTeam, canManageSeason, canManageDiscord, canM
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
               </svg>
               Templates
-            </Link>
-          )}
-          {canManageSeason && (
-            <Link href="/settings/season" role="menuitem" onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-(--color-text-primary) hover:bg-(--color-surface-overlay) transition-colors">
-              <CalendarIcon className="w-4 h-4 text-(--color-text-secondary)" />
-              Season settings
             </Link>
           )}
           {/* Head Mentor + Team Leadership (view); editing is Head Mentor only */}

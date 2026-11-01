@@ -12,6 +12,8 @@
 **Menus**
 - The profile menu is shorter: **Discord** and **Team email** are now one **Integrations** page, which shows where each stands (and whether The Blue Alliance is connected)
 - **Expenses & refunds** left the profile menu — it stays under **More** on phones and on the Budget page
+- **Season settings** left the profile menu too — it is the same page as **Season** in the main menu
+- Team members: active members are split into **Students** (the Team Member role) and **Adults**
 
 ## 1.8.4.1 — 2026-11-01
 

@@ -37,6 +37,15 @@ export default async function MembersPage() {
 
   const pending  = users.filter((u) => u.status === "PENDING");
   const active   = users.filter((u) => u.status === "ACTIVE");
+  // Students have the Team Member role and no adult role; everyone else (mentors, parents, …) is an adult
+  const isStudent = (u: (typeof active)[number]) => {
+    const roles = u.roles.map((r) => r.role);
+    return roles.includes("TEAM_MEMBER") && !isAdult(roles);
+  };
+  const groups = [
+    { title: "Students", list: active.filter(isStudent), empty: "No students yet." },
+    { title: "Adults", list: active.filter((u) => !isStudent(u)), empty: "No adults yet." },
+  ];
   const other    = users.filter((u) => u.status === "SUSPENDED" || u.status === "DENIED");
 
   function statusVariant(status: string): "warning" | "success" | "neutral" | "danger" {
@@ -102,8 +111,14 @@ export default async function MembersPage() {
             <Link href="/settings/roles" className="text-sm font-medium text-(--color-secondary) hover:underline">What can each role do? →</Link>
           </span>
         </div>
+        {groups.map(({ title, list, empty }) => (
+          <section key={title} className="mt-4 first:mt-0">
+            <h3 className="text-h3 text-(--color-text-primary) mb-2">{title} ({list.length})</h3>
+            {list.length === 0 ? (
+              <div className="card"><p className="text-small text-(--color-text-secondary)">{empty}</p></div>
+            ) : (
         <div className="card divide-y divide-(--color-border)">
-          {active.map((u) => (
+          {list.map((u) => (
             // Name + email with Edit roles beside them; the roles wrap underneath at any width
             <div key={u.id} id={`member-${u.id}`} className="space-y-2 py-3 first:pt-0 last:pb-0 scroll-mt-24">
               <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
@@ -143,6 +158,9 @@ export default async function MembersPage() {
             </div>
           ))}
         </div>
+            )}
+          </section>
+        ))}
       </div>
 
       {/* Suspended / Denied */}
