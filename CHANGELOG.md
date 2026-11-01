@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.9.0.1 — 2026-11-01
+
 - New **Slice** color scheme — orange and teal — and it's now the default. Anyone who already picked a scheme keeps it; **FRC Classic** (red and blue) is still in Profile → Color theme
 
 ## 1.9.0 — 2026-11-01
