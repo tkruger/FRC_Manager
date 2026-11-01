@@ -11,8 +11,8 @@ const WRITES = new Set([
   "upsert", "delete", "deleteMany",
 ]);
 
-/** What view-only accounts may still change: their own account and settings, volunteering, and
- *  helping out — packing for competitions */
+/** What view-only accounts may still change: their own account and settings, volunteering,
+ *  submitting expenses, and helping out — packing for competitions */
 const ALLOWED = new Set([
   "User", "UserRole", "Account", "Session", "AuthToken", "RateLimit", "VerificationToken", "Invite",
   "Notification", "NotificationPreference", "PushSubscription", "ReminderLog",
@@ -20,6 +20,8 @@ const ALLOWED = new Set([
   "ChangeLog", "ActivityLog",
   "MeetingVolunteer", "MeetingVolunteerNote", "VolunteerSettings",
   "PackEntry",
+  // Parents often buy things for the team: they can submit expenses (with receipts)
+  "ExpenseClaim", "ExpenseReceipt",
 ]);
 
 /** Single fields they may change on otherwise read-only models: scanning a tool into a location */

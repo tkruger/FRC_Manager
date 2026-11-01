@@ -258,12 +258,15 @@ export default function HelpPage() {
           <li>The budget tracks three things, shown as a line chart on the Budget page and as a small chart in the first tile on the home page (everyone can see them; tap the tile to open the budget):
             <ul className="list">
               <li><b>Goal</b> — what the team plans to spend: the category allocations added up (set in <b>Edit budget</b>).</li>
-              <li><b>Raised</b> — money in hand: funding marked <b>Received</b> (or the received part of <b>Partly received</b>), including what the team puts in from its own account (type <b>Team account</b>). Pledges still to come are listed under Funding sources, not counted as raised.</li>
+              <li><b>Raised</b> — money in hand: funding marked <b>Received</b> (or the received part of <b>Partly received</b>), including what the team puts in from its own account (type <b>Team account</b>). Pledges still to come show as a dotted <b>raised + pledged</b> line, not counted as raised.</li>
               <li><b>Spent</b> — expenses, including orders placed but not yet received.</li>
             </ul>
           </li>
           <li>Head Mentors add funding with <b>+ Add funding</b> and use <b>Edit</b> on a source to mark a pledge received (with the date it came in, so it shows on the chart at the right time). The chart shows the goal, raised and spent week by week over the season.</li>
           <li>Purchases update the budget automatically: when ordered they appear as <b>Committed — on order</b>, and become a regular expense once received. Each item counts toward its order&apos;s budget category (or its own), so one order can show in several categories. A vendor&apos;s <b>tax</b> counts toward the categories of that vendor&apos;s items; its <b>shipping</b> goes to the <b>Shipping</b> category.</li>
+          <li><b>Expenses &amp; refunds</b> — anyone on the team (parents too) taps <b>+ Add expense</b> to report something they bought for the team: date, amount, what it was for, the vendor, how it was paid and the receipt (photos or a PDF). Tick <b>I paid for this myself — please pay me back</b> to ask for a refund. One receipt per claim is best.</li>
+          <li>The <b>Treasurer</b> (Head Mentors if the team has none) is notified and reviews it on <b>Expenses &amp; refunds</b>: <b>Approve</b> records it in the budget (in the category they pick); <b>Deny</b> sends back the reason. An approved refund waits under <b>To pay back</b> until the Treasurer <b>marks it paid</b> (how, a check number or transaction ID, and the date), which closes it. The person who submitted it hears at each step. Nobody approves their own claim; a Treasurer&apos;s or Head Mentor&apos;s own team-card purchase (no refund) is recorded straight away.</li>
+          <li>Receipts are private: only the person who submitted them, Treasurers and Head Mentors can open them. Every change to a claim is in its History and on the Audit log.</li>
           <li>Spend without a category shows as <b>Uncategorized</b> with links to the orders. Open one and use <b>Budget → Change</b> to fix it. That works at any stage, even after the items arrive, and moves the spend already recorded. The person who placed the order, its approvers, the Buyer, Team Leadership and Head Mentors can change it.</li>
         </ul>
       </Section>
@@ -377,6 +380,7 @@ export default function HelpPage() {
             ["Team Leadership", "Approve members and assign roles (except Head Mentor), invite people, manage meetings, Discord and the team time zone; act as captains on orders (Buyer page, item statuses); view the purchase workflow."],
             ["Mentor", "The same as Team Member — add other roles for more."],
             ["Parent", "View-only: see tasks, tools, inventory, the calendar and safety (not orders or robots), help pack for competitions and scan tools into locations. Once cleared, sign up to volunteer at meetings."],
+            ["Treasurer", "Review expense claims: approve them (recording them in the budget) or deny them, and mark refunds paid."],
             ["Integration admin", "Connect the student and parent Discord servers, and send the team's emails from its own account (Settings → Discord and Settings → Team email)."],
             ["Volunteer coordinator", "Make sure every meeting has enough adults: ask volunteers to cover meetings, set shift instructions and adults per meeting; hears about meetings that are short."],
             ["Head Mentor", "Everything: seasons, robots, applying templates, editing the purchase workflow, acting on any purchase step, and clearing adults to volunteer. Only Head Mentors can grant or remove the Head Mentor role."],

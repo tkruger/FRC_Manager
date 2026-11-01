@@ -10,7 +10,6 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { AddFundingDialog } from "./AddFundingDialog";
 import { FUNDING_TYPE_LABELS } from "@/lib/funding";
 import { budgetTotals, pledgePoints, raisedFrom } from "@/lib/budget-summary";
-import { LogExpenseDialog } from "./LogExpenseDialog";
 import { BudgetBurndownCard } from "./BudgetBurndownCard";
 import { PageHeader } from "@/components/PageHeader";
 
@@ -104,9 +103,9 @@ export default async function BudgetDashboard() {
             <Link href="/budget/setup"><Button variant="outline" size="sm">Edit budget</Button></Link>
           )}
           <Link href="/budget/bom"><Button variant="outline" size="sm">Robot BOM</Button></Link>
-          {canEdit && (
-            <LogExpenseDialog budgetId={budget.id} categories={budget.categories} />
-          )}
+          <Link href="/budget/claims"><Button variant="outline" size="sm">Expenses &amp; refunds</Button></Link>
+          {/* Anyone can report an expense (and ask to be paid back); Treasurers review it */}
+          <Link href="/budget/claims/new"><Button size="sm">+ Add expense</Button></Link>
         </>}
       />
 

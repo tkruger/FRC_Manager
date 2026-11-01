@@ -79,6 +79,9 @@ model User {
   incidentReports      SafetyIncident[]
   activityLogs         ActivityLog[]
   changeLogs           ChangeLog[]
+  expenseClaims        ExpenseClaim[]      @relation("ClaimSubmittedBy")
+  expenseClaimsReviewed ExpenseClaim[]     @relation("ClaimReviewedBy")
+  expenseClaimsPaid    ExpenseClaim[]      @relation("ClaimPaidBy")
   volunteerShifts      MeetingVolunteer[]  @relation("Volunteer")
   volunteersAssigned   MeetingVolunteer[]  @relation("VolunteerAssignedBy")
   notifications        Notification[]
@@ -143,6 +146,8 @@ enum Role {
   VOLUNTEER_COORDINATOR
   /// Sets up the team's integrations: its Discord servers and its own email
   INTEGRATION_ADMIN
+  /// Reviews expense claims: approves or denies them, and marks refunds paid
+  TREASURER
 }
 
 model Account {
@@ -239,6 +244,7 @@ model Team {
   packSessions  PackSession[]
   changeLogs    ChangeLog[]
   volunteerSettings VolunteerSettings?
+  expenseClaims ExpenseClaim[]
   emailServer   TeamEmailServer?
   /// The team's Discord servers (a student one and a parent one)
   discordConfigs DiscordConfig[]
@@ -976,6 +982,7 @@ model BudgetCategory {
   label      String
   allocation Float              @default(0)
   expenses   Expense[]
+  claims     ExpenseClaim[]
 }
 
 enum BudgetCategoryType {
@@ -1041,6 +1048,84 @@ model Expense {
   isCommitment      Boolean         @default(false)
   purchaseRequestId String?
   createdAt         DateTime        @default(now())
+  /// The expense claim this came from, once a Treasurer approved it
+  claim             ExpenseClaim?
+}
+
+/// Someone reports money spent for the team (with receipts), optionally asking to be paid
+/// back. A Treasurer (or Head Mentor) approves it — which records it in the budget — or
+/// denies it; approved refunds are then marked paid, which closes them.
+model ExpenseClaim {
+  id            String             @id @default(cuid())
+  teamId        String
+  team          Team               @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  submittedById String?
+  submittedBy   User?              @relation("ClaimSubmittedBy", fields: [submittedById], references: [id], onDelete: SetNull)
+  /// How to reach them with questions: email, phone or Discord
+  contact       String
+  expenseDate   DateTime
+  amount        Float
+  description   String
+  vendor        String?
+  /// How it was paid: personal card, cash, team card…
+  paidWith      String?
+  categoryId    String?
+  category      BudgetCategory?    @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  /// They paid themselves and want the team to pay them back
+  reimbursement Boolean            @default(false)
+  status        ExpenseClaimStatus @default(SUBMITTED)
+  reviewedById  String?
+  reviewedBy    User?              @relation("ClaimReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedAt    DateTime?
+  /// Why it was denied, or a note with the approval
+  reviewNote    String?
+  paidById      String?
+  paidBy        User?              @relation("ClaimPaidBy", fields: [paidById], references: [id], onDelete: SetNull)
+  paidAt        DateTime?
+  /// Check, Venmo, cash, bank transfer…
+  paymentMethod String?
+  /// Check number, transaction ID…
+  paymentReference String?
+  /// The budget entry made when it was approved
+  expenseId     String?            @unique
+  expense       Expense?           @relation(fields: [expenseId], references: [id], onDelete: SetNull)
+  receipts      ExpenseReceipt[]
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  @@index([teamId, status])
+  @@index([submittedById])
+}
+
+enum ExpenseClaimStatus {
+  /// Waiting for a Treasurer
+  SUBMITTED
+  /// Recorded in the budget; a refund still waits to be paid
+  APPROVED
+  DENIED
+  /// The refund was paid — closed
+  PAID
+  /// The submitter took it back before review
+  WITHDRAWN
+}
+
+/// A receipt (photo or PDF) for an expense claim. Kept in the database, private to the team:
+/// served only to the submitter and the people who review claims. A receipt uploaded but never
+/// attached to a claim is removed by the hourly job.
+model ExpenseReceipt {
+  id           String        @id @default(cuid())
+  claimId      String?
+  claim        ExpenseClaim? @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  teamId       String
+  uploadedById String
+  fileName     String
+  contentType  String
+  size         Int
+  data         Bytes
+  createdAt    DateTime      @default(now())
+
+  @@index([claimId])
+  @@index([uploadedById, claimId])
 }
 
 model Sponsor {
@@ -1367,6 +1452,7 @@ enum NotificationType {
   TOOL_DUE
   VOLUNTEER_SHIFT
   VOLUNTEER_COVERAGE
+  EXPENSE_CLAIM
 }
 
 /// A browser/device that has opted in to web push for a user

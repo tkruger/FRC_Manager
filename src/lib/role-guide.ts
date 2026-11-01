@@ -19,6 +19,7 @@ export const ROLE_SUMMARY: Record<Role, { who: string; summary: string }> = {
   MENTOR:          { who: "Mentors",                        summary: "Marks someone as a mentor. Same access as Team Member — add Team Leadership or other roles for more." },
   HEAD_MENTOR:     { who: "The lead mentor (one or more)",  summary: "Everything, including seasons, robots, the purchase workflow, granting the Head Mentor role and clearing adults to volunteer." },
   PARENT:          { who: "Students' parents",              summary: "Sees what a Team Member sees (apart from orders and robots), but view-only — except helping pack for competitions and scanning tools into locations. Once a Head Mentor clears them, they can sign up to volunteer at meetings." },
+  TREASURER:       { who: "Whoever handles the team's money", summary: "Reviews expense claims: approves them (which records them in the budget) or denies them, and marks refunds paid." },
   INTEGRATION_ADMIN: { who: "Whoever looks after the team's tech", summary: "Sets up the team's integrations: the student and parent Discord servers and the team's own email account." },
   VOLUNTEER_COORDINATOR: { who: "Whoever organizes adult volunteers", summary: "Makes sure every meeting has enough cleared adults: assigns volunteers, sets the shift instructions and hears about meetings that are short. View-only elsewhere unless they have other roles." },
 };
@@ -57,7 +58,9 @@ export const CAPABILITIES: { area: string; items: { action: string; who: Who }[]
       { action: "Edit open orders",                                      who: ["ORDER_APPROVER", "BUYER"] },
       { action: "Buyer page: to-order list, CSV export, tracking",  who: ["BUYER", "TEAM_LEADERSHIP"] },
       { action: "Set any item's status by hand",                         who: ["BUYER", "TEAM_LEADERSHIP"] },
-      { action: "Set up the budget, log expenses and record funding",   who: [] },
+      { action: "Submit an expense, with receipts (and ask to be paid back)", who: "all" },
+      { action: "Approve or deny expense claims, mark refunds paid",      who: ["TREASURER"] },
+      { action: "Set up the budget and record funding",                  who: [] },
     ],
   },
   {

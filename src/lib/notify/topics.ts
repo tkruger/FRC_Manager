@@ -18,6 +18,8 @@ export interface TopicDef {
   defaultEmail?: boolean;
   /** Only shown to adults who volunteer, or to volunteer coordinators */
   volunteers?: "adults" | "coordinators";
+  /** Only shown to people who review expense claims (Treasurers, Head Mentors) */
+  claimReviewers?: boolean;
 }
 
 export const TOPICS = [
@@ -81,6 +83,22 @@ export const TOPICS = [
     description: "A morning list of the next two weeks' meetings without enough confirmed adults, and when a volunteer drops out or declines.",
     audience: "Volunteer coordinators (Head Mentors if the team has none)",
     defaultInApp: true, defaultPush: true, defaultEmail: true, volunteers: "coordinators",
+  },
+
+  // Expenses
+  {
+    id: "expenses.review", group: "Expenses",
+    label: "Expense claims to review",
+    description: "Someone submits an expense or asks to be paid back.",
+    audience: "Treasurers (Head Mentors if the team has none)",
+    defaultInApp: true, defaultPush: true, defaultEmail: true, claimReviewers: true,
+  },
+  {
+    id: "expenses.mine", group: "Expenses",
+    label: "My expense claims",
+    description: "Your expense claim is approved or denied, and when your refund is paid.",
+    audience: "The person who submitted it",
+    defaultInApp: true, defaultPush: true, defaultEmail: true,
   },
 
   // Tasks

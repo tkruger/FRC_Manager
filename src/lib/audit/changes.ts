@@ -196,6 +196,26 @@ const SPECS: Record<string, Spec> = {
     partChange: (r, added) => ({ field: "Role", from: added ? EMPTY : ROLE_LABELS[r.role as keyof typeof ROLE_LABELS] ?? r.role, to: added ? ROLE_LABELS[r.role as keyof typeof ROLE_LABELS] ?? r.role : EMPTY }),
     parent: { key: "userId", find: (base, id) => base.user.findUnique({ where: { id }, select: { name: true, teamId: true } }).then((u) => (u ? { userId: id, user: u } : null)) },
   },
+  expenseClaim: {
+    entity: "expense",
+    fields: {
+      status:           { label: "Status",          kind: { enum: { SUBMITTED: "Waiting for review", APPROVED: "Approved", DENIED: "Denied", PAID: "Paid", WITHDRAWN: "Withdrawn" } } },
+      amount:           { label: "Amount",          kind: "money" },
+      expenseDate:      { label: "Date",            kind: "date" },
+      description:      { label: "Description",     kind: "text" },
+      vendor:           { label: "Vendor",          kind: "text" },
+      reimbursement:    { label: "Pay back the submitter", kind: "bool" },
+      reviewNote:       { label: "Review note",     kind: "long" },
+      paymentMethod:    { label: "Paid by",         kind: "text" },
+      paymentReference: { label: "Payment reference", kind: "text" },
+      paidAt:           { label: "Paid on",         kind: "date" },
+    },
+    select: { id: true, teamId: true, description: true, amount: true },
+    teamOf: (r) => r.teamId,
+    idOf: (r) => r.id,
+    labelOf: (r) => `${r.description} ($${Number(r.amount ?? 0).toFixed(2)})`,
+    parent: { key: "teamId", find: (base, id) => base.team.findUnique({ where: { id }, select: { id: true } }).then((t) => (t ? { teamId: t.id } : null)) },
+  },
   orderVendorCharge: {
     entity: "order",
     fields: {

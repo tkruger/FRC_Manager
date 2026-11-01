@@ -27,4 +27,5 @@ export const NOTIFICATION_ICONS: Record<string, string> = {
   TOOL_DUE:                "🔧",
   VOLUNTEER_SHIFT:         "🙋",
   VOLUNTEER_COVERAGE:      "🧑‍🤝‍🧑",
+  EXPENSE_CLAIM:           "🧾",
 };

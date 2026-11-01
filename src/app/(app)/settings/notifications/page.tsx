@@ -10,6 +10,7 @@ import { DeliverySettings } from "./DeliverySettings";
 import { PageTitle } from "@/components/PageHeader";
 import type { TopicDef } from "@/lib/notify/topics";
 import { canCoordinate, isAdult } from "@/lib/volunteers";
+import { canReviewClaims } from "@/lib/expense-claims";
 
 export default async function NotificationSettingsPage() {
   const session = await auth();
@@ -30,7 +31,8 @@ export default async function NotificationSettingsPage() {
   const shown = (t: TopicDef) =>
     (!t.superAdminOnly || session.user.isSuperAdmin) &&
     (t.volunteers !== "adults" || isAdult(roles) || canCoordinate(roles)) &&
-    (t.volunteers !== "coordinators" || canCoordinate(roles));
+    (t.volunteers !== "coordinators" || canCoordinate(roles)) &&
+    (!t.claimReviewers || canReviewClaims(roles));
   const topics = (TOPICS as readonly TopicDef[]).filter(shown).map((t) => ({
     id: t.id, group: t.group, label: t.label, description: t.description, audience: t.audience,
     required: !!t.required,

@@ -29,5 +29,8 @@ export async function GET(request: Request) {
   // Housekeeping: expired rate-limit counters and one-time email links, and change history over a year old
   const [rateLimitsCleared, tokensCleared] = await Promise.all([pruneRateLimits(), pruneAuthTokens()]).catch(() => [0, 0]);
   const changesCleared = await pruneChangeLog(prisma).catch(() => 0);
-  return NextResponse.json({ ...result, seasonsSwitched, rateLimitsCleared, tokensCleared, changesCleared, volunteerPosts, ms: Date.now() - started });
+  // Receipts uploaded for an expense that was never submitted
+  const receiptsCleared = await prisma.expenseReceipt.deleteMany({ where: { claimId: null, createdAt: { lt: new Date(Date.now() - 86_400_000) } } })
+    .then((r) => r.count).catch(() => 0);
+  return NextResponse.json({ ...result, seasonsSwitched, rateLimitsCleared, tokensCleared, changesCleared, receiptsCleared, volunteerPosts, ms: Date.now() - started });
 }
