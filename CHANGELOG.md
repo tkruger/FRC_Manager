@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Volunteer clearance is for adults only: students no longer get a **Volunteer clearance** control on Team members, a Volunteering section on their profile, or a place on the Volunteers page, and a student can't be cleared, sign up or be asked to cover a meeting (an old clearance can still be removed)
+
 ## 1.9.0.3 — 2026-11-01
 
 - The Blue Alliance webhook: the verification code now always shows up, even if a secret from the earlier setup is still saved; **Check for code** refreshes it without reloading the page

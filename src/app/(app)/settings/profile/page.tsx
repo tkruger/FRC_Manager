@@ -24,7 +24,8 @@ export default async function ProfilePage() {
   });
   if (!me) redirect("/login");
   const roles = session.user.roles as string[];
-  const showVolunteering = isAdult(roles) || canCoordinate(roles) || !!me.volunteerClearedAt;
+  // Parents and mentors volunteer (coordinators too); students don't
+  const showVolunteering = isAdult(roles) || canCoordinate(roles);
   const untilText = me.volunteerClearedUntil?.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
   const volunteerStatus = isCleared(me)
     ? `You're cleared to volunteer${untilText ? ` until ${untilText}` : ""}.`

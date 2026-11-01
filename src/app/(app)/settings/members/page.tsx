@@ -143,7 +143,8 @@ export default async function MembersPage() {
                 {u.id !== session.user.id && (
                   <div className="flex flex-wrap items-center gap-3">
                     <DeleteMemberButton userId={u.id} name={u.name} />
-                    {isHeadMentor && <ClearanceEditor userId={u.id} name={u.name} cleared={!!u.volunteerClearedAt} until={u.volunteerClearedUntil?.toISOString() ?? null} />}
+                    {/* Volunteer clearance is for adults (or to remove one someone still has) */}
+                    {isHeadMentor && (isAdult(u.roles.map((r) => r.role)) || !!u.volunteerClearedAt) && <ClearanceEditor userId={u.id} name={u.name} cleared={!!u.volunteerClearedAt} until={u.volunteerClearedUntil?.toISOString() ?? null} />}
                     <MemberRoleEditor userId={u.id} currentRoles={u.roles.map((r) => r.role as Role)} grantable={grantable} subTeams={u.subTeams} />
                   </div>
                 )}

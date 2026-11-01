@@ -71,7 +71,8 @@ export default async function VolunteersPage({ searchParams }: { searchParams: P
   }));
 
   const adultRows: AdultRow[] = adults
-    .filter((u) => u.volunteerClearedAt || isAdult(u.roles.map((r) => r.role)))
+    // Adults only — students don't volunteer, even with a clearance left from an earlier role
+    .filter((u) => isAdult(u.roles.map((r) => r.role)))
     .map((u) => ({
       id: u.id, name: u.name, email: u.email.endsWith(".invalid") ? null : u.email, phone: u.phone,
       cleared: isCleared(u),

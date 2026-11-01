@@ -11,7 +11,7 @@ import { auth } from "@/lib/auth";
 import { issueMessage } from "@/lib/validation";
 import { notifyUsers } from "@/lib/notify/deliver";
 import { calendarDayKey, FALLBACK_TIMEZONE, isValidTimezone, localParts } from "@/lib/notify/time";
-import { canCoordinate, coverage, DEFAULT_MIN_ADULTS, isCleared, shiftWhen } from "@/lib/volunteers";
+import { canCoordinate, coverage, DEFAULT_MIN_ADULTS, isAdult, isCleared, shiftWhen } from "@/lib/volunteers";
 import { notifyVolunteersNeeded } from "@/lib/discord-notify";
 
 type Result = { success: true } | { success: false; error: string };
@@ -100,8 +100,12 @@ export async function setVolunteerClearanceAction(input: unknown): Promise<Resul
   if (!parsed.success) return { success: false, error: issueMessage(parsed.error) };
   const { userId, cleared, until } = parsed.data;
 
-  const target = await prisma.user.findFirst({ where: { id: userId, teamId: who.teamId, deletedAt: null }, select: { id: true, volunteerClearedAt: true } });
+  const target = await prisma.user.findFirst({ where: { id: userId, teamId: who.teamId, deletedAt: null }, select: { id: true, volunteerClearedAt: true, roles: { select: { role: true } } } });
   if (!target) return { success: false, error: "Member not found." };
+  // Students don't volunteer — only adults (Parents, Mentors, Head Mentors, Volunteer Coordinators) are cleared
+  if (cleared && !isAdult(target.roles.map((r) => r.role))) {
+    return { success: false, error: "Only adults can be cleared to volunteer — give them an adult role (Parent or Mentor) first." };
+  }
 
   await prisma.$transaction(async (tx) => {
     await tx.user.update({
@@ -125,6 +129,7 @@ async function clearedMe() {
   const who = await me();
   if (!who) return { error: "Not authenticated." } as const;
   const u = await prisma.user.findUnique({ where: { id: who.id }, select: { volunteerClearedAt: true, volunteerClearedUntil: true } });
+  if (!isAdult(who.roles)) return { error: "Volunteering is for parents and mentors." } as const;
   if (!u || !isCleared(u)) return { error: "A Head Mentor needs to clear you to volunteer first." } as const;
   return { who } as const;
 }
@@ -216,9 +221,10 @@ export async function assignVolunteerAction(meetingId: string, userId: string): 
   if (info.error !== undefined) return { success: false, error: info.error };
   const person = await prisma.user.findFirst({
     where:  { id: String(userId), teamId: who.teamId, status: "ACTIVE", deletedAt: null },
-    select: { id: true, name: true, volunteerClearedAt: true, volunteerClearedUntil: true },
+    select: { id: true, name: true, volunteerClearedAt: true, volunteerClearedUntil: true, roles: { select: { role: true } } },
   });
   if (!person) return { success: false, error: "Member not found." };
+  if (!isAdult(person.roles.map((r) => r.role))) return { success: false, error: `${person.name} isn't an adult — only parents and mentors volunteer.` };
   if (!isCleared(person)) return { success: false, error: `${person.name} isn't cleared to volunteer.` };
 
   // Assigning yourself needs no confirming
