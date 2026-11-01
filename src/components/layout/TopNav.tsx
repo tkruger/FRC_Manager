@@ -10,6 +10,7 @@ import type { Session } from "next-auth";
 import { NotificationsDropdown } from "./NotificationsDropdown";
 import { canCoordinate, isAdult } from "@/lib/volunteers";
 import { hiddenForViewOnly, isViewOnly } from "@/lib/access/read-only";
+import { audienceOf, MOBILE_TABS_BY_AUDIENCE } from "@/lib/audience";
 import { FeedbackLink } from "@/components/feedback/Feedback";
 
 const MODULE_TABS = [
@@ -26,28 +27,27 @@ const MODULE_TABS = [
   { label: "Season",      href: "/settings/season", icon: SettingsNavIcon, exact: false },
 ];
 
-// Four priority tabs shown on mobile bottom bar
-const MOBILE_TABS = [
-  { label: "Tasks",    href: "/tasks",    icon: TasksIcon },
-  { label: "Tools",    href: "/tools",    icon: ToolsIcon },
-  { label: "Safety",   href: "/safety",   icon: SafetyIcon },
-  { label: "Calendar", href: "/calendar", icon: CalendarIcon },
-];
-
-// Items shown in the mobile "More" popup
-const MOBILE_MORE = [
+// Everything on the phone's bottom bar and its More sheet. Four of them are tabs — chosen for who's
+// looking (parents, students, mentors; see src/lib/audience.ts) — and the rest go under More.
+const MOBILE_ITEMS = [
   { label: "Home",       href: "/dashboard",      icon: HomeIcon },
-  { label: "Fleet",      href: "/fleet",          icon: FleetIcon },
+  { label: "Tasks",      href: "/tasks",          icon: TasksIcon },
+  { label: "Calendar",   href: "/calendar",       icon: CalendarIcon },
+  // Our competitions: schedule, bumper colors, results, where to watch
+  { label: "Events",     href: "/competitions",   icon: TrophyIcon },
+  { label: "Volunteers", href: "/volunteers",     icon: VolunteersIcon },
+  { label: "Tools",      href: "/tools",          icon: ToolsIcon },
+  { label: "Safety",     href: "/safety",         icon: SafetyIcon },
   { label: "Inventory",  href: "/inventory",      icon: InventoryIcon },
   { label: "Orders",     href: "/procurement",    icon: ProcurementIcon },
   { label: "Budget",     href: "/budget",         icon: BudgetIcon },
   // Submit an expense / ask to be paid back (Treasurers: the review queue)
   { label: "Expenses",   href: "/budget/claims",  icon: ExpensesIcon },
-  { label: "Volunteers", href: "/volunteers",     icon: VolunteersIcon },
-  // Our competitions: schedule, bumper colors, results, where to watch
-  { label: "Events",     href: "/competitions",   icon: TrophyIcon },
+  { label: "Fleet",      href: "/fleet",          icon: FleetIcon },
   { label: "Season",     href: "/settings/season", icon: SettingsNavIcon },
 ];
+// If one of an audience's tabs isn't available to someone, the next of these fills in
+const MOBILE_TAB_FALLBACK = ["/tasks", "/calendar", "/competitions", "/tools", "/safety", "/dashboard"];
 
 interface Props {
   session: Session | null;
@@ -72,6 +72,10 @@ export function TopNav({ session, pendingMemberCount = 0, unreadNotificationCoun
   // View-only accounts (Parents): no Orders or Fleet, and no robot to pick
   const viewOnly          = isViewOnly(roles);
   const navShown          = (href: string) => (href !== "/volunteers" || showVolunteers) && !(viewOnly && hiddenForViewOnly(href));
+  // Phone bottom bar: four tabs for this person, everything else under More
+  const tabHrefs = [...new Set([...MOBILE_TABS_BY_AUDIENCE[audienceOf(roles)], ...MOBILE_TAB_FALLBACK])].filter(navShown).slice(0, 4);
+  const MOBILE_TABS = tabHrefs.map((h) => MOBILE_ITEMS.find((i) => i.href === h)!);
+  const MOBILE_MORE = MOBILE_ITEMS.filter((i) => navShown(i.href) && !tabHrefs.includes(i.href));
   const canInvite         = roles.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP"].includes(r)); // same as INVITE_ROLES in lib/invites
   const canManageTemplates = roles.some((r) => ["HEAD_MENTOR", "BUILD_LEAD"].includes(r));
   // Same people as the Audit log page (AUDIT_ROLES in lib/packing)
@@ -229,10 +233,10 @@ export function TopNav({ session, pendingMemberCount = 0, unreadNotificationCoun
                 >×</button>
               </div>
               <div className="grid grid-cols-3 gap-2">
-                {MOBILE_MORE.filter((t) => navShown(t.href)).map(({ label, href, icon: Icon }) => {
+                {MOBILE_MORE.map(({ label, href, icon: Icon }) => {
                   // The most specific item wins (Expenses, not Budget, on /budget/claims)
                   const active = href === "/dashboard" ? pathname === href
-                    : pathname.startsWith(href) && !MOBILE_MORE.some((o) => o.href.length > href.length && o.href.startsWith(href) && pathname.startsWith(o.href));
+                    : pathname.startsWith(href) && !MOBILE_ITEMS.some((o) => o.href.length > href.length && o.href.startsWith(href) && pathname.startsWith(o.href));
                   return (
                     <Link
                       key={href}
@@ -268,7 +272,9 @@ export function TopNav({ session, pendingMemberCount = 0, unreadNotificationCoun
         >
           <div className="flex items-stretch h-14">
             {MOBILE_TABS.map(({ label, href, icon: Icon }) => {
-              const active = pathname.startsWith(href);
+              // The most specific item wins (Expenses under More, not the Budget tab, on /budget/claims)
+              const active = href === "/dashboard" ? pathname === href
+                : pathname.startsWith(href) && !MOBILE_ITEMS.some((o) => o.href.length > href.length && o.href.startsWith(href) && pathname.startsWith(o.href));
               return (
                 <Link
                   key={href}

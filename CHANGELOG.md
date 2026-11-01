@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Phones: the **bottom bar** puts first what matters to you, like Home does — parents get **Volunteers, Calendar, Events, Season**; students **Tasks, Calendar, Events, Tools**; mentors **Tasks, Orders, Budget, Calendar**. Everything else is under **More**
+
 - iPhone home-screen app: the bottom tab bar no longer floats up the screen while scrolling — in the home-screen app the page now scrolls inside the app instead of moving the whole window, which is what iOS got wrong. Each page opens at the top
 
 - **Home**: when you've been asked to volunteer at a meeting, the request is the first thing on the page — the meeting, its date and time and who asked — with **Confirm** and **Can't make it** right there, the shift instructions, **Details** to open it on the Volunteers page, and a count of any other requests waiting

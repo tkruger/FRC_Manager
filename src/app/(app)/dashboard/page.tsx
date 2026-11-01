@@ -13,6 +13,7 @@ import { eventWindow, loadEventLive } from "@/lib/frc/event-live";
 import { BumperChip, matchTime } from "@/components/competitions/parts";
 import { canCoordinate, coverage, DEFAULT_MIN_ADULTS, isAdult, isCleared, shiftWhen } from "@/lib/volunteers";
 import { meetingName } from "@/lib/meeting-audience";
+import { audienceOf } from "@/lib/audience";
 import { ShiftAskCard, type ShiftAsk } from "@/components/volunteers/ShiftAskCard";
 
 const MODULES = [
@@ -96,10 +97,7 @@ export default async function DashboardPage() {
 
   // Who's looking: the tiles are ordered for parents, students and mentors
   const roles = session?.user?.roles ?? [];
-  const audience: "parent" | "student" | "mentor" =
-    roles.some((r) => r === "MENTOR" || r === "HEAD_MENTOR") ? "mentor"
-    : viewOnly || roles.includes("VOLUNTEER_COORDINATOR") ? "parent"
-    : "student";
+  const audience = audienceOf(roles);
   const showVolunteers = isAdult(roles) || canCoordinate(roles);
 
   // Volunteers: your next shift, else how many meetings in the next two weeks still need adults
