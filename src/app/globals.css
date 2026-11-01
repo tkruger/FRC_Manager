@@ -205,6 +205,19 @@ body {
   z-index: 1;
 }
 
+/* Home-screen app (iPhone especially): the page scrolls inside <main> instead of the window.
+   When the window itself scrolls, iOS can leave position:fixed things — the tab bar, the
+   background — drawn partway up the screen. With the window never scrolling, they stay put.
+   The top and bottom bars sit outside <main> (z-50), so they stay above it. */
+html.standalone #app-shell > main {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* ─── Typography ─── */
 .text-display { font-size: 2.5rem;   font-weight: 700; line-height: 1.1;  letter-spacing: -0.03em; }
 .text-h1      { font-size: 1.875rem; font-weight: 700; line-height: 1.2;  letter-spacing: -0.02em; }
@@ -494,6 +507,7 @@ html { -webkit-tap-highlight-color: transparent; }
   html, body { background: #fff !important; }
   #app-shell header.fixed, #app-shell nav.fixed, .bg-orbs, .no-print { display: none !important; }
   #app-shell main { padding: 0 !important; }
+  html.standalone #app-shell > main { position: static !important; overflow: visible !important; }
   .card { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; box-shadow: none !important; break-inside: avoid; }
   .card::before, .card::after { display: none !important; }
   .print-break-inside-auto { break-inside: auto; }

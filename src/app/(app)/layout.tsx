@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { ScrollReset } from "@/components/layout/ScrollReset";
 import { FeedbackDialog, FeedbackLink } from "@/components/feedback/Feedback";
 import { MessageSquareText } from "lucide-react";
 import { TopNav } from "@/components/layout/TopNav";
@@ -89,6 +90,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <InstallPrompt />
         {/* iOS: keeps the tab bar at the bottom after the keyboard closes */}
         <ViewportFix />
+        {/* Home-screen app: each page starts at the top of its scroller */}
+        <ScrollReset />
         {/* "Saved" confirmations after edits */}
         <Toaster />
         {/* Give feedback — opened from the footer and the profile menu */}
