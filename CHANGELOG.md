@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.9.0.3 — 2026-11-01
+
 - The Blue Alliance webhook: the verification code now always shows up, even if a secret from the earlier setup is still saved; **Check for code** refreshes it without reloading the page
 
 ## 1.9.0.2 — 2026-11-01
