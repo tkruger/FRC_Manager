@@ -74,7 +74,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           else if(m==='AUTO_TIME'){var h=new Date().getHours(),mo=new Date().getMonth(),s=Math.round(17+(Math.sin((mo-2)*Math.PI/6)+1)*1.5);dark=h>=s||h<6;}
           if(dark)document.documentElement.setAttribute('data-theme','dark');
           document.querySelectorAll('meta[name="theme-color"]').forEach(function(t){t.setAttribute('content',dark?'#080A10':'#FFFFFF');});
-          var ct=localStorage.getItem('frc-color-theme');
+          var ct=localStorage.getItem('frc-color-theme')||'slice';
           if(ct&&ct!=='classic')document.documentElement.setAttribute('data-color-theme',ct);
           var bgm=localStorage.getItem('frc-bg-mode');
           if(bgm==='solid'){document.documentElement.setAttribute('data-bg-style','solid');var sc=localStorage.getItem('frc-bg-solid');if(sc)document.documentElement.style.setProperty('--bg-solid-color',sc);}

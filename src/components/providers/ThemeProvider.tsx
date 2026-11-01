@@ -3,10 +3,14 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
 export type DisplayMode = "LIGHT" | "DARK" | "AUTO_SYSTEM" | "AUTO_TIME";
-export type ColorTheme  = "classic" | "ocean" | "forest" | "sunset" | "purple";
+export type ColorTheme  = "slice" | "classic" | "ocean" | "forest" | "sunset" | "purple";
+
+/** Used until someone picks a color scheme */
+export const DEFAULT_COLOR_THEME: ColorTheme = "slice";
 export type BgMode      = "theme" | "solid" | "custom";
 
 export const COLOR_THEMES: { id: ColorTheme; label: string; primary: string; secondary: string }[] = [
+  { id: "slice",   label: "Slice",       primary: "#EA580C", secondary: "#0D9488" },
   { id: "classic", label: "FRC Classic", primary: "#C1121F", secondary: "#1D3A8A" },
   { id: "ocean",   label: "Ocean",       primary: "#0369A1", secondary: "#0891B2" },
   { id: "forest",  label: "Forest",      primary: "#15803D", secondary: "#D97706" },
@@ -85,7 +89,7 @@ interface Props {
 export function ThemeProvider({ children, initialMode = "AUTO_SYSTEM" }: Props) {
   const [mode,          setModeState]      = useState<DisplayMode>(initialMode);
   const [resolvedTheme, setResolved]       = useState<"light" | "dark">("light");
-  const [colorTheme,    setColorThemeState] = useState<ColorTheme>("classic");
+  const [colorTheme,    setColorThemeState] = useState<ColorTheme>(DEFAULT_COLOR_THEME);
   const [bgMode,        setBgModeState]    = useState<BgMode>("theme");
   const [bgColor1,      setBgColor1State]  = useState("#C1121F");
   const [bgColor2,      setBgColor2State]  = useState("#1D3A8A");
@@ -152,12 +156,11 @@ export function ThemeProvider({ children, initialMode = "AUTO_SYSTEM" }: Props) 
     setModeState(effective);
     applyDisplayTheme(effective);
 
-    // Color theme
-    const storedColor = localStorage.getItem("frc-color-theme") as ColorTheme | null;
-    if (storedColor && storedColor !== "classic") {
-      setColorThemeState(storedColor);
-      document.documentElement.setAttribute("data-color-theme", storedColor);
-    }
+    // Color theme (Slice until someone picks one; Classic is the red/blue base with no attribute)
+    const storedColor = (localStorage.getItem("frc-color-theme") as ColorTheme | null) ?? DEFAULT_COLOR_THEME;
+    setColorThemeState(storedColor);
+    if (storedColor !== "classic") document.documentElement.setAttribute("data-color-theme", storedColor);
+    else document.documentElement.removeAttribute("data-color-theme");
 
     // Background
     const storedBgMode   = (localStorage.getItem("frc-bg-mode")   as BgMode | null) ?? "theme";
