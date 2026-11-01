@@ -384,13 +384,6 @@ function UserMenu({ user, canManageTeam, canManageSeason, canManageDiscord, canM
             </svg>
             Notification settings
           </Link>
-          <Link href="/budget/claims" role="menuitem" onClick={() => setOpen(false)}
-            className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-(--color-text-primary) hover:bg-(--color-surface-overlay) transition-colors">
-            <svg className="w-4 h-4 text-(--color-text-secondary)" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 14.25l6-6m4.5-3.493V21.75l-3.75-1.5-3.75 1.5-3.75-1.5-3.75 1.5V4.757c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0c1.1.128 1.907 1.077 1.907 2.185zM9.75 9h.008v.008H9.75V9zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 4.5h.008v.008h-.008V13.5zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-            </svg>
-            Expenses &amp; refunds
-          </Link>
           <Link href="/help" role="menuitem" onClick={() => setOpen(false)}
             className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-(--color-text-primary) hover:bg-(--color-surface-overlay) transition-colors">
             <svg className="w-4 h-4 text-(--color-text-secondary)" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
@@ -439,15 +432,6 @@ function UserMenu({ user, canManageTeam, canManageSeason, canManageDiscord, canM
               Season settings
             </Link>
           )}
-          {canManageEmail && (
-            <Link href="/settings/email" role="menuitem" onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-(--color-text-primary) hover:bg-(--color-surface-overlay) transition-colors">
-              <svg className="w-4 h-4 text-(--color-text-secondary)" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-              </svg>
-              Team email
-            </Link>
-          )}
           {/* Head Mentor + Team Leadership (view); editing is Head Mentor only */}
           {canManageTeam && (
             <Link href="/settings/workflows" role="menuitem" onClick={() => setOpen(false)}
@@ -458,13 +442,13 @@ function UserMenu({ user, canManageTeam, canManageSeason, canManageDiscord, canM
               Purchase workflow
             </Link>
           )}
-          {canManageDiscord && (
-            <Link href="/settings/discord" role="menuitem" onClick={() => setOpen(false)}
+          {(canManageDiscord || canManageEmail) && (
+            <Link href="/settings/integrations" role="menuitem" onClick={() => setOpen(false)}
               className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-(--color-text-primary) hover:bg-(--color-surface-overlay) transition-colors">
-              <svg className="w-4 h-4 text-(--color-text-secondary)" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/>
+              <svg className="w-4 h-4 text-(--color-text-secondary)" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
               </svg>
-              Discord integration
+              Integrations
             </Link>
           )}
           {/* Platform admin — not a team role */}

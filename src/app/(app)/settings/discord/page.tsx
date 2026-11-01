@@ -40,7 +40,7 @@ export default async function DiscordSettingsPage() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       <div>
         <nav className="text-small text-(--color-text-secondary) mb-1">
-          <Link href="/settings/members" className="hover:text-(--color-primary)">Settings</Link>
+          <Link href="/settings/integrations" className="hover:text-(--color-primary)">Integrations</Link>
           <span className="mx-2">›</span>Discord
         </nav>
         <PageTitle help="discord">Discord Integration</PageTitle>

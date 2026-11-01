@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -20,6 +21,10 @@ export default async function EmailSettingsPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 space-y-6">
       <div>
+        <nav className="text-small text-(--color-text-secondary) mb-1">
+          <Link href="/settings/integrations" className="hover:text-(--color-primary)">Integrations</Link>
+          <span className="mx-2">›</span>Team email
+        </nav>
         <PageTitle help="notifications">Team email</PageTitle>
         <p className="text-body text-(--color-text-secondary) mt-1">
           Send the team&apos;s emails — notifications like volunteer shifts, invites and welcome emails — from your own email

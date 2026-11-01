@@ -9,6 +9,10 @@
 - Season settings: each competition takes its **event code** — pick it from **Find on The Blue Alliance** (fills in the name, dates, location and Week number) or paste a TBA, Nexus or FIRST link
 - New guide section: **Competitions — following along**
 
+**Menus**
+- The profile menu is shorter: **Discord** and **Team email** are now one **Integrations** page, which shows where each stands (and whether The Blue Alliance is connected)
+- **Expenses & refunds** left the profile menu — it stays under **More** on phones and on the Budget page
+
 ## 1.8.4.1 — 2026-11-01
 
 - Role names in title case like the rest: **Order Approver**, **Volunteer Coordinator** and **Integration Admin** (also in saved purchase workflows and order history)
