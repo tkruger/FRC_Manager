@@ -135,9 +135,14 @@ export default async function MembersPage() {
                   </p>
                   <p className="text-small text-(--color-text-secondary) break-all">{u.email}{u.phone && <> · {u.phone}</>}</p>
                 </div>
-                {isHeadMentor && u.id === session.user.id && (
+                {u.id === session.user.id && (isHeadMentor || session.user.isSuperAdmin) && (
                   <div className="flex flex-wrap items-center gap-3">
-                    <ClearanceEditor userId={u.id} name={u.name} cleared={!!u.volunteerClearedAt} until={u.volunteerClearedUntil?.toISOString() ?? null} />
+                    {isHeadMentor && <ClearanceEditor userId={u.id} name={u.name} cleared={!!u.volunteerClearedAt} until={u.volunteerClearedUntil?.toISOString() ?? null} />}
+                    {/* Super admins can change their own roles (but always keep Head Mentor) */}
+                    {session.user.isSuperAdmin && (
+                      <MemberRoleEditor userId={u.id} currentRoles={u.roles.map((r) => r.role as Role)} grantable={grantable} subTeams={u.subTeams}
+                        locked={u.roles.some((r) => r.role === "HEAD_MENTOR") ? ["HEAD_MENTOR"] : []} self />
+                    )}
                   </div>
                 )}
                 {u.id !== session.user.id && (
@@ -145,7 +150,8 @@ export default async function MembersPage() {
                     <DeleteMemberButton userId={u.id} name={u.name} />
                     {/* Volunteer clearance is for adults (or to remove one someone still has) */}
                     {isHeadMentor && (isAdult(u.roles.map((r) => r.role)) || !!u.volunteerClearedAt) && <ClearanceEditor userId={u.id} name={u.name} cleared={!!u.volunteerClearedAt} until={u.volunteerClearedUntil?.toISOString() ?? null} />}
-                    <MemberRoleEditor userId={u.id} currentRoles={u.roles.map((r) => r.role as Role)} grantable={grantable} subTeams={u.subTeams} />
+                    <MemberRoleEditor userId={u.id} currentRoles={u.roles.map((r) => r.role as Role)} grantable={grantable} subTeams={u.subTeams}
+                      locked={u.isSuperAdmin && u.roles.some((r) => r.role === "HEAD_MENTOR") ? ["HEAD_MENTOR"] : []} />
                   </div>
                 )}
               </div>

@@ -49,12 +49,14 @@ async function checkRoleChange(
 
   const target = await prisma.user.findFirst({
     where:  { id: userId, teamId: actor.teamId },
-    select: { roles: { select: { role: true } } },
+    select: { isSuperAdmin: true, roles: { select: { role: true } } },
   });
   if (!target) return "Member not found.";
 
   const wasHead = target.roles.some((r) => r.role === "HEAD_MENTOR");
   const isHead  = roles.includes("HEAD_MENTOR");
+  // Super admins (who run the app) always stay Head Mentors of their team
+  if (target.isSuperAdmin && wasHead && !isHead) return "Super admins keep the Head Mentor role.";
   if (wasHead !== isHead && !actor.roles.includes("HEAD_MENTOR")) {
     return "Only a Head Mentor can grant or remove the Head Mentor role.";
   }
@@ -134,6 +136,8 @@ export async function updateMemberRolesAction(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const session = await requireAdmin();
+    // Only super admins change their own roles (anyone else could lock themselves out)
+    if (userId === session.user.id && !session.user.isSuperAdmin) return { success: false, error: "You can't change your own roles — ask another Head Mentor." };
     // Previously had no team check: leadership on any team could change anyone's roles
     const invalid = await checkRoleChange({ id: session.user.id, teamId: session.user.teamId!, roles: session.user.roles }, userId, roles);
     if (invalid) return { success: false, error: invalid };

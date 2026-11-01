@@ -11,8 +11,13 @@ import { toast } from "@/components/ui/toast";
 import { SubTeamPicker } from "@/components/SubTeamPicker";
 
 
-/** grantable: the roles the editor may give or take away (others are a Head Mentor's) */
-export function MemberRoleEditor({ userId, currentRoles, grantable, subTeams }: { userId: string; currentRoles: Role[]; grantable: Role[]; subTeams: string[] }) {
+/**
+ * grantable: the roles the editor may give or take away (others are a Head Mentor's).
+ * locked: roles that stay on (a super admin's Head Mentor). self: editing your own roles — no Suspend.
+ */
+export function MemberRoleEditor({ userId, currentRoles, grantable, subTeams, locked = [], self = false }: {
+  userId: string; currentRoles: Role[]; grantable: Role[]; subTeams: string[]; locked?: Role[]; self?: boolean;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<Role[]>(currentRoles);
@@ -53,9 +58,11 @@ export function MemberRoleEditor({ userId, currentRoles, grantable, subTeams }: 
         <div className="space-y-2 mb-6">
           {ALL_ROLES.map((role) => (
             <label key={role} className={`flex items-center gap-3 py-1.5 px-2 rounded ${grantable.includes(role) ? "cursor-pointer hover:bg-(--color-surface-overlay)" : "opacity-60"}`}>
-              <input type="checkbox" checked={selected.includes(role)} onChange={() => toggle(role)} disabled={!grantable.includes(role)} className="rounded" />
+              <input type="checkbox" checked={selected.includes(role)} onChange={() => toggle(role)} disabled={!grantable.includes(role) || locked.includes(role)} className="rounded" />
               <span className="text-sm text-(--color-text-primary)">{ROLE_LABELS[role]}</span>
-              {!grantable.includes(role) && <span className="ml-auto text-xs text-(--color-text-secondary)">Head Mentor only</span>}
+              {locked.includes(role)
+                ? <span className="ml-auto text-xs text-(--color-text-secondary)">Always on for super admins</span>
+                : !grantable.includes(role) && <span className="ml-auto text-xs text-(--color-text-secondary)">Head Mentor only</span>}
             </label>
           ))}
         </div>
@@ -68,7 +75,7 @@ export function MemberRoleEditor({ userId, currentRoles, grantable, subTeams }: 
             <Button onClick={handleSave} isLoading={isPending} disabled={selected.length === 0}>Save roles</Button>
             <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
           </div>
-          <Button variant="danger" size="sm" onClick={handleSuspend} isLoading={isPending}>Suspend</Button>
+          {!self && <Button variant="danger" size="sm" onClick={handleSuspend} isLoading={isPending}>Suspend</Button>}
         </div>
       </DialogContent>
     </Dialog>

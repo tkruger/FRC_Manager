@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Super admins can **Edit roles** on their own row in Team members (Head Mentor stays on — nobody can remove it from a super admin). Everyone else still can't change their own roles
+
 ## 1.9.0.4 — 2026-11-01
 
 - Volunteer clearance is for adults only: students no longer get a **Volunteer clearance** control on Team members, a Volunteering section on their profile, or a place on the Volunteers page, and a student can't be cleared, sign up or be asked to cover a meeting (an old clearance can still be removed)
