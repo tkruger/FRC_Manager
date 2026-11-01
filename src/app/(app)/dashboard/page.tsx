@@ -8,7 +8,7 @@ import { formatDate } from "@/lib/utils";
 import { TiltCard } from "@/components/ui/TiltCard";
 import { seasonBudgetChart } from "@/lib/budget-summary";
 import { BudgetTile } from "@/components/budget/BudgetTile";
-import { tbaConfigured } from "@/lib/frc/tba";
+import { tbaFor } from "@/lib/frc/team-keys";
 import { eventWindow, loadEventLive } from "@/lib/frc/event-live";
 import { BumperChip, matchTime } from "@/components/competitions/parts";
 import { canCoordinate, coverage, DEFAULT_MIN_ADULTS, isAdult, isCleared, shiftWhen } from "@/lib/volunteers";
@@ -73,7 +73,8 @@ export default async function DashboardPage() {
     .filter((c) => eventWindow(todayKey, c.startDate, c.endDate) !== "after" && c.startDate.getTime() <= soon)
     .sort((a, b) => a.startDate.getTime() - b.startDate.getTime())[0] ?? null;
   const eventIsLive = !!eventNow && eventWindow(todayKey, eventNow.startDate, eventNow.endDate) === "live";
-  const eventLive = eventNow?.tbaEventKey && eventIsLive && team && tbaConfigured() ? await loadEventLive(team.teamNumber, eventNow.tbaEventKey) : null;
+  const tba = eventNow?.tbaEventKey && eventIsLive && session?.user?.teamId ? await tbaFor(session.user.teamId) : null;
+  const eventLive = tba && team && eventNow?.tbaEventKey ? await loadEventLive(tba, team.teamNumber, eventNow.tbaEventKey) : null;
   const eventTz = isValidTimezone(eventLive?.event?.timezone) ? eventLive!.event!.timezone! : isValidTimezone(team?.timezone) ? team!.timezone! : FALLBACK_TIMEZONE;
   const rank = eventLive?.status?.qual?.ranking;
 

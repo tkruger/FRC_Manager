@@ -1,7 +1,7 @@
 // A competition's live picture for our team: the event, our matches (with our side of each),
 // our rank and record, and the next match. Server-only — needs TBA_API_KEY for anything but links.
 
-import { event, matchLabel, matchVideoUrl, ourSide, sortMatches, teamEventMatches, teamEventStatus, webcastLink, type TbaEvent, type TbaTeamEventStatus } from "./tba";
+import { matchLabel, matchVideoUrl, ourSide, sortMatches, webcastLink, type TbaClient, type TbaEvent, type TbaTeamEventStatus } from "./tba";
 
 export interface OurMatch {
   key: string;
@@ -33,8 +33,8 @@ export interface EventLive {
 }
 
 /** fresh: skip the short cache (the live-update job) */
-export async function loadEventLive(team: number, eventKey: string, fresh = false): Promise<EventLive> {
-  const [ev, list, status] = await Promise.all([event(eventKey), teamEventMatches(team, eventKey, fresh), teamEventStatus(team, eventKey, fresh)]);
+export async function loadEventLive(tba: TbaClient, team: number, eventKey: string, fresh = false): Promise<EventLive> {
+  const [ev, list, status] = await Promise.all([tba.event(eventKey), tba.teamEventMatches(team, eventKey, fresh), tba.teamEventStatus(team, eventKey, fresh)]);
   const year = Number(eventKey.slice(0, 4));
   const matches: OurMatch[] = sortMatches(list ?? []).map((m) => {
     const s = ourSide(m, team);

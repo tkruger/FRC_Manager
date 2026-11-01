@@ -1,20 +1,16 @@
 // The Blue Alliance API v3 — events, match schedules, alliances, scores, rankings. Server-only.
 //
-//   TBA_API_KEY  a free Read API key (thebluealliance.com → Account → Read API Keys).
-//                Without it these return null and pages show links only.
+// Each team can add its own free Read API key (thebluealliance.com → Account → Read API Keys) in
+// Settings → Integrations → The Blue Alliance & Nexus; without one, the deployment's TBA_API_KEY
+// is used if it has one. With no key at all, pages show links only. Get a client for a team with
+// tbaFor(teamId) (src/lib/frc/team-keys.ts).
 //
 // Answers are cached briefly (a minute during an event), so pages stay fast and TBA isn't
 // asked the same thing over and over.
 
 const BASE = "https://www.thebluealliance.com/api/v3";
 
-export function tbaConfigured(): boolean {
-  return !!process.env.TBA_API_KEY;
-}
-
-async function tba<T>(path: string, revalidate: number): Promise<T | null> {
-  const key = process.env.TBA_API_KEY;
-  if (!key) return null;
+async function tbaGet<T>(key: string, path: string, revalidate: number): Promise<T | null> {
   try {
     const res = await fetch(`${BASE}${path}`, {
       headers: { "X-TBA-Auth-Key": key, Accept: "application/json" },
@@ -31,6 +27,16 @@ async function tba<T>(path: string, revalidate: number): Promise<T | null> {
   } catch (e) {
     console.warn(`[tba] ${path} failed:`, e instanceof Error ? e.message : e);
     return null;
+  }
+}
+
+/** Does this key work? (for the settings page) */
+export async function checkTbaKey(key: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${BASE}/team/frc254/simple`, { headers: { "X-TBA-Auth-Key": key }, cache: "no-store", signal: AbortSignal.timeout(8_000) });
+    return res.ok;
+  } catch {
+    return false;
   }
 }
 
@@ -73,46 +79,44 @@ export interface TbaTeamEventStatus {
   last_match_key: string | null;
 }
 
-const teamKey = (team: number) => `frc${team}`;
-
 export interface TbaTeam { key: string; team_number: number; nickname: string | null; name: string | null; city: string | null; state_prov: string | null; rookie_year: number | null }
+
+export interface TbaAward { name: string; award_type: number; event_key: string; year: number; recipient_list: { team_key: string | null; awardee: string | null }[] }
+
+const teamKey = (team: number) => `frc${team}`;
 
 /** Past seasons don't change: cache them for a day */
 const yearCache = (year: number) => (year < new Date().getFullYear() ? 86_400 : 3600);
 
-export const teamInfo = (n: number) => tba<TbaTeam>(`/team/${teamKey(n)}`, 86_400);
-
-/** Every season the team competed in */
-export const yearsParticipated = (n: number) => tba<number[]>(`/team/${teamKey(n)}/years_participated`, 86_400);
-
-/** Every award the team has won */
-export const teamAwards = (n: number) => tba<TbaAward[]>(`/team/${teamKey(n)}/awards`, 21_600);
-
-/** The team's result at each event in a season, by event key */
-export const teamEventStatuses = (n: number, year: number) =>
-  tba<Record<string, TbaTeamEventStatus | null>>(`/team/${teamKey(n)}/events/${year}/statuses`, yearCache(year));
-
-/** The team's events in a season */
-export const teamEvents = (team: number, year: number) =>
-  tba<TbaEvent[]>(`/team/${teamKey(team)}/events/${year}`, yearCache(year));
-
-export const event = (eventKey: string) => tba<TbaEvent>(`/event/${eventKey}`, 1800);
-
-/** The team's matches at an event (the schedule, then scores as they're played) */
-export const teamEventMatches = (team: number, eventKey: string, fresh = false) =>
-  tba<TbaMatch[]>(`/team/${teamKey(team)}/event/${eventKey}/matches`, fresh ? 0 : 60);
-
-export interface TbaAward { name: string; award_type: number; event_key: string; year: number; recipient_list: { team_key: string | null; awardee: string | null }[] }
-
-/** Awards the team won at an event */
-export const teamEventAwards = (team: number, eventKey: string, fresh = false) =>
-  tba<TbaAward[]>(`/team/${teamKey(team)}/event/${eventKey}/awards`, fresh ? 0 : 300);
-
-export async function teamEventStatus(team: number, eventKey: string, fresh = false): Promise<TbaTeamEventStatus | null> {
-  const s = await tba<TbaTeamEventStatus>(`/team/${teamKey(team)}/event/${eventKey}/status`, fresh ? 0 : 60);
-  if (!s) return null;
-  return { ...s, overall_status_str: s.overall_status_str?.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim() ?? null };
+/** TBA calls made with one key */
+export function tbaClient(key: string) {
+  const get = <T>(path: string, revalidate: number) => tbaGet<T>(key, path, revalidate);
+  return {
+    teamInfo: (n: number) => get<TbaTeam>(`/team/${teamKey(n)}`, 86_400),
+    /** Every season the team competed in */
+    yearsParticipated: (n: number) => get<number[]>(`/team/${teamKey(n)}/years_participated`, 86_400),
+    /** Every award the team has won */
+    teamAwards: (n: number) => get<TbaAward[]>(`/team/${teamKey(n)}/awards`, 21_600),
+    /** The team's result at each event in a season, by event key */
+    teamEventStatuses: (n: number, year: number) =>
+      get<Record<string, TbaTeamEventStatus | null>>(`/team/${teamKey(n)}/events/${year}/statuses`, yearCache(year)),
+    /** The team's events in a season */
+    teamEvents: (n: number, year: number) => get<TbaEvent[]>(`/team/${teamKey(n)}/events/${year}`, yearCache(year)),
+    event: (eventKey: string) => get<TbaEvent>(`/event/${eventKey}`, 1800),
+    /** The team's matches at an event (the schedule, then scores as they're played) */
+    teamEventMatches: (n: number, eventKey: string, fresh = false) =>
+      get<TbaMatch[]>(`/team/${teamKey(n)}/event/${eventKey}/matches`, fresh ? 0 : 60),
+    /** Awards the team won at an event */
+    teamEventAwards: (n: number, eventKey: string, fresh = false) =>
+      get<TbaAward[]>(`/team/${teamKey(n)}/event/${eventKey}/awards`, fresh ? 0 : 300),
+    teamEventStatus: async (n: number, eventKey: string, fresh = false): Promise<TbaTeamEventStatus | null> => {
+      const s = await get<TbaTeamEventStatus>(`/team/${teamKey(n)}/event/${eventKey}/status`, fresh ? 0 : 60);
+      if (!s) return null;
+      return { ...s, overall_status_str: s.overall_status_str?.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim() ?? null };
+    },
+  };
 }
+export type TbaClient = ReturnType<typeof tbaClient>;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 

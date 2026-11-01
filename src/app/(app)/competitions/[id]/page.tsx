@@ -4,7 +4,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { PageTitle } from "@/components/PageHeader";
 import { designation } from "@/lib/competition";
-import { tbaConfigured, teamEventAwards } from "@/lib/frc/tba";
+import { tbaFor } from "@/lib/frc/team-keys";
+import type { TbaAward } from "@/lib/frc/tba";
 import { eventWindow, loadEventLive, type EventLive } from "@/lib/frc/event-live";
 import { FALLBACK_TIMEZONE, isValidTimezone, localParts } from "@/lib/notify/time";
 import { AutoRefresh } from "@/components/competitions/AutoRefresh";
@@ -30,8 +31,9 @@ export default async function CompetitionPage({ params }: { params: Promise<{ id
 
   const teamTz = isValidTimezone(team.timezone) ? team.timezone! : FALLBACK_TIMEZONE;
   const when = eventWindow(localParts(new Date(), teamTz).dateKey, comp.startDate, comp.endDate);
-  const [live, awards]: [EventLive | null, Awaited<ReturnType<typeof teamEventAwards>>] = comp.tbaEventKey && tbaConfigured()
-    ? await Promise.all([loadEventLive(team.teamNumber, comp.tbaEventKey), teamEventAwards(team.teamNumber, comp.tbaEventKey)])
+  const tba = await tbaFor(session.user.teamId);
+  const [live, awards]: [EventLive | null, TbaAward[] | null] = comp.tbaEventKey && tba
+    ? await Promise.all([loadEventLive(tba, team.teamNumber, comp.tbaEventKey), tba.teamEventAwards(team.teamNumber, comp.tbaEventKey)])
     : [null, null];
   const tz = isValidTimezone(live?.event?.timezone) ? live!.event!.timezone! : teamTz;
   const year = comp.season.year;
@@ -70,9 +72,9 @@ export default async function CompetitionPage({ params }: { params: Promise<{ id
 
       {live && <EventDetails live={live} tz={tz} when={when} />}
 
-      {comp.tbaEventKey && !tbaConfigured() && (
+      {comp.tbaEventKey && !tba && (
         <p className="text-small text-(--color-text-secondary)">
-          The schedule and results show here once the app is connected to The Blue Alliance. Until then, the links below have everything.
+          The schedule and results show here once the team connects The Blue Alliance (a Head Mentor or Integration Admin, in Settings → Integrations). Until then, the links below have everything.
         </p>
       )}
 

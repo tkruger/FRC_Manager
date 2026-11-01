@@ -9,7 +9,8 @@
 - Season settings: each competition takes its **event code** — pick it from **Find on The Blue Alliance** (fills in the name, dates, location and Week number) or paste a TBA, Nexus or FIRST link
 - New guide section: **Competitions — following along**
 - **Live competition notifications**, on for everyone (parents too) and each one can be turned off in Settings → Notifications: **Match schedule** (posted or changed, with our first match and bumper color), **Our next match** (“Now queuing” at events that use FRC Nexus, otherwise about 20 minutes before the predicted time, with our bumper color), **Match results** (score and our new rank), **Alliance selection & playoffs** (our alliance, winning the event, or the end of our run) and **Awards**
-- Updates are checked every 5 minutes during a linked competition; optional The Blue Alliance and Nexus webhooks make them near-instant (Settings → Integrations shows how)
+- Updates are checked every 5 minutes during a linked competition; optional The Blue Alliance and Nexus webhooks make them near-instant
+- **Each team uses its own keys**: Settings → Integrations → **The Blue Alliance & Nexus** (Head Mentors and Integration Admins) takes the team's TBA Read API key and Nexus API key, and gives the team its own private webhook addresses (with a generated TBA secret and the verification code TBA sends back). Until a team adds a TBA key, the app's shared key is used if there is one
 - The daily competition countdown opens the competition's page
 - **Watch live** button on an event's page when it has a livestream (YouTube or Twitch), and a **▶ Video** link on each match once its video is up; awards won show at the top
 - **Team history** (Competitions → Team history): every season the team has competed, with each event's rank, record, alliance and wins, and every award — plus a page for each season and each past event with all of our matches, scores and videos
@@ -28,6 +29,9 @@
 
 **Feedback**
 - **Give feedback** from anywhere (the footer of every page and the profile menu): an idea, a problem or anything else goes to the app's super admins by email and as a notification — with who sent it, their team and the page they were on. Replying to the email answers the sender
+
+**Fixes**
+- iPhone home-screen app: the bottom tab bar could float partway up the screen while scrolling a long page (not just after typing) — it now stays at the bottom
 
 **Roles**
 - Team Leadership can give and take away only the **Team roles** — Team Member, Build Lead, Inventory Admin, Safety Captain and Team Leadership. Every other role (Mentor, Parent, Treasurer, Buyer, Order Approver, Volunteer Coordinator, Integration Admin, Head Mentor) is given by a Head Mentor; the role pickers mark them “Head Mentor only”

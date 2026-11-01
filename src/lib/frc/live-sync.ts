@@ -10,7 +10,8 @@ import { prisma } from "@/lib/prisma";
 import { notifyRoles, type OutgoingNotification } from "@/lib/notify/deliver";
 import { claimOnce } from "@/lib/notify/claim";
 import { FALLBACK_TIMEZONE, isValidTimezone, localParts } from "@/lib/notify/time";
-import { teamEventAwards, tbaConfigured } from "./tba";
+import { tbaFor, nexusKeyFor } from "./team-keys";
+import type { TbaClient } from "./tba";
 import { eventWindow, loadEventLive, matchTime, type OurMatch } from "./event-live";
 import { nexusEventStatus, nexusSide, shortLabel } from "./nexus";
 
@@ -31,8 +32,8 @@ interface Comp {
 }
 
 /** Check one competition and send what's new. Returns how many notices went out. */
-export async function syncCompetition(c: Comp): Promise<number> {
-  const live = await loadEventLive(c.teamNumber, c.tbaEventKey, true);
+export async function syncCompetition(c: Comp, tba: TbaClient, nexusKey: string | null): Promise<number> {
+  const live = await loadEventLive(tba, c.teamNumber, c.tbaEventKey, true);
   const tz = isValidTimezone(live.event?.timezone) ? live.event!.timezone! : c.timezone;
   const url = `/competitions/${c.id}`;
   const p = `fl:${c.id}`;
@@ -62,7 +63,7 @@ export async function syncCompetition(c: Comp): Promise<number> {
   }
 
   // ── Our next match: Nexus queuing calls, else a heads-up from TBA's predicted time ──
-  const nexus = await nexusEventStatus(c.tbaEventKey);
+  const nexus = nexusKey ? await nexusEventStatus(nexusKey, c.tbaEventKey) : null;
   const nexusOurs = (nexus?.matches ?? []).filter((m) => nexusSide(m, c.teamNumber));
   for (const m of nexusOurs) {
     if (m.status !== "Now queuing") continue;
@@ -129,7 +130,7 @@ export async function syncCompetition(c: Comp): Promise<number> {
   }
 
   // ── Awards ──
-  const awards = await teamEventAwards(c.teamNumber, c.tbaEventKey, true);
+  const awards = await tba.teamEventAwards(c.teamNumber, c.tbaEventKey, true);
   for (const a of awards ?? []) {
     await send(`award:${a.award_type}:${a.name}`, { topic: "competitions.awards", title: `🏅 We won the ${a.name}!`, body: `At ${c.name}.` });
   }
@@ -137,14 +138,15 @@ export async function syncCompetition(c: Comp): Promise<number> {
   return sent;
 }
 
-/** Every competition happening now (optionally just one event's), checked for news */
-export async function syncLiveCompetitions(opts: { eventKey?: string } = {}): Promise<{ checked: number; sent: number }> {
-  if (!tbaConfigured()) return { checked: 0, sent: 0 };
+/** Every competition happening now (optionally one team's, or one event's), checked for news —
+ *  each team with its own keys */
+export async function syncLiveCompetitions(opts: { eventKey?: string; teamId?: string } = {}): Promise<{ checked: number; sent: number }> {
   const now = new Date();
   // A day either side in UTC, narrowed to "today" in each team's time zone below
   const comps = await prisma.competitionEvent.findMany({
     where: {
       tbaEventKey: opts.eventKey ? opts.eventKey : { not: null },
+      ...(opts.teamId ? { season: { teamId: opts.teamId } } : {}),
       startDate: { lte: new Date(now.getTime() + 86_400_000) },
       endDate:   { gte: new Date(now.getTime() - 2 * 86_400_000) },
     },
@@ -159,11 +161,13 @@ export async function syncLiveCompetitions(opts: { eventKey?: string } = {}): Pr
     const team = c.season.team;
     const timezone = isValidTimezone(team.timezone) ? team.timezone! : FALLBACK_TIMEZONE;
     if (eventWindow(localParts(now, timezone).dateKey, c.startDate, c.endDate) !== "live") continue;
+    const tba = await tbaFor(team.id);
+    if (!tba) continue;
     checked++;
     sent += await syncCompetition({
       id: c.id, name: c.name, tbaEventKey: c.tbaEventKey!, startDate: c.startDate, endDate: c.endDate,
       teamId: team.id, teamNumber: team.teamNumber, timezone,
-    }).catch((e) => { console.error("[live-sync]", c.id, e); return 0; });
+    }, tba, await nexusKeyFor(team.id)).catch((e) => { console.error("[live-sync]", c.id, e); return 0; });
   }
   return { checked, sent };
 }

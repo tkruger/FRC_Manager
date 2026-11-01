@@ -57,6 +57,8 @@ export const ROLE_LABELS: Record<Role, string> = {
 export const DISCORD_ADMIN_ROLES: Role[] = ["HEAD_MENTOR", "TEAM_LEADERSHIP", "INTEGRATION_ADMIN"];
 /** Who sets up the team's own email (Settings → Team email) */
 export const EMAIL_ADMIN_ROLES: Role[] = ["HEAD_MENTOR", "INTEGRATION_ADMIN"];
+// Who can add the team's The Blue Alliance / Nexus keys and webhooks
+export const FRC_ADMIN_ROLES: Role[] = ["HEAD_MENTOR", "INTEGRATION_ADMIN"];
 
 // Roles that can manage team members and Discord
 export const LEADERSHIP_ROLES: Role[] = ["HEAD_MENTOR", "TEAM_LEADERSHIP"];

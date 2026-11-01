@@ -4,10 +4,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { PageTitle } from "@/components/PageHeader";
 import { Badge } from "@/components/ui/badge";
-import { DISCORD_ADMIN_ROLES, EMAIL_ADMIN_ROLES } from "@/lib/rbac";
-import { tbaConfigured } from "@/lib/frc/tba";
-import { nexusConfigured } from "@/lib/frc/nexus";
-import { appUrl } from "@/lib/app-url";
+import { DISCORD_ADMIN_ROLES, EMAIL_ADMIN_ROLES, FRC_ADMIN_ROLES } from "@/lib/rbac";
+import { tbaKeyFor } from "@/lib/frc/team-keys";
 
 // Settings → Integrations (Head Mentors, Team Leadership, Integration Admins): the services the app
 // connects to, each with where it stands and a link to set it up.
@@ -18,16 +16,16 @@ export default async function IntegrationsPage() {
   const roles = session.user.roles;
   const discord = roles.some((r) => DISCORD_ADMIN_ROLES.includes(r));
   const email = roles.some((r) => EMAIL_ADMIN_ROLES.includes(r));
-  if (!discord && !email) redirect("/dashboard");
+  const frc = roles.some((r) => FRC_ADMIN_ROLES.includes(r));
+  if (!discord && !email && !frc) redirect("/dashboard");
 
-  const superAdmin = session.user.isSuperAdmin === true;
-  const [configs, server, verify] = await Promise.all([
+  const [configs, server, frcSettings, tbaKey] = await Promise.all([
     discord ? prisma.discordConfig.findMany({ where: { teamId: session.user.teamId }, select: { audience: true } }) : [],
     email ? prisma.teamEmailServer.findUnique({ where: { teamId: session.user.teamId }, select: { enabled: true, fromEmail: true, lastError: true, lastErrorAt: true, lastSentAt: true } }) : null,
-    // The latest code The Blue Alliance sent to verify its webhook
-    superAdmin ? prisma.reminderLog.findFirst({ where: { key: { startsWith: "tba-webhook-verify:" } }, orderBy: { lastSentAt: "desc" } }) : null,
+    frc ? prisma.teamFrcSettings.findUnique({ where: { teamId: session.user.teamId }, select: { nexusKeyEnc: true, tbaWebhookSecretEnc: true, nexusWebhookTokenEnc: true } }) : null,
+    frc ? tbaKeyFor(session.user.teamId) : null,
   ]);
-  const base = appUrl();
+  const webhooks = [frcSettings?.tbaWebhookSecretEnc && "TBA", frcSettings?.nexusWebhookTokenEnc && "Nexus"].filter(Boolean);
   const student = configs.some((c) => c.audience === "STUDENT");
   const parent = configs.some((c) => c.audience === "PARENT");
   const emailFailing = !!server?.lastErrorAt && (!server.lastSentAt || server.lastErrorAt > server.lastSentAt);
@@ -50,27 +48,20 @@ export default async function IntegrationsPage() {
         : emailFailing ? <Badge variant="danger">Failing — check the settings</Badge>
         : <Badge variant="success">Sending from {server.fromEmail}</Badge>,
     }] : []),
-    {
-      title: "The Blue Alliance",
-      desc:  "Match schedules, results and rankings on the competition pages, and live notifications during events (schedule, next match, results, alliance selection, awards). Set up for the whole app by whoever hosts it (the TBA_API_KEY setting); link each competition to its event in Season settings.",
-      status: tbaConfigured() ? <Badge variant="success">Connected</Badge> : <Badge variant="neutral">Not set up — links only</Badge>,
-      extra: superAdmin && (
-        <div className="mt-3 rounded-md bg-(--color-surface-overlay) px-3 py-2 text-small text-(--color-text-secondary) space-y-1">
-          <p><b>Faster updates (optional):</b> add a webhook in myTBA → Account → Webhooks with the URL <code className="break-all">{base}/api/webhooks/tba</code> and the secret set as TBA_WEBHOOK_SECRET, and subscribe the account to your team. Without it, updates arrive within about 5 minutes.</p>
-          {verify && <p>Latest verification code from TBA: <code className="font-semibold text-(--color-text-primary)">{verify.key.replace("tba-webhook-verify:", "")}</code></p>}
-        </div>
+    ...(frc ? [{
+      title: "The Blue Alliance & Nexus",
+      href:  "/settings/frc",
+      desc:  "Match schedules, results, history and live notifications during events (The Blue Alliance), and \"Now queuing\" alerts (FRC Nexus) — with your team's own keys, and optional webhooks for instant updates.",
+      status: (
+        <span className="flex flex-wrap gap-1.5">
+          {tbaKey?.source === "team" ? <Badge variant="success">TBA: your key</Badge>
+            : tbaKey?.source === "shared" ? <Badge variant="info">TBA: shared key</Badge>
+            : <Badge variant="neutral">TBA: not set up</Badge>}
+          <Badge variant={frcSettings?.nexusKeyEnc ? "success" : "neutral"}>Nexus{frcSettings?.nexusKeyEnc ? "" : ": not set up"}</Badge>
+          {webhooks.length > 0 && <Badge variant="success">Webhooks: {webhooks.join(" + ")}</Badge>}
+        </span>
       ),
-    },
-    {
-      title: "FRC Nexus",
-      desc:  "\"Now queuing\" alerts at events that use Nexus for queuing. Without it, the next-match alert comes about 20 minutes before the match's predicted time.",
-      status: nexusConfigured() ? <Badge variant="success">Connected</Badge> : <Badge variant="neutral">Not set up</Badge>,
-      extra: superAdmin && (
-        <div className="mt-3 rounded-md bg-(--color-surface-overlay) px-3 py-2 text-small text-(--color-text-secondary)">
-          Get an API key at frc.nexus/api and set it as NEXUS_API_KEY. For instant alerts, register the webhook <code className="break-all">{base}/api/webhooks/nexus</code> there with the token set as NEXUS_WEBHOOK_TOKEN.
-        </div>
-      ),
-    },
+    }] : []),
   ];
 
   return (

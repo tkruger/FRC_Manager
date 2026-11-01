@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { tbaConfigured, teamEvents } from "@/lib/frc/tba";
+import { tbaFor } from "@/lib/frc/team-keys";
 import { seasonStarted } from "@/lib/season-meetings";
 import { redirect } from "next/navigation";
 import { ActiveSeasonCard } from "./ActiveSeasonCard";
@@ -43,11 +43,12 @@ export default async function SeasonSettingsPage() {
   const statsById = Object.fromEntries(pastSeasonStats.map((s) => [s.id, s]));
 
   // The team's events on The Blue Alliance this season — to link competitions (Head Mentors, with a TBA key)
-  const tbaTeam = isHeadMentor && activeSeason && tbaConfigured()
+  const tba = isHeadMentor && activeSeason ? await tbaFor(session.user.teamId!) : null;
+  const tbaTeam = tba && activeSeason
     ? await prisma.team.findUnique({ where: { id: session.user.teamId! }, select: { teamNumber: true } })
     : null;
   const tbaEventList = tbaTeam && activeSeason
-    ? ((await teamEvents(tbaTeam.teamNumber, activeSeason.year)) ?? [])
+    ? ((await tba!.teamEvents(tbaTeam.teamNumber, activeSeason.year)) ?? [])
         .sort((x, y) => x.start_date.localeCompare(y.start_date))
         .map((e) => ({
           key: e.key, name: e.name, startDate: e.start_date, endDate: e.end_date, eventType: e.event_type, week: e.week,

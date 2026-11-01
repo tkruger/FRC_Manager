@@ -4,7 +4,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/PageHeader";
 import { links } from "@/lib/frc/links";
-import { eventResultSummary, tbaConfigured, teamAwards, teamEvents, teamEventStatuses, teamInfo, yearsParticipated } from "@/lib/frc/tba";
+import { eventResultSummary } from "@/lib/frc/tba";
+import { tbaFor } from "@/lib/frc/team-keys";
 
 // The team's history from The Blue Alliance: every season, its events and how each went, and awards.
 
@@ -23,23 +24,24 @@ export default async function HistoryPage() {
       subtitle={`Every season Team ${n} has competed — events, results and awards, from The Blue Alliance`}
     />
   );
-  if (!tbaConfigured()) {
+  const tba = await tbaFor(session.user.teamId);
+  if (!tba) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {header}
         <div className="card text-sm text-(--color-text-secondary)">
-          History shows once the app is connected to The Blue Alliance. Until then, see{" "}
+          History shows once the team connects The Blue Alliance (Settings → Integrations). Until then, see{" "}
           <a href={links.tbaTeam(n)} target="_blank" rel="noopener noreferrer" className="text-(--color-secondary) hover:underline">Team {n} on The Blue Alliance ↗</a>.
         </div>
       </div>
     );
   }
 
-  const [info, years, awards] = await Promise.all([teamInfo(n), yearsParticipated(n), teamAwards(n)]);
+  const [info, years, awards] = await Promise.all([tba.teamInfo(n), tba.yearsParticipated(n), tba.teamAwards(n)]);
   const seasons = [...(years ?? [])].sort((a, b) => b - a);
   // Each season's events and results (past seasons are cached for a day)
   const perYear = await Promise.all(seasons.map(async (year) => {
-    const [events, statuses] = await Promise.all([teamEvents(n, year), teamEventStatuses(n, year)]);
+    const [events, statuses] = await Promise.all([tba.teamEvents(n, year), tba.teamEventStatuses(n, year)]);
     return {
       year,
       events: (events ?? []).sort((a, b) => a.start_date.localeCompare(b.start_date)).map((e) => ({

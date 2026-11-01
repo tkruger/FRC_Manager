@@ -4,7 +4,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/PageHeader";
 import { links } from "@/lib/frc/links";
-import { eventResultSummary, tbaConfigured, teamAwards, teamEvents, teamEventStatuses } from "@/lib/frc/tba";
+import { eventResultSummary } from "@/lib/frc/tba";
+import { tbaFor } from "@/lib/frc/team-keys";
 
 const DAY = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
 
@@ -17,10 +18,11 @@ export default async function HistoryYearPage({ params }: { params: Promise<{ ye
   if (!session?.user?.teamId) redirect("/dashboard");
   const team = await prisma.team.findUnique({ where: { id: session.user.teamId }, select: { teamNumber: true } });
   if (!team) redirect("/dashboard");
-  if (!tbaConfigured()) redirect("/competitions/history");
+  const tba = await tbaFor(session.user.teamId);
+  if (!tba) redirect("/competitions/history");
   const n = team.teamNumber;
 
-  const [events, statuses, awards] = await Promise.all([teamEvents(n, year), teamEventStatuses(n, year), teamAwards(n)]);
+  const [events, statuses, awards] = await Promise.all([tba.teamEvents(n, year), tba.teamEventStatuses(n, year), tba.teamAwards(n)]);
   const list = (events ?? []).sort((a, b) => a.start_date.localeCompare(b.start_date));
 
   return (

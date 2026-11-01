@@ -1,13 +1,9 @@
 // FRC Nexus — live queuing at events that use it ("Now queuing", "On deck", "On field"). Server-only.
 //
-//   NEXUS_API_KEY        a key from frc.nexus/api. Without it, queuing alerts fall back to TBA's predicted match times.
-//   NEXUS_WEBHOOK_TOKEN  the token Nexus sends with its webhook (Nexus-Token header), so updates arrive right away.
+// Each team adds its own key from frc.nexus/api in Settings → Integrations → The Blue Alliance & Nexus
+// (see nexusKeyFor in team-keys.ts). Without one, queuing alerts fall back to TBA's predicted match times.
 
 const BASE = "https://frc.nexus/api/v1";
-
-export function nexusConfigured(): boolean {
-  return !!process.env.NEXUS_API_KEY;
-}
 
 export interface NexusMatch {
   /** "Qualification 19", "Playoff 8", "Final 1", "Practice 3" */
@@ -30,9 +26,7 @@ export interface NexusEventStatus {
   matches: NexusMatch[];
 }
 
-export async function nexusEventStatus(eventKey: string): Promise<NexusEventStatus | null> {
-  const key = process.env.NEXUS_API_KEY;
-  if (!key) return null;
+export async function nexusEventStatus(key: string, eventKey: string): Promise<NexusEventStatus | null> {
   try {
     const res = await fetch(`${BASE}/event/${eventKey}`, {
       headers: { "Nexus-Api-Key": key, Accept: "application/json" },

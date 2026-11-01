@@ -248,6 +248,7 @@ model Team {
   volunteerSettings VolunteerSettings?
   expenseClaims ExpenseClaim[]
   emailServer   TeamEmailServer?
+  frcSettings   TeamFrcSettings?
   /// The team's Discord servers (a student one and a parent one)
   discordConfigs DiscordConfig[]
   timezone      String?   // IANA zone used for meeting times and daily reminders
@@ -1640,6 +1641,26 @@ model Meeting {
   volunteerNote MeetingVolunteerNote?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+/// A team's own keys for The Blue Alliance and FRC Nexus (encrypted), and its private webhook
+/// addresses. Without its own TBA key, the deployment's TBA_API_KEY (if any) is used.
+model TeamFrcSettings {
+  id                   String    @id @default(cuid())
+  teamId               String    @unique
+  team                 Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  /// Random and unguessable: the team's webhook URLs end in it (/api/webhooks/tba/{hookId})
+  hookId               String    @unique
+  tbaKeyEnc            String?
+  /// The secret the team enters with its webhook in myTBA — TBA signs each message with it
+  tbaWebhookSecretEnc  String?
+  /// The code TBA sends to verify the webhook, to paste back into myTBA
+  tbaVerificationCode  String?
+  nexusKeyEnc          String?
+  /// The token Nexus sends with each webhook call (Nexus-Token header)
+  nexusWebhookTokenEnc String?
+  lastWebhookAt        DateTime?
+  updatedAt            DateTime  @updatedAt
 }
 
 /// The team's own outgoing mail server (e.g. its Gmail), used for team emails — notifications,

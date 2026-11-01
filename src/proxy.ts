@@ -16,8 +16,6 @@ const PUBLIC_EXACT = new Set([
   "/manifest.webmanifest",
   "/api/manifest",               // Web app manifest (chosen home-screen icon)
   "/api/discord/interactions",   // Called by Discord — authenticated by its Ed25519 signature instead
-  "/api/webhooks/tba",           // Called by The Blue Alliance — authenticated by its HMAC signature instead
-  "/api/webhooks/nexus",         // Called by FRC Nexus — authenticated by its Nexus-Token instead
 ]);
 
 // Whole subtrees that are public (matched with the trailing slash)
@@ -26,6 +24,7 @@ const PUBLIC_PREFIXES = [
   "/api/calendar/",    // iCal feed — must be accessible without auth for calendar apps
   "/public/schedule/", // Public team schedule page
   "/api/cron/",        // Scheduled jobs — authenticated with CRON_SECRET instead
+  "/api/webhooks/",    // Each team's TBA / Nexus webhooks — authenticated by its signature or token instead
   "/invite/",          // Invite links — people open them before they have an account
   "/reset-password/",  // Emailed password-reset links
   "/verify-email/",    // Emailed confirmation links

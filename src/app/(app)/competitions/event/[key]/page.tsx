@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { PageTitle } from "@/components/PageHeader";
 import { EVENT_KEY } from "@/lib/frc/links";
-import { tbaConfigured, teamEventAwards } from "@/lib/frc/tba";
+import { tbaFor } from "@/lib/frc/team-keys";
 import { eventWindow, loadEventLive } from "@/lib/frc/event-live";
 import { FALLBACK_TIMEZONE, isValidTimezone, localParts } from "@/lib/notify/time";
 import { EventDetails } from "@/components/competitions/EventDetails";
@@ -27,9 +27,10 @@ export default async function TbaEventPage({ params }: { params: Promise<{ key: 
   ]);
   if (linked) redirect(`/competitions/${linked.id}`);
   if (!team) redirect("/dashboard");
-  if (!tbaConfigured()) redirect("/competitions/history");
+  const tba = await tbaFor(session.user.teamId);
+  if (!tba) redirect("/competitions/history");
 
-  const [live, awards] = await Promise.all([loadEventLive(team.teamNumber, key), teamEventAwards(team.teamNumber, key)]);
+  const [live, awards] = await Promise.all([loadEventLive(tba, team.teamNumber, key), tba.teamEventAwards(team.teamNumber, key)]);
   if (!live.event) notFound();
   const ev = live.event;
   const teamTz = isValidTimezone(team.timezone) ? team.timezone! : FALLBACK_TIMEZONE;

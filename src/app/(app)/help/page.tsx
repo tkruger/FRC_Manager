@@ -404,7 +404,7 @@ export default function HelpPage() {
           <li><b>Alliance selection &amp; playoffs</b> — the alliance we&apos;re on, winning the event, or the end of our playoff run.</li>
           <li><b>Awards</b> — any award we win.</li>
         </ul>
-        <p className="text-small text-(--color-text-secondary)">Updates arrive within a few minutes of happening.</p>
+        <p className="text-small text-(--color-text-secondary)">Updates arrive within a few minutes of happening — in seconds if a Head Mentor or Integration Admin sets up the webhooks in Settings → Integrations → The Blue Alliance &amp; Nexus, where the team&apos;s own TBA and Nexus keys go too.</p>
         <p className="text-small text-(--color-text-secondary)">The schedule and results appear once a Head Mentor has linked the competition to its event code (see <a href="#season" className="link">Season</a>).</p>
       </Section>
 
