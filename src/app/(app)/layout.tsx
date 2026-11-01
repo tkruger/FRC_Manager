@@ -64,11 +64,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           activeSeasonName={activeSeasonName}
           testSite={await isTestSite()}
         />
-        {/* pt-14 clears the top nav; pb-14 clears the mobile bottom tab bar (hidden on lg+) */}
-        <main className="pt-safe-nav pb-14 lg:pb-0">
+        {/* pt-14 clears the top nav; the bottom padding clears the mobile tab bar and the home-indicator space under it (hidden on lg+) */}
+        <main className="pt-safe-nav pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))] lg:pb-0">
           {viewOnly && <ViewOnlyBanner canVolunteer={canVolunteer} />}
           <ViewOnlyProvider viewOnly={viewOnly}>{children}</ViewOnlyProvider>
-          <footer className="no-print px-4 pb-6 pt-10 text-center text-xs text-(--color-text-secondary)">
+          <footer className="no-print px-4 pb-8 pt-10 text-center text-xs text-(--color-text-secondary)">
             <div className="mb-3">
               <FeedbackLink className="inline-flex items-center gap-1.5 rounded-full bg-(--color-secondary)/10 px-3 py-1.5 text-sm font-medium text-(--color-secondary) ring-1 ring-(--color-secondary)/30 hover:bg-(--color-secondary)/20">
                 <MessageSquareText className="h-4 w-4" aria-hidden strokeWidth={2} />
