@@ -19,6 +19,7 @@
 - **Expenses & refunds** left the profile menu — it stays under **More** on phones and on the Budget page
 - **Season settings** left the profile menu too — it is the same page as **Season** in the main menu
 - Team members: active members are split into **Students** (the Team Member role) and **Adults**
+- **Home** puts first what matters most to each person: parents see Volunteers, Calendar, Competitions and Season first; students Tasks, Calendar and Competitions; mentors Tasks, Orders and Budget. Adults get a **Volunteers** tile and a stat with their next shift or how many meetings in the next two weeks still need adults
 
 **Roles**
 - Team Leadership can give and take away only the **Team roles** — Team Member, Build Lead, Inventory Admin, Safety Captain and Team Leadership. Every other role (Mentor, Parent, Treasurer, Buyer, Order Approver, Volunteer Coordinator, Integration Admin, Head Mentor) is given by a Head Mentor; the role pickers mark them “Head Mentor only”
