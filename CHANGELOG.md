@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.9.0.6 — 2026-11-01
+
 - **Snooze competition alerts** — for when you're not at the event: on the event's page or in Settings → Notifications, pause schedule, next-match, result and award alerts for **2 hours**, **until tomorrow morning** or **until the event ends**. No push or email while snoozed; they still collect in your notifications and come back on by themselves
 
 ## 1.9.0.5 — 2026-11-01
