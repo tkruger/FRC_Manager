@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.8.4.1 — 2026-11-01
+
+- Role names in title case like the rest: **Order Approver**, **Volunteer Coordinator** and **Integration Admin** (also in saved purchase workflows and order history)
+- The guide has its own **Expenses & refunds** section: submitting an expense step by step, what each status means, how Treasurers review and pay back, and who can see receipts. The Guide button on the expense pages opens it
+
 ## 1.8.4 — 2026-11-01
 
 **Expenses & refunds**

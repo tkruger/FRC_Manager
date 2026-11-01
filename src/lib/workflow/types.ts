@@ -117,7 +117,7 @@ export const ROLE_DISPLAY: Record<WorkflowRole, string> = {
   TEAM_MEMBER:     "Team Member",
   BUILD_LEAD:      "Build Lead",
   INVENTORY_ADMIN: "Inventory Admin",
-  ORDER_APPROVER:  "Order approver",
+  ORDER_APPROVER:  "Order Approver",
   SAFETY_CAPTAIN:  "Safety Captain",
   BUYER:           "Buyer",
   TEAM_LEADERSHIP: "Team Leadership",

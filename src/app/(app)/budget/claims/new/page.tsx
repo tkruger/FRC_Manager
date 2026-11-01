@@ -32,7 +32,7 @@ export default async function NewClaimPage() {
           <Link href="/budget/claims" className="hover:text-(--color-primary)">Expenses</Link>
           <span className="mx-2">›</span>New
         </nav>
-        <PageTitle help="budget">Submit an expense</PageTitle>
+        <PageTitle help="expenses">Submit an expense</PageTitle>
         <p className="text-body text-(--color-text-secondary) mt-1">
           Thank you for helping the team! Report what you spent, attach the receipt, and tick the box if you paid
           yourself and want to be paid back.

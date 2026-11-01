@@ -16,6 +16,7 @@ const SECTIONS: { id: HelpTopic; title: string }[] = [
   { id: "inventory",       title: "Inventory & the order queue" },
   { id: "purchasing",      title: "Orders" },
   { id: "budget",          title: "Budget" },
+  { id: "expenses",        title: "Expenses & refunds" },
   { id: "tools",           title: "Tools" },
   { id: "safety",          title: "Safety" },
   { id: "fleet",           title: "Robot fleet" },
@@ -232,7 +233,7 @@ export default function HelpPage() {
         />
         <H3>What happens next</H3>
         <Steps>
-          <li><b>Approval</b> — Order approvers or Head Mentors approve or deny the order. Routine orders of $50 or less are approved automatically; emergencies always need approval. Approved items become <b>To order</b>.</li>
+          <li><b>Approval</b> — Order Approvers or Head Mentors approve or deny the order. Routine orders of $50 or less are approved automatically; emergencies always need approval. Approved items become <b>To order</b>.</li>
           <li><b>Buyer orders</b> — on <b>Orders → Buyer</b>, the Buyer copies or downloads the to-order items as CSV for the purchasing spreadsheet (no header; grouped by vendor; columns #XXXX item ID, Vendor, Part Name, Link, Unit Price, Qty, Order Notes, Order Date), places the orders, then selects the items that shipped together and adds one <b>tracking link</b> — they become <b>Ordered</b>. On each order&apos;s page, under <b>Tax &amp; shipping</b>, the Buyer enters the tax and shipping charged by each vendor (the approved total is the items only).</li>
           <li><b>Arrival</b> — when a box shows up, anyone can tick the items and tap <b>Mark arrived</b>. Each item is added to inventory (matched by its inventory link, part number or name, or created new) and becomes <b>Arrived</b>.</li>
         </Steps>
@@ -264,10 +265,50 @@ export default function HelpPage() {
           </li>
           <li>Head Mentors add funding with <b>+ Add funding</b> and use <b>Edit</b> on a source to mark a pledge received (with the date it came in, so it shows on the chart at the right time). The chart shows the goal, raised and spent week by week over the season.</li>
           <li>Purchases update the budget automatically: when ordered they appear as <b>Committed — on order</b>, and become a regular expense once received. Each item counts toward its order&apos;s budget category (or its own), so one order can show in several categories. A vendor&apos;s <b>tax</b> counts toward the categories of that vendor&apos;s items; its <b>shipping</b> goes to the <b>Shipping</b> category.</li>
-          <li><b>Expenses &amp; refunds</b> — anyone on the team (parents too) taps <b>+ Add expense</b> to report something they bought for the team: date, amount, what it was for, the vendor, how it was paid and the receipt (photos or a PDF). Tick <b>I paid for this myself — please pay me back</b> to ask for a refund. One receipt per claim is best.</li>
-          <li>The <b>Treasurer</b> (Head Mentors if the team has none) is notified and reviews it on <b>Expenses &amp; refunds</b>: <b>Approve</b> records it in the budget (in the category they pick); <b>Deny</b> sends back the reason. An approved refund waits under <b>To pay back</b> until the Treasurer <b>marks it paid</b> (how, a check number or transaction ID, and the date), which closes it. The person who submitted it hears at each step. Nobody approves their own claim; a Treasurer&apos;s or Head Mentor&apos;s own team-card purchase (no refund) is recorded straight away.</li>
-          <li>Receipts are private: only the person who submitted them, Treasurers and Head Mentors can open them. Every change to a claim is in its History and on the Audit log.</li>
           <li>Spend without a category shows as <b>Uncategorized</b> with links to the orders. Open one and use <b>Budget → Change</b> to fix it. That works at any stage, even after the items arrive, and moves the spend already recorded. The person who placed the order, its approvers, the Buyer, Team Leadership and Head Mentors can change it.</li>
+        </ul>
+      </Section>
+
+      <Section id="expenses" title="Expenses &amp; refunds">
+        <p>
+          Bought something for the team? Report it on <Link href="/budget/claims" className="link">Expenses &amp; refunds</Link> (in
+          the profile menu, under <b>More</b> on a phone, or <b>+ Add expense</b> on the Budget page) — and ask to be paid back
+          if you used your own money. Anyone on the team can, parents included.
+        </p>
+        <H3>Submitting an expense</H3>
+        <Steps>
+          <li>Tap <b>+ Add expense</b> (or <b>+ Submit an expense</b>).</li>
+          <li>Check your <b>contact information</b> — the email, phone number or Discord user the Treasurer can reach you on with questions.</li>
+          <li>Enter the <b>expense date</b>, the <b>amount</b> and a <b>description</b> of what it was for. Add the vendor, how you paid and the budget category if you know them (the Treasurer can pick the category).</li>
+          <li>Attach the <b>receipt</b> — photos or PDFs, up to 5. Big phone photos are shrunk automatically; PDFs can be up to 4 MB. One receipt or invoice per claim is best: submit separate purchases separately.</li>
+          <li>Paid with your own money? Tick <b>I paid for this myself — please pay me back</b> (a receipt is needed for a refund).</li>
+          <li>Tap <b>Submit for review</b>. You&apos;ll be notified — in the app, by push and by email — when it&apos;s approved, denied, and when you&apos;re paid back.</li>
+        </Steps>
+        <p>Changed your mind before it&apos;s reviewed? Open it and tap <b>Withdraw</b>.</p>
+        <H3>Where a claim stands</H3>
+        <Table
+          head={["Status", "Meaning"]}
+          rows={[
+            ["Waiting for review", "Submitted; a Treasurer hasn't looked at it yet."],
+            ["Approved — to be paid", "A refund the Treasurer approved and recorded in the budget; you'll be paid back."],
+            ["Approved — recorded", "No refund needed; it's recorded in the budget. Done."],
+            ["Paid", "You've been paid back — how and when is on the claim. Done."],
+            ["Denied", "Not approved; the reason is on the claim (often something to fix and submit again)."],
+            ["Withdrawn", "You took it back before it was reviewed."],
+          ]}
+        />
+        <H3>Reviewing claims (Treasurers)</H3>
+        <ul className="list">
+          <li>Treasurers hear about each new claim (Head Mentors do if the team has no Treasurer, and can always review). <b>Expenses &amp; refunds</b> lists <b>To review</b> and <b>To pay back</b>, with the total owed.</li>
+          <li>Open a claim to see the details and receipts. <b>Approve</b> it in a budget category — that records the expense in this season&apos;s budget — or <b>Deny</b> it with the reason, which goes to the person who submitted it.</li>
+          <li>Once a refund is paid, <b>Mark paid and close</b> it with how it was paid (check, Venmo, Zelle…), a reference such as the check number, and the date.</li>
+          <li>Nobody approves their own claim — another Treasurer or a Head Mentor does. A Treasurer&apos;s or Head Mentor&apos;s own purchase that needs no refund (say, on the team card) is recorded straight away.</li>
+          <li>Approving needs this season&apos;s budget to be set up (Budget → Edit budget).</li>
+        </ul>
+        <H3>Privacy and records</H3>
+        <ul className="list">
+          <li>Receipts are private: only the person who submitted them, Treasurers and Head Mentors can open them. Claims are visible to their submitter and the people who review them.</li>
+          <li>Every change — submitted, approved, denied, paid — is in the claim&apos;s <b>History</b> and on the <b>Audit log</b> (&ldquo;Changes to expense claims&rdquo;), with who did it.</li>
         </ul>
       </Section>
 
@@ -307,7 +348,7 @@ export default function HelpPage() {
         <p>Every meeting needs enough adults there — two confirmed adults unless the volunteer coordinator changes it. The <Link href="/volunteers" className="link">Volunteers</Link> page shows each upcoming meeting&apos;s coverage.</p>
         <H3>Getting cleared</H3>
         <ul className="list">
-          <li>Adults (Parents, Mentors, Head Mentors, Volunteer coordinators) need a Head Mentor to mark them <b>Cleared to volunteer</b> — on <b>Settings → Team members → Volunteer clearance</b>, usually once the school&apos;s background check is done. A clearance can have an end date (e.g. when the check runs out); the coordinator sees it coming up.</li>
+          <li>Adults (Parents, Mentors, Head Mentors, Volunteer Coordinators) need a Head Mentor to mark them <b>Cleared to volunteer</b> — on <b>Settings → Team members → Volunteer clearance</b>, usually once the school&apos;s background check is done. A clearance can have an end date (e.g. when the check runs out); the coordinator sees it coming up.</li>
           <li>Add your phone number under <b>Profile</b> so the coordinator can reach you on the day — only coordinators and Head Mentors see it.</li>
         </ul>
         <H3>Signing up</H3>
@@ -317,7 +358,7 @@ export default function HelpPage() {
           <li>The day before each shift you get a reminder with the <b>shift instructions</b> — where to go, when, and what to do.</li>
           <li>Can&apos;t make it after all? Tap <b>Can&apos;t make it</b> under Your shifts; the coordinator hears about it if the meeting is now short.</li>
         </ul>
-        <H3>Coordinating (Volunteer coordinators and Head Mentors)</H3>
+        <H3>Coordinating (Volunteer Coordinators and Head Mentors)</H3>
         <ul className="list">
           <li>Meetings without enough confirmed adults are marked in red on the Volunteers page and the calendar. <b>Only meetings that need adults</b> narrows the list.</li>
           <li><b>Ask someone to cover…</b> sends a cleared adult a request to confirm. The × next to a name takes them off the shift.</li>
@@ -352,7 +393,7 @@ export default function HelpPage() {
         <H3>Team email</H3>
         <p>
           Emails come from FRC Manager unless a Head Mentor connects the team&apos;s own email account in <b>Settings → Team email</b>
-          (Gmail, Outlook, Yahoo, iCloud, Zoho or any mail server) — Integration admins can too. Then notifications, invites and welcome emails come from the
+          (Gmail, Outlook, Yahoo, iCloud, Zoho or any mail server) — Integration Admins can too. Then notifications, invites and welcome emails come from the
           team&apos;s address. Gmail, Yahoo and iCloud need an <b>app password</b> (not the normal one). Account emails — confirming an
           address, resetting a password — always come from FRC Manager, and if the team&apos;s server fails, FRC Manager sends the
           message instead and the problem shows on the Team email page.
@@ -374,15 +415,15 @@ export default function HelpPage() {
             ["Team Member", "Use tasks, tools, inventory and the calendar; place orders and mark items arrived; report incidents."],
             ["Build Lead", "Manage meetings and task templates, edit robots and tools."],
             ["Inventory Admin", "Manage inventory and tools, manage task templates, award certifications."],
-            ["Order approver", "Approve or deny orders, and edit open ones. (The budget is the Head Mentor's.)"],
+            ["Order Approver", "Approve or deny orders, and edit open ones. (The budget is the Head Mentor's.)"],
             ["Safety Captain", "Award and revoke certifications; notified of safety incidents."],
             ["Buyer", "Get approved items to order, export the purchasing CSV, add tracking links and set item statuses."],
             ["Team Leadership", "Approve members and assign roles (except Head Mentor), invite people, manage meetings, Discord and the team time zone; act as captains on orders (Buyer page, item statuses); view the purchase workflow."],
             ["Mentor", "The same as Team Member — add other roles for more."],
             ["Parent", "View-only: see tasks, tools, inventory, the calendar and safety (not orders or robots), help pack for competitions and scan tools into locations. Once cleared, sign up to volunteer at meetings."],
             ["Treasurer", "Review expense claims: approve them (recording them in the budget) or deny them, and mark refunds paid."],
-            ["Integration admin", "Connect the student and parent Discord servers, and send the team's emails from its own account (Settings → Discord and Settings → Team email)."],
-            ["Volunteer coordinator", "Make sure every meeting has enough adults: ask volunteers to cover meetings, set shift instructions and adults per meeting; hears about meetings that are short."],
+            ["Integration Admin", "Connect the student and parent Discord servers, and send the team's emails from its own account (Settings → Discord and Settings → Team email)."],
+            ["Volunteer Coordinator", "Make sure every meeting has enough adults: ask volunteers to cover meetings, set shift instructions and adults per meeting; hears about meetings that are short."],
             ["Head Mentor", "Everything: seasons, robots, applying templates, editing the purchase workflow, acting on any purchase step, and clearing adults to volunteer. Only Head Mentors can grant or remove the Head Mentor role."],
           ]}
         />
@@ -392,7 +433,7 @@ export default function HelpPage() {
 
       <Section id="discord" title="Discord">
         <ul className="list">
-          <li>Team Leadership or an <b>Integration admin</b> connects the team&apos;s Discord servers in <b>Settings → Discord</b>: the <b>student server</b> gets the build notifications (orders, tasks, safety, inventory); an optional <b>parent server</b> gets milestone celebrations and, in its Volunteers channel, a morning list of meetings that still need adults (and a heads-up when a volunteer drops out). Invite the same bot to both.</li>
+          <li>Team Leadership or an <b>Integration Admin</b> connects the team&apos;s Discord servers in <b>Settings → Discord</b>: the <b>student server</b> gets the build notifications (orders, tasks, safety, inventory); an optional <b>parent server</b> gets milestone celebrations and, in its Volunteers channel, a morning list of meetings that still need adults (and a heads-up when a volunteer drops out). Invite the same bot to both.</li>
           <li>You can sign in and sign up with <b>Continue with Discord</b> (or Google). If that account's email matches your FRC Manager account, it signs you into that account. Discord sign-in also connects you for the bot — no <code>/link</code> needed.</li>
           <li>Run <code>/link</code> in Discord to connect your account, then use commands such as <code>/tasks mine</code>, <code>/task done</code>, <code>/milestone next</code>, <code>/tool checkout</code>, <code>/stock check</code> and <code>/order request</code>. <code>/help</code> lists them all.</li>
           <li>Orders follow the same workflow and permissions in Discord as in the app.</li>

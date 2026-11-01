@@ -13,7 +13,7 @@ async function requireAdmin() {
   const session = await auth();
   if (!session?.user?.teamId) throw new ActionError("Not authenticated.");
   if (!session.user.roles.some((r) => DISCORD_ADMIN_ROLES.includes(r)))
-    throw new ActionError("Only Head Mentors, Team Leadership and Integration admins can manage Discord settings.");
+    throw new ActionError("Only Head Mentors, Team Leadership and Integration Admins can manage Discord settings.");
   return session;
 }
 

@@ -5,7 +5,7 @@ import { PageTitle } from "@/components/PageHeader";
 import { EmailServerForm } from "./EmailServerForm";
 import { EMAIL_ADMIN_ROLES } from "@/lib/rbac";
 
-// Settings → Email (Head Mentors, Integration admins): send the team's emails from its own mail account.
+// Settings → Email (Head Mentors, Integration Admins): send the team's emails from its own mail account.
 
 export default async function EmailSettingsPage() {
   const session = await auth();

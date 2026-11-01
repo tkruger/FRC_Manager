@@ -1,6 +1,6 @@
 // View-only accounts. Safe to import on server and client.
 //
-// Someone whose only roles are Parent and/or Volunteer coordinator sees what a Team Member
+// Someone whose only roles are Parent and/or Volunteer Coordinator sees what a Team Member
 // sees but can't change anything — apart from their own account, notification settings,
 // volunteering, and helping out: packing for competitions and scanning tools into locations.
 // Enforced for every write by the Prisma client (src/lib/access/guard.ts);

@@ -4,7 +4,7 @@ import { BookOpen } from "lucide-react";
 /** Section ids on /help — keep in sync with the guide's sections. */
 export type HelpTopic =
   | "getting-started" | "tasks" | "templates" | "season" | "calendar" | "inventory"
-  | "purchasing" | "budget" | "tools" | "safety" | "fleet" | "volunteers" | "notifications" | "roles" | "discord" | "legal";
+  | "purchasing" | "budget" | "expenses" | "tools" | "safety" | "fleet" | "volunteers" | "notifications" | "roles" | "discord" | "legal";
 
 /** Visual of the help button, also used inside the guide when referring to it. */
 export function HelpBadge({ label = "Guide" }: { label?: string }) {

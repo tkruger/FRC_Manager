@@ -41,15 +41,15 @@ export const ROLE_LABELS: Record<Role, string> = {
   TEAM_MEMBER:    "Team Member",
   BUILD_LEAD:     "Build Lead",
   INVENTORY_ADMIN:"Inventory Admin",
-  ORDER_APPROVER: "Order approver",
+  ORDER_APPROVER: "Order Approver",
   SAFETY_CAPTAIN: "Safety Captain",
   BUYER:          "Buyer",
   TEAM_LEADERSHIP:"Team Leadership",
   MENTOR:         "Mentor",
   HEAD_MENTOR:    "Head Mentor",
   PARENT:         "Parent",
-  VOLUNTEER_COORDINATOR: "Volunteer coordinator",
-  INTEGRATION_ADMIN: "Integration admin",
+  VOLUNTEER_COORDINATOR: "Volunteer Coordinator",
+  INTEGRATION_ADMIN: "Integration Admin",
   TREASURER: "Treasurer",
 };
 

@@ -81,7 +81,7 @@ export const TOPICS = [
     id: "volunteers.coverage", group: "Volunteers",
     label: "Meetings short of adults",
     description: "A morning list of the next two weeks' meetings without enough confirmed adults, and when a volunteer drops out or declines.",
-    audience: "Volunteer coordinators (Head Mentors if the team has none)",
+    audience: "Volunteer Coordinators (Head Mentors if the team has none)",
     defaultInApp: true, defaultPush: true, defaultEmail: true, volunteers: "coordinators",
   },
 

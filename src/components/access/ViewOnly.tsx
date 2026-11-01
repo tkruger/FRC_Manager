@@ -3,7 +3,7 @@
 import { createContext, useContext } from "react";
 import Link from "next/link";
 
-// View-only accounts (Parents, Volunteer coordinators with no other role) see the app but
+// View-only accounts (Parents, Volunteer Coordinators with no other role) see the app but
 // can't change it. The app layout provides the flag; components hide their edit controls.
 // The database refuses their writes regardless (src/lib/access/guard.ts).
 

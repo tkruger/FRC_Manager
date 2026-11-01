@@ -71,7 +71,7 @@ export default async function ClaimsPage() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       <PageHeader
         title="Expenses & refunds"
-        help="budget"
+        help="expenses"
         subtitle={reviewer ? "Review what people spent for the team, and pay back refunds" : "What you've spent for the team, and refunds you've asked for"}
         actions={<Link href="/budget/claims/new"><Button size="sm">+ Submit an expense</Button></Link>}
       />

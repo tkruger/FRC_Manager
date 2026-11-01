@@ -38,7 +38,7 @@ const Schema = z.object({
 /** Check the settings by logging in to the server, then save them */
 export async function saveEmailServerAction(input: unknown): Promise<Result> {
   const who = await headMentor();
-  if (!who) return { success: false, error: "Only Head Mentors and Integration admins can set up the team's email." };
+  if (!who) return { success: false, error: "Only Head Mentors and Integration Admins can set up the team's email." };
   const parsed = Schema.safeParse(input);
   if (!parsed.success) return { success: false, error: issueMessage(parsed.error) };
   const d = parsed.data;
@@ -67,7 +67,7 @@ export async function saveEmailServerAction(input: unknown): Promise<Result> {
 /** Send a test message to yourself through the team's server (no fallback, so problems show) */
 export async function sendTestEmailAction(): Promise<Result & { to?: string }> {
   const who = await headMentor();
-  if (!who) return { success: false, error: "Only Head Mentors and Integration admins can set up the team's email." };
+  if (!who) return { success: false, error: "Only Head Mentors and Integration Admins can set up the team's email." };
   const [server, me, team] = await Promise.all([
     prisma.teamEmailServer.findUnique({ where: { teamId: who.teamId } }),
     prisma.user.findUnique({ where: { id: who.id }, select: { email: true, name: true } }),
@@ -96,7 +96,7 @@ export async function sendTestEmailAction(): Promise<Result & { to?: string }> {
 /** Pause (back to the app's email) or resume the team's server */
 export async function setEmailServerEnabledAction(enabled: boolean): Promise<Result> {
   const who = await headMentor();
-  if (!who) return { success: false, error: "Only Head Mentors and Integration admins can set up the team's email." };
+  if (!who) return { success: false, error: "Only Head Mentors and Integration Admins can set up the team's email." };
   await prisma.teamEmailServer.updateMany({ where: { teamId: who.teamId }, data: { enabled: !!enabled, updatedById: who.id } });
   revalidatePath("/settings/email");
   return { success: true };
@@ -105,7 +105,7 @@ export async function setEmailServerEnabledAction(enabled: boolean): Promise<Res
 /** Forget the team's server (and its password) */
 export async function removeEmailServerAction(): Promise<Result> {
   const who = await headMentor();
-  if (!who) return { success: false, error: "Only Head Mentors and Integration admins can set up the team's email." };
+  if (!who) return { success: false, error: "Only Head Mentors and Integration Admins can set up the team's email." };
   await prisma.teamEmailServer.deleteMany({ where: { teamId: who.teamId } });
   revalidatePath("/settings/email");
   return { success: true };
