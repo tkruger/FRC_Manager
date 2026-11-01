@@ -9,20 +9,24 @@ interface Props {
   /** What the team plans to spend (category allocations added up) */
   goal:        number;
   raised:      number;
+  /** Promised but not in yet */
+  pledged:     number;
   spent:       number;
   kickoffDate: string;
   endDate:     string;
   /** Money spent, and money that came in, by date */
   expenses:    MoneyPoint[];
   raises:      MoneyPoint[];
+  /** Every funding source's full amount, by when it was promised */
+  pledges:     MoneyPoint[];
   /** e.g. an "On track" badge */
   badge?:      React.ReactNode;
 }
 
 /** The Budget page chart: goal, raised and spent over the season. Click for a bigger view. */
-export function BudgetBurndownCard({ goal, raised, spent, kickoffDate, endDate, expenses, raises, badge }: Props) {
+export function BudgetBurndownCard({ goal, raised, pledged, spent, kickoffDate, endDate, expenses, raises, pledges, badge }: Props) {
   const [open, setOpen] = useState(false);
-  const data = useMemo(() => budgetSeries(kickoffDate, endDate, goal, expenses, raises), [kickoffDate, endDate, goal, expenses, raises]);
+  const data = useMemo(() => budgetSeries(kickoffDate, endDate, goal, expenses, raises, pledges), [kickoffDate, endDate, goal, expenses, raises, pledges]);
 
   return (
     <>
@@ -42,10 +46,11 @@ export function BudgetBurndownCard({ goal, raised, spent, kickoffDate, endDate, 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent title="Goal, raised and spent" className="sm:max-w-3xl">
           <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-3">
+            <div className={`grid gap-3 ${pledged > 0 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3"}`}>
               {[
                 { label: "Goal",   value: goal,   color: GOAL_COLOR },
                 { label: "Raised", value: raised, color: RAISED_COLOR },
+                ...(pledged > 0 ? [{ label: "Pledged (not in yet)", value: pledged, color: RAISED_COLOR }] : []),
                 { label: "Spent",  value: spent,  color: SPENT_COLOR },
               ].map((s) => (
                 <div key={s.label} className="rounded-md bg-(--color-surface-overlay) px-3 py-2.5 text-center">
@@ -55,7 +60,7 @@ export function BudgetBurndownCard({ goal, raised, spent, kickoffDate, endDate, 
               ))}
             </div>
             <p className="text-small text-(--color-text-secondary)">
-              The goal (dashed), money raised so far and money spent so far (including orders not yet received), week by week.
+              The goal (dashed), money raised so far, raised plus what&apos;s been pledged (dotted, when some hasn&apos;t come in yet), and money spent so far (including orders not yet received), week by week.
             </p>
             <BudgetLineChart data={data} height={320} />
           </div>

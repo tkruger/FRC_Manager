@@ -99,9 +99,9 @@ export default async function DashboardPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {/* Budget first, so everyone sees where the money stands (it takes the Robots tile's place) */}
           {budget && (
-            <BudgetTile goal={budget.goal} raised={budget.raised} spent={budget.spent}
+            <BudgetTile goal={budget.goal} raised={budget.raised} pledged={budget.pledged} spent={budget.spent}
               kickoffDate={activeSeason.startDate.toISOString()} endDate={activeSeason.endDate.toISOString()}
-              expenses={budget.expenses} raises={budget.raises} />
+              expenses={budget.expenses} raises={budget.raises} pledges={budget.pledges} />
           )}
           {[
             {

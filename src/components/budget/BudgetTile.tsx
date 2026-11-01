@@ -13,12 +13,13 @@ const dollars = (v: number) => formatCurrency(Math.round(v)).replace(/\.00$/, ""
  * numbers as small labels inside it (the goal on its dashed line, raised and spent beneath)
  * so the chart gets the room. Opens the Budget page.
  */
-export function BudgetTile({ goal, raised, spent, kickoffDate, endDate, expenses, raises }: {
-  goal: number; raised: number; spent: number; kickoffDate: string; endDate: string; expenses: MoneyPoint[]; raises: MoneyPoint[];
+export function BudgetTile({ goal, raised, pledged = 0, spent, kickoffDate, endDate, expenses, raises, pledges = [] }: {
+  goal: number; raised: number; pledged?: number; spent: number; kickoffDate: string; endDate: string;
+  expenses: MoneyPoint[]; raises: MoneyPoint[]; pledges?: MoneyPoint[];
 }) {
   const data = useMemo(
-    () => budgetSeries(kickoffDate, endDate, goal, expenses, raises, new Date().toISOString()),
-    [kickoffDate, endDate, goal, expenses, raises],
+    () => budgetSeries(kickoffDate, endDate, goal, expenses, raises, pledges, new Date().toISOString()),
+    [kickoffDate, endDate, goal, expenses, raises, pledges],
   );
   const over = spent > raised && raised > 0;
   // Small labels with a soft backing so they stay readable over the lines
@@ -36,7 +37,7 @@ export function BudgetTile({ goal, raised, spent, kickoffDate, endDate, expenses
         <span className={`absolute right-0 top-0 ${tag}`} style={{ color: GOAL_COLOR }}>{dollars(goal)} goal</span>
         {/* Raised and spent, in the space under the goal line */}
         <div className="absolute left-0 top-9 flex flex-col items-start gap-0.5">
-          <span className={tag} style={{ color: RAISED_COLOR }}>{dollars(raised)} raised</span>
+          <span className={tag} style={{ color: RAISED_COLOR }}>{dollars(raised)} raised{pledged > 0 && <span className="opacity-75"> + {dollars(pledged)} pledged</span>}</span>
           <span className={tag} style={{ color: SPENT_COLOR }}>{dollars(spent)} spent</span>
           {over && <span className={`${tag} text-(--color-warning)`}>Spent more than raised</span>}
         </div>

@@ -9,7 +9,7 @@ import { Table, TableHead, TableBody, Th, Td, Tr } from "@/components/ui/table";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { AddFundingDialog } from "./AddFundingDialog";
 import { FUNDING_TYPE_LABELS } from "@/lib/funding";
-import { budgetTotals, raisedFrom } from "@/lib/budget-summary";
+import { budgetTotals, pledgePoints, raisedFrom } from "@/lib/budget-summary";
 import { LogExpenseDialog } from "./LogExpenseDialog";
 import { BudgetBurndownCard } from "./BudgetBurndownCard";
 import { PageHeader } from "@/components/PageHeader";
@@ -115,7 +115,9 @@ export default async function BudgetDashboard() {
         badge={<Badge variant={budgetHealth}>{healthLabel}</Badge>}
         goal={goal}
         raised={raised}
+        pledged={totals.pledged}
         spent={spent}
+        pledges={pledgePoints(budget.fundingSources)}
         raises={budget.fundingSources
           .map((f) => ({ date: (f.receivedDate ?? f.createdAt).toISOString(), amount: raisedFrom(f) }))
           .filter((r) => r.amount > 0)}

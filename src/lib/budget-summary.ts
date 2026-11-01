@@ -11,6 +11,14 @@ export function raisedFrom(f: { amount: number; status: FundingStatus; receivedA
   return 0;
 }
 
+/** Each funding source as money promised, dated when it was pledged (or received, if that
+ *  was entered as earlier) — for the "raised + pledged" line */
+export function pledgePoints(sources: { amount: number; createdAt: Date; receivedDate: Date | null }[]): { date: string; amount: number }[] {
+  return sources
+    .filter((f) => f.amount > 0)
+    .map((f) => ({ date: (f.receivedDate && f.receivedDate < f.createdAt ? f.receivedDate : f.createdAt).toISOString(), amount: f.amount }));
+}
+
 export interface BudgetTotals {
   /** What the team plans to spend: the category allocations added up */
   goal: number;
@@ -49,6 +57,8 @@ export function budgetTotals(budget: {
 export async function seasonBudgetChart(seasonId: string): Promise<(BudgetTotals & {
   expenses: { date: string; amount: number }[];
   raises:   { date: string; amount: number }[];
+  /** Everything promised (raised or not), by when it was pledged */
+  pledges:  { date: string; amount: number }[];
 }) | null> {
   const budget = await prisma.budget.findUnique({
     where:  { seasonId },
@@ -65,5 +75,6 @@ export async function seasonBudgetChart(seasonId: string): Promise<(BudgetTotals
     raises:   budget.fundingSources
       .map((f) => ({ date: (f.receivedDate ?? f.createdAt).toISOString(), amount: raisedFrom(f) }))
       .filter((r) => r.amount > 0),
+    pledges:  pledgePoints(budget.fundingSources),
   };
 }
