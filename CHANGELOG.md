@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.9.0.2 — 2026-11-01
+
 - The Blue Alliance webhook setup now follows how myTBA works: add the URL in myTBA, the **verification code** TBA sends shows up on the settings page (even before anything else is saved) to enter back in myTBA, then paste the **secret myTBA made** into **Webhook secret**. Updates are accepted once the secret is saved
 
 - Phones: the **bottom bar** puts first what matters to you, like Home does — parents get **Volunteers, Calendar, Events, Season**; students **Tasks, Calendar, Events, Tools**; mentors **Tasks, Orders, Budget, Calendar**. Everything else is under **More**

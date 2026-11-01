@@ -1,6 +1,6 @@
 {
   "name": "frc-manager",
-  "version": "1.9.0.1",
+  "version": "1.9.0.2",
   "private": true,
   "scripts": {
     "dev": "next dev",
