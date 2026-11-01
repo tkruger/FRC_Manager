@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+## 1.8.4 — 2026-11-01
+
+**Expenses & refunds**
 - **Expenses & refunds**: anyone on the team (parents too) can submit an expense with **+ Add expense** — contact information, date, amount, description, vendor, how it was paid, budget category and receipts (photos or PDFs, kept private) — and tick **I paid for this myself — please pay me back** to ask for a refund
 - **Treasurer** role (new): gets notified (in the app, push and email) and works a queue — **To review** (approve, which records it in the budget, or deny with a reason) and **To pay back** (mark a refund paid with how, a reference and the date, which closes it). The submitter is notified at each step; nobody approves their own claim; a Treasurer's or Head Mentor's own purchase with no refund is recorded right away. Head Mentors can review too
 - Every change to an expense claim is in its History and on the Audit log (“Changes to expense claims”)
