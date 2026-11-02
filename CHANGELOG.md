@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+**Broadcast messages**
+- Head Mentors: **Broadcast message** in the profile menu sends one message to **Team Members**, **Parents** and/or **Mentors** — in the app with a push notification (tapping it opens the whole message in a card), posted in the student and/or parent Discord server's announcements channel, and by email to the groups you pick. It shows how many people each choice reaches, asks before sending, and lists recent broadcasts
+- Discord settings: an **Announcements channel** for each server (broadcasts use the general channel until it's set)
+- Broadcasts are in the **Audit log** — what was sent, and to whom
+- **Invite people** left the profile menu — it's on the Team members page
+
 ## 1.9.0.7 — 2026-11-01
 
 - Volunteer settings (adults each meeting needs, default shift instructions) moved to their own page — **Edit Shift Instructions** at the top of the Volunteers page, for volunteer coordinators and Head Mentors

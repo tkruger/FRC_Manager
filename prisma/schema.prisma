@@ -88,6 +88,7 @@ model User {
   expenseClaimsPaid    ExpenseClaim[]      @relation("ClaimPaidBy")
   volunteerShifts      MeetingVolunteer[]  @relation("Volunteer")
   volunteersAssigned   MeetingVolunteer[]  @relation("VolunteerAssignedBy")
+  broadcastsSent       Broadcast[]         @relation("BroadcastSender")
   notifications        Notification[]
   maintenanceLogs      ToolMaintenanceLog[]
   discordLink          DiscordLink?
@@ -250,6 +251,7 @@ model Team {
   volunteerSettings VolunteerSettings?
   expenseClaims ExpenseClaim[]
   emailServer   TeamEmailServer?
+  broadcasts    Broadcast[]
   frcSettings   TeamFrcSettings?
   /// The team's Discord servers (a student one and a parent one)
   discordConfigs DiscordConfig[]
@@ -1467,6 +1469,30 @@ enum NotificationType {
   MEETING_TASKS
   /// Someone sent feedback about the app (super admins)
   FEEDBACK
+  /// A Head Mentor's broadcast message
+  BROADCAST
+}
+
+/// A message a Head Mentor sent to some of the team — in the app (and push), Discord, and/or email
+model Broadcast {
+  id           String   @id @default(cuid())
+  teamId       String
+  team         Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  sentById     String?
+  sentBy       User?    @relation("BroadcastSender", fields: [sentById], references: [id], onDelete: SetNull)
+  title        String
+  body         String
+  /// Who got it in the app: "students" | "parents" | "mentors"
+  groups       String[]
+  /// Who also got it by email
+  emailGroups  String[]
+  /// Discord servers it was posted to: "STUDENT" | "PARENT"
+  discord      String[]
+  /// How many got it: { inApp, pushed, emailed, discord }
+  counts       Json?
+  createdAt    DateTime @default(now())
+
+  @@index([teamId, createdAt])
 }
 
 /// A browser/device that has opted in to web push for a user
@@ -1565,6 +1591,8 @@ model DiscordConfig {
   channelMilestones   String?
   /// Parent server: meetings that need adult volunteers
   channelVolunteers   String?
+  /// Where Head Mentors' broadcast messages are posted (falls back to the general channel)
+  channelAnnouncements String?
 
   // Daily build summary
   dailySummaryEnabled Boolean @default(false)

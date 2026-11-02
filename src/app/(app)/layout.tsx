@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { ScrollReset } from "@/components/layout/ScrollReset";
+import { BroadcastOverlay } from "@/components/broadcast/BroadcastOverlay";
 import { FeedbackDialog, FeedbackLink } from "@/components/feedback/Feedback";
 import { MessageSquareText } from "lucide-react";
 import { TopNav } from "@/components/layout/TopNav";
@@ -96,6 +97,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <Toaster />
         {/* Give feedback — opened from the footer and the profile menu */}
         <Suspense fallback={null}><FeedbackDialog /></Suspense>
+        {/* A broadcast message opened from its notification */}
+        <Suspense fallback={null}><BroadcastOverlay /></Suspense>
       </div>
     </div>
   );

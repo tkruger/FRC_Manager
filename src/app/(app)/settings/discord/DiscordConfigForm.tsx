@@ -17,6 +17,7 @@ const STUDENT_CHANNELS = [
   { name: "channelSafety",      label: "Safety channel ID",        hint: "#safety — incident reports" },
   { name: "channelMilestones",  label: "Milestones channel ID",    hint: "#build-updates — milestone celebrations" },
   { name: "channelGeneral",     label: "General channel ID",       hint: "#general — competition approaching announcements" },
+  { name: "channelAnnouncements", label: "Announcements channel ID", hint: "#announcements — Head Mentors' broadcast messages (blank: the general channel)" },
 ];
 
 /** The parents' server gets what parents care about */
@@ -24,6 +25,7 @@ const PARENT_CHANNELS = [
   { name: "channelVolunteers",  label: "Volunteers channel ID",    hint: "#volunteers — each morning, meetings that still need adults; and when a volunteer drops out" },
   { name: "channelMilestones",  label: "Milestones channel ID",    hint: "#team-news — milestone celebrations, the same as the student server" },
   { name: "channelGeneral",     label: "General channel ID",       hint: "#general — where the Test server message goes" },
+  { name: "channelAnnouncements", label: "Announcements channel ID", hint: "#announcements — Head Mentors' broadcast messages (blank: the general channel)" },
 ];
 
 export function DiscordConfigForm({ config, audience = "STUDENT" }: { config: DiscordConfig | null; audience?: "STUDENT" | "PARENT" }) {

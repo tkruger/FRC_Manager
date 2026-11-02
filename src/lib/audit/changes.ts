@@ -32,6 +32,8 @@ export const CHANGE_LOG_DAYS = 365;
 type Kind =
   | "text" | "long" | "date" | "money" | "number" | "bool" | "time"
   | { enum: Record<string, string> }
+  /** A list of values, each shown by its label (a broadcast's recipients) */
+  | { list: Record<string, string> }
   | "robot"
   /** Never shown — only that it was set or changed (passwords) */
   | "secret"
@@ -66,6 +68,8 @@ interface Spec {
   erases?: (data: Row) => boolean;
   /** Personal fields scrubbed from the history once the record is erased or deleted */
   personal?: string[];
+  /** The "created" entry lists what it was created with (a broadcast: what was sent, to whom) */
+  detailOnCreate?: boolean;
 }
 
 type Row = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -216,6 +220,22 @@ const SPECS: Record<string, Spec> = {
     labelOf: (r) => `${r.description} ($${Number(r.amount ?? 0).toFixed(2)})`,
     parent: { key: "teamId", find: (base, id) => base.team.findUnique({ where: { id }, select: { id: true } }).then((t) => (t ? { teamId: t.id } : null)) },
   },
+  broadcast: {
+    entity: "broadcast",
+    fields: {
+      title:       { label: "Title",            kind: "text" },
+      body:        { label: "Message",          kind: "long" },
+      groups:      { label: "In the app to",    kind: { list: { students: "Team Members", parents: "Parents", mentors: "Mentors" } } },
+      emailGroups: { label: "Emailed to",       kind: { list: { students: "Team Members", parents: "Parents", mentors: "Mentors" } } },
+      discord:     { label: "Posted on Discord", kind: { list: { STUDENT: "Student server", PARENT: "Parent server" } } },
+    },
+    select: { id: true, teamId: true, title: true },
+    teamOf: (r) => r.teamId,
+    idOf: (r) => r.id,
+    labelOf: (r) => `📣 ${r.title}`,
+    detailOnCreate: true,
+    parent: { key: "teamId", find: (base, id) => base.team.findUnique({ where: { id }, select: { id: true } }).then((t) => (t ? { teamId: t.id } : null)) },
+  },
   orderVendorCharge: {
     entity: "order",
     fields: {
@@ -241,6 +261,10 @@ function fmtDate(d: unknown): string {
 
 const EMPTY = "—";
 function show(kind: Kind, v: unknown, names: Map<string, string>): string {
+  if (typeof kind === "object" && "list" in kind) {
+    const items = (Array.isArray(v) ? v : []).map((x) => kind.list[String(x)] ?? String(x));
+    return items.length ? items.join(", ") : EMPTY;
+  }
   if (v === null || v === undefined || v === "") return EMPTY;
   if (typeof kind === "object") return kind.enum[String(v)] ?? String(v);
   switch (kind) {
@@ -373,7 +397,12 @@ function lifecycle(spec: Spec, row: Row, action: "created" | "deleted"): Entry |
   const teamId = spec.teamOf(row);
   if (!teamId || spec.skip?.(row)) return null;
   if (!spec.part) {
-    return { teamId, entityType: spec.entity, entityId: spec.idOf(row), entityLabel: spec.labelOf(row), action, changes: [] };
+    const changes = spec.detailOnCreate && action === "created"
+      ? Object.entries(spec.fields)
+          .map(([f, def]) => ({ field: def.label, from: EMPTY, to: show(def.kind, row[f], new Map()) }))
+          .filter((c) => c.to !== EMPTY)
+      : [];
+    return { teamId, entityType: spec.entity, entityId: spec.idOf(row), entityLabel: spec.labelOf(row), action, changes };
   }
   const added = action === "created";
   let changes: FieldChange[];

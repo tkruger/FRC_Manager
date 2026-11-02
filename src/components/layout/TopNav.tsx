@@ -12,6 +12,7 @@ import { canCoordinate, isAdult } from "@/lib/volunteers";
 import { hiddenForViewOnly, isViewOnly } from "@/lib/access/read-only";
 import { audienceOf, MOBILE_TABS_BY_AUDIENCE } from "@/lib/audience";
 import { FeedbackLink } from "@/components/feedback/Feedback";
+import { Megaphone } from "lucide-react";
 
 const MODULE_TABS = [
   { label: "Home",        href: "/dashboard",   icon: HomeIcon,        exact: true },
@@ -76,7 +77,7 @@ export function TopNav({ session, pendingMemberCount = 0, unreadNotificationCoun
   const tabHrefs = [...new Set([...MOBILE_TABS_BY_AUDIENCE[audienceOf(roles)], ...MOBILE_TAB_FALLBACK])].filter(navShown).slice(0, 4);
   const MOBILE_TABS = tabHrefs.map((h) => MOBILE_ITEMS.find((i) => i.href === h)!);
   const MOBILE_MORE = MOBILE_ITEMS.filter((i) => navShown(i.href) && !tabHrefs.includes(i.href));
-  const canInvite         = roles.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP"].includes(r)); // same as INVITE_ROLES in lib/invites
+  const canBroadcast      = roles.includes("HEAD_MENTOR");
   const canManageTemplates = roles.some((r) => ["HEAD_MENTOR", "BUILD_LEAD"].includes(r));
   // Same people as the Audit log page (AUDIT_ROLES in lib/packing)
   const canSeeAudit       = roles.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP", "SAFETY_CAPTAIN"].includes(r));
@@ -166,7 +167,7 @@ export function TopNav({ session, pendingMemberCount = 0, unreadNotificationCoun
           {/* Notifications dropdown */}
           <NotificationsDropdown unreadCount={unreadNotificationCount} />
 
-          {session?.user && <UserMenu user={session.user} canManageTeam={canManageTeam} canManageDiscord={canManageDiscord} canManageEmail={canManageEmail} canManageTemplates={canManageTemplates} isSuperAdmin={isSuperAdmin} canInvite={canInvite} canSeeAudit={canSeeAudit} pendingMemberCount={pendingMemberCount} />}
+          {session?.user && <UserMenu user={session.user} canManageTeam={canManageTeam} canManageDiscord={canManageDiscord} canManageEmail={canManageEmail} canManageTemplates={canManageTemplates} isSuperAdmin={isSuperAdmin} canBroadcast={canBroadcast} canSeeAudit={canSeeAudit} pendingMemberCount={pendingMemberCount} />}
         </div>
         </div>
 
@@ -198,7 +199,7 @@ export function TopNav({ session, pendingMemberCount = 0, unreadNotificationCoun
               <CalendarIcon className="w-4 h-4" />
             </Link>
             <NotificationsDropdown unreadCount={unreadNotificationCount} />
-            {session?.user && <UserMenu user={session.user} canManageTeam={canManageTeam} canManageDiscord={canManageDiscord} canManageEmail={canManageEmail} canManageTemplates={canManageTemplates} isSuperAdmin={isSuperAdmin} canInvite={canInvite} canSeeAudit={canSeeAudit} />}
+            {session?.user && <UserMenu user={session.user} canManageTeam={canManageTeam} canManageDiscord={canManageDiscord} canManageEmail={canManageEmail} canManageTemplates={canManageTemplates} isSuperAdmin={isSuperAdmin} canBroadcast={canBroadcast} canSeeAudit={canSeeAudit} />}
           </div>
         </div>
       </header>
@@ -312,14 +313,14 @@ export function TopNav({ session, pendingMemberCount = 0, unreadNotificationCoun
   );
 }
 
-function UserMenu({ user, canManageTeam, canManageDiscord, canManageEmail = false, canManageTemplates, isSuperAdmin = false, canInvite = false, canSeeAudit = false, pendingMemberCount = 0 }: {
+function UserMenu({ user, canManageTeam, canManageDiscord, canManageEmail = false, canManageTemplates, isSuperAdmin = false, canBroadcast = false, canSeeAudit = false, pendingMemberCount = 0 }: {
   canManageEmail?:    boolean;
   canSeeAudit?:       boolean;
   user: { name?: string | null; email?: string | null };
   canManageTeam:      boolean;
   canManageDiscord:   boolean;
   isSuperAdmin?:      boolean;
-  canInvite?:         boolean;
+  canBroadcast?:      boolean;
   canManageTemplates: boolean;
   pendingMemberCount?: number;
 }) {
@@ -419,13 +420,12 @@ function UserMenu({ user, canManageTeam, canManageDiscord, canManageEmail = fals
               Audit log
             </Link>
           )}
-          {canInvite && (
-            <Link href="/settings/invites" role="menuitem" onClick={() => setOpen(false)}
+          {/* Head Mentors: a message to students, parents and/or mentors */}
+          {canBroadcast && (
+            <Link href="/broadcast" role="menuitem" onClick={() => setOpen(false)}
               className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-(--color-text-primary) hover:bg-(--color-surface-overlay) transition-colors">
-              <svg className="w-4 h-4 text-(--color-text-secondary)" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
-              </svg>
-              Invite people
+              <Megaphone className="w-4 h-4 text-(--color-text-secondary)" aria-hidden strokeWidth={1.75} />
+              Broadcast message
             </Link>
           )}
           {canManageTemplates && (

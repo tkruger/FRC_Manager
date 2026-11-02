@@ -207,6 +207,13 @@ export const TOPICS = [
     defaultInApp: true, defaultPush: true,
   },
   {
+    id: "team.broadcast", group: "Team",
+    label: "Announcements",
+    description: "A message from a Head Mentor to the team (or to students, parents or mentors).",
+    audience: "Whoever the Head Mentor sends it to",
+    defaultInApp: true, defaultPush: true, required: true,
+  },
+  {
     id: "account", group: "Team",
     label: "My account",
     description: "Your account is approved or your roles change.",

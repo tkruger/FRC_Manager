@@ -7,7 +7,7 @@ import { toHistoryEntries, type HistoryEntry } from "@/lib/audit/history";
 import { canReviewClaims } from "@/lib/expense-claims";
 
 const Input = z.object({
-  entityType: z.enum(["order", "task", "meeting", "member", "expense"]),
+  entityType: z.enum(["order", "task", "meeting", "member", "expense", "broadcast"]),
   entityId:   z.string().min(1).max(100),
 });
 

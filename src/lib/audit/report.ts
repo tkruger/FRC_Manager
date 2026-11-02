@@ -8,17 +8,18 @@ export const SHOWS = {
   all:      "Everything",
   tools:    "Tool check-outs and check-ins",
   safety:   "Safety reports",
-  changes:  "Changes to orders, tasks, meetings, members and expenses",
+  changes:  "Changes to orders, tasks, meetings, members and expenses, and broadcasts",
   order:    "Changes to orders",
   task:     "Changes to tasks",
   meeting:  "Changes to meetings",
   member:   "Changes to members",
   expense:  "Changes to expense claims",
+  broadcast: "Broadcast messages",
 } as const;
 export type Show = keyof typeof SHOWS;
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
-const CHANGE_TYPES = ["order", "task", "meeting", "member", "expense"] as const;
+const CHANGE_TYPES = ["order", "task", "meeting", "member", "expense", "broadcast"] as const;
 
 export function addDays(key: string, n: number) {
   return new Date(Date.parse(key) + n * 86_400_000).toISOString().slice(0, 10);

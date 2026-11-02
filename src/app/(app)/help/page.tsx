@@ -419,6 +419,13 @@ export default function HelpPage() {
           type can show <b>in the app</b>, as a <b>push notification</b>, or both. Volunteer shifts and coverage can also come by <b>email</b>.
         </p>
         <p>Tap the ✕ on a notification to clear it, or <b>Clear all</b> in the bell menu or on the Notifications page.</p>
+        <H3>Broadcast messages</H3>
+        <p>
+          Head Mentors can send one message to the team from <b>Broadcast message</b> in the profile menu: pick who gets it in the
+          app (with a push) — <b>Team Members</b>, <b>Parents</b> and/or <b>Mentors</b> — whether it&apos;s posted in the student and/or
+          parent Discord server&apos;s announcements channel, and who also gets it by email. Tapping the notification opens the whole
+          message. Every broadcast is in the Audit log.
+        </p>
         <H3>Turning on push notifications</H3>
         <p>The first time you open the app on a device, it asks whether to turn on notifications. If you choose <b>Not now</b>, it won&apos;t ask again on that device — you can turn them on any time here:</p>
         <Steps>

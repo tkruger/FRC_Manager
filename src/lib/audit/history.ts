@@ -43,7 +43,8 @@ export function historyHref(e: Pick<HistoryEntry, "entityType" | "entityId" | "a
     case "meeting": return `/calendar?meeting=${e.entityId}`;
     case "member":  return `/settings/members#member-${e.entityId}`;
     case "expense": return `/budget/claims/${e.entityId}`;
+    case "broadcast": return `/dashboard?broadcast=${e.entityId}`;
   }
 }
 
-export const ENTITY_LABELS: Record<EntityType, string> = { order: "Order", task: "Task", meeting: "Meeting", member: "Member", expense: "Expense claim" };
+export const ENTITY_LABELS: Record<EntityType, string> = { order: "Order", task: "Task", meeting: "Meeting", member: "Member", expense: "Expense claim", broadcast: "Broadcast" };
