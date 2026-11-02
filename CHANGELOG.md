@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+**Housekeeping (storage)**
+- Tool photos are shrunk on the phone before uploading (longest side 1600px) — a few hundred KB instead of several MB
+- Replaced tool photos are deleted, and a daily sweep removes uploaded photos no tool uses (e.g. a form closed after picking one)
+- Old rows are cleared out: read notifications after 90 days (any after 180), reminder bookkeeping after 180 days, Discord command logs after 90 days
+- The `dev` branch no longer makes its own Vercel deployment (it was identical to preprod), halving the deployments stored
+
 ## 1.9.1 — 2026-11-02
 
 **Broadcast messages**

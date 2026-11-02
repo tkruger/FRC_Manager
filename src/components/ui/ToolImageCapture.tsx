@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { shrinkImage } from "@/lib/shrink-image";
 import { Button } from "./button";
 
 interface Props {
@@ -28,9 +29,11 @@ export function ToolImageCapture({ name = "imageUrl", defaultUrl, onUrl }: Props
     setHasCamera(!!navigator.mediaDevices?.getUserMedia);
   }, []);
 
-  async function upload(file: File) {
+  async function upload(original: File) {
     setUploading(true);
     setError(null);
+    // A tool photo doesn't need to be bigger than this (a phone photo is 3–8 MB; this is ~200–400 KB)
+    const file = await shrinkImage(original, { maxSide: 1600, quality: 0.82, minBytes: 300 * 1024 });
     const fd = new FormData();
     fd.append("file", file);
     try {
@@ -90,7 +93,7 @@ export function ToolImageCapture({ name = "imageUrl", defaultUrl, onUrl }: Props
     stopWebcam();
     canvas.toBlob((blob) => {
       if (blob) upload(new File([blob], "webcam.jpg", { type: "image/jpeg" }));
-    }, "image/jpeg", 0.9);
+    }, "image/jpeg", 0.85);
   }
 
   function clear() {

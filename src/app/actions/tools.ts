@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { deleteBlobQuietly } from "@/lib/blob-cleanup";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
@@ -148,10 +149,14 @@ export async function updateToolImageAction(
   const image = blobImageUrl(imageUrl);
   if (imageUrl && !image) return { success: false };
 
+  const before = await prisma.tool.findFirst({ where: { id: toolId, teamId: session.user.teamId }, select: { image: true } });
+  if (!before) return { success: false };
   await prisma.tool.update({
     where: { id: toolId, teamId: session.user.teamId },
     data:  { image },
   });
+  // The old photo isn't needed any more
+  if (before.image && before.image !== image) await deleteBlobQuietly(before.image);
 
   revalidatePath(`/tools/${toolId}`);
   revalidatePath("/tools");

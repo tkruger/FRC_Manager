@@ -7,6 +7,9 @@ import { syncAllActiveSeasons } from "@/lib/season-active";
 import { prisma } from "@/lib/prisma";
 import { pruneChangeLog } from "@/lib/audit/changes";
 import { postVolunteerDigests } from "@/lib/notify/discord-volunteers";
+import { sweepUnusedToolPhotos } from "@/lib/blob-cleanup";
+
+const DAY = 86_400_000;
 
 // Hourly reminder job. Called by Vercel Cron or the GitHub Actions schedule with
 // `Authorization: Bearer $CRON_SECRET`. Safe to call more often — reminders are deduplicated.
@@ -32,5 +35,18 @@ export async function GET(request: Request) {
   // Receipts uploaded for an expense that was never submitted
   const receiptsCleared = await prisma.expenseReceipt.deleteMany({ where: { claimId: null, createdAt: { lt: new Date(Date.now() - 86_400_000) } } })
     .then((r) => r.count).catch(() => 0);
-  return NextResponse.json({ ...result, seasonsSwitched, rateLimitsCleared, tokensCleared, changesCleared, receiptsCleared, volunteerPosts, ms: Date.now() - started });
+  // Old rows nobody needs: read notifications after 90 days (any after 180), reminder bookkeeping
+  // and Discord command logs after 180 / 90 days
+  const ago = (days: number) => new Date(Date.now() - days * DAY);
+  const [notificationsCleared, remindersCleared, discordLogsCleared] = await Promise.all([
+    prisma.notification.deleteMany({ where: { OR: [{ read: true, createdAt: { lt: ago(90) } }, { createdAt: { lt: ago(180) } }] } }).then((r) => r.count),
+    prisma.reminderLog.deleteMany({ where: { lastSentAt: { lt: ago(180) } } }).then((r) => r.count),
+    prisma.discordInteractionLog.deleteMany({ where: { createdAt: { lt: ago(90) } } }).then((r) => r.count),
+  ]).catch(() => [0, 0, 0]);
+  // Once a day (the 8:05 UTC run — the early hours in the US): tool photos that nothing uses any more
+  const photosCleared = new Date().getUTCHours() === 8 ? await sweepUnusedToolPhotos().catch((e) => { console.error("[cron] photo sweep", e); return 0; }) : 0;
+  return NextResponse.json({
+    ...result, seasonsSwitched, rateLimitsCleared, tokensCleared, changesCleared, receiptsCleared, volunteerPosts,
+    notificationsCleared, remindersCleared, discordLogsCleared, photosCleared, ms: Date.now() - started,
+  });
 }
