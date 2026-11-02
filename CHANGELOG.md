@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.9.1 — 2026-11-02
+
 **Broadcast messages**
 - Head Mentors: **Broadcast message** in the profile menu sends one message to **Team Members**, **Parents** and/or **Mentors** — in the app with a push notification (tapping it opens the whole message in a card), posted in the student and/or parent Discord server's announcements channel, and by email to the groups you pick. It shows how many people each choice reaches, asks before sending, and lists recent broadcasts
 - Discord settings: an **Announcements channel** for each server (broadcasts use the general channel until it's set)
