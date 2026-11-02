@@ -91,7 +91,7 @@ export default async function VolunteersPage({ searchParams }: { searchParams: P
         help="volunteers"
         subtitle={<>Every meeting needs at least {minAdults} confirmed adult{minAdults === 1 ? "" : "s"}. {season ? `${season.name} · the next ${WEEKS_AHEAD} weeks.` : "There's no active season yet."}</>}
         actions={coordinating && (
-          <Link href="/volunteers/settings"><Button size="sm" variant="outline">⚙️ Volunteer settings</Button></Link>
+          <Link href="/volunteers/settings"><Button size="sm" variant="outline">Edit Shift Instructions</Button></Link>
         )}
       />
 

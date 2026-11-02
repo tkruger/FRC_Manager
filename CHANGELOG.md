@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- **Volunteer settings** (adults each meeting needs, default shift instructions) moved to their own page — the **Volunteer settings** button at the top of the Volunteers page, for volunteer coordinators and Head Mentors
+- Volunteer settings (adults each meeting needs, default shift instructions) moved to their own page — **Edit Shift Instructions** at the top of the Volunteers page, for volunteer coordinators and Head Mentors
 
 ## 1.9.0.6 — 2026-11-01
 

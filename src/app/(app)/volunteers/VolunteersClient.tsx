@@ -150,7 +150,7 @@ export function VolunteersClient({ me, headMentors, coordinating, isHeadMentor, 
           <h2 className="text-h3 text-(--color-text-primary)">Shift instructions</h2>
           {defaultInstructions
             ? <Markdown className="text-sm">{defaultInstructions}</Markdown>
-            : <p className="text-small text-(--color-text-secondary)">{coordinating ? "No instructions yet — add where to go and what to do in Volunteer settings (top of the page)." : "The volunteer coordinator hasn't added instructions yet."}</p>}
+            : <p className="text-small text-(--color-text-secondary)">{coordinating ? "No instructions yet — add where to go and what to do with Edit Shift Instructions (top of the page)." : "The volunteer coordinator hasn't added instructions yet."}</p>}
           <p className="text-xs text-(--color-text-secondary)">Some meetings have their own instructions; they&apos;re shown on the meeting and sent with its reminder.</p>
         </section>
       )}
