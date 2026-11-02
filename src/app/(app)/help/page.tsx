@@ -371,7 +371,7 @@ export default function HelpPage() {
         <ul className="list">
           <li>Meetings without enough confirmed adults are marked in red on the Volunteers page and the calendar. <b>Only meetings that need adults</b> narrows the list.</li>
           <li><b>Ask someone to cover…</b> sends a cleared adult a request to confirm. The × next to a name takes them off the shift.</li>
-          <li><b>Volunteer settings</b> sets how many confirmed adults a meeting needs and the default <b>shift instructions</b>. A meeting can have its own <b>special instructions</b> (a competition, an outreach event) instead.</li>
+          <li><b>Volunteer settings</b> (the button at the top of the Volunteers page) sets how many confirmed adults a meeting needs and the default <b>shift instructions</b>. A meeting can have its own <b>special instructions</b> (a competition, an outreach event) instead.</li>
           <li>Each morning, coordinators get a list of the next two weeks&apos; meetings that are short (Head Mentors get it if the team has no coordinator).</li>
         </ul>
       </Section>

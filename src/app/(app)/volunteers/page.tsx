@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { PageTitle } from "@/components/PageHeader";
+import Link from "next/link";
+import { PageHeader } from "@/components/PageHeader";
+import { Button } from "@/components/ui/button";
 import { FALLBACK_TIMEZONE, isValidTimezone, localParts } from "@/lib/notify/time";
 import { canCoordinate, clearanceDaysLeft, DEFAULT_MIN_ADULTS, isAdult, isCleared, shiftWhen } from "@/lib/volunteers";
 import { VolunteersClient, type AdultRow, type MeetingRow } from "./VolunteersClient";
@@ -84,12 +86,14 @@ export default async function VolunteersPage({ searchParams }: { searchParams: P
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-      <div>
-        <PageTitle help="volunteers">Volunteers</PageTitle>
-        <p className="text-body text-(--color-text-secondary) mt-1">
-          Every meeting needs at least {minAdults} confirmed adult{minAdults === 1 ? "" : "s"}. {season ? `${season.name} · the next ${WEEKS_AHEAD} weeks.` : "There's no active season yet."}
-        </p>
-      </div>
+      <PageHeader
+        title="Volunteers"
+        help="volunteers"
+        subtitle={<>Every meeting needs at least {minAdults} confirmed adult{minAdults === 1 ? "" : "s"}. {season ? `${season.name} · the next ${WEEKS_AHEAD} weeks.` : "There's no active season yet."}</>}
+        actions={coordinating && (
+          <Link href="/volunteers/settings"><Button size="sm" variant="outline">⚙️ Volunteer settings</Button></Link>
+        )}
+      />
 
       <VolunteersClient
         me={{ id: session.user.id, cleared: !!me && isCleared(me), lapsed: !!me?.volunteerClearedAt && !isCleared(me), adult: isAdult(roles), clearedUntil: me?.volunteerClearedUntil?.toISOString() ?? null, hasPhone: !!me?.phone }}

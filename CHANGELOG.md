@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Volunteer settings** (adults each meeting needs, default shift instructions) moved to their own page — the **Volunteer settings** button at the top of the Volunteers page, for volunteer coordinators and Head Mentors
+
 ## 1.9.0.6 — 2026-11-01
 
 - **Snooze competition alerts** — for when you're not at the event: on the event's page or in Settings → Notifications, pause schedule, next-match, result and award alerts for **2 hours**, **until tomorrow morning** or **until the event ends**. No push or email while snoozed; they still collect in your notifications and come back on by themselves
