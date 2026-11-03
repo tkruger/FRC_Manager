@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.10.1 — 2026-11-03
+
 - **Integration setup guide** (Help → integration setup guide, and linked from Settings → Integrations, Team email, Discord and The Blue Alliance & Nexus): step-by-step setup for site settings, background jobs, Gmail / Google Workspace (Google Cloud, scopes, redirect address, verification), other mail providers, Discord, The Blue Alliance, FRC Nexus, push notifications and storage — with this site's own addresses filled in — plus **how your data is protected**
 
 ## 1.10.0 — 2026-11-03
