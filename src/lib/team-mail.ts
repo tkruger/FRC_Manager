@@ -19,7 +19,7 @@ export interface MailServer {
   fromEmail: string;
 }
 
-export interface OutgoingMail { to: string; subject: string; html: string; text: string }
+export interface OutgoingMail { to: string; subject: string; html: string; text: string; replyTo?: string }
 
 /** A message safe to show a Head Mentor (no stack traces or internals) */
 export class MailServerError extends Error {}
@@ -109,7 +109,7 @@ export async function verifyMailServer(s: MailServer): Promise<{ ok: true } | { 
 export async function sendViaMailServer(s: MailServer, msg: OutgoingMail): Promise<{ sent: true } | { sent: false; error: string }> {
   try {
     const t = await transport(s);
-    await t.sendMail({ from: fromHeader(s), to: msg.to, subject: msg.subject, html: msg.html, text: msg.text });
+    await t.sendMail({ from: fromHeader(s), to: msg.to, subject: msg.subject, html: msg.html, text: msg.text, ...(msg.replyTo ? { replyTo: msg.replyTo } : {}) });
     t.close();
     return { sent: true };
   } catch (e) {

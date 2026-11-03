@@ -5,6 +5,8 @@ export type MailSecurity = "ssl" | "starttls";
 export interface MailProvider {
   id: string;
   label: string;
+  /** Connected with Google (the Gmail API) instead of a mail server and password */
+  google?: boolean;
   host: string;
   port: number;
   security: MailSecurity;
@@ -15,9 +17,8 @@ export interface MailProvider {
 
 export const MAIL_PROVIDERS: MailProvider[] = [
   {
-    id: "gmail", label: "Gmail / Google Workspace", host: "smtp.gmail.com", port: 465, security: "ssl",
-    passwordHelp: "An app password (not your normal password): turn on 2-Step Verification, then create one under Google Account → Security → App passwords.",
-    helpUrl: "https://myaccount.google.com/apppasswords",
+    id: "gmail", label: "Gmail / Google Workspace", host: "", port: 0, security: "ssl", google: true,
+    passwordHelp: "",
   },
   {
     id: "outlook", label: "Outlook / Microsoft 365", host: "smtp.office365.com", port: 587, security: "starttls",

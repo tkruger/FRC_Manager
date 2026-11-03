@@ -9,7 +9,9 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { issueMessage } from "@/lib/validation";
 import { seal, open } from "@/lib/security/secret-box";
-import { sendViaMailServer, verifyMailServer, type MailServer } from "@/lib/team-mail";
+import { verifyMailServer, type MailServer } from "@/lib/team-mail";
+import { sendThroughTeam } from "@/lib/team-sender";
+import { revokeGmail } from "@/lib/gmail-api";
 import { MAIL_PORTS, PROVIDER_BY_ID, type MailSecurity } from "@/lib/email-providers";
 import { escapeHtml } from "@/lib/html";
 import { EMAIL_ADMIN_ROLES } from "@/lib/rbac";
@@ -42,9 +44,11 @@ export async function saveEmailServerAction(input: unknown): Promise<Result> {
   const parsed = Schema.safeParse(input);
   if (!parsed.success) return { success: false, error: issueMessage(parsed.error) };
   const d = parsed.data;
+  // Gmail connects with Google (the Gmail API), not a mail server password
+  if (PROVIDER_BY_ID[d.provider]?.google) return { success: false, error: "Gmail connects with Google — use Connect with Google." };
 
   const existing = await prisma.teamEmailServer.findUnique({ where: { teamId: who.teamId } });
-  const password = d.password?.trim() ? d.password.trim() : existing ? open(existing.passwordEnc) : null;
+  const password = d.password?.trim() ? d.password.trim() : existing?.passwordEnc ? open(existing.passwordEnc) : null;
   if (!password) return { success: false, error: existing ? "Enter the password again — the saved one can't be read." : "Enter the password." };
 
   const server: MailServer = {
@@ -55,10 +59,16 @@ export async function saveEmailServerAction(input: unknown): Promise<Result> {
   if (!check.ok) return { success: false, error: check.error };
 
   const data = {
-    provider: d.provider, host: server.host, port: server.port, security: server.security,
+    provider: d.provider, method: "smtp", host: server.host, port: server.port, security: server.security,
     username: server.username, passwordEnc: seal(password), fromName: server.fromName, fromEmail: server.fromEmail,
+    // Switching from Gmail: drop the Google connection
+    refreshTokenEnc: null, googleEmail: null,
     enabled: true, lastError: null, lastErrorAt: null, updatedById: who.id,
   };
+  if (existing?.refreshTokenEnc) {
+    const old = open(existing.refreshTokenEnc);
+    if (old) await revokeGmail(old);
+  }
   await prisma.teamEmailServer.upsert({ where: { teamId: who.teamId }, create: { teamId: who.teamId, ...data }, update: data });
   revalidatePath("/settings/email");
   return { success: true };
@@ -73,13 +83,11 @@ export async function sendTestEmailAction(): Promise<Result & { to?: string }> {
     prisma.user.findUnique({ where: { id: who.id }, select: { email: true, name: true } }),
     prisma.team.findUnique({ where: { id: who.teamId }, select: { teamNumber: true } }),
   ]);
-  if (!server) return { success: false, error: "Set up the mail server first." };
+  if (!server) return { success: false, error: "Set up the team's email first." };
   if (!me || me.email.endsWith(".invalid")) return { success: false, error: "Your account has no email address to send the test to." };
-  const password = open(server.passwordEnc);
-  if (!password) return { success: false, error: "The saved password can't be read anymore — enter it again and save." };
 
   const line = `This is a test from FRC Manager. Team ${team?.teamNumber ?? ""} emails — notifications, invites and welcomes — will come from ${server.fromEmail}.`;
-  const res = await sendViaMailServer({ ...server, security: server.security as MailSecurity, password }, {
+  const res = await sendThroughTeam(server, {
     to: me.email,
     subject: `Test email from Team ${team?.teamNumber ?? ""}`.trim(),
     text: `${line}\n\nIf you got this, the team's email is working.`,
@@ -102,11 +110,34 @@ export async function setEmailServerEnabledAction(enabled: boolean): Promise<Res
   return { success: true };
 }
 
-/** Forget the team's server (and its password) */
+/** Forget the team's server (and its password, or its Google connection — which is revoked) */
 export async function removeEmailServerAction(): Promise<Result> {
   const who = await headMentor();
   if (!who) return { success: false, error: "Only Head Mentors and Integration Admins can set up the team's email." };
+  const existing = await prisma.teamEmailServer.findUnique({ where: { teamId: who.teamId }, select: { refreshTokenEnc: true } });
+  const token = existing?.refreshTokenEnc ? open(existing.refreshTokenEnc) : null;
+  if (token) await revokeGmail(token);
   await prisma.teamEmailServer.deleteMany({ where: { teamId: who.teamId } });
+  revalidatePath("/settings/email");
+  return { success: true };
+}
+
+const SenderSchema = z.object({
+  fromName:  z.string().trim().max(100).optional(),
+  fromEmail: z.string().trim().email("Enter the email address messages come from.").max(254),
+});
+
+/** Gmail: the name and address messages come from (the account's address, or a Send-mail-as alias) */
+export async function saveGmailSenderAction(input: unknown): Promise<Result> {
+  const who = await headMentor();
+  if (!who) return { success: false, error: "Only Head Mentors and Integration Admins can set up the team's email." };
+  const parsed = SenderSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: issueMessage(parsed.error) };
+  const { count } = await prisma.teamEmailServer.updateMany({
+    where: { teamId: who.teamId, method: "gmail_api" },
+    data:  { fromName: parsed.data.fromName || null, fromEmail: parsed.data.fromEmail.toLowerCase(), updatedById: who.id },
+  });
+  if (count === 0) return { success: false, error: "Connect Gmail first." };
   revalidatePath("/settings/email");
   return { success: true };
 }

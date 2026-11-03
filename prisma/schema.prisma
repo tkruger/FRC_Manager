@@ -1702,13 +1702,21 @@ model TeamEmailServer {
   team         Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
   /// Preset it was set up from: gmail, outlook, yahoo, icloud, zoho or custom
   provider     String
-  host         String
-  port         Int
+  /// How it sends: "smtp" (a mail server and password) or "gmail_api" (Gmail, connected with Google)
+  method       String    @default("smtp")
+  // SMTP only
+  host         String?
+  port         Int?
   /// "ssl" (TLS from the start, usually 465) or "starttls" (usually 587)
-  security     String
-  username     String
+  security     String?
+  username     String?
   /// Encrypted (src/lib/security/secret-box.ts) — never sent to the browser
-  passwordEnc  String
+  passwordEnc  String?
+  // Gmail API only
+  /// Google's refresh token for the gmail.send permission, encrypted
+  refreshTokenEnc String?
+  /// The Google account that was connected
+  googleEmail  String?
   fromName     String?
   fromEmail    String
   enabled      Boolean   @default(true)

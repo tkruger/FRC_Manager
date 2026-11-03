@@ -7,28 +7,32 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/toast";
 import { MAIL_PORTS, MAIL_PROVIDERS, PROVIDER_BY_ID, type MailSecurity } from "@/lib/email-providers";
 import {
-  removeEmailServerAction, saveEmailServerAction, sendTestEmailAction, setEmailServerEnabledAction,
+  removeEmailServerAction, saveEmailServerAction, saveGmailSenderAction, sendTestEmailAction, setEmailServerEnabledAction,
 } from "@/app/actions/email-server";
 
 interface Saved {
-  provider: string; host: string; port: number; security: MailSecurity;
-  username: string; fromName: string | null; fromEmail: string; enabled: boolean;
+  provider: string;
+  /** "smtp" or "gmail_api" */
+  method: string;
+  googleEmail: string | null;
+  host: string | null; port: number | null; security: MailSecurity;
+  username: string | null; fromName: string | null; fromEmail: string; enabled: boolean;
   lastSentAt: string | null; lastError: string | null; lastErrorAt: string | null;
 }
 
 const inputCls = "h-10 w-full rounded-md border border-(--color-border) bg-(--color-surface) px-3 text-sm text-(--color-text-primary) focus:border-(--color-primary) focus:outline-none";
 const when = (iso: string) => new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 
-export function EmailServerForm({ saved, teamNumber }: { saved: Saved | null; teamNumber: number | null }) {
+export function EmailServerForm({ saved, teamNumber, googleAvailable }: { saved: Saved | null; teamNumber: number | null; googleAvailable: boolean }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [editing, setEditing] = useState(!saved);
   const [error, setError] = useState<string | null>(null);
   const [f, setF] = useState(() => ({
     provider: saved?.provider ?? "gmail",
-    host: saved?.host ?? PROVIDER_BY_ID.gmail.host,
-    port: saved?.port ?? PROVIDER_BY_ID.gmail.port,
-    security: saved?.security ?? PROVIDER_BY_ID.gmail.security,
+    host: saved?.host ?? "",
+    port: saved?.port ?? 587,
+    security: saved?.security ?? ("starttls" as MailSecurity),
     username: saved?.username ?? "",
     password: "",
     fromName: saved?.fromName ?? (teamNumber ? `FRC Team ${teamNumber}` : ""),
@@ -36,6 +40,9 @@ export function EmailServerForm({ saved, teamNumber }: { saved: Saved | null; te
   }));
   const provider = PROVIDER_BY_ID[f.provider] ?? PROVIDER_BY_ID.custom;
   const custom = f.provider === "custom";
+  const google = !!provider.google;
+  const gmailSaved = saved?.method === "gmail_api";
+  const [sender, setSender] = useState({ fromName: saved?.fromName ?? "", fromEmail: saved?.fromEmail ?? "" });
   const set = (k: keyof typeof f, v: string | number) => setF((x) => ({ ...x, [k]: v }));
 
   function pickProvider(id: string) {
@@ -62,7 +69,9 @@ export function EmailServerForm({ saved, teamNumber }: { saved: Saved | null; te
             <div className="min-w-0">
               <h2 className="text-h3 text-(--color-text-primary)">Sending as</h2>
               <p className="text-sm text-(--color-text-primary) break-all">{saved.fromName ? `${saved.fromName} <${saved.fromEmail}>` : saved.fromEmail}</p>
-              <p className="text-small text-(--color-text-secondary)">{PROVIDER_BY_ID[saved.provider]?.label ?? "Mail server"} · {saved.host}:{saved.port}</p>
+              <p className="text-small text-(--color-text-secondary)">
+                {gmailSaved ? `Gmail, connected with Google as ${saved.googleEmail ?? saved.fromEmail}` : `${PROVIDER_BY_ID[saved.provider]?.label ?? "Mail server"} · ${saved.host}:${saved.port}`}
+              </p>
             </div>
             <Badge variant={saved.enabled ? "success" : "neutral"}>{saved.enabled ? "In use" : "Paused — using FRC Manager's email"}</Badge>
           </div>
@@ -72,6 +81,25 @@ export function EmailServerForm({ saved, teamNumber }: { saved: Saved | null; te
             </div>
           )}
           {saved.lastSentAt && <p className="text-small text-(--color-text-secondary)">Last sent {when(saved.lastSentAt)}.</p>}
+          {gmailSaved && (
+            <form className="grid gap-3 border-t border-(--color-border) pt-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end" onSubmit={(e) => {
+              e.preventDefault();
+              act(() => saveGmailSenderAction(sender), "Sender saved");
+            }}>
+              <label className="block space-y-1.5">
+                <span className="block text-sm font-medium text-(--color-text-primary)">From name</span>
+                <input className={inputCls} value={sender.fromName} onChange={(e) => setSender((x) => ({ ...x, fromName: e.target.value }))} maxLength={100} placeholder="FRC Team 1234" />
+              </label>
+              <label className="block space-y-1.5">
+                <span className="block text-sm font-medium text-(--color-text-primary)">From email</span>
+                <input className={inputCls} type="email" value={sender.fromEmail} onChange={(e) => setSender((x) => ({ ...x, fromEmail: e.target.value }))} required />
+              </label>
+              <Button type="submit" size="sm" variant="outline" disabled={pending}>Save sender</Button>
+              <p className="text-xs text-(--color-text-secondary) sm:col-span-3">
+                The account&apos;s own address, or an alias it can send as (Gmail → Settings → Accounts → Send mail as).
+              </p>
+            </form>
+          )}
           {error && <p className="text-sm text-(--color-danger)">{error}</p>}
           <div className="flex flex-wrap gap-2">
             <Button size="sm" isLoading={pending} onClick={() => {
@@ -83,7 +111,7 @@ export function EmailServerForm({ saved, teamNumber }: { saved: Saved | null; te
                 router.refresh();
               });
             }}>Send me a test email</Button>
-            <Button size="sm" variant="outline" disabled={pending} onClick={() => setEditing(true)}>Change settings</Button>
+            <Button size="sm" variant="outline" disabled={pending} onClick={() => setEditing(true)}>{gmailSaved ? "Change account" : "Change settings"}</Button>
             <Button size="sm" variant="outline" disabled={pending}
               onClick={() => act(() => setEmailServerEnabledAction(!saved.enabled), saved.enabled ? "Paused — FRC Manager's email is used" : "The team's email is in use again")}>
               {saved.enabled ? "Pause" : "Resume"}
@@ -99,6 +127,7 @@ export function EmailServerForm({ saved, teamNumber }: { saved: Saved | null; te
       {editing && (
         <form className="card space-y-4" onSubmit={(e) => {
           e.preventDefault();
+          if (google) return;
           act(() => saveEmailServerAction({ ...f, port: Number(f.port), password: f.password || undefined }), "Connected and saved", () => { setEditing(false); set("password", ""); });
         }}>
           <h2 className="text-h3 text-(--color-text-primary)">{saved ? "Change the mail server" : "Connect a mail account"}</h2>
@@ -111,6 +140,18 @@ export function EmailServerForm({ saved, teamNumber }: { saved: Saved | null; te
             </select>
           </label>
 
+          {google ? (
+            <div className="space-y-3 rounded-md bg-(--color-surface-overlay) p-3">
+              <p className="text-sm text-(--color-text-primary)">
+                Sign in with the team&apos;s Google account and allow FRC Manager to <b>send email</b> as it — nothing else (it can&apos;t read the mailbox).
+                Works with Gmail and Google Workspace accounts.
+              </p>
+              {googleAvailable
+                ? <a href="/api/integrations/gmail/start" className="inline-flex h-10 items-center gap-2 rounded-md bg-(--color-primary) px-4 text-sm font-semibold text-white hover:opacity-90">Connect with Google</a>
+                : <p className="text-sm text-(--color-danger)">Google sign-in isn&apos;t set up for this site yet (GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET).</p>}
+              {saved && <Button type="button" variant="ghost" disabled={pending} onClick={() => { setEditing(false); setError(null); }}>Cancel</Button>}
+            </div>
+          ) : (<>
           <div className={custom ? "grid gap-3 sm:grid-cols-[1fr_7rem_10rem]" : "hidden"}>
             <label className="block space-y-1.5">
               <span className="block text-sm font-medium text-(--color-text-primary)">Server</span>
@@ -165,6 +206,7 @@ export function EmailServerForm({ saved, teamNumber }: { saved: Saved | null; te
             {saved && <Button type="button" variant="ghost" disabled={pending} onClick={() => { setEditing(false); setError(null); }}>Cancel</Button>}
           </div>
           <p className="text-xs text-(--color-text-secondary)">Saving logs in to the server to check the settings; nothing is sent.</p>
+          </>)}
         </form>
       )}
     </div>

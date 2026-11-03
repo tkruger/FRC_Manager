@@ -447,7 +447,7 @@ export default function HelpPage() {
         <p>
           Emails come from FRC Manager unless a Head Mentor connects the team&apos;s own email account in <b>Settings → Integrations → Team email</b>
           (Gmail, Outlook, Yahoo, iCloud, Zoho or any mail server) — Integration Admins can too. Then notifications, invites and welcome emails come from the
-          team&apos;s address. Gmail, Yahoo and iCloud need an <b>app password</b> (not the normal one). Account emails — confirming an
+          team&apos;s address. For <b>Gmail / Google Workspace</b>, tap <b>Connect with Google</b> and sign in with the team&apos;s account — FRC Manager only gets permission to send email, not to read the mailbox. Yahoo and iCloud need an <b>app password</b> (not the normal one). Account emails — confirming an
           address, resetting a password — always come from FRC Manager, and if the team&apos;s server fails, FRC Manager sends the
           message instead and the problem shows on the Team email page.
         </p>

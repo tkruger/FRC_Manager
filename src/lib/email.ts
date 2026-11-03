@@ -10,9 +10,7 @@
 //                   verified in Resend. Until then Resend's test sender only reaches your own address.
 
 import { prisma } from "@/lib/prisma";
-import { open } from "@/lib/security/secret-box";
-import { sendViaMailServer } from "@/lib/team-mail";
-import type { MailSecurity } from "@/lib/email-providers";
+import { sendThroughTeam } from "@/lib/team-sender";
 
 export function emailConfigured(): boolean {
   return !!process.env.RESEND_API_KEY;
@@ -37,12 +35,7 @@ async function sendViaTeam(teamId: string, msg: Mail): Promise<boolean> {
   try {
     const server = await prisma.teamEmailServer.findUnique({ where: { teamId } });
     if (!server?.enabled) return false;
-    const password = open(server.passwordEnc);
-    if (!password) {
-      await prisma.teamEmailServer.update({ where: { teamId }, data: { lastError: "The saved password can't be read anymore — enter it again.", lastErrorAt: new Date() } });
-      return false;
-    }
-    const res = await sendViaMailServer({ ...server, security: server.security as MailSecurity, password }, msg);
+    const res = await sendThroughTeam(server, msg);
     await prisma.teamEmailServer.update({
       where: { teamId },
       data:  res.sent ? { lastSentAt: new Date() } : { lastError: res.error, lastErrorAt: new Date() },
