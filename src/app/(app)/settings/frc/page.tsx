@@ -30,7 +30,10 @@ export default async function FrcSettingsPage() {
           <Link href="/settings/integrations" className="hover:text-(--color-primary)">Integrations</Link>
           <span className="mx-2">›</span>The Blue Alliance &amp; Nexus
         </nav>
-        <PageTitle help="competitions">The Blue Alliance &amp; Nexus</PageTitle>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <PageTitle help="competitions">The Blue Alliance &amp; Nexus</PageTitle>
+          <Link href="/help/integrations#tba" className="text-sm font-medium text-(--color-secondary) hover:underline">Setup guide →</Link>
+        </div>
         <p className="text-body text-(--color-text-secondary) mt-1">
           Your team&apos;s own keys for match schedules, results, history and live notifications. Each team uses its own, so
           nobody shares a limit. The webhooks are optional — they make updates arrive in seconds instead of within about 5 minutes.

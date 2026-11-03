@@ -68,7 +68,10 @@ export default async function IntegrationsPage() {
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       <div>
         <PageTitle help="discord">Integrations</PageTitle>
-        <p className="text-body text-(--color-text-secondary) mt-1">The services FRC Manager connects to for your team.</p>
+        <p className="text-body text-(--color-text-secondary) mt-1">
+          The services FRC Manager connects to for your team. Step-by-step setup for each, and how the data is protected, is in the{" "}
+          <Link href="/help/integrations" className="text-(--color-secondary) hover:underline">integration setup guide</Link>.
+        </p>
       </div>
       <ul className="space-y-3">
         {items.map((i) => {

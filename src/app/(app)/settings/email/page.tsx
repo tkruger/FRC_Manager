@@ -38,7 +38,10 @@ export default async function EmailSettingsPage({ searchParams }: { searchParams
           <Link href="/settings/integrations" className="hover:text-(--color-primary)">Integrations</Link>
           <span className="mx-2">›</span>Team email
         </nav>
-        <PageTitle help="notifications">Team email</PageTitle>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <PageTitle help="notifications">Team email</PageTitle>
+          <Link href="/help/integrations#gmail" className="text-sm font-medium text-(--color-secondary) hover:underline">Setup guide →</Link>
+        </div>
         <p className="text-body text-(--color-text-secondary) mt-1">
           Send the team&apos;s emails — notifications like volunteer shifts, invites and welcome emails — from your own email
           account (for example the team&apos;s Gmail), so they come from an address families recognize. Account emails

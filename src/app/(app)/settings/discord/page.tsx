@@ -43,7 +43,10 @@ export default async function DiscordSettingsPage() {
           <Link href="/settings/integrations" className="hover:text-(--color-primary)">Integrations</Link>
           <span className="mx-2">›</span>Discord
         </nav>
-        <PageTitle help="discord">Discord Integration</PageTitle>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <PageTitle help="discord">Discord Integration</PageTitle>
+          <Link href="/help/integrations#discord" className="text-sm font-medium text-(--color-secondary) hover:underline">Setup guide →</Link>
+        </div>
         <p className="text-body text-(--color-text-secondary) mt-1">
           Connect your team&apos;s Discord servers for slash commands and notifications. The <b>student server</b> gets the
           build notifications (orders, tasks, safety, inventory). An optional <b>parent server</b> gets what parents care

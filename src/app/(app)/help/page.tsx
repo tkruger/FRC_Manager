@@ -35,6 +35,7 @@ export default function HelpPage() {
         <h1 className="text-h1 text-(--color-text-primary)">Help &amp; guide</h1>
         <p className="text-body text-(--color-text-secondary) mt-1">
           How FRC Manager works, section by section. Tap the <HelpBadge /> button on a page to jump straight to its part of this guide.
+          Setting up email, Discord, The Blue Alliance or push notifications? See the <Link href="/help/integrations" className="text-(--color-secondary) hover:underline">integration setup guide</Link>.
         </p>
       </div>
 
