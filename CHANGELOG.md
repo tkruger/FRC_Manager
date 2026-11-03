@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.10.0 — 2026-11-03
+
 - **Team email with Gmail** now connects with Google (the Gmail API) instead of an app password: tap **Connect with Google** in Settings → Integrations → Team email and sign in with the team's Google or Workspace account. FRC Manager only gets permission to send (not read) email, the connection is stored encrypted, and removing it revokes the access. The From name and a Send-mail-as alias can be set after connecting
 
 ## 1.9.1.1 — 2026-11-02
