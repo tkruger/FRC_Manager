@@ -263,6 +263,7 @@ const SPECS: Record<string, Spec> = {
     fields: {
       allocation: { label: "Allocation", kind: "money" },
       label:      { label: "Name",       kind: "text" },
+      notUsed:    { label: "Not used",   kind: "bool" },
     },
     select: { id: true, label: true, budgetId: true, ...budgetOf },
     teamOf: (r) => r.budget?.season?.teamId,

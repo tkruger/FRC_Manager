@@ -13,6 +13,7 @@ import { ITEM_ROW_SELECT, toItemRow } from "@/lib/orders/rows";
 import { ItemsTable } from "@/components/orders/ItemsTable";
 import { PageHeader } from "@/components/PageHeader";
 import { RequestActions } from "./RequestActions";
+import { unusedBudgetCategories } from "@/lib/budget-unused";
 import { RequestTimeline, type TimelineEntry } from "./RequestTimeline";
 import { ExportCsvButton } from "@/components/orders/ExportCsvButton";
 import { itemRef } from "@/lib/orders/constants";
@@ -179,6 +180,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         }))}
         recorded={expenses.map((e) => ({ label: e.category?.label ?? "Uncategorized", amount: e.amount, committed: e.isCommitment }))}
         canChange={canSetOrderBudget(roles, session.user.id, order, canEdit)}
+        unusedCategories={await unusedBudgetCategories(session.user.teamId)}
       />
 
       <section className="space-y-3">

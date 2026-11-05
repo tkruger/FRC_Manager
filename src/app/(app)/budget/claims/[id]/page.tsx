@@ -44,7 +44,7 @@ export default async function ClaimPage({ params }: { params: Promise<{ id: stri
   const categories = reviewer && claim.status === "SUBMITTED"
     ? (await prisma.budget.findFirst({
         where:  { season: { teamId: session.user.teamId, isActive: true } },
-        select: { categories: { select: { id: true, label: true }, orderBy: { label: "asc" } } },
+        select: { categories: { where: { notUsed: false }, select: { id: true, label: true }, orderBy: { label: "asc" } } },
       }))?.categories ?? null
     : [];
 

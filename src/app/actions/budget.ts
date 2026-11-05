@@ -51,11 +51,12 @@ export async function setupBudgetAction(
   if (!activeSeason) return { success: false, error: "No active season." };
 
   // Build category allocations from form
-  const categoryAllocations = DEFAULT_CATEGORIES.map((c) => ({
-    type: c.type,
-    label: c.label,
-    allocation: parseFloat(formData.get(`cat_${c.type}`) as string) || 0,
-  }));
+  // "Not used" categories are $0 and hidden
+  const categoryAllocations = DEFAULT_CATEGORIES.map((c) => {
+    const notUsed = formData.get(`off_${c.type}`) === "on";
+    const amount = parseFloat(formData.get(`cat_${c.type}`) as string);
+    return { type: c.type, label: c.label, notUsed, allocation: notUsed || !(amount > 0) ? 0 : amount };
+  });
 
   // Upsert budget
   const existing = await prisma.budget.findUnique({ where: { seasonId: activeSeason.id } });
@@ -72,11 +73,11 @@ export async function setupBudgetAction(
       if (catById[cat.type]) {
         await prisma.budgetCategory.update({
           where: { id: catById[cat.type] },
-          data: { allocation: cat.allocation, label: cat.label },
+          data: { allocation: cat.allocation, label: cat.label, notUsed: cat.notUsed },
         });
       } else {
         await prisma.budgetCategory.create({
-          data: { budgetId: existing.id, type: cat.type, label: cat.label, allocation: cat.allocation },
+          data: { budgetId: existing.id, type: cat.type, label: cat.label, allocation: cat.allocation, notUsed: cat.notUsed },
         });
       }
     }

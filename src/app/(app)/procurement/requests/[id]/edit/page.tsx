@@ -6,6 +6,7 @@ import { PageTitle } from "@/components/PageHeader";
 import { definitionFor, canEditOrder, canResubmitOrder } from "@/lib/workflow/engine";
 import { itemRef } from "@/lib/orders/constants";
 import { OrderForm } from "../../new/OrderForm";
+import { unusedBudgetCategories } from "@/lib/budget-unused";
 
 export default async function EditOrderPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -63,6 +64,7 @@ export default async function EditOrderPage({ params }: { params: Promise<{ id: 
       </div>
       <OrderForm
         vendors={vendors.map((v) => v.name)}
+        unusedCategories={await unusedBudgetCategories(session.user.teamId)}
         edit={{
           requestId: order.id,
           name:      order.title,

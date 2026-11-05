@@ -6,6 +6,7 @@ import { ViewOnlyNotice } from "@/components/access/ViewOnly";
 import Link from "next/link";
 import { PageTitle } from "@/components/PageHeader";
 import { OrderForm, type DraftItem } from "./OrderForm";
+import { unusedBudgetCategories } from "@/lib/budget-unused";
 
 export default async function NewOrderPage({ searchParams }: { searchParams: Promise<{ draft?: string }> }) {
   const { draft: draftId } = await searchParams;
@@ -41,6 +42,7 @@ export default async function NewOrderPage({ searchParams }: { searchParams: Pro
       </div>
       <OrderForm
         key={draft?.id ?? "new"}
+        unusedCategories={await unusedBudgetCategories(session.user.teamId)}
         vendors={vendors.map((v) => v.name)}
         draft={draft ? { id: draft.id, name: draft.name, budgetCategory: draft.budgetCategory, items: (Array.isArray(draft.items) ? draft.items : []) as DraftItem[] } : undefined}
       />

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Budget setup: a category set to **$0 stays $0** (it used to jump back to the suggested amount), and each category has a **Not used** box — for anything the team doesn't spend on, like pneumatics. Not-used categories are $0, hidden on the Budget page, and left out of the category choices on orders and expense claims
+
 ## 1.13.0 — 2026-11-05
 
 - **Budget changes in the audit log**: category allocations, funding sources (added, edited — e.g. a pledge marked received — and removed) and expenses logged on the budget now record who changed what, from → to. Find them under **Changes to the budget, funding and expenses** on the Audit log, or **History** at the bottom of the Budget page (Treasurers and Head Mentors). Spending that orders record on their own stays in each order's history

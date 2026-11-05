@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { setupBudgetAction } from "@/app/actions/budget";
 import { Button } from "@/components/ui/button";
@@ -35,9 +35,13 @@ export function BudgetSetupForm({ existing }: Props) {
     if (state?.success) router.push("/budget");
   }, [state, router]);
 
-  function getAllocation(type: string) {
-    return existing?.categories.find((c) => c.type === type)?.allocation ?? 0;
+  // A saved budget keeps what was saved — $0 included; a new one starts from the suggestions
+  function startingAmount(cat: { type: string; suggested: number }) {
+    if (!existing) return cat.suggested;
+    return existing.categories.find((c) => c.type === cat.type)?.allocation ?? 0;
   }
+  const [off, setOff] = useState<Set<string>>(() => new Set(existing?.categories.filter((c) => c.notUsed).map((c) => c.type) ?? []));
+  const toggleOff = (type: string, on: boolean) => setOff((prev) => { const next = new Set(prev); if (on) next.add(type); else next.delete(type); return next; });
 
   return (
     <form action={action} className="space-y-6">
@@ -55,25 +59,37 @@ export function BudgetSetupForm({ existing }: Props) {
       <div className="card space-y-4">
         <h2 className="text-h3 text-(--color-text-primary)">Category allocations</h2>
         <p className="text-small text-(--color-text-secondary)">
-          Set a spending limit for each category. Suggested amounts shown based on typical FRC team budgets.
+          Set a spending limit for each category{existing ? "" : " — the amounts filled in are typical for an FRC team"}. Tick
+          <b> Not used</b> for anything your team doesn&apos;t spend on (no pneumatics, say): it&apos;s $0 and hidden from the budget
+          and from the categories people pick on orders and expenses.
         </p>
         <div className="space-y-3">
-          {DEFAULT_CATEGORIES.map((cat) => (
-            <div key={cat.type} className="flex items-center gap-4">
-              <label className="flex-1 text-sm text-(--color-text-primary)">{cat.label}</label>
-              <div className="w-36">
-                <Field
-                  label=""
-                  name={`cat_${cat.type}`}
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  defaultValue={getAllocation(cat.type) || cat.suggested}
-                  placeholder={`$${cat.suggested}`}
-                />
+          {DEFAULT_CATEGORIES.map((cat) => {
+            const notUsed = off.has(cat.type);
+            return (
+              <div key={cat.type} className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                <label htmlFor={`cat_${cat.type}`} className={`min-w-40 flex-1 text-sm ${notUsed ? "text-(--color-text-disabled) line-through" : "text-(--color-text-primary)"}`}>{cat.label}</label>
+                <label className="flex items-center gap-1.5 text-small text-(--color-text-secondary) cursor-pointer">
+                  <input type="checkbox" name={`off_${cat.type}`} className="rounded" checked={notUsed} onChange={(e) => toggleOff(cat.type, e.target.checked)} />
+                  Not used
+                </label>
+                <div className="w-36">
+                  <Field
+                    label=""
+                    id={`cat_${cat.type}`}
+                    name={`cat_${cat.type}`}
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    defaultValue={startingAmount(cat)}
+                    placeholder={`$${cat.suggested}`}
+                    disabled={notUsed}
+                    aria-label={`${cat.label} allocation`}
+                  />
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

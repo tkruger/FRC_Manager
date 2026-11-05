@@ -67,7 +67,9 @@ export interface OrderFormEdit {
   resubmit?: boolean;
 }
 
-export function OrderForm({ vendors, edit, draft }: {
+export function OrderForm({ vendors, edit, draft, unusedCategories = [] }: {
+  /** Budget categories the team marked "Not used" — not offered (unless already chosen) */
+  unusedCategories?: string[];
   vendors: string[];
   edit?:   OrderFormEdit;
   /** A saved draft to carry on with (new orders only) */
@@ -246,7 +248,7 @@ export function OrderForm({ vendors, edit, draft }: {
         <span className="block text-sm font-medium text-(--color-text-primary)">Budget category <span className="text-(--color-danger)">*</span></span>
         <select className={inputCls} required value={category} onChange={(e) => setCategory(e.target.value)}>
           <option value="" disabled>Choose what this order is for…</option>
-          {ORDER_BUDGET_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          {ORDER_BUDGET_OPTIONS.filter((o) => o.value === category || !unusedCategories.includes(o.value)).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
         <span className="block text-small text-(--color-text-secondary)">Where the spend shows on the budget. Items can be charged somewhere else below.</span>
       </label>
@@ -348,7 +350,7 @@ export function OrderForm({ vendors, edit, draft }: {
             <Labeled label="Budget category">
               <select className={inputCls} value={item.budgetCategory} onChange={(e) => update(item.key, { budgetCategory: e.target.value })}>
                 <option value="">Same as order{category ? ` (${BUDGET_CATEGORY_LABELS[category as keyof typeof BUDGET_CATEGORY_LABELS]})` : ""}</option>
-                {ORDER_BUDGET_OPTIONS.filter((o) => o.value !== category).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                {ORDER_BUDGET_OPTIONS.filter((o) => o.value !== category && (o.value === item.budgetCategory || !unusedCategories.includes(o.value))).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </Labeled>
           </div>

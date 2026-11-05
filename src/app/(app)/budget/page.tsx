@@ -147,7 +147,7 @@ export default async function BudgetDashboard() {
       <div>
         <h2 className="text-h2 text-(--color-text-primary) mb-3">By category</h2>
         <div className="card space-y-4">
-          {budget.categories.filter((c) => c.allocation > 0).map((cat) => {
+          {budget.categories.filter((c) => c.allocation > 0 && !c.notUsed).map((cat) => {
             const catSpent = spentIn(cat.id);
             return (
               <div key={cat.id}>

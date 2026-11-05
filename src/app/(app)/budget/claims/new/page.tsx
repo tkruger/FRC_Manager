@@ -17,7 +17,7 @@ export default async function NewClaimPage() {
     prisma.team.findUnique({ where: { id: session.user.teamId }, select: { timezone: true } }),
     prisma.budget.findFirst({
       where:  { season: { teamId: session.user.teamId, isActive: true } },
-      select: { categories: { select: { id: true, label: true }, orderBy: { label: "asc" } } },
+      select: { categories: { where: { notUsed: false }, select: { id: true, label: true }, orderBy: { label: "asc" } } },
     }),
   ]);
   const tz = isValidTimezone(team?.timezone) ? team!.timezone! : FALLBACK_TIMEZONE;

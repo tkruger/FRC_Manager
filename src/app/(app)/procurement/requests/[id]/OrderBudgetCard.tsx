@@ -19,11 +19,13 @@ interface Props {
   /** What's in the budget for this order now */
   recorded: { label: string; amount: number; committed: boolean }[];
   canChange: boolean;
+  /** Budget categories the team marked "Not used" — not offered (unless already chosen) */
+  unusedCategories?: string[];
 }
 
 const selectCls = "w-full rounded-md border border-(--color-border) bg-(--color-surface) text-(--color-text-primary) px-2.5 py-2 text-sm focus:border-(--color-primary) focus:outline-none";
 
-export function OrderBudgetCard({ requestId, budgetCategory, items, recorded, canChange }: Props) {
+export function OrderBudgetCard({ requestId, budgetCategory, items, recorded, canChange, unusedCategories = [] }: Props) {
   const router = useRouter();
   const [editing, setEditing]   = useState(canChange && !budgetCategory);
   const [category, setCategory] = useState<string>(budgetCategory ?? "");
@@ -71,7 +73,7 @@ export function OrderBudgetCard({ requestId, budgetCategory, items, recorded, ca
             <span className="block text-sm font-medium text-(--color-text-primary)">Order&apos;s budget category <span className="text-(--color-danger)">*</span></span>
             <select className={selectCls} value={category} onChange={(e) => setCategory(e.target.value)}>
               <option value="" disabled>Choose what this order is for…</option>
-              {ORDER_BUDGET_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              {ORDER_BUDGET_OPTIONS.filter((o) => o.value === category || !unusedCategories.includes(o.value)).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           </label>
           {items.length > 1 && (
@@ -86,7 +88,7 @@ export function OrderBudgetCard({ requestId, budgetCategory, items, recorded, ca
                     </span>
                     <select className={selectCls} value={own[i.id] ?? ""} onChange={(e) => setOwn((m) => ({ ...m, [i.id]: e.target.value }))} aria-label={`Budget category for ${i.name}`}>
                       <option value="">Same as order</option>
-                      {ORDER_BUDGET_OPTIONS.filter((o) => o.value !== category).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                      {ORDER_BUDGET_OPTIONS.filter((o) => o.value !== category && (o.value === own[i.id] || !unusedCategories.includes(o.value))).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                     </select>
                   </li>
                 ))}

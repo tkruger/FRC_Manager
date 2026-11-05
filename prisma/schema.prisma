@@ -1000,6 +1000,8 @@ model BudgetCategory {
   type       BudgetCategoryType
   label      String
   allocation Float              @default(0)
+  /// "Not used" this season (no pneumatics, say): $0, hidden from the budget and the category pickers
+  notUsed    Boolean            @default(false)
   expenses   Expense[]
   claims     ExpenseClaim[]
 }
