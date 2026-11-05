@@ -33,3 +33,13 @@ export async function updateProfileAction(
   revalidatePath("/settings/profile");
   return { success: true };
 }
+
+/** Home's Overdue tasks tile: the whole team's tasks, or only their own */
+export async function setHomeTeamOverdueAction(on: boolean): Promise<ProfileActionState> {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false, error: "Not authenticated." };
+  await prisma.user.update({ where: { id: session.user.id }, data: { homeTeamOverdue: !!on } });
+  revalidatePath("/dashboard");
+  revalidatePath("/settings/profile");
+  return { success: true };
+}

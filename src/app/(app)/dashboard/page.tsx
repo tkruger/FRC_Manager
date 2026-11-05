@@ -81,13 +81,22 @@ export default async function DashboardPage() {
   const eventTz = isValidTimezone(eventLive?.event?.timezone) ? eventLive!.event!.timezone! : isValidTimezone(team?.timezone) ? team!.timezone! : FALLBACK_TIMEZONE;
   const rank = eventLive?.status?.qual?.ranking;
 
-  // Overdue tasks count
+  // Overdue tasks: theirs (a parent: their students'), or the whole team's if they chose that in Profile
+  const overdueMe = session?.user?.id
+    ? await prisma.user.findUnique({ where: { id: session.user.id }, select: { homeTeamOverdue: true, children: { select: { studentId: true } } } })
+    : null;
+  const overdueScope: "team" | "students" | "mine" = overdueMe?.homeTeamOverdue ? "team"
+    : (overdueMe?.children.length ?? 0) > 0 && !(session?.user?.roles ?? []).some((r) => r !== "PARENT") ? "students" : "mine";
+  const overdueFor = overdueScope === "team" ? null
+    : overdueScope === "students" ? overdueMe!.children.map((c) => c.studentId) : [session?.user?.id ?? ""];
   const overdueCount = activeSeason
     ? await prisma.task.count({
         where: {
           seasonId: activeSeason.id,
+          isTemplateTask: false,
           dueDate:  { lt: now },
           status:   { notIn: ["COMPLETE"] },
+          ...(overdueFor ? { assignees: { some: { id: { in: overdueFor } } } } : {}),
         },
       })
     : 0;
@@ -196,9 +205,10 @@ export default async function DashboardPage() {
       accent: "#059669",
     }),
     overdue: stat({
-      label: "Overdue tasks", value: overdueCount,
+      label: overdueScope === "team" ? "Team overdue tasks" : overdueScope === "students" ? "Your students' overdue tasks" : "Your overdue tasks",
+      value: overdueCount,
       sub: overdueCount > 0 ? "Need attention" : "All on track",
-      urgent: overdueCount > 0, href: "/tasks",
+      urgent: overdueCount > 0, href: overdueScope === "mine" ? "/tasks" : "/tasks?mine=0",
       accent: overdueCount > 0 ? "var(--color-danger)" : "var(--color-secondary)",
     }),
     orders: viewOnly ? null : stat({

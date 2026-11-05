@@ -11,6 +11,7 @@ import { canCoordinate, isAdult, isCleared } from "@/lib/volunteers";
 import { isViewOnly } from "@/lib/access/read-only";
 import { SubTeamPicker } from "@/components/SubTeamPicker";
 import { ParentProfile } from "./ParentProfile";
+import { HomeOverdueToggle } from "./HomeOverdueToggle";
 import { teamStudents } from "@/lib/parents";
 
 export default async function ProfilePage() {
@@ -21,7 +22,7 @@ export default async function ProfilePage() {
     where:  { id: session.user.id },
     select: {
       name: true, email: true, emailVerified: true, password: true, accounts: { select: { provider: true } },
-      phone: true, volunteerClearedAt: true, volunteerClearedUntil: true, subTeams: true, parentOf: true,
+      phone: true, volunteerClearedAt: true, volunteerClearedUntil: true, subTeams: true, parentOf: true, homeTeamOverdue: true,
       children: { select: { student: { select: { id: true, name: true } } }, orderBy: { student: { name: "asc" } } },
     },
   });
@@ -61,6 +62,8 @@ export default async function ProfilePage() {
           <SubTeamPicker userId={session.user.id} current={me.subTeams} />
         </section>
       )}
+
+      <HomeOverdueToggle on={me.homeTeamOverdue} parent={isParent} />
 
       {showVolunteering && <VolunteerProfile phone={me.phone} status={volunteerStatus} />}
 

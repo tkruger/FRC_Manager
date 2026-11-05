@@ -70,6 +70,8 @@ model User {
   competitionSnoozeUntil DateTime?
   /// When they finished (or skipped) the app tour — null: offer it on their next visit to Home
   tourSeenAt      DateTime?
+  /// Home's Overdue tasks tile counts the whole team's (off: only theirs — or a parent's students')
+  homeTeamOverdue Boolean   @default(false)
 
   // NextAuth
   accounts      Account[]
