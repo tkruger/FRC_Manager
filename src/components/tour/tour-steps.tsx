@@ -4,7 +4,13 @@
 // screen are skipped. Client-safe.
 
 import Link from "next/link";
-import { Bell, Bot, BookOpen, CalendarRange, Compass, House, LayoutGrid, Menu, PartyPopper, Swords, UserRound, type LucideIcon } from "lucide-react";
+import {
+  CoordinatorCoveragePreview, CoordinatorFillPreview, CoordinatorSetupPreview, VolunteerAskPreview, VolunteerSignupPreview,
+} from "./TourPreviews";
+import {
+  Bell, Bot, BookOpen, CalendarCheck, CalendarRange, ClipboardList, Compass, HandHeart, House, LayoutGrid, Menu, MessageSquareReply,
+  PartyPopper, Swords, UserRound, UsersRound, type LucideIcon,
+} from "lucide-react";
 
 export type TourAudience = "parent" | "student" | "mentor" | "head_mentor";
 
@@ -12,6 +18,10 @@ export interface TourStep {
   id: string;
   /** data-tour names to point at, in order of preference; none = a card in the middle */
   target?: string[];
+  /** Keep the step (as a card in the middle) when its target isn't on this screen */
+  optional?: boolean;
+  /** A drawn preview of a screen it describes (see TourPreviews) */
+  preview?: React.ReactNode;
   title: string;
   body: React.ReactNode;
   /** The picture at the top of the card, and how it moves */
@@ -68,6 +78,68 @@ export const FRC_PRIMER: TourStep[] = [
       </List>
       <p className="mt-2">There&apos;s more in <Link href="/help/frc-basics" className="text-(--color-secondary) underline">FRC basics</Link> any time.</p>
     </>,
+  },
+];
+
+// ── Volunteering (parents) ──────────────────────────────────────────────────
+
+const VOLUNTEERS_TAB = ["nav:/volunteers"];
+
+export const VOLUNTEER_STEPS: TourStep[] = [
+  {
+    id: "vol-signup", target: VOLUNTEERS_TAB, optional: true, title: "Volunteering at meetings",
+    icon: HandHeart, motion: "bob", tint: ["#EC4899", "#F97316"], preview: <VolunteerSignupPreview />,
+    body: <>
+      <p>Every meeting needs adults there — usually at least two. Here&apos;s how it works:</p>
+      <List>
+        <Li><b>Get cleared</b> — a Head Mentor marks you <b>cleared to volunteer</b>, usually once the school&apos;s background check is done.</Li>
+        <Li><b>Sign up</b> — open <b>Volunteers</b> and tap <b>Sign up</b> on any upcoming meeting. You&apos;re confirmed straight away.</Li>
+        <Li>Add your <b>phone number</b> in your Profile so the coordinator can reach you on the day.</Li>
+      </List>
+    </>,
+  },
+  {
+    id: "vol-respond", title: "When you're asked to help",
+    icon: MessageSquareReply, tint: ["#8B5CF6", "#EC4899"], preview: <VolunteerAskPreview />,
+    body: <List>
+      <Li>The volunteer coordinator may <b>ask you to cover</b> a meeting. It shows at the <b>top of Home</b>, as a notification and by email — tap <b>Confirm</b> or <b>Can&apos;t make it</b>.</Li>
+      <Li>The <b>day before</b> each shift you get a reminder with the <b>shift instructions</b> — where to go, when, and what to do.</Li>
+      <Li>Plans changed? Under <b>Your shifts</b> on the Volunteers page, tap <b>Can&apos;t make it</b> — the coordinator is told.</Li>
+    </List>,
+  },
+];
+
+// ── Coordinating volunteers (Volunteer Coordinators, Head Mentors) ──────────
+
+export const COORDINATOR_STEPS: TourStep[] = [
+  {
+    id: "coord-coverage", target: VOLUNTEERS_TAB, optional: true, title: "Coordinating volunteers",
+    icon: UsersRound, tint: ["#0EA5E9", "#8B5CF6"], preview: <CoordinatorCoveragePreview />,
+    body: <>
+      <p>The <b>Volunteers</b> page lists the next eight weeks of meetings and how many adults are confirmed for each.</p>
+      <List>
+        <Li>Meetings without enough confirmed adults are marked in <b>red</b> — there and on the calendar. <b>Only meetings that need adults</b> narrows the list.</Li>
+        <Li>The <b>roster</b> shows every adult, whether they&apos;re cleared (and until when), and their upcoming shifts.</Li>
+      </List>
+    </>,
+  },
+  {
+    id: "coord-fill", title: "Filling a meeting",
+    icon: CalendarCheck, tint: ["#22C55E", "#0EA5E9"], preview: <CoordinatorFillPreview />,
+    body: <List>
+      <Li><b>Ask someone to cover…</b> on a meeting sends a cleared adult a request (a notification and an email). Unanswered asks get a morning nudge as the meeting gets close.</Li>
+      <Li>They confirm or say they can&apos;t — you&apos;re told if a meeting is short again. The <b>×</b> next to a name takes them off.</Li>
+      <Li>Only cleared adults can be asked; Head Mentors clear people in <b>Team members</b>.</Li>
+    </List>,
+  },
+  {
+    id: "coord-setup", title: "Instructions and reminders",
+    icon: ClipboardList, tint: ["#F59E0B", "#EC4899"], preview: <CoordinatorSetupPreview />,
+    body: <List>
+      <Li><b>Edit Shift Instructions</b> (top of the Volunteers page) sets how many adults a meeting needs and the default <b>shift instructions</b> sent with every sign-up and day-before reminder.</Li>
+      <Li>A meeting can have its <b>own instructions</b> instead — for a competition or an outreach event.</Li>
+      <Li>Each morning you get the next two weeks&apos; meetings that are still short; with a parent Discord server, it&apos;s also posted in its Volunteers channel.</Li>
+    </List>,
   },
 ];
 
@@ -216,4 +288,12 @@ export const AUDIENCE_LABEL: Record<TourAudience, string> = {
   parent: "parents", student: "students", mentor: "mentors", head_mentor: "Head Mentors",
 };
 
-export const tourSteps = (a: TourAudience) => STEPS[a];
+/**
+ * The tour for this person: the main steps, then (before the last card) volunteering for parents, and
+ * coordinating for Volunteer Coordinators and Head Mentors.
+ */
+export function tourSteps(a: TourAudience, opts: { coordinator?: boolean } = {}): TourStep[] {
+  const main = STEPS[a];
+  const extra = [...(a === "parent" ? VOLUNTEER_STEPS : []), ...(opts.coordinator ? COORDINATOR_STEPS : [])];
+  return [...main.slice(0, -1), ...extra, main[main.length - 1]];
+}

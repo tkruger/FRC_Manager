@@ -57,7 +57,9 @@ function scrollToShow(el: HTMLElement) {
 const PAD = 6;
 const GAP = 14;
 
-export function AppTour({ audience, offer, vapidPublicKey }: { audience: TourAudience; offer: boolean; vapidPublicKey: string | null }) {
+export function AppTour({ audience, coordinator = false, offer, vapidPublicKey }: {
+  audience: TourAudience; coordinator?: boolean; offer: boolean; vapidPublicKey: string | null;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -177,12 +179,12 @@ export function AppTour({ audience, offer, vapidPublicKey }: { audience: TourAud
     const bottom = Math.min(window.innerHeight - 4, rect.bottom + PAD), right = Math.min(window.innerWidth - 4, rect.right + PAD);
     return { top, left, width: right - left, height: bottom - top };
   })();
-  const tour = tourSteps(audience);
+  const tour = tourSteps(audience, { coordinator });
   const last = index === steps.length - 1;
   function next() { if (last) finish(); else setIndex((i) => i + 1); }
   // Steps about things that aren't on this screen are left out (Home's tiles elsewhere, More on a computer)
   const startTourSteps = (withPrimer: boolean) => {
-    const shown = tour.filter((s) => !s.target || findTarget(s.target));
+    const shown = tour.filter((s) => !s.target || s.optional || findTarget(s.target));
     // The first-visit offers go just before the last card
     const extras: TourStep[] = [
       ...(offers.install ? [{ id: "offer-install", title: "Add it to your home screen", icon: Smartphone, tint: ["#0EA5E9", "#2563EB"] as [string, string], body: null }] : []),
@@ -263,7 +265,7 @@ export function AppTour({ audience, offer, vapidPublicKey }: { audience: TourAud
       <div className="fixed inset-0" onClick={(e) => e.stopPropagation()} />
 
       <div ref={cardRef} tabIndex={-1}
-        className={`fixed w-[min(380px,calc(100vw-24px))] rounded-2xl border border-(--color-border) p-5 text-sm leading-relaxed text-(--color-text-primary) shadow-2xl outline-none ${index > 0 ? "transition-[top,left] duration-300 ease-out" : ""}`}
+        className={`fixed ${step.preview ? "w-[min(380px,calc(100vw-24px))] sm:w-[440px]" : "w-[min(380px,calc(100vw-24px))]"} rounded-2xl border border-(--color-border) p-5 text-sm leading-relaxed text-(--color-text-primary) shadow-2xl outline-none ${index > 0 ? "transition-[top,left] duration-300 ease-out" : ""}`}
         // Hidden until it has been placed (it doesn't fly in from off-screen); then it glides between steps
         style={{ backgroundColor: "var(--color-surface)", top: cardPos?.top ?? 0, left: cardPos?.left ?? 0, opacity: cardPos ? 1 : 0 }}>
         {/* Each step's content slides in */}
@@ -290,6 +292,7 @@ export function AppTour({ audience, offer, vapidPublicKey }: { audience: TourAud
                   <h2 id="tour-title" className="text-h3 text-(--color-text-primary)">{step.title}</h2>
                 </div>
               </div>
+              {step.preview && <div className="mt-3">{step.preview}</div>}
               <div className="mt-3">{offerBody ?? step.body}</div>
               {/* Progress */}
               <div className="mt-4 h-1 overflow-hidden rounded-full bg-(--color-surface-overlay)" aria-hidden>

@@ -125,6 +125,7 @@ export function TopNav({ session, pendingMemberCount = 0, unreadNotificationCoun
               return (
                 <Link
                   key={href}
+                  data-tour={`nav:${href}`}
                   href={href}
                   title={label}
                   className={cn(
@@ -242,6 +243,7 @@ export function TopNav({ session, pendingMemberCount = 0, unreadNotificationCoun
                   return (
                     <Link
                       key={href}
+                      data-tour={`nav:${href}`}
                       href={href}
                       onClick={() => setMoreOpen(false)}
                       className={cn(
@@ -281,6 +283,7 @@ export function TopNav({ session, pendingMemberCount = 0, unreadNotificationCoun
               return (
                 <Link
                   key={href}
+                  data-tour={`nav:${href}`}
                   href={href}
                   onClick={() => setMoreOpen(false)}
                   className={cn(

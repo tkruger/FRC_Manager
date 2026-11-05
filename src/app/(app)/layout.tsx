@@ -20,7 +20,7 @@ import { SOURCE_URL } from "@/components/legal/LegalPage";
 import { APP_VERSION } from "@/lib/version";
 import { ViewOnlyBanner, ViewOnlyProvider } from "@/components/access/ViewOnly";
 import { isViewOnly } from "@/lib/access/read-only";
-import { isCleared } from "@/lib/volunteers";
+import { canCoordinate, isCleared } from "@/lib/volunteers";
 import { isTestSite } from "@/lib/test-site";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -107,7 +107,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         {/* Give feedback — opened from the footer and the profile menu */}
         <Suspense fallback={null}><FeedbackDialog /></Suspense>
         {/* The app tour (first visit to Home; again from the profile menu) */}
-        <Suspense fallback={null}><AppTour audience={tourAudience} offer={offerTour} vapidPublicKey={process.env.VAPID_PUBLIC_KEY ?? null} /></Suspense>
+        <Suspense fallback={null}><AppTour audience={tourAudience} coordinator={canCoordinate(roles)} offer={offerTour} vapidPublicKey={process.env.VAPID_PUBLIC_KEY ?? null} /></Suspense>
         {/* A broadcast message opened from its notification */}
         <Suspense fallback={null}><BroadcastOverlay /></Suspense>
       </div>
