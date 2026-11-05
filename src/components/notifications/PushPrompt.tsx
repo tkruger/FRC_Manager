@@ -5,25 +5,21 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { pushSupport, hasSubscription, enablePush, isIos } from "@/lib/push-client";
+import { enablePush, isIos } from "@/lib/push-client";
 import { releasePrompt, whenFree } from "@/lib/prompt-queue";
+import { pushAnswered, pushOfferNeeded, rememberPush } from "@/lib/first-visit-offers";
 
 // Asks once per device whether to turn on push notifications. The answer is
 // remembered in this device's storage, so a new phone or browser is asked again.
 // (On iPhone, the home-screen app has separate storage from Safari, so it's asked
 // again after installing — which is when push actually becomes possible.)
+// The app tour asks the same question as one of its steps; whichever asks first, the other doesn't.
 
-const STORAGE_KEY = "frc-push-prompt";
 const SHOW_AFTER_MS = 1500;
 
 type Step = "ask" | "install" | "enabled" | "declined" | "blocked";
 
-function remembered(): boolean {
-  try { return !!localStorage.getItem(STORAGE_KEY); } catch { return true; } // no storage → don't nag
-}
-function remember(answer: string) {
-  try { localStorage.setItem(STORAGE_KEY, answer); } catch { /* ignore */ }
-}
+const remember = rememberPush;
 
 export function PushPrompt({ vapidPublicKey }: { vapidPublicKey: string | null }) {
   const pathname = usePathname();
@@ -42,20 +38,15 @@ export function PushPrompt({ vapidPublicKey }: { vapidPublicKey: string | null }
 
   useEffect(() => {
     // Nothing to offer without server keys; no need to ask on the settings page itself
-    if (!vapidPublicKey || remembered() || pathname.startsWith("/settings/notifications")) return;
+    if (pathname.startsWith("/settings/notifications")) return;
 
     let cancelled = false;
     const timer = setTimeout(async () => {
-      const support = pushSupport();
-      if (support === "unsupported") { remember("unsupported"); return; }
       // Not installed yet on iPhone: InstallPrompt explains installing; this asks again inside the app
-      if (support === "needs-install") return;
-      // Already decided at the browser level, or already subscribed on this device
-      if (Notification.permission === "denied") { remember("blocked"); return; }
-      if (Notification.permission === "granted" && await hasSubscription().catch(() => false)) {
-        remember("enabled"); return;
-      }
-      if (!cancelled) { setStep("ask"); whenFree("push", () => setOpen(true)); }
+      if (!(await pushOfferNeeded(vapidPublicKey)) || cancelled) return;
+      setStep("ask");
+      // Its turn may come after the app tour — which may have asked already
+      whenFree("push", () => { if (pushAnswered()) releasePrompt("push"); else setOpen(true); });
     }, SHOW_AFTER_MS);
 
     return () => { cancelled = true; clearTimeout(timer); };

@@ -107,7 +107,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         {/* Give feedback — opened from the footer and the profile menu */}
         <Suspense fallback={null}><FeedbackDialog /></Suspense>
         {/* The app tour (first visit to Home; again from the profile menu) */}
-        <Suspense fallback={null}><AppTour audience={tourAudience} offer={offerTour} /></Suspense>
+        <Suspense fallback={null}><AppTour audience={tourAudience} offer={offerTour} vapidPublicKey={process.env.VAPID_PUBLIC_KEY ?? null} /></Suspense>
         {/* A broadcast message opened from its notification */}
         <Suspense fallback={null}><BroadcastOverlay /></Suspense>
       </div>

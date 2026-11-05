@@ -4,54 +4,23 @@ import { useEffect, useRef, useState } from "react";
 import { Share, MoreVertical, Menu, PlusSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { isIos, isStandalone } from "@/lib/push-client";
 import { releasePrompt, whenFree } from "@/lib/prompt-queue";
+import {
+  getInstallEvent, installNow as install, installOfferNeeded, installSnoozed, listenForInstall, onInstallChange, snoozeInstall,
+  type Platform,
+} from "@/lib/first-visit-offers";
 
 // Once signed in, on a phone or tablet browser (not the installed app), explain how to add FRC Manager to
 // the home screen — only the steps for this device and browser. Android Chrome gets a
-// one-tap Install button when the browser offers it. "Not now" waits two weeks.
+// one-tap Install button when the browser offers it. "Not now" waits two weeks. The app tour offers the
+// same as one of its steps; whichever offers first, the other doesn't.
 
-const STORAGE_KEY = "frc-install-prompt";
-const SNOOZE_MS   = 14 * 86_400_000;
 const SHOW_AFTER  = 2500;
-
-type Platform =
-  | { os: "ios"; browser: "safari" | "chrome" | "firefox" | "edge" }
-  | { os: "android"; browser: "chrome" | "samsung" | "firefox" | "other" };
-
-/** Chrome's install event (not in TypeScript's DOM types) */
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
-}
-
-function detect(): Platform | null {
-  const ua = navigator.userAgent;
-  if (isIos()) {
-    return { os: "ios", browser: /CriOS/.test(ua) ? "chrome" : /FxiOS/.test(ua) ? "firefox" : /EdgiOS/.test(ua) ? "edge" : "safari" };
-  }
-  if (/Android/i.test(ua)) {
-    return { os: "android", browser: /SamsungBrowser/.test(ua) ? "samsung" : /Firefox/.test(ua) ? "firefox" : /Chrome/.test(ua) ? "chrome" : "other" };
-  }
-  return null; // computers don't get the prompt
-}
-
-function snoozed(): boolean {
-  try {
-    const until = Number(localStorage.getItem(STORAGE_KEY));
-    return Number.isFinite(until) && until > Date.now();
-  } catch {
-    return true; // no storage → don't nag
-  }
-}
-function snooze() {
-  try { localStorage.setItem(STORAGE_KEY, String(Date.now() + SNOOZE_MS)); } catch { /* ignore */ }
-}
 
 export function InstallPrompt() {
   const [platform, setPlatform] = useState<Platform | null>(null);
   const [open, setOpen]         = useState(false);
-  const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
+  const [canInstall, setCanInstall] = useState(false);
 
   // Taking turns with the other first-visit prompt (src/lib/prompt-queue.ts)
   const shown = useRef(false);
@@ -62,44 +31,32 @@ export function InstallPrompt() {
   useEffect(() => () => releasePrompt("install"), []);
 
   useEffect(() => {
-    if (isStandalone() || snoozed()) return;
-    const p = detect();
-    if (!p) return;
-
-    // Android Chrome offers a real install dialog — keep the event to trigger it from our button
-    function onBeforeInstall(e: Event) {
-      e.preventDefault();
-      setInstallEvent(e as BeforeInstallPromptEvent);
-    }
-    function onInstalled() { snooze(); setOpen(false); }
-    window.addEventListener("beforeinstallprompt", onBeforeInstall);
-    window.addEventListener("appinstalled", onInstalled);
-
-    // After the notifications question if that's showing — never on top of it
-    const timer = setTimeout(() => { setPlatform(p); whenFree("install", () => setOpen(true)); }, SHOW_AFTER);
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener("beforeinstallprompt", onBeforeInstall);
-      window.removeEventListener("appinstalled", onInstalled);
-    };
+    // Android Chrome offers a real install dialog — kept (in first-visit-offers) for our button
+    listenForInstall();
+    const off = onInstallChange(() => { setCanInstall(!!getInstallEvent()); if (installSnoozed()) setOpen(false); });
+    const p = installOfferNeeded();
+    if (!p) return off;
+    // After the notifications question (and the app tour, which may offer this itself) — never on top
+    const timer = setTimeout(() => {
+      setPlatform(p);
+      setCanInstall(!!getInstallEvent());
+      whenFree("install", () => { if (installSnoozed()) releasePrompt("install"); else setOpen(true); });
+    }, SHOW_AFTER);
+    return () => { clearTimeout(timer); off(); };
   }, []);
 
   if (!platform) return null;
 
   function close() {
-    snooze();
+    snoozeInstall();
     setOpen(false);
   }
 
   async function installNow() {
-    if (!installEvent) return;
-    await installEvent.prompt();
-    const { outcome } = await installEvent.userChoice;
-    if (outcome === "accepted") close();
-    setInstallEvent(null);
+    if (await install()) close();
   }
 
-  const steps = stepsFor(platform);
+  const steps = installStepsFor(platform);
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) close(); }}>
@@ -108,7 +65,7 @@ export function InstallPrompt() {
         description="It opens full screen like a real app, stays signed in, and can send you notifications."
       >
         <div className="space-y-4">
-          {installEvent ? (
+          {canInstall ? (
             <Button className="w-full" onClick={installNow}>Install app</Button>
           ) : (
             <ol className="space-y-3">
@@ -134,7 +91,8 @@ export function InstallPrompt() {
 
 const icon = "inline h-4 w-4 align-[-3px] mx-0.5";
 
-function stepsFor(p: Platform): React.ReactNode[] {
+/** How to add the app to the home screen, for this device and browser */
+export function installStepsFor(p: Platform): React.ReactNode[] {
   if (p.os === "ios") {
     const share = <>the <b>Share</b> button <Share className={icon} aria-hidden /></>;
     const where = p.browser === "safari"

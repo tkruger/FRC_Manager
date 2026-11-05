@@ -5,12 +5,22 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { releasePrompt, whenFree } from "@/lib/prompt-queue";
 import { markTourSeenAction } from "@/app/actions/tour";
-import type { LucideIcon } from "lucide-react";
+import { BellRing, Smartphone, type LucideIcon } from "lucide-react";
+import { enablePush } from "@/lib/push-client";
+import {
+  getInstallEvent, installNow, installOfferNeeded, installSnoozed, listenForInstall, onInstallChange,
+  pushAnswered, pushOfferNeeded, rememberPush, snoozeInstall, type Platform,
+} from "@/lib/first-visit-offers";
+import { installStepsFor } from "@/components/InstallPrompt";
 import { AUDIENCE_LABEL, FRC_PRIMER, WELCOME_ICON, tourSteps, type TourAudience, type TourStep } from "./tour-steps";
 
 // The app tour: a card for each step, pointing at the part of the screen it's about (a spotlight
-// cut out of a dimmed page). Offered once, on Home, to everyone who hasn't seen it (it goes before
-// the other first-visit prompts); "Take the tour" in the profile menu runs it again.
+// cut out of a dimmed page). Offered once, on Home, to everyone who hasn't seen it; "Take the tour" in
+// the profile menu runs it again.
+//
+// It goes before the other first-visit prompts (turn on notifications, add to home screen) and offers
+// them itself, as steps near the end, when they apply. One the person reaches counts as answered either
+// way; skipping the tour before then (or "Not now" on the welcome card) leaves them to their own prompts.
 
 const START_EVENT = "frc:start-tour";
 export const startTour = () => window.dispatchEvent(new Event(START_EVENT));
@@ -47,7 +57,7 @@ function scrollToShow(el: HTMLElement) {
 const PAD = 6;
 const GAP = 14;
 
-export function AppTour({ audience, offer }: { audience: TourAudience; offer: boolean }) {
+export function AppTour({ audience, offer, vapidPublicKey }: { audience: TourAudience; offer: boolean; vapidPublicKey: string | null }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -56,14 +66,31 @@ export function AppTour({ audience, offer }: { audience: TourAudience; offer: bo
   const [rect, setRect] = useState<DOMRect | null>(null);
   const [cardPos, setCardPos] = useState<{ top: number; left: number } | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  // The first-visit offers that apply on this device (worked out when the tour starts)
+  const [offers, setOffers] = useState<{ install: Platform | null; push: boolean }>({ install: null, push: false });
+  const [canInstall, setCanInstall] = useState(false);
+  const [pushState, setPushState] = useState<"ask" | "busy" | "enabled" | "blocked" | "declined" | "error">("ask");
+  const seenOffers = useRef(new Set<string>());
   const open = steps !== null;
   const step = steps?.[index] ?? null;
   // A welcome card first; the FRC primer is added if they pick it there
   const welcome = useCallback((): TourStep => ({ id: "welcome", title: "Welcome to FRC Manager", body: null }), []);
 
-  const begin = useCallback(() => { setIndex(0); setSteps([welcome()]); }, [welcome]);
+  const begin = useCallback(() => {
+    listenForInstall();
+    seenOffers.current.clear();
+    setPushState("ask");
+    setCanInstall(!!getInstallEvent());
+    pushOfferNeeded(vapidPublicKey).then((push) => setOffers({ install: installOfferNeeded(), push })).catch(() => {});
+    setIndex(0);
+    setSteps([welcome()]);
+  }, [welcome, vapidPublicKey]);
+  useEffect(() => onInstallChange(() => setCanInstall(!!getInstallEvent())), []);
 
   const finish = useCallback(() => {
+    // An offer they reached but didn't act on counts as "not now" — so its own prompt doesn't follow
+    if (seenOffers.current.has("offer-push") && !pushAnswered()) rememberPush("declined");
+    if (seenOffers.current.has("offer-install") && !installSnoozed()) snoozeInstall();
     setSteps(null);
     setCardPos(null);
     releasePrompt("tour");
@@ -141,6 +168,7 @@ export function AppTour({ audience, offer }: { audience: TourAudience; offer: bo
     return () => window.removeEventListener("keydown", onKey);
   });
   useEffect(() => { if (open) cardRef.current?.focus(); }, [open, index]);
+  useEffect(() => { if (step?.id.startsWith("offer-")) seenOffers.current.add(step.id); }, [step]);
 
   if (!open || !step) return null;
   // The highlight, kept inside the screen so all of its border shows (the bottom bar sits at the edge)
@@ -155,9 +183,57 @@ export function AppTour({ audience, offer }: { audience: TourAudience; offer: bo
   // Steps about things that aren't on this screen are left out (Home's tiles elsewhere, More on a computer)
   const startTourSteps = (withPrimer: boolean) => {
     const shown = tour.filter((s) => !s.target || findTarget(s.target));
-    setSteps([welcome(), ...(withPrimer ? FRC_PRIMER : []), ...shown]);
+    // The first-visit offers go just before the last card
+    const extras: TourStep[] = [
+      ...(offers.install ? [{ id: "offer-install", title: "Add it to your home screen", icon: Smartphone, tint: ["#0EA5E9", "#2563EB"] as [string, string], body: null }] : []),
+      ...(offers.push ? [{ id: "offer-push", title: "Turn on notifications", icon: BellRing, motion: "swing" as const, tint: ["#F59E0B", "#EA580C"] as [string, string], body: null }] : []),
+    ];
+    const done = shown[shown.length - 1];
+    setSteps([welcome(), ...(withPrimer ? FRC_PRIMER : []), ...shown.slice(0, -1), ...extras, done]);
     setIndex(1);
   };
+  async function turnOnPush() {
+    if (!vapidPublicKey) return;
+    setPushState("busy");
+    try {
+      const result = await enablePush(vapidPublicKey);
+      rememberPush(result);
+      setPushState(result === "enabled" ? "enabled" : result === "denied" ? "blocked" : "declined");
+    } catch {
+      setPushState("error");
+    }
+  }
+  const offerBody = step.id === "offer-install" && offers.install ? (
+    <>
+      <p>It opens full screen like a real app, stays signed in{offers.install.os === "ios" ? ", and on iPhone it's the only way to get notifications" : ", and can send you notifications"}.</p>
+      {canInstall ? (
+        <Button className="mt-3 w-full" onClick={() => { installNow().then((ok) => ok && next()); }}>Install app</Button>
+      ) : (
+        <ol className="mt-3 space-y-2">
+          {installStepsFor(offers.install).map((t, i) => (
+            <li key={i} className="flex gap-2.5">
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-(--color-primary)/15 text-[11px] font-bold text-(--color-primary)">{i + 1}</span>
+              <span>{t}</span>
+            </li>
+          ))}
+        </ol>
+      )}
+      <p className="mt-2 text-small text-(--color-text-secondary)">Not now? Tap Next — you can add it any time.</p>
+    </>
+  ) : step.id === "offer-push" ? (
+    <>
+      <p>Get a heads-up on this device when something needs you — meeting changes, tasks, volunteer requests, competition updates.</p>
+      {pushState === "enabled" ? (
+        <p className="mt-3 rounded-md bg-(--color-success)/10 px-3 py-2 font-medium text-(--color-success)">✓ Notifications are on for this device</p>
+      ) : pushState === "blocked" ? (
+        <p className="mt-3 rounded-md bg-(--color-warning)/10 px-3 py-2 text-(--color-warning)">Notifications are blocked in this browser&apos;s settings — you can allow them there later.</p>
+      ) : (
+        <Button className="mt-3 w-full" isLoading={pushState === "busy"} onClick={turnOnPush}>Turn on notifications</Button>
+      )}
+      {pushState === "error" && <p className="mt-2 text-small text-(--color-danger)">That didn&apos;t work — try again from Settings → Notifications.</p>}
+      <p className="mt-2 text-small text-(--color-text-secondary)">Choose exactly which ones you get, and quiet hours, in Settings → Notifications.</p>
+    </>
+  ) : null;
   const newcomerFirst = audience === "parent" || audience === "student";
 
   return (
@@ -214,7 +290,7 @@ export function AppTour({ audience, offer }: { audience: TourAudience; offer: bo
                   <h2 id="tour-title" className="text-h3 text-(--color-text-primary)">{step.title}</h2>
                 </div>
               </div>
-              <div className="mt-3">{step.body}</div>
+              <div className="mt-3">{offerBody ?? step.body}</div>
               {/* Progress */}
               <div className="mt-4 h-1 overflow-hidden rounded-full bg-(--color-surface-overlay)" aria-hidden>
                 <div className="h-full rounded-full bg-(--color-primary) transition-[width] duration-500 ease-out" style={{ width: `${(index / (steps.length - 1)) * 100}%` }} />

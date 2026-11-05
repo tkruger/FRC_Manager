@@ -7,6 +7,7 @@
 **App tour & FRC basics**
 - **App tour**: the first time someone opens Home, a short tour points out each part of the screen — the bottom bar (or the top tabs on a computer), More, the bell and the profile menu — and what they can do there. It's different for **parents, students, mentors and Head Mentors**, can be skipped, and doesn't come back once finished (on any device). **Take the tour** in the profile menu or on Help runs it again
 - The tour has a picture for each step, cards that slide in, a progress bar, and a highlight with a bright double border and a pulsing ring so it stands out in dark mode too (motion is turned off for anyone who has reduced motion set)
+- The tour and the first-visit questions (turn on notifications, add to the home screen) never overlap. Taking the tour, they're part of it — a **Turn on notifications** step and an **Add it to your home screen** step near the end, when they apply — and aren't asked again afterward. Choosing **Not now** on the tour (or skipping it early) leaves them to come up on their own, one at a time
 - **New to FRC?** The tour can start with four quick cards on how FRC works — what it is, the season, a competition, and the words you'll hear — and there's a full **FRC basics** page (Help → FRC basics): the season month by month, how matches and events work, how a team works, a glossary, and how families help
 
 ## 1.11.0 — 2026-11-04
