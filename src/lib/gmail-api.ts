@@ -133,9 +133,22 @@ export async function sendViaGmailApi(
   s: { refreshToken: string; fromName: string | null; fromEmail: string },
   msg: { to: string; subject: string; text: string; html: string; replyTo?: string },
 ): Promise<{ sent: true } | { sent: false; error: string }> {
+  return sendGmailMessage(() => accessToken(s.refreshToken), { fromName: s.fromName, fromEmail: s.fromEmail }, msg, "the app's Google Cloud project");
+}
+
+/**
+ * Post a message to users.messages.send with an access token from getToken (a connected account
+ * or a service account). project: whose Google Cloud project, for the "API isn't on" message.
+ */
+export async function sendGmailMessage(
+  getToken: () => Promise<string>,
+  from: { fromName: string | null; fromEmail: string },
+  msg: { to: string; subject: string; text: string; html: string; replyTo?: string },
+  project: string,
+): Promise<{ sent: true } | { sent: false; error: string }> {
   try {
-    const token = await accessToken(s.refreshToken);
-    const raw = Buffer.from(buildMime({ ...msg, fromName: s.fromName, fromEmail: s.fromEmail }), "utf8").toString("base64url");
+    const token = await getToken();
+    const raw = Buffer.from(buildMime({ ...msg, ...from }), "utf8").toString("base64url");
     const res = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
       method: "POST",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
@@ -146,7 +159,7 @@ export async function sendViaGmailApi(
     if (res.ok) return { sent: true };
     const err = await res.json().catch(() => ({})) as { error?: { message?: string; status?: string } };
     const detail = err.error?.message ?? `error ${res.status}`;
-    if (res.status === 403 && /not been used|disabled/i.test(detail)) return { sent: false, error: "The Gmail API isn't turned on for the app's Google Cloud project." };
+    if (res.status === 403 && /not been used|disabled/i.test(detail)) return { sent: false, error: `The Gmail API isn't turned on for ${project}.` };
     if (res.status === 400 && /from/i.test(detail)) return { sent: false, error: "Gmail refused the From address — it has to be the account's address or a \"Send mail as\" alias." };
     if (res.status === 429) return { sent: false, error: "Gmail's sending limit was reached for now — try again later." };
     return { sent: false, error: `Gmail refused the message: ${detail}` };

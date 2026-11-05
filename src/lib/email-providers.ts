@@ -7,6 +7,8 @@ export interface MailProvider {
   label: string;
   /** Connected with Google (the Gmail API) instead of a mail server and password */
   google?: boolean;
+  /** A Google Workspace service account (domain-wide delegation) */
+  serviceAccount?: boolean;
   host: string;
   port: number;
   security: MailSecurity;
@@ -18,6 +20,10 @@ export interface MailProvider {
 export const MAIL_PROVIDERS: MailProvider[] = [
   {
     id: "gmail", label: "Gmail / Google Workspace", host: "", port: 0, security: "ssl", google: true,
+    passwordHelp: "",
+  },
+  {
+    id: "google_sa", label: "Google Workspace — service account", host: "", port: 0, security: "ssl", serviceAccount: true,
     passwordHelp: "",
   },
   {

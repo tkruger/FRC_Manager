@@ -11,7 +11,9 @@ import { issueMessage } from "@/lib/validation";
 import { seal, open } from "@/lib/security/secret-box";
 import { verifyMailServer, type MailServer } from "@/lib/team-mail";
 import { sendThroughTeam } from "@/lib/team-sender";
-import { revokeGmail } from "@/lib/gmail-api";
+import { GmailError, revokeGmail } from "@/lib/gmail-api";
+import { parseServiceAccountKey, serviceAccountToken } from "@/lib/google-service-account";
+import { MAX_DAILY_LIMIT, MAX_HOURLY_LIMIT } from "@/lib/mail-limits";
 import { MAIL_PORTS, PROVIDER_BY_ID, type MailSecurity } from "@/lib/email-providers";
 import { escapeHtml } from "@/lib/html";
 import { EMAIL_ADMIN_ROLES } from "@/lib/rbac";
@@ -61,8 +63,8 @@ export async function saveEmailServerAction(input: unknown): Promise<Result> {
   const data = {
     provider: d.provider, method: "smtp", host: server.host, port: server.port, security: server.security,
     username: server.username, passwordEnc: seal(password), fromName: server.fromName, fromEmail: server.fromEmail,
-    // Switching from Gmail: drop the Google connection
-    refreshTokenEnc: null, googleEmail: null,
+    // Switching from Gmail or a service account: drop the Google connection
+    refreshTokenEnc: null, googleEmail: null, serviceKeyEnc: null, serviceAccountEmail: null,
     enabled: true, lastError: null, lastErrorAt: null, updatedById: who.id,
   };
   if (existing?.refreshTokenEnc) {
@@ -127,17 +129,84 @@ const SenderSchema = z.object({
   fromEmail: z.string().trim().email("Enter the email address messages come from.").max(254),
 });
 
-/** Gmail: the name and address messages come from (the account's address, or a Send-mail-as alias) */
+/** Gmail / Workspace: the name and address messages come from (the mailbox, or a Send-mail-as alias) */
 export async function saveGmailSenderAction(input: unknown): Promise<Result> {
   const who = await headMentor();
   if (!who) return { success: false, error: "Only Head Mentors and Integration Admins can set up the team's email." };
   const parsed = SenderSchema.safeParse(input);
   if (!parsed.success) return { success: false, error: issueMessage(parsed.error) };
   const { count } = await prisma.teamEmailServer.updateMany({
-    where: { teamId: who.teamId, method: "gmail_api" },
+    where: { teamId: who.teamId, method: { in: ["gmail_api", "google_sa"] } },
     data:  { fromName: parsed.data.fromName || null, fromEmail: parsed.data.fromEmail.toLowerCase(), updatedById: who.id },
   });
   if (count === 0) return { success: false, error: "Connect Gmail first." };
+  revalidatePath("/settings/email");
+  return { success: true };
+}
+
+const ServiceAccountSchema = z.object({
+  /** The key file's JSON, or base64 of it. Blank keeps the saved key. */
+  key:       z.string().max(20_000).optional(),
+  sender:    z.string().trim().email("Enter the Workspace mailbox to send as.").max(254),
+  fromName:  z.string().trim().max(100).optional(),
+  /** Blank: the mailbox itself */
+  fromEmail: z.string().trim().max(254).optional(),
+});
+
+/**
+ * Google Workspace service account: check the key works for the mailbox (Google hands out a token —
+ * nothing is sent), then save it encrypted. The app only ever sends as that one mailbox.
+ */
+export async function saveServiceAccountAction(input: unknown): Promise<Result> {
+  const who = await headMentor();
+  if (!who) return { success: false, error: "Only Head Mentors and Integration Admins can set up the team's email." };
+  const parsed = ServiceAccountSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: issueMessage(parsed.error) };
+  const d = parsed.data;
+  const fromEmail = (d.fromEmail || d.sender).toLowerCase();
+  if (!z.string().email().safeParse(fromEmail).success) return { success: false, error: "Enter a valid From email." };
+
+  const existing = await prisma.teamEmailServer.findUnique({ where: { teamId: who.teamId } });
+  const keyText = d.key?.trim() ? d.key.trim() : existing?.serviceKeyEnc ? open(existing.serviceKeyEnc) : null;
+  if (!keyText) return { success: false, error: existing?.serviceKeyEnc ? "Upload the key again — the saved one can't be read." : "Upload the service account's key file." };
+
+  let key;
+  try {
+    key = parseServiceAccountKey(keyText);
+    await serviceAccountToken(key, d.sender.toLowerCase());
+  } catch (e) {
+    return { success: false, error: e instanceof GmailError ? e.message : "Couldn't check the service account with Google." };
+  }
+
+  // Switching from Connect with Google: that access is no longer needed
+  if (existing?.refreshTokenEnc) {
+    const old = open(existing.refreshTokenEnc);
+    if (old) await revokeGmail(old);
+  }
+  const data = {
+    provider: "google_sa", method: "google_sa",
+    host: null, port: null, security: null, username: null, passwordEnc: null, refreshTokenEnc: null,
+    // Stored as normalized JSON, encrypted
+    serviceKeyEnc: seal(JSON.stringify(key)), serviceAccountEmail: key.client_email,
+    googleEmail: d.sender.toLowerCase(), fromName: d.fromName || null, fromEmail,
+    enabled: true, lastError: null, lastErrorAt: null, updatedById: who.id,
+  };
+  await prisma.teamEmailServer.upsert({ where: { teamId: who.teamId }, create: { teamId: who.teamId, ...data }, update: data });
+  revalidatePath("/settings/email");
+  return { success: true };
+}
+
+/** Spam guard: the most team emails an hour and a day */
+export async function saveMailLimitsAction(input: { hourly: number; daily: number }): Promise<Result> {
+  const who = await headMentor();
+  if (!who) return { success: false, error: "Only Head Mentors and Integration Admins can change the team's email limits." };
+  const hourly = Math.round(Number(input.hourly));
+  const daily = Math.round(Number(input.daily));
+  if (!(hourly >= 1 && hourly <= MAX_HOURLY_LIMIT)) return { success: false, error: `The hourly limit can be 1–${MAX_HOURLY_LIMIT}.` };
+  if (!(daily >= 1 && daily <= MAX_DAILY_LIMIT)) return { success: false, error: `The daily limit can be 1–${MAX_DAILY_LIMIT}.` };
+  if (hourly > daily) return { success: false, error: "The hourly limit can't be more than the daily one." };
+  const { count } = await prisma.teamEmailServer.updateMany({ where: { teamId: who.teamId }, data: { hourlyLimit: hourly, dailyLimit: daily, updatedById: who.id } });
+  if (count === 0) return { success: false, error: "Set up the team's email first." };
   revalidatePath("/settings/email");
   return { success: true };
 }

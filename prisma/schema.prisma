@@ -1702,7 +1702,8 @@ model TeamEmailServer {
   team         Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
   /// Preset it was set up from: gmail, outlook, yahoo, icloud, zoho or custom
   provider     String
-  /// How it sends: "smtp" (a mail server and password) or "gmail_api" (Gmail, connected with Google)
+  /// How it sends: "smtp" (a mail server and password), "gmail_api" (Gmail, connected with Google)
+  /// or "google_sa" (a Google Workspace service account with domain-wide delegation)
   method       String    @default("smtp")
   // SMTP only
   host         String?
@@ -1715,8 +1716,16 @@ model TeamEmailServer {
   // Gmail API only
   /// Google's refresh token for the gmail.send permission, encrypted
   refreshTokenEnc String?
-  /// The Google account that was connected
+  /// The Google account that was connected — for a service account, the one mailbox it sends as
   googleEmail  String?
+  // Service account only
+  /// The service account's key file (JSON), encrypted
+  serviceKeyEnc       String?
+  /// Its address (…@….iam.gserviceaccount.com), to show which one is connected
+  serviceAccountEmail String?
+  /// Spam guard: at most this many team emails an hour / a day (whichever way they're sent)
+  hourlyLimit  Int       @default(250)
+  dailyLimit   Int       @default(1000)
   fromName     String?
   fromEmail    String
   enabled      Boolean   @default(true)

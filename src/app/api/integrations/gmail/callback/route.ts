@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     const data = {
       provider: "gmail", method: "gmail_api",
       host: null, port: null, security: null, username: null, passwordEnc: null,
-      refreshTokenEnc: seal(refreshToken), googleEmail: email,
+      refreshTokenEnc: seal(refreshToken), googleEmail: email, serviceKeyEnc: null, serviceAccountEmail: null,
       fromName: existing?.fromName ?? (team ? `FRC Team ${team.teamNumber}` : null),
       fromEmail: keepAlias ? existing!.fromEmail : email,
       enabled: true, lastError: null, lastErrorAt: null, updatedById: session.user.id,

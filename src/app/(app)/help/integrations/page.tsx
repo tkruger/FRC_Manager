@@ -12,7 +12,9 @@ const SECTIONS = [
   { id: "site",       title: "Site settings (environment variables)" },
   { id: "jobs",       title: "Background jobs (GitHub Actions)" },
   { id: "gmail",      title: "Team email — Gmail / Google Workspace" },
+  { id: "workspace",  title: "Team email — Google Workspace service account" },
   { id: "smtp",       title: "Team email — other providers" },
+  { id: "limits",     title: "Team email sending limits" },
   { id: "discord",    title: "Discord" },
   { id: "tba",        title: "The Blue Alliance" },
   { id: "nexus",      title: "FRC Nexus" },
@@ -121,6 +123,39 @@ export default function IntegrationGuidePage() {
         </p>
       </Section>
 
+      <Section id="workspace" title="Team email — Google Workspace service account">
+        <p>
+          For teams with their own Google Workspace: a <b>service account</b> in the team&apos;s own Google Cloud project sends as one Workspace
+          mailbox, with no one&apos;s personal sign-in involved. The team controls the Cloud project, so it can also cap Gmail API use there.
+          Nothing has to be added to the site&apos;s Vercel settings — the key is uploaded in the app and stored encrypted.
+        </p>
+        <H3>In Google Cloud (the team&apos;s Workspace admin)</H3>
+        <Steps>
+          <li>Create (or pick) a project at <a className="link" href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer">console.cloud.google.com</a>, signed in with the Workspace.</li>
+          <li><b>APIs &amp; Services → Library</b> → <b>Gmail API</b> → <b>Enable</b>.</li>
+          <li><b>IAM &amp; Admin → Service accounts → Create service account</b> (e.g. <code>frc-mailer</code>). No project roles are needed.</li>
+          <li>Open it → <b>Keys → Add key → Create new key → JSON</b>. A key file downloads — keep it safe, it&apos;s the only copy. Note the account&apos;s <b>Unique ID</b> (client ID).</li>
+          <li>Optional: <b>IAM &amp; Admin → Quotas</b> → Gmail API → lower the per-day / per-minute limits as an extra cap.</li>
+        </Steps>
+        <H3>In the Google Admin console (a Workspace super admin)</H3>
+        <Steps>
+          <li>Create a dedicated mailbox to send from (e.g. <code>notifications@yourteam.org</code>) rather than a person&apos;s account.</li>
+          <li><b>Security → Access and data control → API controls → Manage Domain Wide Delegation → Add new</b>.</li>
+          <li>Client ID: the service account&apos;s Unique ID. OAuth scopes: only <code>https://www.googleapis.com/auth/gmail.send</code>. <b>Authorize</b>. (It can take a few minutes to take effect.)</li>
+        </Steps>
+        <H3>In FRC Manager (Head Mentor or Integration Admin)</H3>
+        <Steps>
+          <li>Settings → Integrations → <b>Team email</b> → provider <b>Google Workspace — service account</b>.</li>
+          <li>Choose the key file (or paste its JSON — or the same JSON base64-encoded), enter the mailbox to send as, and the From name.</li>
+          <li><b>Check and save</b> asks Google for permission to send as that mailbox (nothing is sent), then stores the key encrypted. Then <b>Send me a test email</b>.</li>
+        </Steps>
+        <p className="text-(--color-text-secondary)">
+          Domain-wide delegation lets a key act for <b>any</b> mailbox in the Workspace, so FRC Manager only ever sends as the one mailbox you set,
+          and the delegation should only include <code>gmail.send</code>. If the key might have been exposed, delete it in Google Cloud (Service
+          account → Keys) and upload a new one. Removing it in the app deletes the stored copy.
+        </p>
+      </Section>
+
       <Section id="smtp" title="Team email — other providers">
         <p>Outlook / Microsoft 365, Yahoo, iCloud, Zoho or any mail server connect with a server, username and password (Settings → Integrations → Team email). Saving logs in to check them.</p>
         <ul className="list">
@@ -128,6 +163,15 @@ export default function IntegrationGuidePage() {
           <li><b>Microsoft 365</b>: the admin may need to turn on <b>Authenticated SMTP</b> for the mailbox (Microsoft 365 admin → Users → the mailbox → Mail → Manage email apps).</li>
           <li>The <b>From email</b> must be the account&apos;s address or an alias it can send as.</li>
         </ul>
+      </Section>
+
+      <Section id="limits" title="Team email sending limits">
+        <p>
+          Every team email — whichever way it&apos;s sent, including FRC Manager&apos;s own email for teams that haven&apos;t connected one — counts
+          against the team&apos;s limits: <b>250 an hour and 1,000 a day</b> unless changed (up to 1,000 an hour and 2,000 a day) on the Team email
+          page. Past either, no more go out until it resets, and Head Mentors and Integration Admins get a notification. If the count can&apos;t be
+          checked, nothing is sent. Account emails (confirming an address, resetting a password) aren&apos;t counted.
+        </p>
       </Section>
 
       <Section id="discord" title="Discord">
@@ -218,6 +262,7 @@ export default function IntegrationGuidePage() {
           <li>Each integration asks for the least it needs: Gmail can only <b>send</b> (not read) mail, The Blue Alliance and Nexus keys only read event data, and the Discord bot only posts and answers its own commands.</li>
           <li>Messages coming in from Discord, The Blue Alliance and Nexus are checked to be genuine (signatures or tokens) before anything is done with them, and each team&apos;s webhook address is private to it.</li>
           <li>Removing a connection deletes its stored secret, and revokes the access where the service allows it (Google).</li>
+          <li>Team email has hourly and daily sending limits, so the app can&apos;t be used to send large amounts of email even if something went wrong.</li>
         </ul>
         <H3>Uploads, records and clean-up</H3>
         <ul className="list">

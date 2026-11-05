@@ -11,6 +11,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { sendThroughTeam } from "@/lib/team-sender";
+import { countTeamMail } from "@/lib/mail-limits";
 
 export function emailConfigured(): boolean {
   return !!process.env.RESEND_API_KEY;
@@ -24,6 +25,9 @@ type Mail = { to: string; subject: string; html: string; text: string; /** Repli
  */
 export async function sendEmail(msg: Mail, opts: { teamId?: string | null } = {}): Promise<{ sent: boolean; error?: string }> {
   if (opts.teamId) {
+    // Spam guard: the team's hourly / daily limits cover its emails whichever way they go out
+    const allowed = await countTeamMail(opts.teamId);
+    if (!allowed.ok) return { sent: false, error: allowed.error };
     const viaTeam = await sendViaTeam(opts.teamId, msg);
     if (viaTeam) return { sent: true };
   }

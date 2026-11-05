@@ -214,6 +214,13 @@ export const TOPICS = [
     defaultInApp: true, defaultPush: true, required: true,
   },
   {
+    id: "team.email_limit", group: "Team",
+    label: "Team email limit reached",
+    description: "More team emails were sent in an hour or a day than the limit allows, so the rest were held back.",
+    audience: "Head Mentors and Integration Admins",
+    defaultInApp: true, defaultPush: true, required: true,
+  },
+  {
     id: "account", group: "Team",
     label: "My account",
     description: "Your account is approved or your roles change.",

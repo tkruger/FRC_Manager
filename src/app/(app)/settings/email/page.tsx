@@ -6,6 +6,7 @@ import { PageTitle } from "@/components/PageHeader";
 import { EmailServerForm } from "./EmailServerForm";
 import { EMAIL_ADMIN_ROLES } from "@/lib/rbac";
 import { gmailConfigured } from "@/lib/gmail-api";
+import { MAX_DAILY_LIMIT, MAX_HOURLY_LIMIT, teamMailUsage } from "@/lib/mail-limits";
 
 /** What the Gmail connect flow came back with (?gmail=…) */
 const GMAIL_RESULT: Record<string, { ok: boolean; text: string }> = {
@@ -26,9 +27,10 @@ export default async function EmailSettingsPage({ searchParams }: { searchParams
   if (!session?.user?.teamId) redirect("/dashboard");
   if (!session.user.roles.some((r) => EMAIL_ADMIN_ROLES.includes(r))) redirect("/dashboard");
 
-  const [server, team] = await Promise.all([
+  const [server, team, usage] = await Promise.all([
     prisma.teamEmailServer.findUnique({ where: { teamId: session.user.teamId } }),
     prisma.team.findUnique({ where: { id: session.user.teamId }, select: { teamNumber: true } }),
+    teamMailUsage(session.user.teamId),
   ]);
 
   return (
@@ -57,8 +59,11 @@ export default async function EmailSettingsPage({ searchParams }: { searchParams
       <EmailServerForm
         teamNumber={team?.teamNumber ?? null}
         googleAvailable={gmailConfigured()}
+        maxHourly={MAX_HOURLY_LIMIT}
+        maxDaily={MAX_DAILY_LIMIT}
         saved={server && {
           provider: server.provider, method: server.method, googleEmail: server.googleEmail,
+          serviceAccountEmail: server.serviceAccountEmail, hourlyLimit: server.hourlyLimit, dailyLimit: server.dailyLimit, usage,
           host: server.host, port: server.port, security: (server.security ?? "ssl") as "ssl" | "starttls",
           username: server.username, fromName: server.fromName, fromEmail: server.fromEmail, enabled: server.enabled,
           lastSentAt: server.lastSentAt?.toISOString() ?? null,
