@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { APP_VERSION } from "@/lib/version";
+import { TakeTourLink } from "@/components/tour/TakeTourLink";
 import { SOURCE_URL } from "@/components/legal/LegalPage";
 import { HelpBadge, type HelpTopic } from "@/components/HelpLink";
 
@@ -36,6 +37,10 @@ export default function HelpPage() {
         <p className="text-body text-(--color-text-secondary) mt-1">
           How FRC Manager works, section by section. Tap the <HelpBadge /> button on a page to jump straight to its part of this guide.
           Setting up email, Discord, The Blue Alliance or push notifications? See the <Link href="/help/integrations" className="text-(--color-secondary) hover:underline">integration setup guide</Link>.
+        </p>
+        <p className="text-body text-(--color-text-secondary) mt-2">
+          New here? <TakeTourLink /> for a quick look around, or read <Link href="/help/frc-basics" className="text-(--color-secondary) hover:underline">FRC basics</Link> if
+          robotics competitions are new to you.
         </p>
       </div>
 

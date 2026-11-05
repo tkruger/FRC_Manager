@@ -72,6 +72,7 @@ export function NotificationsDropdown({ unreadCount }: { unreadCount: number }) 
     <div ref={ref} className="relative">
       {/* Bell button */}
       <button
+        data-tour="bell"
         onClick={() => setOpen((v) => !v)}
         className="relative h-9 w-9 rounded-md flex items-center justify-center text-(--color-text-secondary) hover:bg-(--color-surface-overlay) transition-colors"
         aria-label={`Notifications${localUnread > 0 ? ` (${localUnread} unread)` : ""}`}

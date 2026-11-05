@@ -1,0 +1,185 @@
+"use client";
+
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { releasePrompt, whenFree } from "@/lib/prompt-queue";
+import { markTourSeenAction } from "@/app/actions/tour";
+import { AUDIENCE_LABEL, FRC_PRIMER, tourSteps, type TourAudience, type TourStep } from "./tour-steps";
+
+// The app tour: a card for each step, pointing at the part of the screen it's about (a spotlight
+// cut out of a dimmed page). Offered once, on Home, to everyone who hasn't seen it (it goes before
+// the other first-visit prompts); "Take the tour" in the profile menu runs it again.
+
+const START_EVENT = "frc:start-tour";
+export const startTour = () => window.dispatchEvent(new Event(START_EVENT));
+
+/** The first element for any of these data-tour names that's actually on the screen */
+function findTarget(names: string[] | undefined): HTMLElement | null {
+  for (const name of names ?? []) {
+    for (const el of document.querySelectorAll<HTMLElement>(`[data-tour="${name}"]`)) {
+      const r = el.getBoundingClientRect();
+      if (r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== "hidden") return el;
+    }
+  }
+  return null;
+}
+
+const PAD = 6;
+const GAP = 14;
+
+export function AppTour({ audience, offer }: { audience: TourAudience; offer: boolean }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const params = useSearchParams();
+  const [steps, setSteps] = useState<TourStep[] | null>(null);
+  const [index, setIndex] = useState(0);
+  const [rect, setRect] = useState<DOMRect | null>(null);
+  const [cardPos, setCardPos] = useState<{ top: number; left: number } | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const open = steps !== null;
+  const step = steps?.[index] ?? null;
+  // A welcome card first; the FRC primer is added if they pick it there
+  const welcome = useCallback((): TourStep => ({ id: "welcome", title: "Welcome to FRC Manager", body: null }), []);
+
+  const begin = useCallback(() => { setIndex(0); setSteps([welcome()]); }, [welcome]);
+
+  const finish = useCallback(() => {
+    setSteps(null);
+    setCardPos(null);
+    releasePrompt("tour");
+    markTourSeenAction().catch(() => {});
+  }, []);
+
+  // Offered once, on Home — before the notification / home-screen prompts
+  useEffect(() => {
+    if (!offer || pathname !== "/dashboard") return;
+    const t = setTimeout(() => whenFree("tour", begin), 700);
+    return () => clearTimeout(t);
+  }, [offer, pathname, begin]);
+
+  // "Take the tour" (profile menu, Help) — on Home, where every part of it is
+  useEffect(() => {
+    const go = () => (pathname === "/dashboard" ? begin() : router.push("/dashboard?tour=1"));
+    window.addEventListener(START_EVENT, go);
+    return () => window.removeEventListener(START_EVENT, go);
+  }, [pathname, router, begin]);
+  useEffect(() => {
+    if (params.get("tour") !== "1" || pathname !== "/dashboard") return;
+    router.replace("/dashboard", { scroll: false });
+    const t = setTimeout(begin, 500);
+    return () => clearTimeout(t);
+  }, [params, pathname, router, begin]);
+
+  // Where this step's target is on the screen
+  const measure = useCallback(() => {
+    if (!step) return;
+    if (!step.target) { setRect(null); return; }
+    const el = findTarget(step.target);
+    setRect(el ? el.getBoundingClientRect() : null);
+  }, [step]);
+
+  // Bring the target into view, then measure (again once any scrolling has settled)
+  useEffect(() => {
+    findTarget(step?.target)?.scrollIntoView({ block: "center", behavior: "smooth" });
+    const now = setTimeout(measure, 0);
+    const settled = setTimeout(measure, 380);
+    return () => { clearTimeout(now); clearTimeout(settled); };
+  }, [step, measure]);
+
+  useEffect(() => {
+    if (!open) return;
+    window.addEventListener("resize", measure);
+    window.addEventListener("scroll", measure, true);
+    return () => { window.removeEventListener("resize", measure); window.removeEventListener("scroll", measure, true); };
+  }, [open, measure]);
+
+  // Place the card next to the spotlight, where it fits; otherwise in the middle
+  useLayoutEffect(() => {
+    const card = cardRef.current;
+    if (!card || !open) return;
+    const w = card.offsetWidth, h = card.offsetHeight, vw = window.innerWidth, vh = window.innerHeight;
+    if (!rect) { setCardPos({ top: Math.max(12, (vh - h) / 2), left: Math.max(12, (vw - w) / 2) }); return; }
+    const left = Math.min(Math.max(12, rect.left + rect.width / 2 - w / 2), vw - w - 12);
+    const below = rect.bottom + PAD + GAP;
+    const above = rect.top - PAD - GAP - h;
+    // Below or above if it fits; otherwise pinned to whichever edge has more room, covering as little as possible
+    const top = below + h < vh - 12 ? below : above > 12 ? above
+      : rect.top > vh - rect.bottom ? 12 : Math.max(12, vh - h - 12);
+    setCardPos({ top, left });
+  }, [rect, open, index, steps]);
+
+  // Keyboard: Esc ends it, arrows step through
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") finish();
+      if (e.key === "ArrowRight" && index > 0) next();
+      if (e.key === "ArrowLeft" && index > 1) setIndex((i) => i - 1);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
+  useEffect(() => { if (open) cardRef.current?.focus(); }, [open, index]);
+
+  if (!open || !step) return null;
+  const tour = tourSteps(audience);
+  const last = index === steps.length - 1;
+  function next() { if (last) finish(); else setIndex((i) => i + 1); }
+  // Steps about things that aren't on this screen are left out (Home's tiles elsewhere, More on a computer)
+  const startTourSteps = (withPrimer: boolean) => {
+    const shown = tour.filter((s) => !s.target || findTarget(s.target));
+    setSteps([welcome(), ...(withPrimer ? FRC_PRIMER : []), ...shown]);
+    setIndex(1);
+  };
+  const newcomerFirst = audience === "parent" || audience === "student";
+
+  return (
+    <div className="fixed inset-0 z-[80]" role="dialog" aria-modal="true" aria-labelledby="tour-title">
+      {/* The dimmed page, with a window cut around the target */}
+      {rect ? (
+        <div data-tour-spot className="pointer-events-none fixed rounded-xl ring-2 ring-(--color-primary) transition-all duration-300"
+          style={{
+            top: rect.top - PAD, left: rect.left - PAD, width: rect.width + PAD * 2, height: rect.height + PAD * 2,
+            boxShadow: "0 0 0 9999px rgba(0,0,0,0.62)",
+          }} />
+      ) : (
+        <div className="fixed inset-0 bg-black/60" />
+      )}
+      {/* Clicks outside the card don't reach the page */}
+      <div className="fixed inset-0" onClick={(e) => e.stopPropagation()} />
+
+      <div ref={cardRef} tabIndex={-1}
+        className={`fixed w-[min(380px,calc(100vw-24px))] rounded-2xl border border-(--color-border) p-5 text-sm leading-relaxed text-(--color-text-primary) shadow-2xl outline-none ${index > 0 ? "transition-[top,left] duration-300" : ""}`}
+        // Hidden until it has been placed (it doesn't fly in from off-screen); then it glides between steps
+        style={{ backgroundColor: "var(--color-surface)", top: cardPos?.top ?? 0, left: cardPos?.left ?? 0, opacity: cardPos ? 1 : 0 }}>
+        {step.id === "welcome" ? (
+          <>
+            <h2 id="tour-title" className="text-h3 text-(--color-text-primary)">Welcome to FRC Manager 👋</h2>
+            <p className="mt-2">A one-minute tour for {AUDIENCE_LABEL[audience]}: where things are, and what you can do here.</p>
+            <p className="mt-2 text-(--color-text-secondary)">New to FRC robotics? Start with four quick cards on how it all works.</p>
+            <div className="mt-4 flex flex-col gap-2">
+              {newcomerFirst && <Button onClick={() => startTourSteps(true)}>I&apos;m new to FRC — start with the basics</Button>}
+              <Button variant={newcomerFirst ? "outline" : "primary"} onClick={() => startTourSteps(false)}>Show me around</Button>
+              {!newcomerFirst && <Button variant="outline" onClick={() => startTourSteps(true)}>Start with FRC basics</Button>}
+              <button type="button" onClick={finish} className="mt-1 text-small text-(--color-text-secondary) hover:underline">Not now</button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="text-xs font-semibold uppercase tracking-wide text-(--color-text-secondary)">{index} of {steps.length - 1}</p>
+            <h2 id="tour-title" className="mt-1 text-h3 text-(--color-text-primary)">{step.title}</h2>
+            <div className="mt-2">{step.body}</div>
+            <div className="mt-4 flex items-center justify-between gap-2">
+              <button type="button" onClick={finish} className="text-small text-(--color-text-secondary) hover:underline">{last ? "" : "Skip tour"}</button>
+              <div className="flex gap-2">
+                {index > 1 && <Button size="sm" variant="outline" onClick={() => setIndex((i) => i - 1)}>Back</Button>}
+                <Button size="sm" onClick={next}>{last ? "Done" : "Next"}</Button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}

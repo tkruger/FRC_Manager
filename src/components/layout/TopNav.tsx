@@ -12,7 +12,8 @@ import { canCoordinate, isAdult } from "@/lib/volunteers";
 import { hiddenForViewOnly, isViewOnly } from "@/lib/access/read-only";
 import { audienceOf, MOBILE_TABS_BY_AUDIENCE } from "@/lib/audience";
 import { FeedbackLink } from "@/components/feedback/Feedback";
-import { Megaphone } from "lucide-react";
+import { startTour } from "@/components/tour/AppTour";
+import { Compass, Megaphone } from "lucide-react";
 
 const MODULE_TABS = [
   { label: "Home",        href: "/dashboard",   icon: HomeIcon,        exact: true },
@@ -116,7 +117,7 @@ export function TopNav({ session, pendingMemberCount = 0, unreadNotificationCoun
           </div>
 
           {/* Center: module tabs — always perfectly centered */}
-          <nav className="flex items-center" aria-label="Modules">
+          <nav className="flex items-center" aria-label="Modules" data-tour="top-tabs">
             {MODULE_TABS.filter((t) => navShown(t.href)).map(({ label, href, exact, icon: Icon }) => {
               const active = exact ? pathname === href : (pathname.startsWith(href) && href !== "/dashboard");
               const isDashboard = href === "/dashboard" && pathname === "/dashboard";
@@ -270,6 +271,7 @@ export function TopNav({ session, pendingMemberCount = 0, unreadNotificationCoun
             boxShadow: "0 -4px 12px -4px rgb(0 0 0 / .06)",
           }}
           aria-label="Mobile navigation"
+          data-tour="bottom-bar"
         >
           <div className="flex items-stretch h-14">
             {MOBILE_TABS.map(({ label, href, icon: Icon }) => {
@@ -295,6 +297,7 @@ export function TopNav({ session, pendingMemberCount = 0, unreadNotificationCoun
 
             {/* More button */}
             <button
+              data-tour="more"
               onClick={() => setMoreOpen((o) => !o)}
               className={cn(
                 "flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors py-2",
@@ -354,6 +357,7 @@ function UserMenu({ user, canManageTeam, canManageDiscord, canManageEmail = fals
         aria-label={`User menu${pendingMemberCount > 0 ? ` (${pendingMemberCount} pending approvals)` : ""}`}
         aria-expanded={open}
         aria-haspopup="menu"
+        data-tour="profile"
       >
         {user.name?.[0]?.toUpperCase() ?? "U"}
         {pendingMemberCount > 0 && (
@@ -397,6 +401,11 @@ function UserMenu({ user, canManageTeam, canManageDiscord, canManageEmail = fals
             </svg>
             Help &amp; guide
           </Link>
+          <button type="button" onClick={() => { setOpen(false); startTour(); }}
+            className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-(--color-text-primary) hover:bg-(--color-surface-overlay) transition-colors">
+            <Compass className="w-4 h-4 text-(--color-text-secondary)" aria-hidden strokeWidth={1.75} />
+            Take the tour
+          </button>
           <FeedbackLink onOpen={() => setOpen(false)}
             className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-(--color-text-primary) hover:bg-(--color-surface-overlay) transition-colors">
             <svg className="w-4 h-4 text-(--color-text-secondary)" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>

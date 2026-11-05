@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+**App tour & FRC basics**
+- **App tour**: the first time someone opens Home, a short tour points out each part of the screen — the bottom bar (or the top tabs on a computer), More, the bell and the profile menu — and what they can do there. It's different for **parents, students, mentors and Head Mentors**, can be skipped, and doesn't come back once finished (on any device). **Take the tour** in the profile menu or on Help runs it again
+- **New to FRC?** The tour can start with four quick cards on how FRC works — what it is, the season, a competition, and the words you'll hear — and there's a full **FRC basics** page (Help → FRC basics): the season month by month, how matches and events work, how a team works, a glossary, and how families help
+
 ## 1.11.0 — 2026-11-04
 
 **Team email**

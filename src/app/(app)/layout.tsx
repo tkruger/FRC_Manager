@@ -3,6 +3,9 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { ScrollReset } from "@/components/layout/ScrollReset";
 import { BroadcastOverlay } from "@/components/broadcast/BroadcastOverlay";
+import { AppTour } from "@/components/tour/AppTour";
+import type { TourAudience } from "@/components/tour/tour-steps";
+import { audienceOf } from "@/lib/audience";
 import { FeedbackDialog, FeedbackLink } from "@/components/feedback/Feedback";
 import { MessageSquareText } from "lucide-react";
 import { TopNav } from "@/components/layout/TopNav";
@@ -31,11 +34,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   let activeSeasonName: string | null = null;
   const viewOnly = isViewOnly(session.user.roles);
   let canVolunteer = false;
+  let offerTour = false;
+  const roles = session.user.roles as string[];
+  const tourAudience: TourAudience = roles.includes("HEAD_MENTOR") ? "head_mentor" : audienceOf(roles);
 
   if (session.user.teamId) {
     const isAdmin = session.user.roles.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP"].includes(r));
 
-    const [activeSeason, pendingCount, unreadCount, me] = await Promise.all([
+    const [activeSeason, pendingCount, unreadCount, me, tour] = await Promise.all([
       prisma.season.findFirst({ where: { teamId: session.user.teamId, isActive: true }, select: { name: true } }),
       isAdmin
         ? prisma.user.count({ where: { teamId: session.user.teamId, status: "PENDING" } })
@@ -44,7 +50,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       viewOnly
         ? prisma.user.findUnique({ where: { id: session.user.id }, select: { volunteerClearedAt: true, volunteerClearedUntil: true } })
         : Promise.resolve(null),
+      prisma.user.findUnique({ where: { id: session.user.id }, select: { tourSeenAt: true } }),
     ]);
+    // The app tour, until they've finished or skipped it
+    offerTour = !!tour && !tour.tourSeenAt;
     canVolunteer = !!me && isCleared(me);
 
     pendingMemberCount = pendingCount;
@@ -97,6 +106,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <Toaster />
         {/* Give feedback — opened from the footer and the profile menu */}
         <Suspense fallback={null}><FeedbackDialog /></Suspense>
+        {/* The app tour (first visit to Home; again from the profile menu) */}
+        <Suspense fallback={null}><AppTour audience={tourAudience} offer={offerTour} /></Suspense>
         {/* A broadcast message opened from its notification */}
         <Suspense fallback={null}><BroadcastOverlay /></Suspense>
       </div>
