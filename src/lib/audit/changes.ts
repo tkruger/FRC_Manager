@@ -1,4 +1,4 @@
-// Change history for orders, tasks, meetings and members. Server-only.
+// Change history for orders, tasks, meetings, members, expense claims, broadcasts and the budget. Server-only.
 //
 // A Prisma client extension (applied in src/lib/prisma.ts) watches every create, update and
 // delete on the models below and writes a ChangeLog row: who, which order/task/meeting, and
@@ -19,6 +19,7 @@ import { statusLabel } from "@/lib/procurement-helpers";
 import { ITEM_STATUS_INFO, IMPORTANCE_OPTIONS, itemRef } from "@/lib/orders/constants";
 import { BUDGET_CATEGORY_LABELS } from "@/lib/budget-categories";
 import { ROLE_LABELS } from "@/lib/rbac";
+import { FUNDING_TYPE_LABELS } from "@/lib/funding";
 import { requestUser } from "@/lib/request-user";
 
 import type { EntityType, FieldChange } from "./changes-types";
@@ -78,6 +79,18 @@ const seasonTeam = { season: { select: { teamId: true } } };
 const findSeason = (base: PrismaClient, id: string) => base.season.findUnique({ where: { id }, select: { teamId: true } }).then((s) => (s ? { season: s } : null));
 const findOrder = (base: PrismaClient, id: string) =>
   base.purchaseRequest.findUnique({ where: { id }, select: { id: true, title: true, season: { select: { teamId: true } } } }).then((r) => (r ? { requestId: r.id, request: r } : null));
+
+// The budget: one history per season's budget, with its categories, funding and logged expenses as parts
+const budgetOf = { budget: { select: { id: true, season: { select: { teamId: true, name: true } } } } };
+const findBudget = (base: PrismaClient, id: string) =>
+  base.budget.findUnique({ where: { id }, select: { id: true, season: { select: { teamId: true, name: true } } } }).then((b) => (b ? { budgetId: b.id, budget: b } : null));
+const budgetLabel = (season: Row | undefined) => `Budget${season?.name ? ` — ${season.name}` : ""}`;
+const FUNDING_STATUS: Record<string, string> = { PLEDGED: "Pledged", PARTIAL: "Partly received", RECEIVED: "Received" };
+const money = (v: unknown) => `$${Number(v ?? 0).toFixed(2)}`;
+/** Budget parts: what was added or removed, in one line */
+function budgetPart(what: (r: Row) => string) {
+  return (r: Row, added: boolean): FieldChange => ({ field: "", from: added ? EMPTY : what(r), to: added ? what(r) : "removed" });
+}
 
 const ITEM_FIELDS: Spec["fields"] = {
   name:             { label: "Name",            kind: "text" },
@@ -235,6 +248,67 @@ const SPECS: Record<string, Spec> = {
     labelOf: (r) => `📣 ${r.title}`,
     detailOnCreate: true,
     parent: { key: "teamId", find: (base, id) => base.team.findUnique({ where: { id }, select: { id: true } }).then((t) => (t ? { teamId: t.id } : null)) },
+  },
+  budget: {
+    entity: "budget",
+    fields: {},
+    select: { id: true, season: { select: { teamId: true, name: true } } },
+    teamOf: (r) => r.season?.teamId,
+    idOf: (r) => r.id,
+    labelOf: (r) => budgetLabel(r.season),
+    parent: { key: "seasonId", find: (base, id) => base.season.findUnique({ where: { id }, select: { teamId: true, name: true } }).then((s) => (s ? { season: s } : null)) },
+  },
+  budgetCategory: {
+    entity: "budget",
+    fields: {
+      allocation: { label: "Allocation", kind: "money" },
+      label:      { label: "Name",       kind: "text" },
+    },
+    select: { id: true, label: true, budgetId: true, ...budgetOf },
+    teamOf: (r) => r.budget?.season?.teamId,
+    idOf: (r) => r.budgetId,
+    labelOf: (r) => budgetLabel(r.budget?.season),
+    part: (r) => `Category: ${r.label ?? "Category"}`,
+    partChange: budgetPart((r) => `Category: ${r.label} (${money(r.allocation)})`),
+    parent: { key: "budgetId", find: findBudget },
+  },
+  fundingSource: {
+    entity: "budget",
+    fields: {
+      name:           { label: "Name",          kind: "text" },
+      type:           { label: "Type",          kind: { enum: FUNDING_TYPE_LABELS } },
+      amount:         { label: "Amount",        kind: "money" },
+      status:         { label: "Status",        kind: { enum: FUNDING_STATUS } },
+      receivedAmount: { label: "Received",      kind: "money" },
+      receivedDate:   { label: "Received on",   kind: "date" },
+      notes:          { label: "Notes",         kind: "long" },
+    },
+    select: { id: true, name: true, budgetId: true, ...budgetOf },
+    teamOf: (r) => r.budget?.season?.teamId,
+    idOf: (r) => r.budgetId,
+    labelOf: (r) => budgetLabel(r.budget?.season),
+    part: (r) => `Funding: ${r.name ?? "Funding"}`,
+    partChange: budgetPart((r) => `Funding: ${r.name} — ${money(r.amount)} ${(FUNDING_STATUS[r.status ?? "PLEDGED"] ?? "").toLowerCase()} (${FUNDING_TYPE_LABELS[r.type] ?? r.type})`),
+    parent: { key: "budgetId", find: findBudget },
+  },
+  expense: {
+    entity: "budget",
+    fields: {
+      date:          { label: "Date",        kind: "date" },
+      amount:        { label: "Amount",      kind: "money" },
+      vendor:        { label: "Vendor",      kind: "text" },
+      description:   { label: "Description", kind: "text" },
+      paymentMethod: { label: "Paid with",   kind: "text" },
+    },
+    select: { id: true, description: true, budgetId: true, purchaseRequestId: true, isCommitment: true, ...budgetOf },
+    teamOf: (r) => r.budget?.season?.teamId,
+    idOf: (r) => r.budgetId,
+    labelOf: (r) => budgetLabel(r.budget?.season),
+    part: (r) => `Expense: ${r.description ?? "Expense"}`,
+    partChange: budgetPart((r) => `Expense: ${r.description} — ${money(r.amount)} on ${fmtDate(r.date)}${r.vendor ? ` (${r.vendor})` : ""}`),
+    // Orders record (and re-record) their own spending — the order's history covers it
+    skip: (r) => !!r.purchaseRequestId || !!r.isCommitment,
+    parent: { key: "budgetId", find: findBudget },
   },
   orderVendorCharge: {
     entity: "order",
@@ -407,7 +481,9 @@ function lifecycle(spec: Spec, row: Row, action: "created" | "deleted"): Entry |
   const added = action === "created";
   let changes: FieldChange[];
   if (spec.partChange) {
-    changes = [spec.partChange(row, added)];
+    const c = spec.partChange(row, added);
+    // Budget parts: "Funding: Acme — $500 pledged" added / removed
+    changes = [c.field ? c : added ? { field: "Added", from: EMPTY, to: c.to } : { field: "Removed", from: c.from, to: EMPTY }];
   } else if ("tax" in spec.fields) {
     // A vendor's tax & shipping: each amount that was set appears or goes
     changes = Object.entries(spec.fields)

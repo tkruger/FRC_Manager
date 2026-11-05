@@ -7,7 +7,7 @@ import { toHistoryEntries, type HistoryEntry } from "@/lib/audit/history";
 import { canReviewClaims } from "@/lib/expense-claims";
 
 const Input = z.object({
-  entityType: z.enum(["order", "task", "meeting", "member", "expense", "broadcast"]),
+  entityType: z.enum(["order", "task", "meeting", "member", "expense", "broadcast", "budget"]),
   entityId:   z.string().min(1).max(100),
 });
 
@@ -22,6 +22,9 @@ export async function getChangeHistoryAction(entityType: string, entityId: strin
   if (parsed.data.entityType === "expense" && !canReviewClaims(session.user.roles)) {
     const mine = await prisma.expenseClaim.findFirst({ where: { id: parsed.data.entityId, submittedById: session.user.id }, select: { id: true } });
     if (!mine) return { success: false, error: "Only Treasurers, Head Mentors and the person who submitted it can see a claim's history." };
+  }
+  if (parsed.data.entityType === "budget" && !canReviewClaims(session.user.roles)) {
+    return { success: false, error: "Only Treasurers and Head Mentors can see the budget's history." };
   }
   if (parsed.data.entityType === "member" && !session.user.roles.some((r) => ["HEAD_MENTOR", "TEAM_LEADERSHIP", "SAFETY_CAPTAIN"].includes(r))) {
     return { success: false, error: "Only Head Mentors and Team Leadership can see a member's history." };

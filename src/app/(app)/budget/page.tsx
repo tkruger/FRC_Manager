@@ -12,6 +12,8 @@ import { FUNDING_TYPE_LABELS } from "@/lib/funding";
 import { budgetTotals, pledgePoints, raisedFrom } from "@/lib/budget-summary";
 import { BudgetBurndownCard } from "./BudgetBurndownCard";
 import { PageHeader } from "@/components/PageHeader";
+import { ChangeHistory } from "@/components/history/ChangeHistory";
+import { canReviewClaims } from "@/lib/expense-claims";
 
 const BUDGET_ROLES = ["HEAD_MENTOR"];
 
@@ -251,6 +253,13 @@ export default async function BudgetDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Who changed the budget, funding and expenses — for the people who manage the money */}
+      {canReviewClaims(session.user.roles) && (
+        <div id="budget-history" className="scroll-mt-24">
+          <ChangeHistory entityType="budget" entityId={budget.id} />
+        </div>
+      )}
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Budget changes in the audit log**: category allocations, funding sources (added, edited — e.g. a pledge marked received — and removed) and expenses logged on the budget now record who changed what, from → to. Find them under **Changes to the budget, funding and expenses** on the Audit log, or **History** at the bottom of the Budget page (Treasurers and Head Mentors). Spending that orders record on their own stays in each order's history
 **Real names & parents**
 - Sign-up (email, Google/Discord and invites) and Profile now ask for a **first and last name** — a single word or a username isn't accepted, and Profile asks anyone whose name is only one word to add the rest
 - **Whose parent are you?** Signing up, a parent can tick **I'm a parent or guardian of a student on the team** and name their students. Mentors see it on the approval list, and **Approve** starts with the Parent role picked
