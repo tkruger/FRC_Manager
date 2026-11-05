@@ -169,7 +169,7 @@ export default function IntegrationGuidePage() {
         <p>
           Every team email — whichever way it&apos;s sent, including FRC Manager&apos;s own email for teams that haven&apos;t connected one — counts
           against the team&apos;s limits: <b>250 an hour and 1,000 a day</b> unless changed (up to 1,000 an hour and 2,000 a day) on the Team email
-          page. Past either, no more go out until it resets, and Head Mentors and Integration Admins get a notification. If the count can&apos;t be
+          page. At <b>80%</b> of either, Head Mentors and Integration Admins get a heads-up, so the limit can be raised before a big broadcast is cut short; past either, no more go out until it resets, and they&apos;re told again. If the count can&apos;t be
           checked, nothing is sent. Account emails (confirming an address, resetting a password) aren&apos;t counted.
         </p>
       </Section>

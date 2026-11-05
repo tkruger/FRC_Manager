@@ -4,7 +4,7 @@
 
 **Team email**
 - **Google Workspace — service account**: a new way to send the team's email for teams with a Workspace — upload the service account's key file (JSON, or base64), name the one mailbox it sends as, and **Check and save** confirms it with Google before storing the key encrypted. Nothing goes in the site's Vercel settings; FRC Manager only ever sends as that mailbox
-- **Sending limits** on every team's email, whichever way it goes out (250 an hour and 1,000 a day unless changed on the Team email page): past either, no more are sent until it resets, and Head Mentors and Integration Admins are notified. A guard against the app ever being used to send spam
+- **Sending limits** on every team's email, whichever way it goes out (250 an hour and 1,000 a day unless changed on the Team email page): Head Mentors and Integration Admins get a heads-up at 80% of either limit, and past either, no more are sent until it resets (and they're told). A guard against the app ever being used to send spam
 - The integration setup guide covers the service account (Google Cloud, Admin console domain-wide delegation) and the limits
 
 ## 1.10.1 — 2026-11-03
