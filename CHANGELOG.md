@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+**Real names & parents**
+- Sign-up (email, Google/Discord and invites) and Profile now ask for a **first and last name** — a single word or a username isn't accepted, and Profile asks anyone whose name is only one word to add the rest
+- **Whose parent are you?** Signing up, a parent can tick **I'm a parent or guardian of a student on the team** and name their students. Mentors see it on the approval list, and **Approve** starts with the Parent role picked
+- Parents and students are **linked**: names that match a student on the team link automatically (also when the student joins later; a first name alone works when the last name matches the parent's). Parents can add or remove their students under **My students** in Profile, and Team members shows "Parent of …" and "Parents: …"
+
 ## 1.12.1 — 2026-11-05
 
 - Sign-in, sign-up and invite pages warn that Discord is often blocked on school Wi-Fi (sign-in then fails); a failed sign-in mentions it too

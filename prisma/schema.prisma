@@ -41,6 +41,13 @@ model User {
   termsAcceptedAt  DateTime?
   /// The sub-teams they're part of (any number) — sub-team meetings remind them
   subTeams         SubTeam[] @default([])
+  /// Parents: whose parent they are, in their own words (from sign-up or Profile) — for students not
+  /// linked below, and for whoever approves them
+  parentOf         String?
+  /// Parents: their students' accounts
+  children         ParentLink[] @relation("ParentLinkParent")
+  /// Students: their parents' accounts
+  parents          ParentLink[] @relation("ParentLinkStudent")
 
   // Profile
   /// Optional; shown to volunteer coordinators and Head Mentors so they can reach volunteers
@@ -1813,6 +1820,18 @@ model OrderDraft {
 /// Invitation to join a team. EMAIL invites are for one person and used once; LINK invites
 /// are a shareable join link (posted to Discord) that anyone can use until it expires or is
 /// revoked. Accepting one makes the person an approved member of the team with the invite's roles.
+/// A parent and one of their students (both on the same team)
+model ParentLink {
+  parentId  String
+  parent    User     @relation("ParentLinkParent", fields: [parentId], references: [id], onDelete: Cascade)
+  studentId String
+  student   User     @relation("ParentLinkStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([parentId, studentId])
+  @@index([studentId])
+}
+
 model Invite {
   id          String     @id @default(cuid())
   teamId      String

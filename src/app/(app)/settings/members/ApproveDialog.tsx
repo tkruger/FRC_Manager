@@ -10,10 +10,11 @@ import type { Role } from "@/generated/prisma";
 
 
 /** grantable: the roles the approver may give (others are a Head Mentor's) */
-export function ApproveDialog({ userId, userName, grantable }: { userId: string; userName: string; grantable: Role[] }) {
+export function ApproveDialog({ userId, userName, grantable, parentOf }: { userId: string; userName: string; grantable: Role[]; parentOf?: string | null }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState<Role[]>(["TEAM_MEMBER"]);
+  // Said they're a parent when signing up
+  const [selected, setSelected] = useState<Role[]>(parentOf && grantable.includes("PARENT") ? ["PARENT"] : ["TEAM_MEMBER"]);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -37,6 +38,7 @@ export function ApproveDialog({ userId, userName, grantable }: { userId: string;
       </DialogTrigger>
       <DialogContent title={`Approve ${userName}`} description="Assign roles before approving. The user can log in immediately after.">
         {error && <div className="text-sm text-(--color-danger) bg-(--color-danger)/10 rounded px-3 py-2 mb-4">{error}</div>}
+        {parentOf && <p className="mb-3 text-sm text-(--color-text-primary)">Says they&apos;re the parent of <b>{parentOf}</b>.</p>}
         <div className="space-y-2 mb-6">
           {ALL_ROLES.map((role) => (
             <label key={role} className={`flex items-center gap-3 py-1.5 px-2 rounded ${grantable.includes(role) ? "cursor-pointer hover:bg-(--color-surface-overlay)" : "opacity-60"}`}>

@@ -10,6 +10,8 @@ import { VolunteerProfile } from "./VolunteerProfile";
 import { canCoordinate, isAdult, isCleared } from "@/lib/volunteers";
 import { isViewOnly } from "@/lib/access/read-only";
 import { SubTeamPicker } from "@/components/SubTeamPicker";
+import { ParentProfile } from "./ParentProfile";
+import { teamStudents } from "@/lib/parents";
 
 export default async function ProfilePage() {
   const session = await auth();
@@ -19,11 +21,14 @@ export default async function ProfilePage() {
     where:  { id: session.user.id },
     select: {
       name: true, email: true, emailVerified: true, password: true, accounts: { select: { provider: true } },
-      phone: true, volunteerClearedAt: true, volunteerClearedUntil: true, subTeams: true,
+      phone: true, volunteerClearedAt: true, volunteerClearedUntil: true, subTeams: true, parentOf: true,
+      children: { select: { student: { select: { id: true, name: true } } }, orderBy: { student: { name: "asc" } } },
     },
   });
   if (!me) redirect("/login");
   const roles = session.user.roles as string[];
+  const isParent = roles.includes("PARENT") && !!session.user.teamId;
+  const students = isParent ? await teamStudents(session.user.teamId!) : [];
   // Parents and mentors volunteer (coordinators too); students don't
   const showVolunteering = isAdult(roles) || canCoordinate(roles);
   const untilText = me.volunteerClearedUntil?.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
@@ -43,6 +48,8 @@ export default async function ProfilePage() {
       </div>
 
       <ProfileForm initialName={me.name} />
+
+      {isParent && <ParentProfile linked={me.children.map((c) => c.student)} students={students} parentOf={me.parentOf} />}
 
       {/* Parents aren't in sub-teams */}
       {!isViewOnly(roles) && (

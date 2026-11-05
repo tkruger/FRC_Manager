@@ -12,14 +12,18 @@ import { safeEqual } from "@/lib/security/crypto";
 import { sendVerificationEmail } from "@/lib/notify/auth-emails";
 import { after } from "next/server";
 import { TERMS_REQUIRED } from "@/components/legal/TermsCheckbox";
+import { fullNameSchema } from "@/lib/names";
+import { linkNewMember } from "@/lib/parents";
 
 const RegisterSchema = z.object({
-  name: z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name is too long"),
+  name: fullNameSchema,
   email: z.string().trim().toLowerCase().email("Invalid email address").max(254, "Email is too long"),
   password: z.string().min(8, "Password must be at least 8 characters").max(200, "Password is too long"),
   teamNumber: z.coerce.number().int().min(1, "Enter a valid FRC team number").max(99999, "Enter a valid FRC team number"),
   accessCode: z.string().trim().max(100).optional(),
   registrationNote: z.string().trim().max(500, "Keep the message under 500 characters").optional(),
+  /** Parents: whose parent they are */
+  parentOf: z.string().trim().max(300, "Keep it under 300 characters").optional(),
 });
 
 export type RegisterState =
@@ -37,6 +41,7 @@ export async function registerAction(
     teamNumber: formData.get("teamNumber"),
     accessCode: formData.get("accessCode") || undefined,
     registrationNote: formData.get("registrationNote") || undefined,
+    parentOf: formData.get("parentOf") || undefined,
   };
 
   if (formData.get("acceptTerms") !== "on") return { success: false, error: TERMS_REQUIRED };
@@ -49,7 +54,7 @@ export async function registerAction(
     };
   }
 
-  const { name, email, password, teamNumber, accessCode, registrationNote } = parsed.data;
+  const { name, email, password, teamNumber, accessCode, registrationNote, parentOf } = parsed.data;
 
   // 5 sign-ups per hour from one address (also limits pending-team spam)
   if (!await rateLimit(`register:ip:${await clientIp()}`, 5, 60 * 60)) return { success: false, error: TOO_MANY };
@@ -60,7 +65,7 @@ export async function registerAction(
   }
 
   const hashed = await bcrypt.hash(password, 12);
-  const result = await joinTeamOnRegistration({ name, teamNumber, accessCode, registrationNote, create: { email, password: hashed } });
+  const result = await joinTeamOnRegistration({ name, teamNumber, accessCode, registrationNote, parentOf, create: { email, password: hashed } });
 
   // Ask them to confirm the address (needed before Google/Discord can link to this account)
   if (result.success) {
@@ -80,10 +85,11 @@ async function joinTeamOnRegistration(opts: {
   teamNumber: number;
   accessCode?: string;
   registrationNote?: string;
+  parentOf?: string;
   create?: { email: string; password: string };
   userId?: string;
 }): Promise<RegisterState> {
-  const { name, teamNumber, accessCode, registrationNote } = opts;
+  const { name, teamNumber, accessCode, registrationNote, parentOf } = opts;
 
   // Find or create team. A team that's new to FRC Manager waits for a super admin to
   // approve it; its first member becomes Head Mentor when it's approved.
@@ -108,22 +114,28 @@ async function joinTeamOnRegistration(opts: {
     name,
     teamId: team.id,
     registrationNote,
+    parentOf: parentOf || null,
     // Both callers check the Terms checkbox first
     termsAcceptedAt: new Date(),
     status: codeMatch ? ("ACTIVE" as const) : ("PENDING" as const),
     ...(codeMatch ? { approvedAt: new Date() } : {}),
   };
 
+  let userId = opts.userId;
   if (opts.create) {
-    await prisma.user.create({
+    ({ id: userId } = await prisma.user.create({
+      select: { id: true },
       data: { ...data, ...opts.create, roles: codeMatch ? { create: { role: "TEAM_MEMBER" } } : undefined },
-    });
+    }));
   } else if (opts.userId) {
     await prisma.$transaction([
       prisma.user.update({ where: { id: opts.userId }, data }),
       ...(codeMatch ? [prisma.userRole.createMany({ data: [{ userId: opts.userId, role: "TEAM_MEMBER" as const }], skipDuplicates: true })] : []),
     ]);
   }
+
+  // Joined straight away as a student: link the parents who named them
+  if (codeMatch && userId) await linkNewMember(team.id, userId);
 
   if (newTeam) {
     await teamAwaitingApproval(teamNumber, name);
@@ -135,7 +147,7 @@ async function joinTeamOnRegistration(opts: {
   return { success: true, activated: codeMatch, newTeam };
 }
 
-const FinishSchema = RegisterSchema.pick({ name: true, teamNumber: true, accessCode: true, registrationNote: true });
+const FinishSchema = RegisterSchema.pick({ name: true, teamNumber: true, accessCode: true, registrationNote: true, parentOf: true });
 
 /** Signed up with Google or Discord: pick the team to join (the account already exists). */
 export async function finishRegistrationAction(
@@ -156,6 +168,7 @@ export async function finishRegistrationAction(
     teamNumber: formData.get("teamNumber"),
     accessCode: formData.get("accessCode") || undefined,
     registrationNote: formData.get("registrationNote") || undefined,
+    parentOf: formData.get("parentOf") || undefined,
   });
   if (!parsed.success) {
     return {

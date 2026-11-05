@@ -18,6 +18,8 @@ import { sendVerificationEmail } from "@/lib/notify/auth-emails";
 import { after } from "next/server";
 import { sendEmail, escapeHtml } from "@/lib/email";
 import { parseInviteList } from "@/lib/invite-list";
+import { fullNameSchema } from "@/lib/names";
+import { linkNewMember } from "@/lib/parents";
 import { sendChannelMessage, embed, COLORS, explainDiscordError } from "@/lib/discord";
 import {
   canInvite, checkInviteRoles, newInviteToken, inviteUrl, daysFromNow, findUsableInvite, markInviteUsed,
@@ -173,8 +175,9 @@ export async function revokeInviteAction(inviteId: string): Promise<{ success: t
 
 const NewAccountSchema = z.object({
   acceptTerms: z.literal(true, { message: TERMS_REQUIRED }),
-  name:     z.string().trim().min(2, "Enter your name.").max(100, "That name is too long."),
+  name:     fullNameSchema,
   email:    z.string().trim().toLowerCase().email("Enter a valid email address.").max(254),
+  parentOf: z.string().trim().max(300, "Keep the names under 300 characters.").optional(),
   password: z.string().min(8, "Password must be at least 8 characters.").max(200, "That password is too long."),
 });
 
@@ -186,7 +189,7 @@ export async function acceptInviteWithNewAccountAction(token: string, input: unk
 
   const parsed = NewAccountSchema.safeParse(input);
   if (!parsed.success) return { success: false, error: issueMessage(parsed.error) };
-  const { name, password } = parsed.data;
+  const { name, password, parentOf } = parsed.data;
   // An email invite is for that address
   const email = (usable.invite.email ?? parsed.data.email).toLowerCase();
 
@@ -205,11 +208,13 @@ export async function acceptInviteWithNewAccountAction(token: string, input: unk
       status:     "ACTIVE",
       approvedAt: new Date(),
       registrationNote: "Joined with an invite",
+      parentOf:   parentOf || null,
       termsAcceptedAt: new Date(),
       roles:      { create: usable.invite.roles.map((role) => ({ role })) },
     },
   });
   await markInviteUsed(usable.invite.id);
+  await linkNewMember(usable.team.id, created.id);
   revalidatePath("/settings/members");
   if (!emailed) after(() => sendVerificationEmail(created.id).then(() => undefined));
 
@@ -252,6 +257,7 @@ export async function acceptInviteAsCurrentUserAction(token: string, acceptTerms
     }),
   ]);
   await markInviteUsed(usable.invite.id);
+  await linkNewMember(usable.team.id, session.user.id);
   revalidatePath("/", "layout");
   return { success: true };
 }

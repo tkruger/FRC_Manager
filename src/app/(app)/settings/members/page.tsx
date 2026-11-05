@@ -32,7 +32,11 @@ export default async function MembersPage() {
     prisma.user.findMany({
       // Deleted members (kept only for history) don't appear here
       where: { teamId: session.user.teamId, deletedAt: null },
-      include: { roles: true },
+      include: {
+        roles: true,
+        children: { select: { student: { select: { name: true } } } },
+        parents:  { where: { parent: { deletedAt: null } }, select: { parent: { select: { name: true } } } },
+      },
       orderBy: [{ status: "asc" }, { createdAt: "desc" }],
     }),
   ]);
@@ -84,6 +88,7 @@ export default async function MembersPage() {
                   <p className="font-medium text-(--color-text-primary)">{u.name}</p>
                   <p className="text-small text-(--color-text-secondary) break-all">{u.email}</p>
                   <p className="text-small text-(--color-text-secondary)">Requested {formatDate(u.createdAt)}</p>
+                  {u.parentOf && <p className="text-small text-(--color-text-primary)">Parent of {u.parentOf}</p>}
                   {u.registrationNote && (
                     <p className="mt-1 text-small text-(--color-text-primary) italic">
                       &ldquo;{u.registrationNote}&rdquo;
@@ -91,7 +96,7 @@ export default async function MembersPage() {
                   )}
                 </div>
                 <div className="flex gap-2 shrink-0">
-                  <ApproveDialog userId={u.id} userName={u.name} grantable={grantable} />
+                  <ApproveDialog userId={u.id} userName={u.name} grantable={grantable} parentOf={u.parentOf} />
                   <DenyButton userId={u.id} />
                 </div>
               </div>
@@ -134,6 +139,15 @@ export default async function MembersPage() {
                     )}
                   </p>
                   <p className="text-small text-(--color-text-secondary) break-all">{u.email}{u.phone && <> · {u.phone}</>}</p>
+                  {/* Parents and their students, linked (or in the parent's words until their student joins) */}
+                  {(u.children.length > 0 || (u.parentOf && u.roles.some((r) => r.role === "PARENT"))) && (
+                    <p className="text-small text-(--color-text-secondary)">
+                      Parent of {u.children.length > 0 ? u.children.map((c) => c.student.name).join(", ") : u.parentOf}
+                    </p>
+                  )}
+                  {u.parents.length > 0 && (
+                    <p className="text-small text-(--color-text-secondary)">Parent{u.parents.length === 1 ? "" : "s"}: {u.parents.map((p) => p.parent.name).join(", ")}</p>
+                  )}
                 </div>
                 {u.id === session.user.id && (isHeadMentor || session.user.isSuperAdmin) && (
                   <div className="flex flex-wrap items-center gap-3">

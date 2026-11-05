@@ -8,6 +8,7 @@ import { useTheme, COLOR_THEMES } from "@/components/providers/ThemeProvider";
 import type { ColorTheme, BgMode } from "@/components/providers/ThemeProvider";
 import { useKanbanStyle, STICKY_COLORS, subTeamNote, type KanbanCardStyle } from "@/lib/kanban-style";
 import { SUBTEAM_COLORS } from "@/lib/schedule-helpers";
+import { FULL_NAME_HINT, looksLikeFullName } from "@/lib/names";
 
 interface Props {
   initialName: string;
@@ -75,7 +76,12 @@ export function ProfileForm({ initialName }: Props) {
         )}
 
         <form action={action} className="space-y-4">
-          <Field label="Display name"  name="name"  required defaultValue={initialName} />
+          {!looksLikeFullName(initialName) && (
+            <p className="rounded-md bg-(--color-warning)/10 px-3 py-2 text-sm text-(--color-warning)">
+              Please add your full first and last name — it&apos;s how mentors, students and parents know who you are.
+            </p>
+          )}
+          <Field label="First and last name" name="name" required autoComplete="name" defaultValue={initialName} hint={FULL_NAME_HINT} />
           <Button type="submit" isLoading={isPending}>Save changes</Button>
         </form>
       </div>

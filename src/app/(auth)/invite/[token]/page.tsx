@@ -57,7 +57,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
           </div>
         )
       ) : (
-        <InviteSignup token={token} email={invite.email} name={invite.name} teamNumber={team.teamNumber} providers={oauthProviders()} />
+        <InviteSignup token={token} email={invite.email} name={invite.name} parentInvite={invite.roles.includes("PARENT")} teamNumber={team.teamNumber} providers={oauthProviders()} />
       )}
     </div>
   );

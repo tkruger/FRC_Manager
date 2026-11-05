@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { OAuthButtons, OrDivider, type OAuthProvider } from "@/components/auth/OAuthButtons";
 import { TermsCheckbox } from "@/components/legal/TermsCheckbox";
+import { ParentOfField } from "@/components/auth/ParentOfField";
+import { FULL_NAME_HINT } from "@/lib/names";
 
 export function RegisterForm({ providers }: { providers: OAuthProvider[] }) {
   const router = useRouter();
@@ -55,12 +57,13 @@ export function RegisterForm({ providers }: { providers: OAuthProvider[] }) {
 
       <form action={action} className="space-y-4">
         <Field
-          label="Full name"
+          label="First and last name"
           name="name"
           type="text"
           autoComplete="name"
           required
           placeholder="Alex Johnson"
+          hint={FULL_NAME_HINT}
           error={errors.name?.[0]}
         />
         <Field
@@ -89,6 +92,8 @@ export function RegisterForm({ providers }: { providers: OAuthProvider[] }) {
           placeholder="e.g. 254"
           error={errors.teamNumber?.[0]}
         />
+
+        <ParentOfField error={errors.parentOf?.[0]} />
 
         <div>
           <button

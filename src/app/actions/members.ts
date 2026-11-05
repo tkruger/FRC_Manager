@@ -1,5 +1,6 @@
 "use server";
 
+import { linkNewMember } from "@/lib/parents";
 import { newAccessCode } from "@/lib/security/crypto";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
@@ -91,6 +92,8 @@ export async function approveMemberAction(
       }),
       ...await setRoles(userId, roles),
     ]);
+    // A parent's named students (or a student's parents) on the team
+    await linkNewMember(session.user.teamId!, userId);
 
     await createNotification({
       userId,
@@ -223,13 +226,14 @@ export async function deleteMemberAction(userId: string): Promise<{ success: boo
       await tx.pushSubscription.deleteMany({ where: { userId } });
       await tx.notificationPreference.deleteMany({ where: { userId } });
       await tx.orderDraft.deleteMany({ where: { userId } });
+      await tx.parentLink.deleteMany({ where: { OR: [{ parentId: userId }, { studentId: userId }] } });
       await tx.discordLink.updateMany({ where: { userId, revokedAt: null }, data: { revokedAt: new Date() } });
       await tx.user.update({
         where: { id: userId },
         data: {
           name: "Former member",
           email: `deleted-${userId}@deleted.invalid`,
-          password: null, image: null, registrationNote: null, timezone: null,
+          password: null, image: null, registrationNote: null, parentOf: null, timezone: null,
           isSuperAdmin: false,
           status: "DENIED",
           deniedReason: "Deleted",
