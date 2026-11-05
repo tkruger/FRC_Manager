@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.12.0 — 2026-11-05
+
 - iPhone home-screen app: fixed the bottom bar being pushed partly off the bottom of the screen
 
 **App tour & FRC basics**
