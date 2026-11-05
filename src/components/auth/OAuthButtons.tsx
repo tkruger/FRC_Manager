@@ -38,6 +38,12 @@ export function OAuthButtons({ providers, callbackUrl }: { providers: OAuthProvi
           Continue with {LABEL[p]}
         </Button>
       ))}
+      {/* Many school networks block Discord — the sign-in then fails with an error page */}
+      {providers.includes("discord") && (
+        <p className="text-small text-(--color-text-secondary)">
+          On school Wi-Fi? Discord is often blocked there and sign-in will fail — use another option, or try on cell data or home Wi-Fi.
+        </p>
+      )}
     </div>
   );
 }

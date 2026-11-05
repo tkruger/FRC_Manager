@@ -21,8 +21,8 @@ const OAUTH_ERRORS: Record<string, string> = {
   LinkNeedsVerify: "That email already has an FRC Manager account with a password. Sign in with your password, then use Profile → Connect to add this sign-in method.",
   OAuthAccountNotLinked: "That email already has an FRC Manager account. Sign in with your password, or the way you signed in before.",
   AccessDenied: "Sign-in was cancelled or isn't allowed for this account.",
-  OAuthCallbackError: "Sign-in didn't finish. Please try again.",
-  Callback: "Sign-in didn't finish. Please try again.",
+  OAuthCallbackError: "Sign-in didn't finish. Please try again. If you used Discord on school Wi-Fi, it may be blocked there — try another sign-in option or a different network.",
+  Callback: "Sign-in didn't finish. Please try again. If you used Discord on school Wi-Fi, it may be blocked there — try another sign-in option or a different network.",
   Configuration: "Sign-in with that service isn't working right now. Use your email and password, or try again later.",
 };
 

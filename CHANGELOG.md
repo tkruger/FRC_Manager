@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Sign-in, sign-up and invite pages warn that Discord is often blocked on school Wi-Fi (sign-in then fails); a failed sign-in mentions it too
 - **Invites with names**: invite by email now also takes `Dana Starler <dana@example.com>` (or `"Starler, Dana" <…>`), so you can paste straight from an email’s To: line. The name greets them in the invite email, fills in their sign-up form, and shows in Open invites. Plain addresses work as before; anything that isn’t an address is listed back as skipped
 
 ## 1.12.0 — 2026-11-05
