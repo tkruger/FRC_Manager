@@ -48,7 +48,7 @@ function CopyLink({ url }: { url: string }) {
   );
 }
 
-/** Invite a comma-separated list of email addresses */
+/** Invite a list of addresses, with or without names ("Dana Starler <dana@…>") */
 export function EmailInvites({ emailReady, days, roles: roleOptions }: { emailReady: boolean; days: number; roles: RoleOption[] }) {
   const router = useRouter();
   const [emails, setEmails] = useState("");
@@ -76,7 +76,8 @@ export function EmailInvites({ emailReady, days, roles: roleOptions }: { emailRe
       <div>
         <h2 className="text-h3 text-(--color-text-primary)">Invite by email</h2>
         <p className="text-small text-(--color-text-secondary) mt-1">
-          Separate addresses with commas. Each person gets their own link, good for {days} days.
+          Separate people with commas or new lines. Add a name as <span className="whitespace-nowrap">Dana Starler &lt;dana@example.com&gt;</span> to
+          fill in their sign-up — or paste straight from an email&apos;s To: line. Each person gets their own link, good for {days} days.
           {!emailReady && " Email isn't set up yet, so you'll get the links to send yourself."}
         </p>
       </div>
@@ -87,7 +88,7 @@ export function EmailInvites({ emailReady, days, roles: roleOptions }: { emailRe
           required
           value={emails}
           onChange={(e) => setEmails(e.target.value)}
-          placeholder="alex@example.com, sam@example.com"
+          placeholder={"alex@example.com, Dana Starler <dana@example.com>"}
           autoComplete="off"
           autoCapitalize="off"
           spellCheck={false}
@@ -100,7 +101,9 @@ export function EmailInvites({ emailReady, days, roles: roleOptions }: { emailRe
         <ul className="divide-y divide-(--color-border) rounded-md border border-(--color-border)">
           {results.map((r) => (
             <li key={r.email} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
-              <span className="min-w-0 break-all text-(--color-text-primary)">{r.email}</span>
+              <span className="min-w-0 break-all text-(--color-text-primary)">
+                {r.name ? <>{r.name} <span className="text-(--color-text-secondary)">{r.email}</span></> : r.email}
+              </span>
               <span className="flex items-center gap-2">
                 {r.status === "sent" && <Badge variant="success">Emailed</Badge>}
                 {r.status === "link" && <><Badge variant="warning">Not emailed</Badge>{r.url && <CopyLink url={r.url} />}</>}
@@ -195,7 +198,7 @@ export function DiscordInvite({ connected, channels, defaultChannel, days, roles
 }
 
 interface OpenInvite {
-  id: string; kind: "EMAIL" | "LINK"; email: string | null; url: string; uses: number; emailSent: boolean;
+  id: string; kind: "EMAIL" | "LINK"; email: string | null; name: string | null; url: string; uses: number; emailSent: boolean;
   invitedBy: string | null; createdAt: string; expiresAt: string; roles: string[];
 }
 
@@ -215,7 +218,7 @@ export function InviteList({ invites, joined }: { invites: OpenInvite[]; joined:
             <div key={i.id} className="flex flex-wrap items-center justify-between gap-2 px-5 py-3">
               <div className="min-w-0">
                 <p className="text-sm text-(--color-text-primary) break-all">
-                  {i.kind === "EMAIL" ? i.email : "Discord join link"}
+                  {i.kind === "LINK" ? "Discord join link" : i.name ? <>{i.name} <span className="text-(--color-text-secondary)">{i.email}</span></> : i.email}
                   {i.kind === "LINK" && <span className="ml-2 text-small text-(--color-text-secondary)">· {i.uses} joined</span>}
                 </p>
                 <p className="text-small text-(--color-text-secondary)">
@@ -228,7 +231,7 @@ export function InviteList({ invites, joined }: { invites: OpenInvite[]; joined:
                   type="button"
                   disabled={pending}
                   onClick={() => {
-                    if (!confirm(i.kind === "LINK" ? "Turn off this join link? Anyone who hasn't used it yet won't be able to." : `Cancel the invite for ${i.email}?`)) return;
+                    if (!confirm(i.kind === "LINK" ? "Turn off this join link? Anyone who hasn't used it yet won't be able to." : `Cancel the invite for ${i.name ?? i.email}?`)) return;
                     start(async () => {
                       const res = await revokeInviteAction(i.id);
                       if (!res.success) { toast.error(res.error); return; }

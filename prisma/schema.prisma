@@ -1820,6 +1820,8 @@ model Invite {
   kind        InviteKind
   /// The invited address (EMAIL invites only)
   email       String?
+  /// Their name, when the inviter gave one ("Dana Starler <dana@…>") — fills in the sign-up form
+  name        String?
   token       String     @unique
   invitedById String?
   invitedBy   User?      @relation("InviteSentBy", fields: [invitedById], references: [id], onDelete: SetNull)

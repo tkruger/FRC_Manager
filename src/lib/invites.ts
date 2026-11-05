@@ -29,14 +29,14 @@ export function daysFromNow(days: number): Date {
   return new Date(Date.now() + days * 86_400_000);
 }
 
-export type UsableInvite = { ok: true; invite: { id: string; kind: "EMAIL" | "LINK"; email: string | null; teamId: string; roles: Role[] }; team: { id: string; teamNumber: number; name: string } }
+export type UsableInvite = { ok: true; invite: { id: string; kind: "EMAIL" | "LINK"; email: string | null; name: string | null; teamId: string; roles: Role[] }; team: { id: string; teamNumber: number; name: string } }
                          | { ok: false; reason: string };
 
 /** An invite that can still be accepted, or why not */
 export async function findUsableInvite(token: string): Promise<UsableInvite> {
   const invite = await prisma.invite.findUnique({
     where:  { token },
-    select: { id: true, kind: true, email: true, teamId: true, roles: true, expiresAt: true, revokedAt: true, acceptedAt: true,
+    select: { id: true, kind: true, email: true, name: true, teamId: true, roles: true, expiresAt: true, revokedAt: true, acceptedAt: true,
               team: { select: { id: true, teamNumber: true, name: true, status: true } } },
   });
   if (!invite) return { ok: false, reason: "This invite link isn't valid. Check you copied all of it." };
@@ -46,7 +46,7 @@ export async function findUsableInvite(token: string): Promise<UsableInvite> {
   if (invite.team.status !== "ACTIVE") return { ok: false, reason: "This team isn't open to new members right now." };
   return {
     ok: true,
-    invite: { id: invite.id, kind: invite.kind, email: invite.email, teamId: invite.teamId, roles: invite.roles.length ? invite.roles : ["TEAM_MEMBER"] },
+    invite: { id: invite.id, kind: invite.kind, email: invite.email, name: invite.name, teamId: invite.teamId, roles: invite.roles.length ? invite.roles : ["TEAM_MEMBER"] },
     team: { id: invite.team.id, teamNumber: invite.team.teamNumber, name: invite.team.name },
   };
 }

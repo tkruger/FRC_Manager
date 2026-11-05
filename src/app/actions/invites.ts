@@ -17,6 +17,7 @@ import { clientIp } from "@/lib/security/request";
 import { sendVerificationEmail } from "@/lib/notify/auth-emails";
 import { after } from "next/server";
 import { sendEmail, escapeHtml } from "@/lib/email";
+import { parseInviteList } from "@/lib/invite-list";
 import { sendChannelMessage, embed, COLORS, explainDiscordError } from "@/lib/discord";
 import {
   canInvite, checkInviteRoles, newInviteToken, inviteUrl, daysFromNow, findUsableInvite, markInviteUsed,
@@ -39,13 +40,17 @@ function refresh() {
 
 export interface EmailInviteResult {
   email:  string;
+  name?:  string | null;
   /** sent = emailed; link = created but not emailed (copy the link); skipped = see reason */
   status: "sent" | "link" | "skipped";
   reason?: string;
   url?:   string;
 }
 
-/** Invite a comma-separated list of addresses. Each gets a personal, single-use invite. */
+/**
+ * Invite a list of people — plain addresses or "Name <address>" (as copied from an email's To: line).
+ * Each gets a personal, single-use invite.
+ */
 export async function sendEmailInvitesAction(raw: string, pickedRoles: string[] = ["TEAM_MEMBER"]): Promise<{ success: true; results: EmailInviteResult[] } | Fail> {
   const session = await requireInviter();
   if (!session) return { success: false, error: "Only Head Mentors and Team Leadership can invite people." };
@@ -55,9 +60,11 @@ export async function sendEmailInvitesAction(raw: string, pickedRoles: string[] 
   if (!roleCheck.ok) return { success: false, error: roleCheck.error };
   const roles = roleCheck.roles;
 
-  const emails = [...new Set(raw.split(/[\s,;]+/).map((e) => e.trim().toLowerCase()).filter(Boolean))];
-  if (emails.length === 0) return { success: false, error: "Enter at least one email address." };
-  if (emails.length > 50) return { success: false, error: "Up to 50 addresses at a time." };
+  const { entries, invalid } = parseInviteList(raw);
+  if (entries.length === 0) {
+    return { success: false, error: invalid.length ? `"${invalid[0].slice(0, 60)}" isn't an email address.` : "Enter at least one email address." };
+  }
+  if (entries.length > 50) return { success: false, error: "Up to 50 addresses at a time." };
   // 4 batches an hour per person keeps a compromised account from spamming through us
   if (!await rateLimit(`invites:user:${session.user.id}`, 4, 60 * 60)) return { success: false, error: TOO_MANY };
 
@@ -65,15 +72,15 @@ export async function sendEmailInvitesAction(raw: string, pickedRoles: string[] 
   if (!team) return { success: false, error: "Team not found." };
   const inviter = session.user.name ?? "Your team";
 
-  const results: EmailInviteResult[] = [];
-  for (const email of emails) {
-    if (!z.string().email().safeParse(email).success) { results.push({ email, status: "skipped", reason: "Not a valid email address" }); continue; }
+  const results: EmailInviteResult[] = invalid.slice(0, 20).map((t) => ({ email: t.slice(0, 100), status: "skipped", reason: "Not an email address" }));
+  for (const { email, name } of entries) {
+    if (!z.string().email().safeParse(email).success) { results.push({ email, name, status: "skipped", reason: "Not a valid email address" }); continue; }
 
     const existing = await prisma.user.findFirst({
       where: { email: { equals: email, mode: "insensitive" } },
       select: { teamId: true, status: true },
     });
-    if (existing?.teamId === teamId && existing.status === "ACTIVE") { results.push({ email, status: "skipped", reason: "Already on the team" }); continue; }
+    if (existing?.teamId === teamId && existing.status === "ACTIVE") { results.push({ email, name, status: "skipped", reason: "Already on the team" }); continue; }
 
     // A fresh invite replaces any earlier one still waiting for this address
     await prisma.invite.updateMany({
@@ -81,16 +88,19 @@ export async function sendEmailInvitesAction(raw: string, pickedRoles: string[] 
       data:  { revokedAt: new Date() },
     });
     const invite = await prisma.invite.create({
-      data: { teamId, kind: "EMAIL", email, roles, token: newInviteToken(), invitedById: session.user.id, expiresAt: daysFromNow(EMAIL_INVITE_DAYS) },
+      data: { teamId, kind: "EMAIL", email, name, roles, token: newInviteToken(), invitedById: session.user.id, expiresAt: daysFromNow(EMAIL_INVITE_DAYS) },
     });
     const url = inviteUrl(invite.token);
 
     const subject = `${inviter} invited you to Team ${team.teamNumber} on FRC Manager`;
+    const first = name?.split(" ")[0];
+    const hi = first ? `Hi ${first},\n\n` : "";
     const sent = await sendEmail({
       to: email,
       subject,
-      text: `${inviter} invited you to join Team ${team.teamNumber} (${team.name}) on FRC Manager, where the team runs its tasks, tools, orders and calendar.\n\nAccept the invite: ${url}\n\nThe link works for ${EMAIL_INVITE_DAYS} days.`,
+      text: `${hi}${inviter} invited you to join Team ${team.teamNumber} (${team.name}) on FRC Manager, where the team runs its tasks, tools, orders and calendar.\n\nAccept the invite: ${url}\n\nThe link works for ${EMAIL_INVITE_DAYS} days.`,
       html: `<div style="font-family:system-ui,sans-serif;max-width:480px;line-height:1.5;color:#1f2430">
+        ${first ? `<p>Hi ${escapeHtml(first)},</p>` : ""}
         <p><b>${escapeHtml(inviter)}</b> invited you to join <b>Team ${team.teamNumber}</b> (${escapeHtml(team.name)}) on FRC Manager, where the team runs its tasks, tools, orders and calendar.</p>
         <p><a href="${url}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-weight:600">Accept the invite</a></p>
         <p style="font-size:13px;color:#555">The link works for ${EMAIL_INVITE_DAYS} days. If the button doesn't work, open: ${url}</p>
@@ -98,9 +108,9 @@ export async function sendEmailInvitesAction(raw: string, pickedRoles: string[] 
     }, { teamId });
     if (sent.sent) {
       await prisma.invite.update({ where: { id: invite.id }, data: { emailSent: true } });
-      results.push({ email, status: "sent" });
+      results.push({ email, name, status: "sent" });
     } else {
-      results.push({ email, status: "link", reason: sent.error, url });
+      results.push({ email, name, status: "link", reason: sent.error, url });
     }
   }
 

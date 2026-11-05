@@ -23,13 +23,13 @@ export default async function InvitesPage() {
     prisma.invite.findMany({
       where:   { teamId, revokedAt: null, expiresAt: { gt: now }, OR: [{ kind: "LINK" }, { kind: "EMAIL", acceptedAt: null }] },
       orderBy: { createdAt: "desc" },
-      select:  { id: true, kind: true, email: true, token: true, roles: true, createdAt: true, expiresAt: true, uses: true, emailSent: true, invitedBy: { select: { name: true } } },
+      select:  { id: true, kind: true, email: true, name: true, token: true, roles: true, createdAt: true, expiresAt: true, uses: true, emailSent: true, invitedBy: { select: { name: true } } },
     }),
     prisma.invite.findMany({
       where:   { teamId, kind: "EMAIL", acceptedAt: { not: null } },
       orderBy: { acceptedAt: "desc" },
       take:    10,
-      select:  { id: true, email: true, acceptedAt: true },
+      select:  { id: true, email: true, name: true, acceptedAt: true },
     }),
     prisma.discordConfig.findMany({ where: { teamId, active: true }, orderBy: { audience: "asc" }, select: { guildId: true, channelGeneral: true, audience: true } }),
   ]);
@@ -65,11 +65,11 @@ export default async function InvitesPage() {
 
       <InviteList
         invites={open.map((i) => ({
-          id: i.id, kind: i.kind, email: i.email, url: inviteUrl(i.token), uses: i.uses, emailSent: i.emailSent,
+          id: i.id, kind: i.kind, email: i.email, name: i.name, url: inviteUrl(i.token), uses: i.uses, emailSent: i.emailSent,
           roles: i.roles.map((r) => ROLE_LABELS[r]),
           invitedBy: i.invitedBy?.name ?? null, createdAt: i.createdAt.toISOString(), expiresAt: i.expiresAt.toISOString(),
         }))}
-        joined={joined.map((j) => ({ id: j.id, email: j.email ?? "", acceptedAt: j.acceptedAt!.toISOString() }))}
+        joined={joined.map((j) => ({ id: j.id, email: j.name ?? j.email ?? "", acceptedAt: j.acceptedAt!.toISOString() }))}
       />
     </div>
   );

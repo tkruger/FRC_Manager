@@ -10,7 +10,9 @@ import { acceptInviteAsCurrentUserAction, acceptInviteWithNewAccountAction } fro
 import { TermsCheckbox } from "@/components/legal/TermsCheckbox";
 
 /** Signed out: create an account from the invite (or sign in to an existing one). */
-export function InviteSignup({ token, email, teamNumber, providers }: { token: string; email: string | null; teamNumber: number; providers: OAuthProvider[] }) {
+export function InviteSignup({ token, email, name, teamNumber, providers }: {
+  token: string; email: string | null; name?: string | null; teamNumber: number; providers: OAuthProvider[];
+}) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -35,7 +37,7 @@ export function InviteSignup({ token, email, teamNumber, providers }: { token: s
     <div className="space-y-4">
       <form onSubmit={submit} className="space-y-4">
         {error && <div className="rounded-md bg-(--color-danger)/10 px-3 py-2 text-sm text-(--color-danger)">{error}</div>}
-        <Field label="Your name" name="name" required autoComplete="name" />
+        <Field label="Your name" name="name" required autoComplete="name" defaultValue={name ?? undefined} />
         {email
           ? <Field label="Email" name="email" type="email" value={email} readOnly hint="This invite is for this address" />
           : <Field label="Email" name="email" type="email" required autoComplete="email" />}
