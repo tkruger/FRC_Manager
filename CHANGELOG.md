@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.13.1 — 2026-11-05
+
 - Budget setup: a category set to **$0 stays $0** (it used to jump back to the suggested amount), and each category has a **Not used** box — for anything the team doesn't spend on, like pneumatics. Not-used categories are $0, hidden on the Budget page, and left out of the category choices on orders and expense claims
 
 ## 1.13.0 — 2026-11-05
