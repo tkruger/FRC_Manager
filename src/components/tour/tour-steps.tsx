@@ -4,6 +4,7 @@
 // screen are skipped. Client-safe.
 
 import Link from "next/link";
+import { Bell, Bot, BookOpen, CalendarRange, Compass, House, LayoutGrid, Menu, PartyPopper, Swords, UserRound, type LucideIcon } from "lucide-react";
 
 export type TourAudience = "parent" | "student" | "mentor" | "head_mentor";
 
@@ -13,7 +14,14 @@ export interface TourStep {
   target?: string[];
   title: string;
   body: React.ReactNode;
+  /** The picture at the top of the card, and how it moves */
+  icon?: LucideIcon;
+  motion?: "bob" | "swing";
+  /** Badge colors (a gradient) */
+  tint?: [string, string];
 }
+
+export const WELCOME_ICON = Compass;
 
 const Li = ({ children }: { children: React.ReactNode }) => <li>{children}</li>;
 const List = ({ children }: { children: React.ReactNode }) => <ul className="mt-2 list-disc space-y-1 pl-5">{children}</ul>;
@@ -22,7 +30,7 @@ const List = ({ children }: { children: React.ReactNode }) => <ul className="mt-
 
 export const FRC_PRIMER: TourStep[] = [
   {
-    id: "frc-what", title: "What is FRC?",
+    id: "frc-what", title: "What is FRC?", icon: Bot, motion: "bob", tint: ["#F97316", "#DC2626"],
     body: <>
       <p><b>FIRST Robotics Competition</b> is a high-school robotics program run by FIRST. Each year teams design, build and program a
         robot — about the size of a dishwasher — to play a brand-new game against other teams.</p>
@@ -31,7 +39,7 @@ export const FRC_PRIMER: TourStep[] = [
     </>,
   },
   {
-    id: "frc-season", title: "A season at a glance",
+    id: "frc-season", title: "A season at a glance", icon: CalendarRange, tint: ["#0EA5E9", "#6366F1"],
     body: <List>
       <Li><b>Kickoff</b> (early January) — the year&apos;s game is revealed.</Li>
       <Li><b>Build season</b> — about eight weeks of designing, building and practicing.</Li>
@@ -41,7 +49,7 @@ export const FRC_PRIMER: TourStep[] = [
     </List>,
   },
   {
-    id: "frc-events", title: "At a competition",
+    id: "frc-events", title: "At a competition", icon: Swords, tint: ["#DC2626", "#2563EB"],
     body: <>
       <p>Matches are <b>three robots against three</b> — a red alliance and a blue one — for 2½ minutes: 15 seconds of the robot
         driving itself, then the drive team takes over. The <b>bumper color</b> shows which side a robot is on.</p>
@@ -50,7 +58,7 @@ export const FRC_PRIMER: TourStep[] = [
     </>,
   },
   {
-    id: "frc-words", title: "Words you'll hear",
+    id: "frc-words", title: "Words you'll hear", icon: BookOpen, tint: ["#14B8A6", "#0F766E"],
     body: <>
       <List>
         <Li><b>Pit</b> — the team&apos;s workshop area at an event.</Li>
@@ -66,13 +74,13 @@ export const FRC_PRIMER: TourStep[] = [
 // ── The tour itself ─────────────────────────────────────────────────────────
 
 const bell: TourStep = {
-  id: "bell", target: ["bell"], title: "Notifications",
+  id: "bell", target: ["bell"], title: "Notifications", icon: Bell, motion: "swing", tint: ["#F59E0B", "#EA580C"],
   body: <>The bell has everything the app tells you — and the same arrives as push notifications on your phone if you turn them on.
     Choose what you hear about in <b>Notification settings</b> (profile menu).</>,
 };
 
 const help = (extra?: React.ReactNode): TourStep => ({
-  id: "done", title: "You're all set",
+  id: "done", title: "You're all set", icon: PartyPopper, tint: ["#22C55E", "#0D9488"],
   body: <>
     {extra}
     <p>Every page has a <b>Guide</b> button that explains it, and <Link href="/help" className="text-(--color-secondary) underline">Help &amp; guide</Link> covers
@@ -84,7 +92,7 @@ const help = (extra?: React.ReactNode): TourStep => ({
 const STEPS: Record<TourAudience, TourStep[]> = {
   parent: [
     {
-      id: "nav", target: ["bottom-bar", "top-tabs"], title: "Your main sections",
+      id: "nav", target: ["bottom-bar", "top-tabs"], icon: LayoutGrid, tint: ["#8B5CF6", "#6366F1"], title: "Your main sections",
       body: <List>
         <Li><b>Volunteers</b> — sign up to help at meetings (once a Head Mentor clears you).</Li>
         <Li><b>Calendar</b> — every meeting, with changes as they happen.</Li>
@@ -93,21 +101,21 @@ const STEPS: Record<TourAudience, TourStep[]> = {
       </List>,
     },
     {
-      id: "more", target: ["more"], title: "Everything else is under More",
+      id: "more", target: ["more"], icon: Menu, tint: ["#64748B", "#334155"], title: "Everything else is under More",
       body: <>Home, Tasks, Tools, Safety, Inventory, the Budget, and <b>Expenses</b> — where you submit something you bought for the
         team, and ask to be paid back.</>,
     },
     { ...bell, body: <>{bell.body} You&apos;ll hear about meeting changes, volunteer requests and live competition updates — which you can
       <b> snooze</b> when you&apos;re not at an event.</> },
     {
-      id: "profile", target: ["profile"], title: "Your profile menu",
+      id: "profile", target: ["profile"], icon: UserRound, tint: ["#EC4899", "#8B5CF6"], title: "Your profile menu",
       body: <List>
         <Li><b>Profile &amp; appearance</b> — your name, a phone number for the volunteer coordinator, colors and dark mode.</Li>
         <Li><b>Notification settings</b>, <b>Help &amp; guide</b> and <b>Give feedback</b>.</Li>
       </List>,
     },
     {
-      id: "home", target: ["home-stats", "home-tiles"], title: "Home puts you first",
+      id: "home", target: ["home-stats", "home-tiles"], icon: House, tint: ["#10B981", "#0EA5E9"], title: "Home puts you first",
       body: <>Anything waiting on you — like a request to volunteer — shows at the top, then your next shift, the next competition, and the
         team&apos;s budget.</>,
     },
@@ -117,7 +125,7 @@ const STEPS: Record<TourAudience, TourStep[]> = {
 
   student: [
     {
-      id: "nav", target: ["bottom-bar", "top-tabs"], title: "Your main sections",
+      id: "nav", target: ["bottom-bar", "top-tabs"], icon: LayoutGrid, tint: ["#8B5CF6", "#6366F1"], title: "Your main sections",
       body: <List>
         <Li><b>Tasks</b> — what you&apos;re working on, as a board or a schedule. Move your cards as you go.</Li>
         <Li><b>Calendar</b> — every meeting, including your sub-team&apos;s.</Li>
@@ -126,21 +134,21 @@ const STEPS: Record<TourAudience, TourStep[]> = {
       </List>,
     },
     {
-      id: "more", target: ["more"], title: "Everything else is under More",
+      id: "more", target: ["more"], icon: Menu, tint: ["#64748B", "#334155"], title: "Everything else is under More",
       body: <>Home, <b>Safety</b> (certifications and reporting an issue), <b>Inventory</b> (parts and materials), <b>Orders</b> (ask for
         parts to be bought), the Budget, Expenses, the robot Fleet, and the Season.</>,
     },
     { ...bell, body: <>{bell.body} You&apos;ll hear when you&apos;re given a task, before meetings — with your open tasks as each meeting
       starts — and during competitions.</> },
     {
-      id: "profile", target: ["profile"], title: "Your profile menu",
+      id: "profile", target: ["profile"], icon: UserRound, tint: ["#EC4899", "#8B5CF6"], title: "Your profile menu",
       body: <List>
         <Li><b>Profile &amp; appearance</b> — pick <b>your sub-teams</b> (so you get their meetings), colors and dark mode.</Li>
         <Li><b>Notification settings</b>, <b>Help &amp; guide</b> and <b>Give feedback</b>.</Li>
       </List>,
     },
     {
-      id: "home", target: ["home-stats", "home-tiles"], title: "Home",
+      id: "home", target: ["home-stats", "home-tiles"], icon: House, tint: ["#10B981", "#0EA5E9"], title: "Home",
       body: <>The countdown to what&apos;s next, overdue tasks, the budget, and shortcuts to every part of the app.</>,
     },
     help(),
@@ -148,7 +156,7 @@ const STEPS: Record<TourAudience, TourStep[]> = {
 
   mentor: [
     {
-      id: "nav", target: ["bottom-bar", "top-tabs"], title: "Your main sections",
+      id: "nav", target: ["bottom-bar", "top-tabs"], icon: LayoutGrid, tint: ["#8B5CF6", "#6366F1"], title: "Your main sections",
       body: <List>
         <Li><b>Tasks</b> — the build plan: who&apos;s doing what, and what&apos;s late.</Li>
         <Li><b>Orders</b> — parts requests, and the ones waiting on you to approve or buy.</Li>
@@ -157,17 +165,17 @@ const STEPS: Record<TourAudience, TourStep[]> = {
       </List>,
     },
     {
-      id: "more", target: ["more"], title: "Everything else is under More",
+      id: "more", target: ["more"], icon: Menu, tint: ["#64748B", "#334155"], title: "Everything else is under More",
       body: <>Home, Events (competitions), <b>Volunteers</b>, Tools, Safety, Inventory, Expenses, the robot Fleet and the Season.</>,
     },
     { ...bell, body: <>{bell.body} Orders waiting on you get reminders until they&apos;re handled.</> },
     {
-      id: "profile", target: ["profile"], title: "Your profile menu",
+      id: "profile", target: ["profile"], icon: UserRound, tint: ["#EC4899", "#8B5CF6"], title: "Your profile menu",
       body: <>Your profile and sub-teams, notification settings, Help &amp; guide and Give feedback — plus anything your roles add, like
         <b> Templates</b> or <b>Team members</b>.</>,
     },
     {
-      id: "home", target: ["home-stats", "home-tiles"], title: "Home",
+      id: "home", target: ["home-stats", "home-tiles"], icon: House, tint: ["#10B981", "#0EA5E9"], title: "Home",
       body: <>What&apos;s next, overdue tasks, orders waiting for approval, and the budget — at a glance.</>,
     },
     help(<p className="mb-2">What you can change depends on your roles — <Link href="/settings/roles" className="text-(--color-secondary) underline">Roles explained</Link> lists them.</p>),
@@ -175,20 +183,20 @@ const STEPS: Record<TourAudience, TourStep[]> = {
 
   head_mentor: [
     {
-      id: "nav", target: ["bottom-bar", "top-tabs"], title: "Your main sections",
+      id: "nav", target: ["bottom-bar", "top-tabs"], icon: LayoutGrid, tint: ["#8B5CF6", "#6366F1"], title: "Your main sections",
       body: <List>
         <Li><b>Tasks</b>, <b>Orders</b>, <b>Budget</b> and <b>Calendar</b> first — the rest are a tap away.</Li>
         <Li>As Head Mentor you can change everything: tasks, orders and approvals, the budget, meetings and the season.</Li>
       </List>,
     },
     {
-      id: "more", target: ["more"], title: "Everything else is under More",
+      id: "more", target: ["more"], icon: Menu, tint: ["#64748B", "#334155"], title: "Everything else is under More",
       body: <>Home, Events, Volunteers, Tools, Safety, Inventory, Expenses, the robot Fleet, and <b>Season</b> — where the season&apos;s dates,
         meeting schedule and competitions are set up.</>,
     },
     bell,
     {
-      id: "profile", target: ["profile"], title: "Running the team",
+      id: "profile", target: ["profile"], icon: UserRound, tint: ["#EC4899", "#8B5CF6"], title: "Running the team",
       body: <List>
         <Li><b>Team members</b> — approve people who ask to join, and give roles.</Li>
         <Li><b>Broadcast message</b> — one message to students, parents and/or mentors.</Li>
@@ -197,7 +205,7 @@ const STEPS: Record<TourAudience, TourStep[]> = {
       </List>,
     },
     {
-      id: "home", target: ["home-stats", "home-tiles"], title: "Home",
+      id: "home", target: ["home-stats", "home-tiles"], icon: House, tint: ["#10B981", "#0EA5E9"], title: "Home",
       body: <>What&apos;s next, overdue tasks, orders waiting for approval, and the budget — at a glance.</>,
     },
     help(<p className="mb-2">Setting up email, Discord or competition data? The <Link href="/help/integrations" className="text-(--color-secondary) underline">integration setup guide</Link> walks through it.</p>),
