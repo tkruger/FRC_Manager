@@ -1,8 +1,10 @@
 ﻿"use client";
 
 import { useEffect, useState } from "react";
-import { SUBTEAM_COLORS, shortDate } from "@/lib/schedule-helpers";
+import { SUBTEAM_COLORS, SUBTEAM_OPTIONS, shortDate } from "@/lib/schedule-helpers";
 import { subTeamNote } from "@/lib/kanban-style";
+
+const SUBTEAM_NAME: Record<string, string> = Object.fromEntries(SUBTEAM_OPTIONS.map((o) => [o.value, o.label]));
 
 const STORAGE_KEY = "frc-schedule-progress-collapsed";
 
@@ -99,7 +101,7 @@ export function SeasonProgressBar({
                 return (
                   <div key={st}>
                     <div className="flex justify-between text-small mb-1">
-                      <span style={{ backgroundColor: subTeamNote(color) }} className="min-w-0 truncate rounded px-1.5 font-semibold text-[#1f2430]">{st.replace(/_/g, " ")}</span>
+                      <span style={{ backgroundColor: subTeamNote(color) }} title={SUBTEAM_NAME[st] ?? st} className="min-w-0 truncate rounded px-1.5 text-xs font-semibold leading-5 text-[#1f2430]">{SUBTEAM_NAME[st] ?? st.replace(/_/g, " ")}</span>
                       <span className="text-(--color-text-secondary) shrink-0 ml-1">{s.done}/{s.total}</span>
                     </div>
                     <div className="h-1.5 rounded-full bg-(--color-surface-overlay)">
