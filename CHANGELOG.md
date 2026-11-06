@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- iPhone home-screen app: the bottom bar no longer gets stuck partway up the screen after typing or picking from a drop-down (e.g. on Settings → Notifications)
+
 - **Order emails**: orders waiting on you (to approve, order or receive) and updates on your own orders (approved, denied, ordered, delivered, canceled) are now emailed as well as pushed — on by default, and each person can turn email off in Settings → Notifications. Expense claim reviews and updates already email by default. Sent from the team's email when it's set up
 
 ## 1.13.2 — 2026-11-05

@@ -211,6 +211,8 @@ body {
    The top and bottom bars sit outside <main> (z-50), so they stay above it. */
 /* …and nothing is shifted to make up for iOS there (see ViewportFix) */
 html.standalone .pinned-bottom { -webkit-transform: none; transform: none; }
+/* Nothing to scroll in the window itself — it only moves when iOS makes room for the keyboard */
+html.standalone, html.standalone body { height: 100%; overflow: hidden; }
 html.standalone .bg-orbs { bottom: 0; }
 html.standalone #app-shell > main {
   position: fixed;
@@ -511,6 +513,7 @@ html { -webkit-tap-highlight-color: transparent; }
   #app-shell header.fixed, #app-shell nav.fixed, .bg-orbs, .no-print { display: none !important; }
   #app-shell main { padding: 0 !important; }
   html.standalone #app-shell > main { position: static !important; overflow: visible !important; }
+  html.standalone, html.standalone body { height: auto !important; overflow: visible !important; }
   .card { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; box-shadow: none !important; break-inside: avoid; }
   .card::before, .card::after { display: none !important; }
   .print-break-inside-auto { break-inside: auto; }
