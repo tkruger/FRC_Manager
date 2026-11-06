@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Import CSV** on New order: fill the order's items from a spreadsheet — an order's own **Export CSV**, or any file with a header row (Item, Vendor, Link, Price, Qty, Notes, Part number, Sub-team, Importance, Why). Check them, then submit
+- New order has a red **Cancel** next to Save draft and Submit order (it asks first if you've started filling it in)
+
 - Buttons are never just a bare word: **Cancel order**, deletes and removes are solid red, and Cancel / Edit / Rename buttons have a frame
 - Sub-team names on the season progress card, the task list and a task's card sit on their sticky-note color (dark text on a light tint), so dark colors like Electrical are easy to read
 

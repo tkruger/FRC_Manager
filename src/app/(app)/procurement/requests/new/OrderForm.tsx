@@ -11,6 +11,8 @@ import { toast } from "@/components/ui/toast";
 import { IMPORTANCE_OPTIONS } from "@/lib/orders/constants";
 import { SUBTEAM_OPTIONS } from "@/lib/schedule-helpers";
 import { ORDER_BUDGET_OPTIONS, BUDGET_CATEGORY_LABELS } from "@/lib/budget-categories";
+import { parseOrderCsv } from "@/lib/orders/import-csv";
+import { Upload } from "lucide-react";
 
 interface Item {
   key:        number;
@@ -98,6 +100,25 @@ export function OrderForm({ vendors, edit, draft, unusedCategories = [] }: {
   const locked = edit?.locked ?? [];
   const [error, setError] = useState<string | null>(null);
   const [pending, start]  = useTransition();
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  /** Items from a CSV file (the app's own export, or a spreadsheet with a header row) */
+  async function importCsv(file: File) {
+    setError(null);
+    if (file.size > 1_000_000) { setError("That file is too big — keep it under 1 MB."); return; }
+    const res = parseOrderCsv(await file.text());
+    if (res.error) { setError(res.error); return; }
+    const imported = res.items.map((i) => ({ ...blankItem(), ...i, lookup: (i.link ? "done" : "idle") as Item["lookup"] }));
+    // Replace the empty starter item; otherwise add to what's there
+    setItems((list) => [...list.filter((i) => i.name.trim() || i.link.trim()), ...imported]);
+    toast.success(`Imported ${imported.length} item${imported.length === 1 ? "" : "s"}${res.skipped ? ` (${res.skipped} row${res.skipped === 1 ? "" : "s"} without a name skipped)` : ""} — check them before submitting`);
+  }
+
+  const hasContent = !!name.trim() || items.some((i) => i.name.trim() || i.link.trim());
+  function cancelNew() {
+    if (hasContent && !confirm(draftId ? "Leave this order? Changes since the draft was saved are lost." : "Discard this order? Save it as a draft to finish later.")) return;
+    router.push("/procurement");
+  }
 
   const update = (key: number, patch: Partial<Item>) =>
     setItems((list) => list.map((i) => (i.key === key ? { ...i, ...patch } : i)));
@@ -271,6 +292,19 @@ export function OrderForm({ vendors, edit, draft, unusedCategories = [] }: {
         </div>
       )}
 
+      {!edit && (
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-dashed border-(--color-border) px-4 py-3">
+          <input ref={fileRef} type="file" accept=".csv,text/csv" className="hidden"
+            onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void importCsv(f); }} />
+          <Button type="button" size="sm" variant="outline" onClick={() => fileRef.current?.click()}>
+            <Upload className="h-4 w-4" aria-hidden /> Import CSV
+          </Button>
+          <p className="min-w-0 flex-1 text-small text-(--color-text-secondary)">
+            Items from a spreadsheet — an order&apos;s <b>Export CSV</b>, or any file with a header row (Item, Vendor, Link, Price, Qty, Notes…).
+          </p>
+        </div>
+      )}
+
       <datalist id="vendor-names">{vendors.map((v) => <option key={v} value={v} />)}</datalist>
 
       {items.map((item, idx) => (
@@ -394,6 +428,9 @@ export function OrderForm({ vendors, edit, draft, unusedCategories = [] }: {
         <div className="flex gap-2">
           {edit && (
             <Button type="button" variant="outline" onClick={() => router.push(`/procurement/requests/${edit.requestId}`)}>Cancel</Button>
+          )}
+          {!edit && (
+            <Button type="button" variant="danger" onClick={cancelNew}>Cancel</Button>
           )}
           {!edit && (
             <Button type="button" variant="outline" onClick={saveDraft} isLoading={savingDraft}>Save draft</Button>

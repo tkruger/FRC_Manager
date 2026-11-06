@@ -1,5 +1,6 @@
 // CSV utilities for task templates
 
+import { parseCsvRows } from "@/lib/csv";
 import { TASK_ANCHORS, STAGE_INFO, isCompetitionAnchor, legacyAnchor, type TaskAnchor } from "@/lib/competition";
 import { csvCell } from "@/lib/csv";
 
@@ -115,40 +116,10 @@ const VALID_SUBTEAMS = new Set([
 ]);
 const VALID_PRIORITIES = new Set(["CRITICAL","HIGH","MEDIUM","LOW"]);
 
-/**
- * Splits CSV text into rows of cells. Quoted cells may contain commas, "" and line breaks
- * (multi-line Markdown details), so rows are found here rather than by splitting lines.
- */
-function parseCSVRecords(content: string): string[][] {
-  const rows: string[][] = [];
-  let row: string[] = [];
-  let cur = "";
-  let inQuotes = false;
-  for (let i = 0; i < content.length; i++) {
-    const ch = content[i];
-    if (inQuotes) {
-      if (ch === '"' && content[i + 1] === '"') { cur += '"'; i++; }
-      else if (ch === '"') inQuotes = false;
-      else cur += ch;
-    } else if (ch === '"') {
-      inQuotes = true;
-    } else if (ch === ",") {
-      row.push(cur); cur = "";
-    } else if (ch === "\n" || ch === "\r") {
-      if (ch === "\r" && content[i + 1] === "\n") i++;
-      row.push(cur); rows.push(row); row = []; cur = "";
-    } else {
-      cur += ch;
-    }
-  }
-  if (cur || row.length) { row.push(cur); rows.push(row); }
-  // Undo the ' that exports put in front of formula-like text (see csvCell)
-  return rows.map((r) => r.map((c) => (/^'[=+\-@\t\r]/.test(c) ? c.slice(1) : c.replace(/\r\n/g, "\n"))));
-}
 
 export function parseCSV(content: string): ParseResult {
   // Skip blank rows and # notes
-  const lines = parseCSVRecords(content).filter((r) => r.some((c) => c.trim()) && !r[0].trim().startsWith("#"));
+  const lines = parseCsvRows(content).filter((r) => r.some((c) => c.trim()) && !r[0].trim().startsWith("#"));
   if (lines.length < 2) return { tasks: [], errors: ["CSV must have a header row and at least one task row."] };
 
   const header = lines[0].map((h) => h.trim().toLowerCase());
