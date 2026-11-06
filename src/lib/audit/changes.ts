@@ -316,6 +316,7 @@ const SPECS: Record<string, Spec> = {
     fields: {
       tax:      { label: "Tax",      kind: "money" },
       shipping: { label: "Shipping", kind: "money" },
+      vendorOrderNumber: { label: "Vendor order #", kind: "text" },
     },
     select: { id: true, vendorName: true, requestId: true, request: { select: { title: true, season: { select: { teamId: true } } } } },
     teamOf: (r) => r.request?.season?.teamId,
@@ -486,9 +487,9 @@ function lifecycle(spec: Spec, row: Row, action: "created" | "deleted"): Entry |
     // Budget parts: "Funding: Acme — $500 pledged" added / removed
     changes = [c.field ? c : added ? { field: "Added", from: EMPTY, to: c.to } : { field: "Removed", from: c.from, to: EMPTY }];
   } else if ("tax" in spec.fields) {
-    // A vendor's tax & shipping: each amount that was set appears or goes
+    // A vendor's tax, shipping and order number: each one that was set appears or goes
     changes = Object.entries(spec.fields)
-      .filter(([f]) => Number(row[f]) > 0)
+      .filter(([f, def]) => (def.kind === "money" ? Number(row[f]) > 0 : !!row[f]))
       .map(([f, def]) => {
         const v = show(def.kind, row[f], new Map());
         return { field: `${spec.part!(row)} — ${def.label}`, from: added ? EMPTY : v, to: added ? v : EMPTY };

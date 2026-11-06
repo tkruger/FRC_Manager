@@ -341,6 +341,7 @@ const ChargesSchema = z.object({
     vendorName: z.string().trim().max(120),
     tax:        z.number().min(0, "Tax can't be negative.").max(1_000_000),
     shipping:   z.number().min(0, "Shipping can't be negative.").max(1_000_000),
+    vendorOrderNumber: z.string().trim().max(100, "That order number is too long.").optional(),
   })).max(50),
 });
 
@@ -353,7 +354,7 @@ export async function setOrderChargesAction(input: unknown): Promise<Result> {
   const who = await actor();
   if (!who) return { success: false, error: "Not authenticated." };
   if (!who.roles.some((r) => ORDER_ADMIN_ROLES.includes(r))) {
-    return { success: false, error: "Only the Buyer, Team Leadership and Head Mentors can set tax and shipping." };
+    return { success: false, error: "Only the Buyer, Team Leadership and Head Mentors can change the vendor orders." };
   }
   const parsed = ChargesSchema.safeParse(input);
   if (!parsed.success) return { success: false, error: issueMessage(parsed.error) };
@@ -361,11 +362,11 @@ export async function setOrderChargesAction(input: unknown): Promise<Result> {
 
   const order = await prisma.purchaseRequest.findFirst({
     where:  { id: requestId, season: { teamId: who.teamId } },
-    select: { id: true, status: true, lineItems: { select: { vendorName: true } }, vendorCharges: { select: { id: true, vendorName: true } } },
+    select: { id: true, status: true, lineItems: { select: { vendorName: true } }, vendorCharges: { select: { id: true, vendorName: true, vendorOrderNumber: true } } },
   });
   if (!order) return { success: false, error: "Order not found." };
   if (order.status === "DENIED" || order.status === "CANCELLED") return { success: false, error: "This order is closed." };
-  if (order.status === "DRAFT" || order.status === "SUBMITTED") return { success: false, error: "Tax and shipping are added once the order is approved." };
+  if (order.status === "DRAFT" || order.status === "SUBMITTED") return { success: false, error: "Vendor order details are added once the order is approved." };
 
   // Only the vendors on the order (matched like the budget does: trimmed, any case)
   const key = (v: string | null | undefined) => (v ?? "").trim().toLowerCase();
@@ -379,18 +380,21 @@ export async function setOrderChargesAction(input: unknown): Promise<Result> {
       const vendorName = vendors.get(key(c.vendorName));
       if (vendorName === undefined) continue;
       const tax = money(c.tax), shipping = money(c.shipping);
+      const orderNo = c.vendorOrderNumber?.trim() || null;
       // Update what's there for this vendor (however its name was spelled then), so the
       // order's history shows each amount from → to
       const [keep, ...extra] = order.vendorCharges.filter((x) => key(x.vendorName) === key(vendorName)).map((x) => x.id);
       if (extra.length) await tx.orderVendorCharge.deleteMany({ where: { id: { in: extra } } });
-      if (tax === 0 && shipping === 0) {
+      const before = order.vendorCharges.find((x) => x.id === keep);
+      if (tax === 0 && shipping === 0 && !orderNo) {
         if (keep) await tx.orderVendorCharge.delete({ where: { id: keep } });
       } else if (keep) {
-        await tx.orderVendorCharge.update({ where: { id: keep }, data: { tax, shipping, updatedById: who.id } });
+        await tx.orderVendorCharge.update({ where: { id: keep }, data: { tax, shipping, vendorOrderNumber: orderNo, updatedById: who.id } });
       } else {
-        await tx.orderVendorCharge.create({ data: { requestId, vendorName, tax, shipping, updatedById: who.id } });
+        await tx.orderVendorCharge.create({ data: { requestId, vendorName, tax, shipping, vendorOrderNumber: orderNo, updatedById: who.id } });
       }
-      parts.push(`${vendorName || "No vendor"}: ${tax > 0 || shipping > 0 ? `${tax.toFixed(2)} tax, ${shipping.toFixed(2)} shipping` : "none"}`);
+      const noChange = orderNo === (before?.vendorOrderNumber ?? null) ? "" : orderNo ? `, order #${orderNo}` : before?.vendorOrderNumber ? ", order # removed" : "";
+      parts.push(`${vendorName || "No vendor"}: ${tax > 0 || shipping > 0 ? `${tax.toFixed(2)} tax, ${shipping.toFixed(2)} shipping` : "no tax or shipping"}${noChange}`);
     }
     // Spend already recorded follows (nothing recorded yet: it's included when it is)
     await syncOrderSpend(tx, requestId);

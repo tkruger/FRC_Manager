@@ -53,6 +53,13 @@ export const TOPICS = [
     defaultInApp: true, defaultPush: true, defaultEmail: true,
   },
   {
+    id: "purchase.comments", group: "Purchasing",
+    label: "Comments on orders I'm part of",
+    description: "Someone comments on an order you placed, approved, are buying or commented on — back orders, broken links, questions.",
+    audience: "The person who placed the order and everyone who has worked on or commented on it",
+    defaultInApp: true, defaultPush: true, defaultEmail: true,
+  },
+  {
     id: "inventory.low_stock", group: "Purchasing",
     label: "Low stock",
     description: "An item falls to its minimum and is added to the order queue.",

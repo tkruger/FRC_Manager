@@ -12,6 +12,7 @@ import { ITEM_STATUSES, ITEM_STATUS_INFO, ORDER_ADMIN_ROLES, STATUS_OVERRIDE_ROL
 import { ITEM_ROW_SELECT, toItemRow } from "@/lib/orders/rows";
 import { ChangeStatusButton, ItemsTable } from "@/components/orders/ItemsTable";
 import { PriceCheckButton } from "@/components/orders/PriceCheckButton";
+import { OrderComments } from "@/components/orders/OrderComments";
 import { isViewOnly } from "@/lib/access/read-only";
 import { ShareButton } from "@/components/ShareButton";
 import { PageHeader } from "@/components/PageHeader";
@@ -34,8 +35,9 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
     where: { id, season: { teamId: session.user.teamId } },
     include: {
       requestedBy: { select: { name: true } },
+      comments:    { orderBy: { createdAt: "asc" }, select: { id: true, body: true, createdAt: true, authorId: true, author: { select: { name: true, deletedAt: true } } } },
       lineItems:   { orderBy: [{ orderNumber: "asc" }, { id: "asc" }], select: ITEM_ROW_SELECT },
-      vendorCharges: { select: { vendorName: true, tax: true, shipping: true } },
+      vendorCharges: { select: { vendorName: true, tax: true, shipping: true, vendorOrderNumber: true } },
       events:      { orderBy: { createdAt: "asc" }, include: { actor: { select: { name: true } } } },
     },
   });
@@ -89,16 +91,16 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
   // Items grouped by vendor (trimmed, any case — as the budget matches them), with each one's tax & shipping
   const vendorKey = (v: string | null | undefined) => (v ?? "").trim().toLowerCase();
-  const vendors = new Map<string, { name: string; items: number; subtotal: number; tax: number; shipping: number }>();
+  const vendors = new Map<string, { name: string; items: number; subtotal: number; tax: number; shipping: number; orderNumber: string | null }>();
   for (const i of items) {
-    const v = vendors.get(vendorKey(i.vendorName)) ?? { name: (i.vendorName ?? "").trim(), items: 0, subtotal: 0, tax: 0, shipping: 0 };
+    const v = vendors.get(vendorKey(i.vendorName)) ?? { name: (i.vendorName ?? "").trim(), items: 0, subtotal: 0, tax: 0, shipping: 0, orderNumber: null };
     v.items += 1;
     v.subtotal += (i.unitCost ?? 0) * i.quantity;
     vendors.set(vendorKey(i.vendorName), v);
   }
   for (const c of order.vendorCharges) {
     const v = vendors.get(vendorKey(c.vendorName));
-    if (v) { v.tax += c.tax; v.shipping += c.shipping; }
+    if (v) { v.tax += c.tax; v.shipping += c.shipping; v.orderNumber ??= c.vendorOrderNumber; }
   }
   const extras = [...vendors.values()].reduce((s, v) => s + v.tax + v.shipping, 0);
   const beforeApproval = order.status === "DRAFT" || order.status === "SUBMITTED";
@@ -191,6 +193,13 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         recorded={expenses.map((e) => ({ label: e.category?.label ?? "Uncategorized", amount: e.amount, committed: e.isCommitment }))}
         canChange={canSetOrderBudget(roles, session.user.id, order, canEdit)}
         unusedCategories={await unusedBudgetCategories(session.user.teamId)}
+      />
+
+      <OrderComments
+        requestId={order.id}
+        comments={order.comments.map((c) => ({ id: c.id, body: c.body, at: c.createdAt.toISOString(), mine: c.authorId === session.user.id, author: !c.author || c.author.deletedAt ? "Former member" : c.author.name }))}
+        canComment={!isViewOnly(roles)}
+        canModerate={roles.some((r) => STATUS_OVERRIDE_ROLES.includes(r))}
       />
 
       <section className="space-y-3">

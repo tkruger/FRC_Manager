@@ -98,6 +98,7 @@ model User {
   expenseClaimsReviewed ExpenseClaim[]     @relation("ClaimReviewedBy")
   expenseClaimsPaid    ExpenseClaim[]      @relation("ClaimPaidBy")
   volunteerShifts      MeetingVolunteer[]  @relation("Volunteer")
+  orderComments        OrderComment[]      @relation("OrderCommentAuthor")
   volunteersAssigned   MeetingVolunteer[]  @relation("VolunteerAssignedBy")
   broadcastsSent       Broadcast[]         @relation("BroadcastSender")
   notifications        Notification[]
@@ -851,6 +852,7 @@ model PurchaseRequest {
   lineItems       PurchaseLineItem[]
   vendorCharges   OrderVendorCharge[]
   events          PurchaseRequestEvent[]
+  comments        OrderComment[]
   reorderRequests ReorderRequest[]
 }
 
@@ -1485,6 +1487,8 @@ enum NotificationType {
   FEEDBACK
   /// A Head Mentor's broadcast message
   BROADCAST
+  /// Someone commented on an order you're part of
+  ORDER_COMMENT
   /// Someone edited an order you're part of
   ORDER_CHANGED
 }
@@ -1884,6 +1888,19 @@ enum InviteKind {
 /// Tax and shipping for the items in an order that come from one vendor, entered by the
 /// Buyer when placing it. Tax counts toward the categories of that vendor's items (split by
 /// cost); shipping goes to the Shipping category.
+/// A note on an order from anyone working on it ("back ordered until the 20th", "the link is broken")
+model OrderComment {
+  id        String          @id @default(cuid())
+  requestId String
+  request   PurchaseRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  authorId  String?
+  author    User?           @relation("OrderCommentAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  body      String
+  createdAt DateTime        @default(now())
+
+  @@index([requestId, createdAt])
+}
+
 model OrderVendorCharge {
   id          String          @id @default(cuid())
   requestId   String
@@ -1892,6 +1909,8 @@ model OrderVendorCharge {
   vendorName  String
   tax         Float           @default(0)
   shipping    Float           @default(0)
+  /// The vendor's own order number — for following up with them after ordering
+  vendorOrderNumber String?
   updatedById String?
   updatedAt   DateTime        @updatedAt
 

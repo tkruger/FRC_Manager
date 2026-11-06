@@ -14,6 +14,8 @@ interface Vendor {
   subtotal: number;
   tax: number;
   shipping: number;
+  /** The vendor's own order number */
+  orderNumber: string | null;
 }
 
 interface Props {
@@ -37,7 +39,7 @@ const toNumber = (s: string) => {
 /** Each vendor's tax and shipping on an order — added by the Buyer when placing it */
 export function OrderChargesCard({ requestId, vendors, canChange, beforeApproval }: Props) {
   const router = useRouter();
-  const initial = () => Object.fromEntries(vendors.map((v) => [v.name, { tax: toText(v.tax), shipping: toText(v.shipping) }]));
+  const initial = () => Object.fromEntries(vendors.map((v) => [v.name, { tax: toText(v.tax), shipping: toText(v.shipping), orderNumber: v.orderNumber ?? "" }]));
   const [editing, setEditing] = useState(false);
   const [values, setValues]   = useState(initial);
   const [error, setError]     = useState<string | null>(null);
@@ -54,33 +56,33 @@ export function OrderChargesCard({ requestId, vendors, canChange, beforeApproval
   }
 
   function save() {
-    const charges = vendors.map((v) => ({ vendorName: v.name, tax: toNumber(values[v.name]?.tax), shipping: toNumber(values[v.name]?.shipping) }));
+    const charges = vendors.map((v) => ({ vendorName: v.name, tax: toNumber(values[v.name]?.tax), shipping: toNumber(values[v.name]?.shipping), vendorOrderNumber: values[v.name]?.orderNumber ?? "" }));
     const bad = charges.find((c) => !(c.tax >= 0) || !(c.shipping >= 0));
     if (bad) { setError(`Enter the tax and shipping for ${bad.vendorName || "items with no vendor"} as amounts (0 or more).`); return; }
     setError(null);
     start(async () => {
       const res = await setOrderChargesAction({ requestId, charges });
       if (!res.success) { setError(res.error); return; }
-      toast.success("Tax and shipping saved");
+      toast.success("Vendor orders saved");
       setEditing(false);
       router.refresh();
     });
   }
 
-  const set = (vendor: string, field: "tax" | "shipping", value: string) =>
+  const set = (vendor: string, field: "tax" | "shipping" | "orderNumber", value: string) =>
     setValues((m) => ({ ...m, [vendor]: { ...m[vendor], [field]: value } }));
 
   return (
     <section className="card space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <h2 className="text-h3 text-(--color-text-primary)">Tax &amp; shipping</h2>
+          <h2 className="text-h3 text-(--color-text-primary)">Vendor orders</h2>
           <p className="text-small text-(--color-text-secondary) mt-0.5">
-            Per vendor. Tax counts toward the items&apos; budget categories; shipping goes to Shipping.
+            Per vendor: the vendor&apos;s order number (for following up with them), tax and shipping. Tax counts toward the items&apos; budget categories; shipping goes to Shipping.
             {!canChange && (beforeApproval ? " The Buyer adds these when ordering, once the order is approved." : " Added by the Buyer when ordering.")}
           </p>
         </div>
-        {canChange && !editing && <Button size="sm" variant="outline" onClick={() => setEditing(true)}>{tax + shipping > 0 ? "Change" : "Add"}</Button>}
+        {canChange && !editing && <Button size="sm" variant="outline" onClick={() => setEditing(true)}>{tax + shipping > 0 || vendors.some((v) => v.orderNumber) ? "Change" : "Add"}</Button>}
       </div>
 
       {error && <div className="text-sm text-(--color-danger) bg-(--color-danger)/10 rounded px-3 py-2">{error}</div>}
@@ -92,15 +94,23 @@ export function OrderChargesCard({ requestId, vendors, canChange, beforeApproval
         </div>
         <ul className="divide-y divide-(--color-border) border-y border-(--color-border) sm:border-b-0">
           {vendors.map((v) => {
-            const val = values[v.name] ?? { tax: "", shipping: "" };
+            const val = values[v.name] ?? { tax: "", shipping: "", orderNumber: "" };
             const rowTax  = editing ? toNumber(val.tax) || 0 : v.tax;
             const rowShip = editing ? toNumber(val.shipping) || 0 : v.shipping;
             const what = v.name || "items with no vendor";
             return (
               <li key={v.name} className={`grid grid-cols-4 ${cols} gap-x-3 gap-y-1 py-2 items-center`}>
-                <span className="col-span-4 sm:col-span-1 min-w-0 truncate text-(--color-text-primary)">
-                  {v.name || <span className="text-(--color-text-secondary)">No vendor</span>}
-                  <span className="text-(--color-text-secondary)"> · {v.items} item{v.items === 1 ? "" : "s"}</span>
+                <span className="col-span-4 sm:col-span-1 min-w-0 text-(--color-text-primary)">
+                  <span className="block truncate">
+                    {v.name || <span className="text-(--color-text-secondary)">No vendor</span>}
+                    <span className="text-(--color-text-secondary)"> · {v.items} item{v.items === 1 ? "" : "s"}</span>
+                  </span>
+                  {editing ? (
+                    <input className={`${inputCls} mt-1 text-left`} placeholder="Vendor order # (optional)" value={val.orderNumber} maxLength={100}
+                      onChange={(e) => set(v.name, "orderNumber", e.target.value)} aria-label={`Order number from ${what}`} />
+                  ) : v.orderNumber ? (
+                    <span className="block text-small text-(--color-text-secondary)">Order # <span className="font-mono text-(--color-text-primary) select-all">{v.orderNumber}</span></span>
+                  ) : null}
                 </span>
                 <Amount label="Items">{formatCurrency(v.subtotal)}</Amount>
                 <Amount label="Tax">

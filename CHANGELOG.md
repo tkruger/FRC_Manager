@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Vendor order number**: the order's **Vendor orders** card (was Tax & shipping) takes each vendor's own order number alongside its tax and shipping — handy when following up with the vendor after ordering. It's in the order's history
+- **Comments on orders**: anyone working on an order can post a comment — a back order, a broken link, a vendor that can't fill it. Everyone on the order (who placed it, approved it, is buying it or commented) is told in the app, by push and by email (**Comments on orders I'm part of**). Authors, the Buyer and captains can remove a comment
+
 - **Check prices** (Buyers and captains, on an order): looks up every item still to order on its store again and shows what changed — old → new, and the difference for those items. **Update prices** saves them, records them in the order's history and tells everyone on the order. Items whose store can't be read are listed to check by hand
 
 - After **Import CSV**, every line with a link is filled in from it (only the blanks — the file's own values stay)
