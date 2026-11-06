@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { SUBTEAM_COLORS, SUBTEAM_OPTIONS, shortDate } from "@/lib/schedule-helpers";
-import { subTeamNote } from "@/lib/kanban-style";
+import { STICKY_COLORS, subTeamNote } from "@/lib/kanban-style";
 
-const SUBTEAM_NAME: Record<string, string> = Object.fromEntries(SUBTEAM_OPTIONS.map((o) => [o.value, o.label]));
+// Tasks with no sub-team (OTHER): "Any team", on yellow — the color their sticky notes have on the board
+const SUBTEAM_NAME: Record<string, string> = { ...Object.fromEntries(SUBTEAM_OPTIONS.map((o) => [o.value, o.label])), OTHER: "Any team" };
+const ANY_TEAM = { note: STICKY_COLORS[0].hex, bar: "#EAB308" };
 
 const STORAGE_KEY = "frc-schedule-progress-collapsed";
 
@@ -97,11 +99,12 @@ export function SeasonProgressBar({
             <div className="pt-2 border-t border-(--color-border) grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
               {Object.entries(subteamStats).map(([st, s]) => {
                 const pct = s.total ? Math.round((s.done / s.total) * 100) : 0;
-                const color = SUBTEAM_COLORS[st] ?? "#64748B";
+                const color = st === "OTHER" ? ANY_TEAM.bar : SUBTEAM_COLORS[st] ?? "#64748B";
+                const note  = st === "OTHER" ? ANY_TEAM.note : subTeamNote(color);
                 return (
                   <div key={st}>
                     <div className="flex justify-between text-small mb-1">
-                      <span style={{ backgroundColor: subTeamNote(color) }} title={SUBTEAM_NAME[st] ?? st} className="min-w-0 truncate rounded px-1.5 text-xs font-semibold leading-5 text-[#1f2430]">{SUBTEAM_NAME[st] ?? st.replace(/_/g, " ")}</span>
+                      <span style={{ backgroundColor: note }} title={SUBTEAM_NAME[st] ?? st} className="min-w-0 truncate rounded px-1.5 text-xs font-semibold leading-5 text-[#1f2430]">{SUBTEAM_NAME[st] ?? st.replace(/_/g, " ")}</span>
                       <span className="text-(--color-text-secondary) shrink-0 ml-1">{s.done}/{s.total}</span>
                     </div>
                     <div className="h-1.5 rounded-full bg-(--color-surface-overlay)">
