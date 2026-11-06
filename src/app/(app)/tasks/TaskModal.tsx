@@ -121,7 +121,7 @@ export function TaskModal({ task, allTasks = [], allMembers = [], allRobots = []
                 {task.subTeam && <span className="badge badge-neutral" style={{ color: stColor }}>{task.subTeam.replace(/_/g, " ")}</span>}
                 {task.isMilestone && <Badge variant="info">◆ Milestone</Badge>}
                 {overdue && <Badge variant="danger">Overdue</Badge>}
-                <ShareButton path={`/tasks/${task.id}`} title={`Task: ${task.name}`} label={false} className="ml-auto" />
+                <ShareButton path={`/tasks/${task.id}`} title={`Task: ${task.name}`} className="ml-auto" />
               </div>
 
               {/* Status quick-change */}

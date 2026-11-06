@@ -23,14 +23,14 @@ async function copy(text: string): Promise<boolean> {
   }
 }
 
-export function ShareButton({ path, title, text, label = true, className }: {
+export function ShareButton({ path, title, text, label = false, className }: {
   /** The page to share, e.g. /procurement/requests/abc */
   path: string;
   /** What it is — the share sheet's title, and the start of the message */
   title: string;
   /** A line to send with the link (default: the title) */
   text?: string;
-  /** Show "Share" next to the icon (false: icon only) */
+  /** Show "Share" next to the icon (default: just the icon) */
   label?: boolean;
   className?: string;
 }) {

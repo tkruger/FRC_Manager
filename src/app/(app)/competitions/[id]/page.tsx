@@ -50,7 +50,7 @@ export default async function CompetitionPage({ params }: { params: Promise<{ id
           <Link href="/competitions" className="hover:text-(--color-primary)">Competitions</Link>
           <span className="mx-2">›</span>{designation(comp.stage, comp.stageNumber)}
         </nav>
-        <PageTitle help="competitions" share={<ShareButton path={`/competitions/${comp.id}`} title={comp.name} label={false} />}>{comp.name}</PageTitle>
+        <PageTitle help="competitions" share={<ShareButton path={`/competitions/${comp.id}`} title={comp.name} />}>{comp.name}</PageTitle>
         <p className="mt-1 text-sm text-(--color-text-secondary)">
           {DAY(comp.startDate)}{comp.endDate.toISOString().slice(0, 10) !== comp.startDate.toISOString().slice(0, 10) && ` – ${DAY(comp.endDate)}`}
           {(live?.event?.location_name || comp.location) && ` · ${[live?.event?.location_name, comp.location].filter(Boolean).join(", ")}`}
