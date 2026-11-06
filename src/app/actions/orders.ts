@@ -9,6 +9,7 @@ import { createOrder } from "@/lib/orders/create";
 import { editOrder } from "@/lib/orders/edit";
 import { addTracking, setItemStatus, markArrived, toOrderCsv } from "@/lib/orders/items";
 import { lookupProduct, type ProductInfo } from "@/lib/orders/lookup";
+import { applyOrderPrices, checkOrderPrices, type PriceCheck } from "@/lib/orders/prices";
 import { ORDER_ADMIN_ROLES, STATUS_OVERRIDE_ROLES } from "@/lib/orders/constants";
 import { createExportToken } from "@/lib/orders/export-token";
 import { syncOrderSpend, canSetOrderBudget } from "@/lib/orders/spend";
@@ -183,6 +184,28 @@ export async function lookupProductAction(url: string): Promise<Result<{ product
   } catch {
     return { success: false, error: "Couldn't read that page — fill the details in by hand." };
   }
+}
+
+// ── Prices ─────────────────────────────────────────────────────────────────
+
+/** Buyer and captains: look up the current price of each item still to be ordered */
+export async function checkOrderPricesAction(requestId: string): Promise<Result<{ items: PriceCheck[] }>> {
+  const who = await actor();
+  if (!who) return { success: false, error: "Not authenticated." };
+  if (!who.roles.some((r) => ORDER_ADMIN_ROLES.includes(r))) return { success: false, error: "Only the Buyer or captains can check prices." };
+  return checkOrderPrices(who.teamId, requestId);
+}
+
+/** Save the prices the Buyer accepted (history + everyone on the order is told) */
+export async function applyOrderPricesAction(requestId: string, prices: { id: string; unitCost: number }[]): Promise<Result<{ count: number }>> {
+  const who = await actor();
+  if (!who) return { success: false, error: "Not authenticated." };
+  if (!who.roles.some((r) => ORDER_ADMIN_ROLES.includes(r))) return { success: false, error: "Only the Buyer or captains can change prices." };
+  const parsed = z.array(z.object({ id: z.string().min(1), unitCost: z.number().min(0).max(1_000_000) })).min(1).max(100).safeParse(prices);
+  if (!parsed.success) return { success: false, error: "Nothing to update." };
+  const res = await applyOrderPrices(who, requestId, parsed.data);
+  if (res.success) refresh([requestId]);
+  return res;
 }
 
 // ── Item updates ─────────────────────────────────────────────────────────────

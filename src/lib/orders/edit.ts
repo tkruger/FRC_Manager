@@ -173,7 +173,7 @@ export async function editOrder(input: {
     }
   }, { timeout: 20_000 });
 
-  if (changes.length) await tellParticipants(order.id, actor, name || order.title, changes, resubmit);
+  if (changes.length) await tellParticipants(order.id, actor, name || order.title, changes, resubmit ? "fixed" : "edited");
 
   if (resubmit) {
     await resubmitWorkflow(order.id, actor);
@@ -207,7 +207,7 @@ function describe(field: (typeof EDITABLE_FIELDS)[number], from: unknown, to: un
 }
 
 /** Everyone on the order — who placed it and everyone who has acted on it — hears what changed */
-async function tellParticipants(requestId: string, actor: Actor, title: string, changes: string[], resubmit: boolean) {
+export async function tellParticipants(requestId: string, actor: Actor, title: string, changes: string[], verb = "edited") {
   try {
     const order = await prisma.purchaseRequest.findUnique({
       where:  { id: requestId },
@@ -222,7 +222,7 @@ async function tellParticipants(requestId: string, actor: Actor, title: string, 
     await notifyUsers(ids, {
       topic: "purchase.changes",
       type:  "ORDER_CHANGED",
-      title: `${actor.name} ${resubmit ? "fixed" : "edited"} "${title}"`,
+      title: `${actor.name} ${verb} "${title}"`,
       body,
       details: changes.map((c) => `• ${c}`).join("\n"),
       url:   `/procurement/requests/${requestId}`,

@@ -11,6 +11,7 @@ import { describeCondition, describeRoles, evaluateCondition } from "@/lib/workf
 import { ITEM_STATUSES, ITEM_STATUS_INFO, ORDER_ADMIN_ROLES, STATUS_OVERRIDE_ROLES } from "@/lib/orders/constants";
 import { ITEM_ROW_SELECT, toItemRow } from "@/lib/orders/rows";
 import { ChangeStatusButton, ItemsTable } from "@/components/orders/ItemsTable";
+import { PriceCheckButton } from "@/components/orders/PriceCheckButton";
 import { isViewOnly } from "@/lib/access/read-only";
 import { ShareButton } from "@/components/ShareButton";
 import { PageHeader } from "@/components/PageHeader";
@@ -123,6 +124,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           <ShareButton path={`/procurement/requests/${order.id}`} title={`Order: ${order.title}`} />
           {/* Managing the items: export, change their status, edit the order */}
           {items.length > 0 && <ExportCsvButton order={order.id} />}
+          {/* Buyer: prices may have moved since the order was placed */}
+          {!closed && roles.some((r) => ORDER_ADMIN_ROLES.includes(r)) && order.lineItems.some((l) => (l.status === "QUEUED" || l.status === "TO_ORDER") && l.vendorProductUrl) && <PriceCheckButton requestId={order.id} />}
           {canChangeStatus && <ChangeStatusButton />}
           {canEdit && <Link href={`/procurement/requests/${order.id}/edit`}><Button variant="outline" size="sm">Edit order</Button></Link>}
           {canResubmit && <Link href={`/procurement/requests/${order.id}/edit`}><Button size="sm">Fix and resubmit</Button></Link>}
