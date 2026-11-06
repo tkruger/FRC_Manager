@@ -137,7 +137,7 @@ export default async function SchedulePage({
   // Progress stats — always the whole season (ignores My tasks / robot filters) so the
   // header card is identical on the Kanban, List and Gantt views
   const allTaskStats = await prisma.task.findMany({
-    where:  { seasonId: activeSeason.id },
+    where:  { seasonId: activeSeason.id, isTemplateTask: false },
     select: { status: true, subTeam: true },
   });
   const totalTasks = allTaskStats.length;
