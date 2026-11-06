@@ -136,10 +136,10 @@ export async function sendTestNotificationAction(): Promise<Result & { pushed?: 
 
 /**
  * Snooze competition alerts — for when you're not at the event. Pushes and emails stop; they still
- * show in the app. "2h", "morning" (7am tomorrow your time), "event" (until the competition
- * happening now ends), or "off".
+ * show in the app. "2h", "morning" (7am tomorrow your time), "days" (7am, `days` days from now — 1 to
+ * 30), "event" (until the competition happening now ends), or "off".
  */
-export async function snoozeCompetitionAlertsAction(choice: "2h" | "morning" | "event" | "off"): Promise<{ success: true; until: string | null } | { success: false; error: string }> {
+export async function snoozeCompetitionAlertsAction(choice: "2h" | "morning" | "days" | "event" | "off", days = 1): Promise<{ success: true; until: string | null } | { success: false; error: string }> {
   const session = await currentUser();
   if (!session?.user.teamId) return { success: false, error: "Not authenticated." };
   const me = await prisma.user.findUnique({ where: { id: session.user.id }, select: { timezone: true, team: { select: { timezone: true } } } });
@@ -148,10 +148,12 @@ export async function snoozeCompetitionAlertsAction(choice: "2h" | "morning" | "
   let until: Date | null = null;
 
   if (choice === "2h") until = new Date(now.getTime() + 2 * 3_600_000);
-  else if (choice === "morning") {
+  else if (choice === "morning" || choice === "days") {
+    const n = choice === "morning" ? 1 : Math.trunc(Number(days));
+    if (!(n >= 1 && n <= 30)) return { success: false, error: "Pick between 1 and 30 days." };
     const today = localParts(now, tz).dateKey;
     const [y, m, d] = today.split("-").map(Number);
-    const tomorrow = new Date(Date.UTC(y, m - 1, d + 1));
+    const tomorrow = new Date(Date.UTC(y, m - 1, d + n));
     until = zonedTimeToUtc(tomorrow.getUTCFullYear(), tomorrow.getUTCMonth() + 1, tomorrow.getUTCDate(), 7, 0, tz);
   } else if (choice === "event") {
     const todayKey = localParts(now, tz).dateKey;
