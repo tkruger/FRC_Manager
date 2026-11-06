@@ -108,10 +108,16 @@ export function OrderForm({ vendors, edit, draft, unusedCategories = [] }: {
     if (file.size > 1_000_000) { setError("That file is too big — keep it under 1 MB."); return; }
     const res = parseOrderCsv(await file.text());
     if (res.error) { setError(res.error); return; }
-    const imported = res.items.map((i) => ({ ...blankItem(), ...i, lookup: (i.link ? "done" : "idle") as Item["lookup"] }));
+    const imported = res.items.map((i) => ({ ...blankItem(), ...i, lookup: "idle" as Item["lookup"] }));
     // Replace the empty starter item; otherwise add to what's there
     setItems((list) => [...list.filter((i) => i.name.trim() || i.link.trim()), ...imported]);
-    toast.success(`Imported ${imported.length} item${imported.length === 1 ? "" : "s"}${res.skipped ? ` (${res.skipped} row${res.skipped === 1 ? "" : "s"} without a name skipped)` : ""} — check them before submitting`);
+    const withLinks = imported.filter((i) => i.link).slice(0, 60);
+    toast.success(`Imported ${imported.length} item${imported.length === 1 ? "" : "s"}${res.skipped ? ` (${res.skipped} row${res.skipped === 1 ? "" : "s"} without a name skipped)` : ""}${withLinks.length ? " — filling in details from the links" : " — check them before submitting"}`);
+    // Fill each line from its link, three at a time — only blanks are filled, so the file's own values stay
+    const queue = [...withLinks];
+    await Promise.all(Array.from({ length: Math.min(3, queue.length) }, async () => {
+      for (let next = queue.shift(); next; next = queue.shift()) await fillFromLink(next, next.link, { batch: true }).catch(() => {});
+    }));
   }
 
   const hasContent = !!name.trim() || items.some((i) => i.name.trim() || i.link.trim());
@@ -123,7 +129,7 @@ export function OrderForm({ vendors, edit, draft, unusedCategories = [] }: {
   const update = (key: number, patch: Partial<Item>) =>
     setItems((list) => list.map((i) => (i.key === key ? { ...i, ...patch } : i)));
 
-  async function fillFromLink(item: Item, link = item.link) {
+  async function fillFromLink(item: Item, link = item.link, opts: { batch?: boolean } = {}) {
     const url = extractUrl(link);
     if (!url) return;
     if (url !== item.link) update(item.key, { link: url });
@@ -132,6 +138,8 @@ export function OrderForm({ vendors, edit, draft, unusedCategories = [] }: {
     if (!res.success) { update(item.key, { lookup: "failed" }); return; }
     const p = res.product;
     if (p.choices?.length) {
+      // Several products on that page: in a batch (CSV import) leave it for the person to fill
+      if (opts.batch) { update(item.key, { lookup: "done", vendorName: item.vendorName || p.vendorName || "" }); return; }
       update(item.key, { lookup: "done", vendorName: item.vendorName || p.vendorName || "" });
       setPicker({ itemKey: item.key, vendorName: p.vendorName, choices: p.choices });
       return;

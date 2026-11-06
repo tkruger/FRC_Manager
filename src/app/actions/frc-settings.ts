@@ -1,5 +1,6 @@
 "use server";
 
+import { checkMouserKey } from "@/lib/orders/mouser";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -22,6 +23,24 @@ async function requireAdmin() {
  * Save the team's keys. A blank field keeps what's saved; `clear` removes one. A new TBA key is
  * checked with TBA first.
  */
+/** The team's Mouser Search API key (checked with Mouser first); empty removes it */
+export async function saveMouserKeyAction(key: string): Promise<Result> {
+  const teamId = await requireAdmin();
+  if (!teamId) return { success: false, error: "Only Head Mentors and Integration Admins can change these." };
+  const k = key.trim();
+  if (k.length > 200) return { success: false, error: "That's too long for a key." };
+  if (k && !(await checkMouserKey(k))) {
+    return { success: false, error: "Mouser didn't accept that key — use the Search API key from My Mouser → APIs." };
+  }
+  await prisma.teamVendorKeys.upsert({
+    where:  { teamId },
+    create: { teamId, mouserKeyEnc: k ? seal(k) : null },
+    update: { mouserKeyEnc: k ? seal(k) : null },
+  });
+  revalidatePath("/settings/integrations");
+  return { success: true };
+}
+
 export async function saveFrcKeysAction(input: {
   tbaKey?: string; tbaSecret?: string; nexusKey?: string; nexusToken?: string;
   clear?: ("tba" | "tbaSecret" | "nexus" | "nexusToken")[];

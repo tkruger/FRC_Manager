@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- After **Import CSV**, every line with a link is filled in from it (only the blanks — the file's own values stay)
+- **Mouser** links fill in: the manufacturer and part number from the link itself, and — with a free Mouser Search API key in **Settings → Integrations → Mouser** — the description, Mouser's part number and the price
+
 - **Import CSV** on New order: fill the order's items from a spreadsheet — an order's own **Export CSV**, or any file with a header row (Item, Vendor, Link, Price, Qty, Notes, Part number, Sub-team, Importance, Why). Check them, then submit
 - New order has a red **Cancel** next to Save draft and Submit order (it asks first if you've started filling it in)
 

@@ -264,6 +264,7 @@ model Team {
   emailServer   TeamEmailServer?
   broadcasts    Broadcast[]
   frcSettings   TeamFrcSettings?
+  vendorKeys    TeamVendorKeys?
   /// The team's Discord servers (a student one and a parent one)
   discordConfigs DiscordConfig[]
   timezone      String?   // IANA zone used for meeting times and daily reminders
@@ -1685,6 +1686,15 @@ model Meeting {
   /// Shift instructions for this meeting only (instead of the team's default)
   volunteerNote MeetingVolunteerNote?
   createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+/// A team's keys for vendor product lookups (encrypted) — Mouser's Search API fills in Mouser links.
+/// Without one, the deployment's MOUSER_API_KEY (if any) is used.
+model TeamVendorKeys {
+  teamId       String   @id
+  team         Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  mouserKeyEnc String?
   updatedAt    DateTime @updatedAt
 }
 

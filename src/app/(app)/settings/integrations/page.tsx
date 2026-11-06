@@ -6,6 +6,8 @@ import { PageTitle } from "@/components/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { DISCORD_ADMIN_ROLES, EMAIL_ADMIN_ROLES, FRC_ADMIN_ROLES } from "@/lib/rbac";
 import { tbaKeyFor } from "@/lib/frc/team-keys";
+import { mouserKeyFor } from "@/lib/orders/mouser";
+import { MouserKeyForm } from "./MouserKeyForm";
 
 // Settings → Integrations (Head Mentors, Team Leadership, Integration Admins): the services the app
 // connects to, each with where it stands and a link to set it up.
@@ -19,11 +21,12 @@ export default async function IntegrationsPage() {
   const frc = roles.some((r) => FRC_ADMIN_ROLES.includes(r));
   if (!discord && !email && !frc) redirect("/dashboard");
 
-  const [configs, server, frcSettings, tbaKey] = await Promise.all([
+  const [configs, server, frcSettings, tbaKey, mouserKey] = await Promise.all([
     discord ? prisma.discordConfig.findMany({ where: { teamId: session.user.teamId }, select: { audience: true } }) : [],
     email ? prisma.teamEmailServer.findUnique({ where: { teamId: session.user.teamId }, select: { enabled: true, fromEmail: true, lastError: true, lastErrorAt: true, lastSentAt: true } }) : null,
     frc ? prisma.teamFrcSettings.findUnique({ where: { teamId: session.user.teamId }, select: { nexusKeyEnc: true, tbaWebhookSecretEnc: true, nexusWebhookTokenEnc: true } }) : null,
     frc ? tbaKeyFor(session.user.teamId) : null,
+    frc ? mouserKeyFor(session.user.teamId) : null,
   ]);
   const webhooks = [frcSettings?.tbaWebhookSecretEnc && "TBA", frcSettings?.nexusWebhookTokenEnc && "Nexus"].filter(Boolean);
   const student = configs.some((c) => c.audience === "STUDENT");
@@ -61,6 +64,14 @@ export default async function IntegrationsPage() {
           {webhooks.length > 0 && <Badge variant="success">Webhooks: {webhooks.join(" + ")}</Badge>}
         </span>
       ),
+    }] : []),
+    ...(frc ? [{
+      title: "Mouser",
+      desc:  "Mouser blocks apps from reading its pages, so a Mouser link on an order only fills in the manufacturer and part number. With a free Mouser Search API key (My Mouser → APIs → Search API), it also fills in the description, Mouser's part number and the price.",
+      status: mouserKey?.source === "team" ? <Badge variant="success">Your key</Badge>
+        : mouserKey?.source === "shared" ? <Badge variant="info">Shared key</Badge>
+        : <Badge variant="neutral">Not set up</Badge>,
+      extra: <MouserKeyForm saved={mouserKey?.source === "team"} canEdit={frc} />,
     }] : []),
   ];
 

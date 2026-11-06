@@ -9,6 +9,7 @@
 // Shopify products with several variants, and WCP "family" pages (one page, many part
 // numbers, listed from a published spreadsheet). Amazon gets its own parser.
 
+import { lookupMouser } from "./mouser";
 import { lookup as dnsLookup } from "node:dns/promises";
 import { isIP } from "node:net";
 
@@ -347,10 +348,15 @@ function fromHtml(html: string): Partial<ProductInfo> {
 }
 
 /** Best-effort product details from a link. Never throws for unreachable pages. */
-export async function lookupProduct(rawUrl: string): Promise<ProductInfo> {
+export async function lookupProduct(rawUrl: string, opts: { teamId?: string | null } = {}): Promise<ProductInfo> {
   const url = new URL(rawUrl);
   const vendorName = vendorFromHost(url.hostname);
   const empty: ProductInfo = { vendorName, name: null, partNumber: null, unitCost: null };
+
+  // Mouser blocks page reads: the link and (with a key) Mouser's API instead
+  if (vendorName === "Mouser") {
+    try { return { ...empty, ...await lookupMouser(url, opts.teamId) }; } catch { return empty; }
+  }
 
   if (vendorName === "Amazon") {
     try { return await fromAmazon(url); } catch { return empty; }

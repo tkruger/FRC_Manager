@@ -171,14 +171,15 @@ export async function editOrderAction(input: unknown): Promise<Result> {
 }
 
 export async function lookupProductAction(url: string): Promise<Result<{ product: ProductInfo }>> {
-  if (!await actor()) return { success: false, error: "Not authenticated." };
+  const who = await actor();
+  if (!who) return { success: false, error: "Not authenticated." };
   try {
     new URL(url);
   } catch {
     return { success: false, error: "That doesn't look like a link." };
   }
   try {
-    return { success: true, product: await lookupProduct(url) };
+    return { success: true, product: await lookupProduct(url, { teamId: who.teamId }) };
   } catch {
     return { success: false, error: "Couldn't read that page — fill the details in by hand." };
   }
