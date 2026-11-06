@@ -12,6 +12,7 @@ import { ITEM_STATUSES, ITEM_STATUS_INFO, ORDER_ADMIN_ROLES, STATUS_OVERRIDE_ROL
 import { ITEM_ROW_SELECT, toItemRow } from "@/lib/orders/rows";
 import { ChangeStatusButton, ItemsTable } from "@/components/orders/ItemsTable";
 import { isViewOnly } from "@/lib/access/read-only";
+import { ShareButton } from "@/components/ShareButton";
 import { PageHeader } from "@/components/PageHeader";
 import { RequestActions } from "./RequestActions";
 import { unusedBudgetCategories } from "@/lib/budget-unused";
@@ -119,6 +120,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           </div>
         }
         actions={<>
+          <ShareButton path={`/procurement/requests/${order.id}`} title={`Order: ${order.title}`} />
           {/* Managing the items: export, change their status, edit the order */}
           {items.length > 0 && <ExportCsvButton order={order.id} />}
           {canChangeStatus && <ChangeStatusButton />}

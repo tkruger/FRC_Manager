@@ -1,5 +1,6 @@
 "use client";
 
+import { ShareButton } from "@/components/ShareButton";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -191,6 +192,8 @@ export function VolunteersClient({ me, headMentors, coordinating, isHeadMentor, 
                     <span className="flex flex-wrap items-center gap-2">
                       <Badge variant={c.covered ? "success" : "danger"}>{c.confirmed} / {minAdults} adults</Badge>
                       {c.pending > 0 && <Badge variant="warning">{c.pending} waiting</Badge>}
+                      <ShareButton path={`/volunteers?meeting=${m.id}`} title={`${m.title || "Team meeting"} — ${m.when}`}
+                        text={c.covered ? `${m.title || "Team meeting"} — ${m.when}` : `Can you help cover ${m.title || "this meeting"}? ${m.when}`} label={false} />
                       {!me.cleared && <span className="text-small text-(--color-text-secondary)">Cleared adults only</span>}
                       {canSignUp && (
                         <Button size="sm" isLoading={busy === `up-${m.id}` && pending} onClick={() => run(`up-${m.id}`, () => signUpForShiftAction(m.id), "You're signed up — thank you!")}>

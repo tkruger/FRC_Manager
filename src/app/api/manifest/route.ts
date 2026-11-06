@@ -14,7 +14,11 @@ export function GET(req: Request) {
       description:      "Robot fleet, tools, inventory, orders, budget, and schedule — all in one place.",
       id:               "/dashboard",
       start_url:        "/dashboard",
+      scope:            "/",
       display:          "standalone",
+      // Links to the app open in the installed app where the device allows it (Android, Chrome on a computer)
+      handle_links:     "preferred",
+      launch_handler:   { client_mode: ["navigate-existing", "auto"] },
       background_color: "#080A10",
       theme_color:      "#080A10",
       orientation:      "portrait-primary",

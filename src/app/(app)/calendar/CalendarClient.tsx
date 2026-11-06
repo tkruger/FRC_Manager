@@ -1,5 +1,6 @@
 "use client";
 
+import { ShareButton } from "@/components/ShareButton";
 import { useState, useTransition, useCallback } from "react";
 import { ChangeHistory } from "@/components/history/ChangeHistory";
 import { MeetingVolunteers, type VolunteerView } from "@/components/calendar/MeetingVolunteers";
@@ -513,7 +514,8 @@ function MeetingDialog({
 
               <ChangeHistory entityType="meeting" entityId={meeting.id} />
 
-              <div className="flex gap-2 pt-1">
+              <div className="flex flex-wrap gap-2 pt-1">
+                <ShareButton path={`/calendar?meeting=${meeting.id}`} title={meeting.title || "Team meeting"} />
                 {isLeadership && !cancelling && (
                   <>
                     <Button size="sm" onClick={() => setEditing(true)}>Edit</Button>

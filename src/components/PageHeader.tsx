@@ -1,11 +1,11 @@
 import { HelpLink, type HelpTopic } from "@/components/HelpLink";
 
 /** Page title with its Guide button: Guide on the right on phones, next to the title from sm up. */
-export function PageTitle({ children, help }: { children: React.ReactNode; help?: HelpTopic }) {
+export function PageTitle({ children, help, share }: { children: React.ReactNode; help?: HelpTopic; share?: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-3 sm:justify-start">
       <h1 className="text-h1 text-(--color-text-primary) min-w-0 break-words">{children}</h1>
-      {help && <HelpLink topic={help} />}
+      {(help || share) && <span className="flex shrink-0 items-center gap-2">{share}{help && <HelpLink topic={help} />}</span>}
     </div>
   );
 }

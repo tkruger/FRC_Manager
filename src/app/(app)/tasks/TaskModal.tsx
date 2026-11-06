@@ -1,5 +1,6 @@
 "use client";
 
+import { ShareButton } from "@/components/ShareButton";
 import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogClose, DialogFooter } from "@/components/ui/dialog";
@@ -120,6 +121,7 @@ export function TaskModal({ task, allTasks = [], allMembers = [], allRobots = []
                 {task.subTeam && <span className="badge badge-neutral" style={{ color: stColor }}>{task.subTeam.replace(/_/g, " ")}</span>}
                 {task.isMilestone && <Badge variant="info">◆ Milestone</Badge>}
                 {overdue && <Badge variant="danger">Overdue</Badge>}
+                <ShareButton path={`/tasks/${task.id}`} title={`Task: ${task.name}`} label={false} className="ml-auto" />
               </div>
 
               {/* Status quick-change */}

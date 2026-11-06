@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Share links**: a share button on orders, tasks, expense claims, competitions, meetings (Calendar), volunteer shifts and the Calendar itself. On a phone it opens the phone's share sheet (Messages, WhatsApp, Mail…); on a computer it copies the link. Whoever opens it signs in if they need to and lands right on it. On Android (and Chrome on a computer) the link opens in the installed app; on iPhone it opens in Safari
+
 **Editing orders**
 - **Edit order** saves exactly what changed in the order's history, item by item ("9001 Bearings: vendor "AndyMark" → "REV"; 9002 Bolts: quantity 10 → 12"), and tells everyone on the order — whoever placed it and everyone who has worked on it — in the app, by push and by email (**Changes to orders I'm part of** in Settings → Notifications)
 - Items already **Ordered** or **Arrived** keep their price and quantity and can't be removed; everything else about them (name, vendor, link, notes…) can still be fixed. A Buyer can set an item back to To order to change it — that's in the history too

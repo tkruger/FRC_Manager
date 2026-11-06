@@ -8,6 +8,7 @@ import { CalendarClient } from "./CalendarClient";
 import { SubscribeCalendarButton } from "@/components/calendar/SubscribeCalendarButton";
 import { GenerateShareLinkButton } from "./GenerateShareLinkButton";
 import { PageHeader } from "@/components/PageHeader";
+import { ShareButton } from "@/components/ShareButton";
 import { appUrl } from "@/lib/app-url";
 import { kickoffOf } from "@/lib/competition";
 
@@ -69,6 +70,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
         help="calendar"
         subtitle={<>{activeSeason.name} · {activeSeason.meetings.filter((m) => !m.cancelled).length} meetings</>}
         actions={<>
+          <ShareButton path="/calendar" title={`Team calendar — ${activeSeason.name}`} />
           {calendarUrl
             ? <SubscribeCalendarButton icsUrl={calendarUrl} />
             : <GenerateShareLinkButton seasonId={activeSeason.id} />}

@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Badge } from "@/components/ui/badge";
 import { PageTitle } from "@/components/PageHeader";
+import { ShareButton } from "@/components/ShareButton";
 import { formatCurrency } from "@/lib/utils";
 import { canReviewClaims, claimStatusInfo } from "@/lib/expense-claims";
 import { ChangeHistory } from "@/components/history/ChangeHistory";
@@ -69,7 +70,7 @@ export default async function ClaimPage({ params }: { params: Promise<{ id: stri
           <span className="mx-2">›</span>Claim
         </nav>
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <PageTitle help="expenses">{claim.description}</PageTitle>
+          <PageTitle help="expenses" share={<ShareButton path={`/budget/claims/${claim.id}`} title={`Expense claim: ${claim.description}`} label={false} />}>{claim.description}</PageTitle>
           <span className="text-h1 font-bold tabular-nums text-(--color-text-primary)">{formatCurrency(claim.amount)}</span>
         </div>
         <div className="mt-2 flex flex-wrap gap-2">
