@@ -97,7 +97,7 @@ export function FrcSettingsForm({ sharedTbaKey, tbaKey, tbaSecret, nexusKey, nex
                 {tbaWebhook.verificationCode
                   ? <div className="min-w-0 flex-1"><Copyable value={tbaWebhook.verificationCode} /></div>
                   : <span className="italic">No code yet.</span>}
-                <Button type="button" size="sm" variant="ghost" onClick={() => router.refresh()}>Check for code</Button>
+                <Button type="button" size="sm" variant="outline" onClick={() => router.refresh()}>Check for code</Button>
               </div>
             </li>
             <li>

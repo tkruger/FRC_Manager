@@ -132,7 +132,7 @@ export function OrderChargesCard({ requestId, vendors, canChange, beforeApproval
       {editing && (
         <div className="flex gap-2">
           <Button size="sm" onClick={save} isLoading={pending}>Save</Button>
-          <Button size="sm" variant="ghost" onClick={cancel} disabled={pending}>Cancel</Button>
+          <Button size="sm" variant="outline" onClick={cancel} disabled={pending}>Cancel</Button>
         </div>
       )}
     </section>

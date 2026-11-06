@@ -62,7 +62,7 @@ function ItemForm({ initial, toolNames, onSave, onCancel, saveLabel }: {
       <input className={input} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Notes (optional)" maxLength={300} aria-label="Notes" />
       <div className="flex gap-2">
         <Button type="submit" size="sm" disabled={!ready} isLoading={isPending}>{saveLabel}</Button>
-        {onCancel && <Button type="button" size="sm" variant="ghost" onClick={onCancel}>Cancel</Button>}
+        {onCancel && <Button type="button" size="sm" variant="outline" onClick={onCancel}>Cancel</Button>}
       </div>
     </form>
   );
@@ -119,8 +119,8 @@ export function PackListEditor({ items, toolNames, groupSizes, canEdit }: {
                       <div className="flex gap-1">
                         <Button size="icon" variant="ghost" aria-label="Move up" disabled={i === 0} onClick={() => start(async () => { await run(movePackItemAction(it.id, "up")); })}>↑</Button>
                         <Button size="icon" variant="ghost" aria-label="Move down" disabled={i === items.length - 1} onClick={() => start(async () => { await run(movePackItemAction(it.id, "down")); })}>↓</Button>
-                        <Button size="sm" variant="ghost" onClick={() => setEditing(it.id)}>Edit</Button>
-                        <Button size="sm" variant="ghost" className="text-(--color-danger)"
+                        <Button size="sm" variant="outline" onClick={() => setEditing(it.id)}>Edit</Button>
+                        <Button size="sm" variant="danger"
                           onClick={() => { if (confirm(`Remove ${it.toolName ?? it.label} from the pack list?`)) start(async () => { await run(deletePackItemAction(it.id)); }); }}>
                           Remove
                         </Button>

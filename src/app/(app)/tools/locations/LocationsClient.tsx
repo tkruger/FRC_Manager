@@ -70,7 +70,7 @@ export function LocationsClient({ locations, canEdit }: { locations: Location[];
                   <input className={input} value={editing.name} autoFocus onChange={(e) => setEditing({ id: l.id, name: e.target.value })} maxLength={80}
                     onKeyDown={(e) => { if (e.key === "Enter") saveRename(); if (e.key === "Escape") setEditing(null); }} />
                   <Button size="sm" onClick={saveRename} isLoading={isPending}>Save</Button>
-                  <Button size="sm" variant="ghost" onClick={() => setEditing(null)}>Cancel</Button>
+                  <Button size="sm" variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
                 </div>
               ) : (
                 <>
@@ -82,8 +82,8 @@ export function LocationsClient({ locations, canEdit }: { locations: Location[];
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     <Link href={`/tools/locations/labels?id=${l.id}`}><Button size="sm" variant="outline">Label</Button></Link>
-                    {canEdit && <Button size="sm" variant="ghost" onClick={() => setEditing({ id: l.id, name: l.name })}>Rename</Button>}
-                    {canEdit && <Button size="sm" variant="ghost" className="text-(--color-danger)" onClick={() => remove(l)}>Delete</Button>}
+                    {canEdit && <Button size="sm" variant="outline" onClick={() => setEditing({ id: l.id, name: l.name })}>Rename</Button>}
+                    {canEdit && <Button size="sm" variant="danger" onClick={() => remove(l)}>Delete</Button>}
                   </div>
                 </>
               )}

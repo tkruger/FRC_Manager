@@ -14,6 +14,7 @@ import {
 import { TaskModal, clearOpenTaskParam } from "./TaskModal";
 import type { TaskModalData } from "./TaskModal";
 import type { TaskStatus } from "@/generated/prisma";
+import { subTeamNote } from "@/lib/kanban-style";
 
 type SortKey = "name" | "status" | "priority" | "dueDate" | "subTeam";
 
@@ -181,7 +182,7 @@ export function ListView({
                     </td>
                     <td className="px-4 py-3">
                       {task.subTeam ? (
-                        <span className="text-xs font-medium" style={{ color: stColor }}>
+                        <span className="rounded px-1.5 py-0.5 text-xs font-semibold text-[#1f2430]" style={{ backgroundColor: subTeamNote(stColor) }}>
                           {task.subTeam.replace(/_/g, " ")}
                         </span>
                       ) : (

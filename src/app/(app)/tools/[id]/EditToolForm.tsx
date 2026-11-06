@@ -118,7 +118,7 @@ export function EditToolForm({ tool, names = [], groupSize = 1 }: {
           <div className="flex flex-wrap gap-2">
             <Button type="button" size="sm" onClick={() => choose("all")}>Rename all {groupSize}</Button>
             <Button type="button" size="sm" variant="outline" onClick={() => choose("one")}>Just this one</Button>
-            <Button type="button" size="sm" variant="ghost" onClick={() => setAsking(false)}>Cancel</Button>
+            <Button type="button" size="sm" variant="outline" onClick={() => setAsking(false)}>Cancel</Button>
           </div>
           <p className="text-xs text-(--color-text-secondary)">Just this one moves it into its own group{name.trim() ? ` (${name.trim()})` : ""}.</p>
         </div>

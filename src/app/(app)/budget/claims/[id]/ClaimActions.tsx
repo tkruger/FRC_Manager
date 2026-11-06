@@ -109,7 +109,7 @@ export function ClaimActions({ claimId, status, reimbursement, reviewer, mine, c
             </label>
             <div className="flex flex-wrap gap-2">
               <Button variant="danger" isLoading={pending} onClick={() => run(() => denyClaimAction(claimId, reason), "Claim denied")}>Deny claim</Button>
-              <Button variant="ghost" disabled={pending} onClick={() => setDenying(false)}>Cancel</Button>
+              <Button variant="outline" disabled={pending} onClick={() => setDenying(false)}>Cancel</Button>
             </div>
           </div>
         )}

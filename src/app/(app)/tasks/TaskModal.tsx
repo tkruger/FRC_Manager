@@ -1,6 +1,7 @@
 "use client";
 
 import { ShareButton } from "@/components/ShareButton";
+import { subTeamNote } from "@/lib/kanban-style";
 import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogClose, DialogFooter } from "@/components/ui/dialog";
@@ -118,7 +119,7 @@ export function TaskModal({ task, allTasks = [], allMembers = [], allRobots = []
               <div className="flex flex-wrap gap-2">
                 <Badge variant={statusCfg?.variant ?? "neutral"}>{statusCfg?.label ?? task.status}</Badge>
                 <Badge variant={priorityCfg?.variant ?? "neutral"}>{priorityCfg?.label ?? task.priority}</Badge>
-                {task.subTeam && <span className="badge badge-neutral" style={{ color: stColor }}>{task.subTeam.replace(/_/g, " ")}</span>}
+                {task.subTeam && <span className="badge text-[#1f2430]" style={{ backgroundColor: subTeamNote(stColor) }}>{task.subTeam.replace(/_/g, " ")}</span>}
                 {task.isMilestone && <Badge variant="info">◆ Milestone</Badge>}
                 {overdue && <Badge variant="danger">Overdue</Badge>}
                 <ShareButton path={`/tasks/${task.id}`} title={`Task: ${task.name}`} className="ml-auto" />

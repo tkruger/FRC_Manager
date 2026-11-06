@@ -247,7 +247,7 @@ function DeleteCompetition({ competition }: { competition: Competition }) {
   return (
     <Button
       size="sm"
-      variant="ghost"
+      variant="danger"
       disabled={pending}
       onClick={() => {
         if (!confirm(`Delete ${designation(competition.stage, competition.stageNumber)} (${competition.name})? Tasks already created from templates are kept.`)) return;

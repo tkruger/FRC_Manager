@@ -147,7 +147,7 @@ export function PackSessionClient({ sessionId, title, subtitle, finished, manage
             </Button>
           )}
           {manager && (
-            <Button variant="ghost" size="sm" className="text-(--color-danger)"
+            <Button variant="danger" size="sm"
               onClick={() => { if (confirm("Delete this packing list and everything ticked on it?")) act(async () => { const r = await deletePackSessionAction(sessionId); if (r.success) router.push("/tools/pack"); return r; }); }}>
               Delete
             </Button>

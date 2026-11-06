@@ -54,7 +54,7 @@ export function RequestActions({ requestId, actions }: Props) {
             </Button>
           )}
           {deny && <Button size="sm" variant="danger" onClick={() => setPanel("deny")}>Deny</Button>}
-          {cancel && <Button size="sm" variant="ghost" onClick={() => setPanel("cancel")}>Cancel order</Button>}
+          {cancel && <Button size="sm" variant="danger" onClick={() => setPanel("cancel")}>Cancel order</Button>}
         </div>
       )}
 

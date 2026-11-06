@@ -132,7 +132,7 @@ export function VolunteersClient({ me, headMentors, coordinating, isHeadMentor, 
                   ) : (
                     <span className="flex flex-wrap items-center gap-2">
                       <Badge variant="success">Confirmed</Badge>
-                      <Button size="sm" variant="ghost" disabled={pending}
+                      <Button size="sm" variant="outline" disabled={pending}
                         onClick={() => { if (confirm("Take yourself off this shift? The coordinator will be told if the meeting is short.")) run(`out-${m.id}`, () => withdrawFromShiftAction(m.id), "You're off this shift"); }}>
                         Can&apos;t make it
                       </Button>
@@ -291,7 +291,7 @@ function InstructionsDialog({ meeting, onClose }: { meeting: MeetingRow; onClose
           <DialogFooter>
             <Button type="submit" isLoading={pending}>Save</Button>
             {meeting.instructions && <Button type="button" variant="outline" disabled={pending} onClick={() => save(null, "Back to the default instructions")}>Use the default</Button>}
-            <DialogClose asChild><Button type="button" variant="ghost">Cancel</Button></DialogClose>
+            <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
           </DialogFooter>
         </form>
       </DialogContent>

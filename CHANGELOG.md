@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Buttons are never just a bare word: **Cancel order**, deletes and removes are solid red, and Cancel / Edit / Rename buttons have a frame
+- Sub-team names on the season progress card, the task list and a task's card sit on their sticky-note color (dark text on a light tint), so dark colors like Electrical are easy to read
+
 - **Share links**: a share button on orders, tasks, expense claims, competitions, meetings (Calendar), volunteer shifts and the Calendar itself. On a phone it opens the phone's share sheet (Messages, WhatsApp, Mail…); on a computer it copies the link. Whoever opens it signs in if they need to and lands right on it. On Android (and Chrome on a computer) the link opens in the installed app; on iPhone it opens in Safari
 
 **Editing orders**

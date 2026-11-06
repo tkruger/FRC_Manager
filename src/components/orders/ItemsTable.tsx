@@ -141,7 +141,7 @@ export function ItemsTable({ items, canTrack, canOverride, canChange = true, sho
               </label>
               <Button size="sm" isLoading={pending} disabled={n === 0 || (needsLink && !url.trim())} onClick={apply}>Apply status</Button>
             </div>
-            <Button size="sm" variant="ghost" disabled={pending} onClick={exit}>Cancel</Button>
+            <Button size="sm" variant="outline" disabled={pending} onClick={exit}>Cancel</Button>
           </div>
 
           {/* Ordered: the package's tracking link can go with it */}

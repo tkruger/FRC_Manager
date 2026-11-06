@@ -100,11 +100,11 @@ export function AccountSecurity({ email, emailVerified, hasPassword, providers, 
             {hasPassword && <Field label="Current password" name="emailPassword" type="password" autoComplete="current-password" required maxLength={200} />}
             <div className="flex gap-2">
               <Button type="submit" size="sm" isLoading={pending}>Send confirmation</Button>
-              <Button type="button" size="sm" variant="ghost" onClick={() => setEditingEmail(false)}>Cancel</Button>
+              <Button type="button" size="sm" variant="outline" onClick={() => setEditingEmail(false)}>Cancel</Button>
             </div>
           </form>
         ) : (
-          <Button size="sm" variant="ghost" onClick={() => { setEmailMsg(null); setEditingEmail(true); }}>Change email</Button>
+          <Button size="sm" variant="outline" onClick={() => { setEmailMsg(null); setEditingEmail(true); }}>Change email</Button>
         )}
         <Note msg={emailMsg} />
       </section>

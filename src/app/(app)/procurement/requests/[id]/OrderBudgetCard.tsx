@@ -97,7 +97,7 @@ export function OrderBudgetCard({ requestId, budgetCategory, items, recorded, ca
           )}
           <div className="flex gap-2">
             <Button size="sm" onClick={save} isLoading={pending}>Save</Button>
-            {budgetCategory && <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>Cancel</Button>}
+            {budgetCategory && <Button size="sm" variant="outline" onClick={() => setEditing(false)}>Cancel</Button>}
           </div>
         </div>
       )}

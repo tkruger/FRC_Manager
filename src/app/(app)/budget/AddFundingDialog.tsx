@@ -98,7 +98,7 @@ export function AddFundingDialog({ budgetId, source }: { budgetId: string; sourc
           <DialogFooter>
             <Button type="submit" isLoading={isPending}>{source ? "Save" : "Add funding"}</Button>
             <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-            {source && <Button type="button" variant="ghost" className="ml-auto text-(--color-danger)" onClick={handleDelete}>Remove</Button>}
+            {source && <Button type="button" variant="danger" className="ml-auto" onClick={handleDelete}>Remove</Button>}
           </DialogFooter>
         </form>
       </DialogContent>

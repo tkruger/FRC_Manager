@@ -133,7 +133,7 @@ export function EmailServerForm({ saved, teamNumber, googleAvailable, maxHourly,
               onClick={() => act(() => setEmailServerEnabledAction(!saved.enabled), saved.enabled ? "Paused — FRC Manager's email is used" : "The team's email is in use again")}>
               {saved.enabled ? "Pause" : "Resume"}
             </Button>
-            <Button size="sm" variant="ghost" disabled={pending}
+            <Button size="sm" variant="danger" disabled={pending}
               onClick={() => { if (confirm("Remove the team's mail server? Emails will come from FRC Manager again.")) act(removeEmailServerAction, "Removed — emails come from FRC Manager", () => setEditing(true)); }}>
               Remove
             </Button>
@@ -219,7 +219,7 @@ export function EmailServerForm({ saved, teamNumber, googleAvailable, maxHourly,
               </div>
               <div className="flex flex-wrap gap-2">
                 <Button type="submit" isLoading={pending}>Check and save</Button>
-                {saved && <Button type="button" variant="ghost" disabled={pending} onClick={() => { setEditing(false); setError(null); }}>Cancel</Button>}
+                {saved && <Button type="button" variant="outline" disabled={pending} onClick={() => { setEditing(false); setError(null); }}>Cancel</Button>}
               </div>
               <p className="text-xs text-(--color-text-secondary)">Saving asks Google for permission to send as the mailbox; nothing is sent.</p>
             </div>
@@ -232,7 +232,7 @@ export function EmailServerForm({ saved, teamNumber, googleAvailable, maxHourly,
               {googleAvailable
                 ? <a href="/api/integrations/gmail/start" className="inline-flex h-10 items-center gap-2 rounded-md bg-(--color-primary) px-4 text-sm font-semibold text-white hover:opacity-90">Connect with Google</a>
                 : <p className="text-sm text-(--color-danger)">Google sign-in isn&apos;t set up for this site yet (GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET).</p>}
-              {saved && <Button type="button" variant="ghost" disabled={pending} onClick={() => { setEditing(false); setError(null); }}>Cancel</Button>}
+              {saved && <Button type="button" variant="outline" disabled={pending} onClick={() => { setEditing(false); setError(null); }}>Cancel</Button>}
             </div>
           ) : (<>
           <div className={custom ? "grid gap-3 sm:grid-cols-[1fr_7rem_10rem]" : "hidden"}>
@@ -286,7 +286,7 @@ export function EmailServerForm({ saved, teamNumber, googleAvailable, maxHourly,
 
           <div className="flex flex-wrap gap-2">
             <Button type="submit" isLoading={pending}>Connect and save</Button>
-            {saved && <Button type="button" variant="ghost" disabled={pending} onClick={() => { setEditing(false); setError(null); }}>Cancel</Button>}
+            {saved && <Button type="button" variant="outline" disabled={pending} onClick={() => { setEditing(false); setError(null); }}>Cancel</Button>}
           </div>
           <p className="text-xs text-(--color-text-secondary)">Saving logs in to the server to check the settings; nothing is sent.</p>
           </>)}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { SUBTEAM_COLORS, shortDate } from "@/lib/schedule-helpers";
+import { subTeamNote } from "@/lib/kanban-style";
 
 const STORAGE_KEY = "frc-schedule-progress-collapsed";
 
@@ -98,7 +99,7 @@ export function SeasonProgressBar({
                 return (
                   <div key={st}>
                     <div className="flex justify-between text-small mb-1">
-                      <span style={{ color }} className="font-medium truncate">{st.replace(/_/g, " ")}</span>
+                      <span style={{ backgroundColor: subTeamNote(color) }} className="min-w-0 truncate rounded px-1.5 font-semibold text-[#1f2430]">{st.replace(/_/g, " ")}</span>
                       <span className="text-(--color-text-secondary) shrink-0 ml-1">{s.done}/{s.total}</span>
                     </div>
                     <div className="h-1.5 rounded-full bg-(--color-surface-overlay)">
