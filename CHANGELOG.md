@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.13.2 — 2026-11-05
+
 - **Snooze competition alerts** is easier to spot: proper buttons in a card, plus **Snooze for 1–30 days** (ends at 7 AM that morning). While snoozed, a highlighted banner shows until when, with **Turn back on**
 
 - Home's **Overdue tasks** tile now counts only **your** overdue tasks (a parent: their students'). To see the whole team's, turn on **Show the whole team's overdue tasks** in Profile → Home screen
