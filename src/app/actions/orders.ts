@@ -333,22 +333,30 @@ export async function setOrderBudgetAction(input: unknown): Promise<Result> {
   return { success: true };
 }
 
-// ── Tax & shipping per vendor (the Buyer, when placing the order) ──────────
+// ── Vendor orders: order numbers, tax & shipping (the Buyer, when placing the order) ──
 
+const VendorOrderSchema = z.object({
+  /** An existing vendor order (blank: a new one) */
+  id:                z.string().max(100).optional(),
+  vendorOrderNumber: z.string().trim().max(100, "That order number is too long.").optional(),
+  tax:               z.number().min(0, "Tax can't be negative.").max(1_000_000),
+  shipping:          z.number().min(0, "Shipping can't be negative.").max(1_000_000),
+  /** The vendor's items on this order */
+  itemIds:           z.array(z.string().max(100)).max(500),
+});
 const ChargesSchema = z.object({
   requestId: z.string().max(100),
-  charges:   z.array(z.object({
+  vendors:   z.array(z.object({
     vendorName: z.string().trim().max(120),
-    tax:        z.number().min(0, "Tax can't be negative.").max(1_000_000),
-    shipping:   z.number().min(0, "Shipping can't be negative.").max(1_000_000),
-    vendorOrderNumber: z.string().trim().max(100, "That order number is too long.").optional(),
+    orders:     z.array(VendorOrderSchema).min(1).max(10, "Up to 10 orders per vendor."),
   })).max(50),
 });
 
 /**
- * Set the tax and shipping for each vendor on an order (Buyer, Team Leadership, Head
- * Mentors). Tax counts toward the categories of that vendor's items, shipping toward
- * Shipping; spend already in the budget is updated to match.
+ * Each vendor's orders on an order (Buyer, Team Leadership, Head Mentors): usually one, more when some
+ * items had to be ordered separately (out of stock). Each has the vendor's order number, tax and shipping
+ * and its items. Tax counts toward its items' categories, shipping toward Shipping; spend already in the
+ * budget is updated to match.
  */
 export async function setOrderChargesAction(input: unknown): Promise<Result> {
   const who = await actor();
@@ -358,11 +366,15 @@ export async function setOrderChargesAction(input: unknown): Promise<Result> {
   }
   const parsed = ChargesSchema.safeParse(input);
   if (!parsed.success) return { success: false, error: issueMessage(parsed.error) };
-  const { requestId, charges } = parsed.data;
+  const { requestId } = parsed.data;
 
   const order = await prisma.purchaseRequest.findFirst({
     where:  { id: requestId, season: { teamId: who.teamId } },
-    select: { id: true, status: true, lineItems: { select: { vendorName: true } }, vendorCharges: { select: { id: true, vendorName: true, vendorOrderNumber: true } } },
+    select: {
+      id: true, status: true,
+      lineItems: { select: { id: true, vendorName: true } },
+      vendorCharges: { orderBy: [{ createdAt: "asc" }, { id: "asc" }], select: { id: true, vendorName: true, vendorOrderNumber: true, tax: true, shipping: true } },
+    },
   });
   if (!order) return { success: false, error: "Order not found." };
   if (order.status === "DENIED" || order.status === "CANCELLED") return { success: false, error: "This order is closed." };
@@ -376,25 +388,45 @@ export async function setOrderChargesAction(input: unknown): Promise<Result> {
   const parts: string[] = [];
 
   await prisma.$transaction(async (tx) => {
-    for (const c of charges) {
-      const vendorName = vendors.get(key(c.vendorName));
+    for (const v of parsed.data.vendors) {
+      const vendorName = vendors.get(key(v.vendorName));
       if (vendorName === undefined) continue;
-      const tax = money(c.tax), shipping = money(c.shipping);
-      const orderNo = c.vendorOrderNumber?.trim() || null;
-      // Update what's there for this vendor (however its name was spelled then), so the
-      // order's history shows each amount from → to
-      const [keep, ...extra] = order.vendorCharges.filter((x) => key(x.vendorName) === key(vendorName)).map((x) => x.id);
-      if (extra.length) await tx.orderVendorCharge.deleteMany({ where: { id: { in: extra } } });
-      const before = order.vendorCharges.find((x) => x.id === keep);
-      if (tax === 0 && shipping === 0 && !orderNo) {
-        if (keep) await tx.orderVendorCharge.delete({ where: { id: keep } });
-      } else if (keep) {
-        await tx.orderVendorCharge.update({ where: { id: keep }, data: { tax, shipping, vendorOrderNumber: orderNo, updatedById: who.id } });
-      } else {
-        await tx.orderVendorCharge.create({ data: { requestId, vendorName, tax, shipping, vendorOrderNumber: orderNo, updatedById: who.id } });
+      const itemsOfVendor = new Set(order.lineItems.filter((l) => key(l.vendorName) === key(vendorName)).map((l) => l.id));
+      const existing = order.vendorCharges.filter((x) => key(x.vendorName) === key(vendorName));
+      const kept: string[] = [];
+      const assigned = new Map<string, string>(); // item → vendor order
+      const label = (no: string | null, i: number) => `${vendorName || "No vendor"}${v.orders.length > 1 ? ` order ${i + 1}` : ""}${no ? ` (#${no})` : ""}`;
+
+      for (const [i, o] of v.orders.entries()) {
+        const tax = money(o.tax), shipping = money(o.shipping);
+        const orderNo = o.vendorOrderNumber?.trim() || null;
+        const before = existing.find((x) => x.id === o.id);
+        // A lone vendor order with nothing on it isn't kept
+        if (v.orders.length === 1 && tax === 0 && shipping === 0 && !orderNo) {
+          if (existing.length) parts.push(`${vendorName || "No vendor"}: no tax, shipping or order number`);
+          continue;
+        }
+        let id: string;
+        if (before) {
+          await tx.orderVendorCharge.update({ where: { id: before.id }, data: { tax, shipping, vendorOrderNumber: orderNo, updatedById: who.id } });
+          id = before.id;
+        } else {
+          id = (await tx.orderVendorCharge.create({ data: { requestId, vendorName, tax, shipping, vendorOrderNumber: orderNo, updatedById: who.id }, select: { id: true } })).id;
+        }
+        kept.push(id);
+        for (const itemId of o.itemIds) if (itemsOfVendor.has(itemId)) assigned.set(itemId, id);
+        if (!before || before.tax !== tax || before.shipping !== shipping || (before.vendorOrderNumber ?? null) !== orderNo) {
+          parts.push(`${label(orderNo, i)}: ${tax > 0 || shipping > 0 ? `${tax.toFixed(2)} tax, ${shipping.toFixed(2)} shipping` : "no tax or shipping"}`);
+        }
       }
-      const noChange = orderNo === (before?.vendorOrderNumber ?? null) ? "" : orderNo ? `, order #${orderNo}` : before?.vendorOrderNumber ? ", order # removed" : "";
-      parts.push(`${vendorName || "No vendor"}: ${tax > 0 || shipping > 0 ? `${tax.toFixed(2)} tax, ${shipping.toFixed(2)} shipping` : "no tax or shipping"}${noChange}`);
+      const gone = existing.filter((x) => !kept.includes(x.id));
+      if (gone.length) await tx.orderVendorCharge.deleteMany({ where: { id: { in: gone.map((x) => x.id) } } });
+      if (gone.length && kept.length) parts.push(`${vendorName || "No vendor"}: ${gone.length} order${gone.length === 1 ? "" : "s"} merged back`);
+      // Items follow: each on the order it was put on (the vendor's first, when it wasn't)
+      const first = kept[0] ?? null;
+      for (const itemId of itemsOfVendor) {
+        await tx.purchaseLineItem.update({ where: { id: itemId }, data: { vendorOrderId: assigned.get(itemId) ?? first } });
+      }
     }
     // Spend already recorded follows (nothing recorded yet: it's included when it is)
     await syncOrderSpend(tx, requestId);

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Split vendor orders**: when some items are out of stock, the Buyer can split a vendor's items over more than one order (**+ Split … items onto another order** under Vendor orders) — each with its own vendor order number, tax and shipping, and the items picked for it. Tax counts toward that order's items; the order's history records each one
+
 - **Vendor order number**: the order's **Vendor orders** card (was Tax & shipping) takes each vendor's own order number alongside its tax and shipping — handy when following up with the vendor after ordering. It's in the order's history
 - **Comments on orders**: anyone working on an order can post a comment — a back order, a broken link, a vendor that can't fill it. Everyone on the order (who placed it, approved it, is buying it or commented) is told in the app, by push and by email (**Comments on orders I'm part of**). Authors, the Buyer and captains can remove a comment
 

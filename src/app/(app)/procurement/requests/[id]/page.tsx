@@ -23,7 +23,7 @@ import { ExportCsvButton } from "@/components/orders/ExportCsvButton";
 import { itemRef } from "@/lib/orders/constants";
 import { canSetOrderBudget } from "@/lib/orders/spend";
 import { OrderBudgetCard } from "./OrderBudgetCard";
-import { OrderChargesCard } from "./OrderChargesCard";
+import { OrderChargesCard, type Vendor } from "./OrderChargesCard";
 import { ChangeHistory } from "@/components/history/ChangeHistory";
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -37,7 +37,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       requestedBy: { select: { name: true } },
       comments:    { orderBy: { createdAt: "asc" }, select: { id: true, body: true, createdAt: true, authorId: true, author: { select: { name: true, deletedAt: true } } } },
       lineItems:   { orderBy: [{ orderNumber: "asc" }, { id: "asc" }], select: ITEM_ROW_SELECT },
-      vendorCharges: { select: { vendorName: true, tax: true, shipping: true, vendorOrderNumber: true } },
+      vendorCharges: { orderBy: [{ createdAt: "asc" }, { id: "asc" }], select: { id: true, vendorName: true, tax: true, shipping: true, vendorOrderNumber: true, items: { select: { id: true } } } },
       events:      { orderBy: { createdAt: "asc" }, include: { actor: { select: { name: true } } } },
     },
   });
@@ -89,20 +89,25 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   const canChangeStatus = !closed && !isViewOnly(roles);
   const canResubmit = closed && canResubmitOrder(def, order, { id: session.user.id, roles });
 
-  // Items grouped by vendor (trimmed, any case — as the budget matches them), with each one's tax & shipping
+  // Items grouped by vendor (trimmed, any case — as the budget matches them), and each vendor's orders
+  // (usually one; more when items were split onto separate orders). Items on none are on the first.
   const vendorKey = (v: string | null | undefined) => (v ?? "").trim().toLowerCase();
-  const vendors = new Map<string, { name: string; items: number; subtotal: number; tax: number; shipping: number; orderNumber: string | null }>();
+  const vendors = new Map<string, Vendor>();
   for (const i of items) {
-    const v = vendors.get(vendorKey(i.vendorName)) ?? { name: (i.vendorName ?? "").trim(), items: 0, subtotal: 0, tax: 0, shipping: 0, orderNumber: null };
-    v.items += 1;
-    v.subtotal += (i.unitCost ?? 0) * i.quantity;
+    const v = vendors.get(vendorKey(i.vendorName)) ?? { name: (i.vendorName ?? "").trim(), items: [], orders: [] };
+    v.items.push({ id: i.id, ref: itemRef(i), name: i.name, total: (i.unitCost ?? 0) * i.quantity });
     vendors.set(vendorKey(i.vendorName), v);
   }
   for (const c of order.vendorCharges) {
     const v = vendors.get(vendorKey(c.vendorName));
-    if (v) { v.tax += c.tax; v.shipping += c.shipping; v.orderNumber ??= c.vendorOrderNumber; }
+    if (v) v.orders.push({ id: c.id, orderNumber: c.vendorOrderNumber, tax: c.tax, shipping: c.shipping, itemIds: c.items.map((x) => x.id).filter((id) => v.items.some((it) => it.id === id)) });
   }
-  const extras = [...vendors.values()].reduce((s, v) => s + v.tax + v.shipping, 0);
+  for (const v of vendors.values()) {
+    if (v.orders.length === 0) v.orders.push({ id: null, orderNumber: null, tax: 0, shipping: 0, itemIds: [] });
+    const placed = new Set(v.orders.flatMap((o) => o.itemIds));
+    v.orders[0].itemIds.push(...v.items.filter((it) => !placed.has(it.id)).map((it) => it.id));
+  }
+  const extras = [...vendors.values()].reduce((s, v) => s + v.orders.reduce((t, o) => t + o.tax + o.shipping, 0), 0);
   const beforeApproval = order.status === "DRAFT" || order.status === "SUBMITTED";
 
   return (

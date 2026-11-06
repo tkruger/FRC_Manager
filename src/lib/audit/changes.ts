@@ -318,11 +318,11 @@ const SPECS: Record<string, Spec> = {
       shipping: { label: "Shipping", kind: "money" },
       vendorOrderNumber: { label: "Vendor order #", kind: "text" },
     },
-    select: { id: true, vendorName: true, requestId: true, request: { select: { title: true, season: { select: { teamId: true } } } } },
+    select: { id: true, vendorName: true, vendorOrderNumber: true, requestId: true, request: { select: { title: true, season: { select: { teamId: true } } } } },
     teamOf: (r) => r.request?.season?.teamId,
     idOf: (r) => r.requestId,
     labelOf: (r) => r.request?.title ?? "Order",
-    part: (r) => r.vendorName || "No vendor",
+    part: (r) => `${r.vendorName || "No vendor"}${r.vendorOrderNumber ? ` (order #${r.vendorOrderNumber})` : ""}`,
     parent: { key: "requestId", find: findOrder },
   },
 };

@@ -62,8 +62,8 @@ export async function syncOrderSpend(
     select: {
       id: true, title: true, seasonId: true, budgetCategory: true, actualTotal: true,
       preferredVendor: { select: { name: true } },
-      lineItems: { select: { budgetCategory: true, unitCost: true, quantity: true, vendorName: true } },
-      vendorCharges: { select: { vendorName: true, tax: true, shipping: true } },
+      lineItems: { select: { budgetCategory: true, unitCost: true, quantity: true, vendorName: true, vendorOrderId: true } },
+      vendorCharges: { orderBy: [{ createdAt: "asc" }, { id: "asc" }], select: { id: true, vendorName: true, tax: true, shipping: true } },
     },
   });
   const budget = await tx.budget.findUnique({
@@ -101,10 +101,15 @@ export async function syncOrderSpend(
   const addTo = (part: Map<BudgetCategoryType | null, number>) => {
     for (const [k, v] of part) shares.set(k, Math.round(((shares.get(k) ?? 0) + v) * 100) / 100);
   };
-  // Each vendor's tax to its items' categories; shipping to Shipping
+  // Each vendor order's tax to its items' categories; shipping to Shipping. Items not placed on one of
+  // their vendor's orders belong to its first.
   const vendorKey = (v: string | null | undefined) => (v ?? "").trim().toLowerCase();
+  const chargeIds = new Set(order.vendorCharges.map((c) => c.id));
   for (const c of order.vendorCharges) {
-    if (c.tax > 0) addTo(split(c.tax, weightsOf(order.lineItems.filter((l) => vendorKey(l.vendorName) === vendorKey(c.vendorName)))));
+    const ofVendor = order.lineItems.filter((l) => vendorKey(l.vendorName) === vendorKey(c.vendorName));
+    const first = order.vendorCharges.find((x) => vendorKey(x.vendorName) === vendorKey(c.vendorName))?.id === c.id;
+    const mine = ofVendor.filter((l) => l.vendorOrderId === c.id || (first && !(l.vendorOrderId && chargeIds.has(l.vendorOrderId))));
+    if (c.tax > 0) addTo(split(c.tax, weightsOf(mine.length ? mine : ofVendor)));
     if (c.shipping > 0) addTo(new Map([["SHIPPING" as BudgetCategoryType, c.shipping]]));
   }
   for (const [k, v] of shares) if (v === 0 && shares.size > 1) shares.delete(k);

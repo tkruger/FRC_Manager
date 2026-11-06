@@ -953,6 +953,9 @@ model PurchaseLineItem {
   status           OrderItemStatus @default(QUEUED)
   trackingId       String?
   tracking         Tracking?       @relation(fields: [trackingId], references: [id], onDelete: SetNull)
+  /// Which of its vendor's orders it's on (null: the vendor's first)
+  vendorOrderId    String?
+  vendorOrder      OrderVendorCharge? @relation(fields: [vendorOrderId], references: [id], onDelete: SetNull)
   /// Last time this item was included in a Buyer CSV export
   exportedAt       DateTime?
   orderedAt        DateTime?
@@ -1901,6 +1904,9 @@ model OrderComment {
   @@index([requestId, createdAt])
 }
 
+/// One order placed with a vendor for some of an order's items: its order number, tax and shipping. A
+/// vendor usually has one; out-of-stock items can go on a second (and third…) order with that vendor.
+/// Items point at theirs (vendorOrderId); items that don't belong to the vendor's first one.
 model OrderVendorCharge {
   id          String          @id @default(cuid())
   requestId   String
@@ -1911,8 +1917,10 @@ model OrderVendorCharge {
   shipping    Float           @default(0)
   /// The vendor's own order number — for following up with them after ordering
   vendorOrderNumber String?
+  items       PurchaseLineItem[]
   updatedById String?
+  createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
-  @@unique([requestId, vendorName])
+  @@index([requestId, vendorName])
 }
