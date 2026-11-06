@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Order emails**: orders waiting on you (to approve, order or receive) and updates on your own orders (approved, denied, ordered, delivered, canceled) are now emailed as well as pushed — on by default, and each person can turn email off in Settings → Notifications. Expense claim reviews and updates already email by default. Sent from the team's email when it's set up
+
 ## 1.13.2 — 2026-11-05
 
 - **Snooze competition alerts** is easier to spot: proper buttons in a card, plus **Snooze for 1–30 days** (ends at 7 AM that morning). While snoozed, a highlighted banner shows until when, with **Turn back on**

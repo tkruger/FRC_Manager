@@ -29,7 +29,7 @@ export const TOPICS = [
     label: "Orders waiting on you",
     description: "An order reaches a step you can act on (approve, order, receive).",
     audience: "Roles assigned to that step in the purchase workflow",
-    defaultInApp: true, defaultPush: true,
+    defaultInApp: true, defaultPush: true, defaultEmail: true,
   },
   {
     id: "purchase.reminders", group: "Purchasing",
@@ -43,7 +43,7 @@ export const TOPICS = [
     label: "Updates on my orders",
     description: "Your order is approved, denied, ordered, delivered or canceled.",
     audience: "The person who submitted the order",
-    defaultInApp: true, defaultPush: true,
+    defaultInApp: true, defaultPush: true, defaultEmail: true,
   },
   {
     id: "inventory.low_stock", group: "Purchasing",

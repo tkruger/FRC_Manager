@@ -441,12 +441,13 @@ export default function HelpPage() {
         </Steps>
         <H3>What you can get</H3>
         <ul className="list">
-          <li><b>Purchasing</b> — orders waiting on you (with reminders until you act), updates on your own orders, low stock.</li>
+          <li><b>Purchasing</b> — orders waiting on you (with reminders until you act), updates on your own orders, low stock. Orders waiting on you and updates on your own orders are emailed too unless you turn email off.</li>
           <li><b>Meetings</b> — a reminder the day before and shortly before each meeting, and any changes or cancellations.</li>
           <li><b>Tasks</b> — when you&apos;re assigned, a morning digest of overdue and upcoming tasks, blocked tasks, and your open tasks as each meeting starts.</li>
           <li><b>Competitions</b> — a daily countdown each morning for the 30 days before every event.</li>
           <li><b>Tools &amp; safety</b> — tool returns, expiring certifications, safety incidents.</li>
           <li><b>Volunteers</b> — requests to cover a meeting, sign-up confirmations and the day-before reminder with instructions; for coordinators, meetings short of adults. These are emailed too unless you turn email off.</li>
+          <li><b>Expenses</b> — for Treasurers and Head Mentors, claims to review; for everyone, when your own claim is approved, denied or paid. These are emailed too unless you turn email off.</li>
           <li><b>Team</b> — new members waiting for approval, and your own account.</li>
         </ul>
         <H3>Team email</H3>
@@ -467,7 +468,7 @@ export default function HelpPage() {
 
       <Section id="roles" title="Roles & permissions">
         <p>Head Mentors and Team Leadership approve new members and assign roles. Team Leadership can give and take away the <b>Team roles</b> — Team Member, Build Lead, Inventory Admin, Safety Captain and Team Leadership; every other role (Mentor, Parent, Treasurer, Buyer, Order Approver, Head Mentor …) is given by a Head Mentor. <b>Mentor</b> has the same access as Team Member — give a mentor Team Leadership (or other roles) for more. <b>Parents</b> are view-only: they see what a Team Member sees (except orders and robots) but can&apos;t change anything, apart from their own settings, volunteering, helping pack for competitions and scanning tools into their locations. A member can have several roles. <Link href="/settings/roles" className="link">Roles explained</Link> has the full list of who can do what.</p>
-        <p><b>Inviting people:</b> Head Mentors and Team Leadership can invite people from <b>Settings → Invite people</b> — by email (separate addresses with commas) or with a join link the bot posts in a Discord channel. Pick the roles they'll get (Team Member by default — you can give roles up to your own; only Head Mentors can invite Head Mentors). Anyone who accepts joins the team straight away with those roles.</p>
+        <p><b>Inviting people:</b> Head Mentors and Team Leadership can invite people from <b>Settings → Invite people</b> — by email (separate people with commas or new lines; add names as <i>Dana Starler &lt;dana@example.com&gt;</i> or paste from an email&apos;s To: line) or with a join link the bot posts in a Discord channel. Pick the roles they'll get (Team Member by default — you can give roles up to your own; only Head Mentors can invite Head Mentors). Anyone who accepts joins the team straight away with those roles.</p>
         <Table
           head={["Role", "Can also…"]}
           rows={[
