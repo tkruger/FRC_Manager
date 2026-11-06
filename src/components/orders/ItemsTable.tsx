@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn, formatCurrency } from "@/lib/utils";
@@ -32,12 +32,19 @@ export interface OrderItemRow {
 
 interface Props {
   items:       OrderItemRow[];
-  /** Buyer / captains: add tracking links */
+  /** Buyer / captains: add tracking links (with Ordered) */
   canTrack:    boolean;
-  /** Buyer / captains: set any status */
+  /** Buyer / captains: set any status (everyone else can only mark items arrived) */
   canOverride: boolean;
+  /** Can change statuses at all here (false on a denied or canceled order) */
+  canChange?:  boolean;
   /** Show which order each item belongs to (Buyer page) */
   showOrder?:  boolean;
+  /**
+   * The page's own "Change status" button turns the mode on (?change=status) — the order page puts it
+   * next to Edit order. Without it, the list shows its own button (Buyer page).
+   */
+  modeFromPage?: boolean;
   emptyText?:  string;
 }
 
@@ -48,34 +55,63 @@ const IMPORTANCE_BADGE: Record<string, "neutral" | "warning" | "danger"> = {
 const inputCls =
   "rounded-md border border-(--color-border) bg-(--color-surface) text-(--color-text-primary) px-2.5 py-1.5 text-sm focus:border-(--color-primary) focus:outline-none";
 
-export function ItemsTable({ items, canTrack, canOverride, showOrder, emptyText = "No items." }: Props) {
+/** The page-header button that turns on Change status mode for the order's items */
+export function ChangeStatusButton() {
+  const params = useSearchParams();
+  const pathname = usePathname();
+  const on = params.get("change") === "status";
+  return (
+    <Link href={on ? pathname : `${pathname}?change=status`} scroll={false} replace>
+      <Button variant={on ? "secondary" : "outline"} size="sm" aria-pressed={on}>Change status</Button>
+    </Link>
+  );
+}
+
+export function ItemsTable({ items, canTrack, canOverride, canChange = true, showOrder, modeFromPage, emptyText = "No items." }: Props) {
   const router = useRouter();
+  const pathname = usePathname();
+  const params = useSearchParams();
+  const viewOnly = useViewOnly();
+  const [localMode, setLocalMode] = useState(false);
+  const changing = canChange && !viewOnly && (modeFromPage ? params.get("change") === "status" : localMode);
+
+  // What this person can set: Buyers and captains anything; everyone else marks items arrived
+  const options: ItemStatus[] = canOverride ? [...ITEM_STATUSES] : canTrack ? ["ORDERED", "ARRIVED"] : ["ARRIVED"];
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [panel, setPanel]       = useState<null | "tracking" | "status">(null);
+  const [status, setStatus]     = useState<ItemStatus>(options.includes("ORDERED") ? "ORDERED" : "ARRIVED");
   const [url, setUrl]           = useState("");
   const [label, setLabel]       = useState("");
-  const [status, setStatus]     = useState<ItemStatus>("ORDERED");
   const [msg, setMsg]           = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start]        = useTransition();
-  const viewOnly = useViewOnly();
 
-  const chosen = items.filter((i) => selected.has(i.id));
-  const canArriveChosen = chosen.some((i) => i.status === "TO_ORDER" || i.status === "ORDERED");
   const allSelected = items.length > 0 && selected.size === items.length;
+  const n = selected.size;
+  // Ordered without the right to override: it's set by adding the tracking link
+  const needsLink = status === "ORDERED" && !canOverride;
 
   function toggle(id: string) {
-    setSelected((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+    setSelected((s) => { const next = new Set(s); if (next.has(id)) next.delete(id); else next.add(id); return next; });
   }
 
-  function run(fn: () => Promise<{ success: boolean; error?: string; count?: number }>, done: string) {
+  function exit() {
+    setSelected(new Set());
+    setUrl(""); setLabel("");
+    if (modeFromPage) router.replace(pathname, { scroll: false }); else setLocalMode(false);
+  }
+
+  function apply() {
+    const ids = [...selected];
+    if (status === "ARRIVED" && !confirm(`Mark ${n} item${n === 1 ? "" : "s"} arrived? They'll be added to inventory, and arrived items can't be changed back.`)) return;
     setMsg(null);
     start(async () => {
-      const res = await fn();
+      const link = url.trim();
+      const res = status === "ORDERED" && link && canTrack ? await addTrackingAction(ids, link, label)
+        : status === "ARRIVED" && !canOverride ? await markArrivedAction(ids)
+        : await setItemStatusAction(ids, status);
       if (!res.success) { setMsg({ ok: false, text: res.error ?? "Something went wrong." }); return; }
-      setMsg({ ok: true, text: `${done} — ${res.count} item${res.count === 1 ? "" : "s"}.` });
-      setSelected(new Set());
-      setPanel(null);
-      setUrl(""); setLabel("");
+      const count = "count" in res ? res.count : ids.length;
+      setMsg({ ok: true, text: `${ITEM_STATUS_INFO[status].label}${link && status === "ORDERED" ? " (with tracking)" : ""} — ${count} item${count === 1 ? "" : "s"}.` });
+      exit();
       router.refresh();
     });
   }
@@ -86,66 +122,55 @@ export function ItemsTable({ items, canTrack, canOverride, showOrder, emptyText 
 
   return (
     <div className="space-y-3">
-      {/* Selection / bulk actions */}
-      {!viewOnly && <div className="flex flex-wrap items-center gap-2">
-        <label className="flex items-center gap-2 text-sm text-(--color-text-secondary) cursor-pointer">
-          <input
-            type="checkbox"
-            className="accent-(--color-primary)"
-            checked={allSelected}
-            onChange={() => setSelected(allSelected ? new Set() : new Set(items.map((i) => i.id)))}
-          />
-          {selected.size ? `${selected.size} selected` : "Select all"}
-        </label>
-        {selected.size > 0 && (
-          <div className="flex flex-wrap gap-2">
-            <Button size="sm" disabled={!canArriveChosen || pending}
-              title={canArriveChosen ? undefined : "Only approved items (To order / Ordered) can arrive"}
-              onClick={() => {
-                if (confirm(`Mark ${chosen.length} item${chosen.length === 1 ? "" : "s"} arrived? They'll be added to inventory.`)) {
-                  run(() => markArrivedAction([...selected]), "Marked arrived and added to inventory");
-                }
-              }}>
-              Mark arrived
-            </Button>
-            {canTrack && <Button size="sm" variant="secondary" onClick={() => setPanel(panel === "tracking" ? null : "tracking")}>Add tracking link</Button>}
-            {canOverride && <Button size="sm" variant="outline" onClick={() => setPanel(panel === "status" ? null : "status")}>Set status</Button>}
-          </div>
-        )}
-      </div>}
-
-      {panel === "tracking" && selected.size > 0 && (
-        <form
-          className="card flex flex-wrap items-end gap-2"
-          onSubmit={(e) => { e.preventDefault(); run(() => addTrackingAction([...selected], url, label), "Tracking added, items marked Ordered"); }}
-        >
-          <label className="flex-1 min-w-48 space-y-1">
-            <span className="block text-sm font-medium text-(--color-text-primary)">Tracking link</span>
-            <input className={cn(inputCls, "w-full")} type="url" required placeholder="https://…" value={url} onChange={(e) => setUrl(e.target.value)} />
-          </label>
-          <label className="w-40 space-y-1">
-            <span className="block text-sm font-medium text-(--color-text-primary)">Label</span>
-            <input className={cn(inputCls, "w-full")} placeholder="e.g. REV box 1" value={label} onChange={(e) => setLabel(e.target.value)} />
-          </label>
-          <Button type="submit" size="sm" isLoading={pending}>Save for {selected.size} item{selected.size === 1 ? "" : "s"}</Button>
-        </form>
+      {/* The Buyer page has no header button: the list carries its own */}
+      {!modeFromPage && canChange && !viewOnly && !changing && (
+        <div className="flex justify-end">
+          <Button size="sm" variant="outline" onClick={() => { setMsg(null); setLocalMode(true); }}>Change status</Button>
+        </div>
       )}
 
-      {panel === "status" && selected.size > 0 && (
-        <div className="card flex flex-wrap items-end gap-2">
-          <label className="space-y-1">
-            <span className="block text-sm font-medium text-(--color-text-primary)">New status</span>
-            <select className={inputCls} value={status} onChange={(e) => setStatus(e.target.value as ItemStatus)}>
-              {ITEM_STATUSES.map((s) => <option key={s} value={s}>{ITEM_STATUS_INFO[s].label}</option>)}
-            </select>
-          </label>
-          <Button size="sm" isLoading={pending} onClick={() => {
-            if (status === "ARRIVED" && !confirm("Arrived items are added to inventory. Continue?")) return;
-            run(() => setItemStatusAction([...selected], status), `Status set to ${ITEM_STATUS_INFO[status].label}`);
-          }}>
-            Apply to {selected.size} item{selected.size === 1 ? "" : "s"}
-          </Button>
-          <p className="text-small text-(--color-text-secondary) w-full">Arrived items can&apos;t be changed back — their stock has been added.</p>
+      {changing && (
+        <div className="card space-y-3 border-(--color-primary)/40">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div className="flex flex-wrap items-end gap-2">
+              <label className="space-y-1">
+                <span className="block text-sm font-medium text-(--color-text-primary)">New status</span>
+                <select className={inputCls} value={status} onChange={(e) => setStatus(e.target.value as ItemStatus)}>
+                  {options.map((s) => <option key={s} value={s}>{ITEM_STATUS_INFO[s].label}</option>)}
+                </select>
+              </label>
+              <Button size="sm" isLoading={pending} disabled={n === 0 || (needsLink && !url.trim())} onClick={apply}>Apply status</Button>
+            </div>
+            <Button size="sm" variant="ghost" disabled={pending} onClick={exit}>Cancel</Button>
+          </div>
+
+          {/* Ordered: the package's tracking link can go with it */}
+          {status === "ORDERED" && canTrack && (
+            <div className="flex flex-wrap items-end gap-2">
+              <label className="flex-1 min-w-48 space-y-1">
+                <span className="block text-sm font-medium text-(--color-text-primary)">
+                  Tracking link {!needsLink && <span className="font-normal text-(--color-text-secondary)">(optional)</span>}
+                </span>
+                <input className={cn(inputCls, "w-full")} type="url" placeholder="https://…" value={url} onChange={(e) => setUrl(e.target.value)} />
+              </label>
+              <label className="w-40 space-y-1">
+                <span className="block text-sm font-medium text-(--color-text-primary)">Label</span>
+                <input className={cn(inputCls, "w-full")} placeholder="e.g. REV box 1" value={label} onChange={(e) => setLabel(e.target.value)} />
+              </label>
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-(--color-border) pt-3">
+            <label className="flex items-center gap-2 text-sm text-(--color-text-primary) cursor-pointer">
+              <input type="checkbox" className="accent-(--color-primary)" checked={allSelected}
+                onChange={() => setSelected(allSelected ? new Set() : new Set(items.map((i) => i.id)))} />
+              Select all
+            </label>
+            <p className="text-small text-(--color-text-secondary)">
+              {n === 0 ? "Tick the items to change below." : <>Your change will apply to <b className="text-(--color-text-primary)">{n} item{n === 1 ? "" : "s"}</b>.</>}
+              {status === "ARRIVED" && " Arrived items are added to inventory and can't be changed back."}
+            </p>
+          </div>
         </div>
       )}
 
@@ -155,54 +180,58 @@ export function ItemsTable({ items, canTrack, canOverride, showOrder, emptyText 
         {items.map((i) => {
           const info = ITEM_STATUS_INFO[i.status];
           const total = (i.unitCost ?? 0) * i.quantity;
+          const Row = changing ? "label" : "div";
           return (
-            <li key={i.id} className={cn("flex gap-3 px-3 py-3 sm:px-4", selected.has(i.id) && "bg-(--color-primary)/5")}>
-              {!viewOnly && <input
-                type="checkbox"
-                aria-label={`Select item ${itemRef(i)}`}
-                className="mt-1 accent-(--color-primary)"
-                checked={selected.has(i.id)}
-                onChange={() => toggle(i.id)}
-              />}
-              <div className="min-w-0 flex-1 space-y-1">
-                <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                  <p className="min-w-0 text-sm text-(--color-text-primary)">
-                    <span className="font-mono text-xs font-semibold text-(--color-text-secondary) mr-2">{itemRef(i)}</span>
-                    {i.link ? (
-                      <a href={i.link} target="_blank" rel="noopener noreferrer" className="font-medium text-(--color-secondary) hover:underline">
-                        {i.name} ↗
-                      </a>
-                    ) : <span className="font-medium">{i.name}</span>}
-                  </p>
-                  <p className="text-sm text-(--color-text-primary) whitespace-nowrap">
-                    {i.unitCost != null ? `${formatCurrency(i.unitCost)} × ${i.quantity} = ` : `× ${i.quantity} `}
-                    <b>{i.unitCost != null ? formatCurrency(total) : ""}</b>
-                  </p>
-                </div>
-                <p className="text-small text-(--color-text-secondary)">
-                  {[i.vendorName, i.partNumber && `#${i.partNumber}`, i.subTeam?.replace(/_/g, " ").toLowerCase()].filter(Boolean).join(" · ") || "No vendor"}
-                  {showOrder && (
-                    <> · <Link href={`/procurement/requests/${i.requestId}`} className="text-(--color-secondary) hover:underline">{i.orderName}</Link></>
-                  )}
-                </p>
-                {(i.reasoning || i.notes) && (
+            <li key={i.id} className={cn(changing && selected.has(i.id) && "bg-(--color-primary)/5")}>
+              <Row className={cn("flex gap-3 px-3 py-3 sm:px-4", changing && "cursor-pointer")}>
+                {changing && <input
+                  type="checkbox"
+                  aria-label={`Select item ${itemRef(i)}`}
+                  className="mt-1 accent-(--color-primary)"
+                  checked={selected.has(i.id)}
+                  onChange={() => toggle(i.id)}
+                />}
+                <div className="min-w-0 flex-1 space-y-1">
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                    <p className="min-w-0 text-sm text-(--color-text-primary)">
+                      <span className="font-mono text-xs font-semibold text-(--color-text-secondary) mr-2">{itemRef(i)}</span>
+                      {i.link && !changing ? (
+                        <a href={i.link} target="_blank" rel="noopener noreferrer" className="font-medium text-(--color-secondary) hover:underline">
+                          {i.name} ↗
+                        </a>
+                      ) : <span className="font-medium">{i.name}</span>}
+                    </p>
+                    <p className="text-sm text-(--color-text-primary) whitespace-nowrap">
+                      {i.unitCost != null ? `${formatCurrency(i.unitCost)} × ${i.quantity} = ` : `× ${i.quantity} `}
+                      <b>{i.unitCost != null ? formatCurrency(total) : ""}</b>
+                    </p>
+                  </div>
                   <p className="text-small text-(--color-text-secondary)">
-                    {i.reasoning && <>Why: {i.reasoning}</>}
-                    {i.reasoning && i.notes && " · "}
-                    {i.notes && <>Notes: {i.notes}</>}
+                    {[i.vendorName, i.partNumber && `#${i.partNumber}`, i.subTeam?.replace(/_/g, " ").toLowerCase()].filter(Boolean).join(" · ") || "No vendor"}
+                    {showOrder && !changing && (
+                      <> · <Link href={`/procurement/requests/${i.requestId}`} className="text-(--color-secondary) hover:underline">{i.orderName}</Link></>
+                    )}
+                    {showOrder && changing && <> · {i.orderName}</>}
                   </p>
-                )}
-                <div className="flex flex-wrap items-center gap-2 pt-0.5">
-                  <Badge variant={info.badge}>{info.label}</Badge>
-                  {i.importance !== "ROUTINE" && <Badge variant={IMPORTANCE_BADGE[i.importance] ?? "neutral"}>{i.importance.toLowerCase()}</Badge>}
-                  {i.tracking && (
-                    <a href={i.tracking.url} target="_blank" rel="noopener noreferrer" className="text-small text-(--color-secondary) hover:underline">
-                      Track{i.tracking.label ? `: ${i.tracking.label}` : " package"} ↗
-                    </a>
+                  {(i.reasoning || i.notes) && (
+                    <p className="text-small text-(--color-text-secondary)">
+                      {i.reasoning && <>Why: {i.reasoning}</>}
+                      {i.reasoning && i.notes && " · "}
+                      {i.notes && <>Notes: {i.notes}</>}
+                    </p>
                   )}
-                  {i.status === "TO_ORDER" && i.exportedAt && <span className="text-xs text-(--color-text-secondary)">in spreadsheet</span>}
+                  <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                    <Badge variant={info.badge}>{info.label}</Badge>
+                    {i.importance !== "ROUTINE" && <Badge variant={IMPORTANCE_BADGE[i.importance] ?? "neutral"}>{i.importance.toLowerCase()}</Badge>}
+                    {i.tracking && !changing && (
+                      <a href={i.tracking.url} target="_blank" rel="noopener noreferrer" className="text-small text-(--color-secondary) hover:underline">
+                        Track{i.tracking.label ? `: ${i.tracking.label}` : " package"} ↗
+                      </a>
+                    )}
+                    {i.status === "TO_ORDER" && i.exportedAt && <span className="text-xs text-(--color-text-secondary)">in spreadsheet</span>}
+                  </div>
                 </div>
-              </div>
+              </Row>
             </li>
           );
         })}

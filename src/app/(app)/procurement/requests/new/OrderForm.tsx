@@ -18,6 +18,8 @@ interface Item {
   id?:        string;
   /** Its item ID or draft ID, shown on the card */
   ref?:       string;
+  /** Existing item's status — Ordered and Arrived keep their price and quantity */
+  status?:    string;
   link:       string;
   vendorName: string;
   name:       string;
@@ -44,6 +46,9 @@ function extractUrl(text: string): string | null {
   return text.match(/https?:\/\/[^\s<>"']+/i)?.[0]?.replace(/[).,!?]+$/, "") ?? null;
 }
 
+/** Ordered or arrived: what was paid — price and quantity can't change */
+const isPaid = (i: { status?: string }) => i.status === "ORDERED" || i.status === "ARRIVED";
+
 let nextKey = 1;
 function blankItem(defaults?: Partial<Item>): Item {
   return {
@@ -65,6 +70,8 @@ export interface OrderFormEdit {
   locked:    { ref: string; name: string; quantity: number }[];
   /** A denied or canceled order being fixed: saving sends it for approval again */
   resubmit?: boolean;
+  /** Everything has arrived: items can be fixed, not added */
+  complete?: boolean;
 }
 
 export function OrderForm({ vendors, edit, draft, unusedCategories = [] }: {
@@ -271,8 +278,9 @@ export function OrderForm({ vendors, edit, draft, unusedCategories = [] }: {
           <div className="flex items-center justify-between">
             <legend className="text-h3 text-(--color-text-primary)">
               {item.ref ? <><span className="font-mono text-sm text-(--color-text-secondary) mr-2">{item.ref}</span>{item.name || `Item ${idx + 1}`}</> : `${edit ? "New item" : "Item"} ${idx + 1}`}
+              {isPaid(item) && <span className="ml-2 align-middle badge badge-info">{item.status === "ARRIVED" ? "Arrived" : "Ordered"}</span>}
             </legend>
-            {(items.length > 1 || locked.length > 0) && (
+            {(items.length > 1 || locked.length > 0) && !isPaid(item) && (
               <button type="button" className="text-small text-(--color-danger) hover:underline"
                 onClick={() => setItems((list) => list.filter((i) => i.key !== item.key))}>
                 Remove
@@ -330,11 +338,16 @@ export function OrderForm({ vendors, edit, draft, unusedCategories = [] }: {
             </Labeled>
             <div className="grid grid-cols-2 gap-3">
               <Labeled label="Unit cost ($)">
-                <input className={inputCls} type="number" min="0" step="0.01" value={item.unitCost} onChange={(e) => update(item.key, { unitCost: e.target.value })} />
+                <input className={`${inputCls} disabled:opacity-60`} type="number" min="0" step="0.01" value={item.unitCost} disabled={isPaid(item)} onChange={(e) => update(item.key, { unitCost: e.target.value })} />
               </Labeled>
               <Labeled label="Quantity" required>
-                <input className={inputCls} type="number" min="1" step="any" required value={item.quantity} onChange={(e) => update(item.key, { quantity: e.target.value })} />
+                <input className={`${inputCls} disabled:opacity-60`} type="number" min="1" step="any" required value={item.quantity} disabled={isPaid(item)} onChange={(e) => update(item.key, { quantity: e.target.value })} />
               </Labeled>
+              {isPaid(item) && (
+                <p className="col-span-2 -mt-1 text-small text-(--color-text-secondary)">
+                  {item.status === "ARRIVED" ? "Arrived" : "Already ordered"} — the price and quantity are locked. A Buyer can set the item back to To order to change them.
+                </p>
+              )}
             </div>
             <Labeled label="Sub-team">
               <select className={inputCls} value={item.subTeam} onChange={(e) => update(item.key, { subTeam: e.target.value })}>
@@ -365,11 +378,13 @@ export function OrderForm({ vendors, edit, draft, unusedCategories = [] }: {
         </fieldset>
       ))}
 
-      <button type="button"
-        onClick={() => setItems((list) => [...list, blankItem({ subTeam: list[list.length - 1]?.subTeam })])}
-        className="w-full rounded-lg border-2 border-dashed border-(--color-border) py-3 text-sm font-medium text-(--color-text-secondary) hover:border-(--color-primary) hover:text-(--color-primary) transition-colors">
-        + Add another item
-      </button>
+      {!edit?.complete && (
+        <button type="button"
+          onClick={() => setItems((list) => [...list, blankItem({ subTeam: list[list.length - 1]?.subTeam })])}
+          className="w-full rounded-lg border-2 border-dashed border-(--color-border) py-3 text-sm font-medium text-(--color-text-secondary) hover:border-(--color-primary) hover:text-(--color-primary) transition-colors">
+          + Add another item
+        </button>
+      )}
 
       <div className="sticky bottom-16 lg:bottom-4 z-10 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-(--color-surface) border border-(--color-border) p-3 shadow-lg">
         <p className="text-sm text-(--color-text-primary)">

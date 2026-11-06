@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+**Editing orders**
+- **Edit order** saves exactly what changed in the order's history, item by item ("9001 Bearings: vendor "AndyMark" → "REV"; 9002 Bolts: quantity 10 → 12"), and tells everyone on the order — whoever placed it and everyone who has worked on it — in the app, by push and by email (**Changes to orders I'm part of** in Settings → Notifications)
+- Items already **Ordered** or **Arrived** keep their price and quantity and can't be removed; everything else about them (name, vendor, link, notes…) can still be fixed. A Buyer can set an item back to To order to change it — that's in the history too
+- Received orders can still be edited (names, vendors, links, notes) — no new items
+- **Change status** sits next to **Edit order** (with **Export CSV**) at the top of the order. It opens one card: pick the new status, tick the items ("Your change will apply to 3 items"), **Apply status** — or **Cancel**. Checkboxes only show while changing status. Choosing **Ordered** offers the tracking link right there. The Buyer page works the same way
+
 ## 1.13.3 — 2026-11-05
 
 - iPhone home-screen app: the bottom bar no longer gets stuck partway up the screen after typing or picking from a drop-down (e.g. on Settings → Notifications)

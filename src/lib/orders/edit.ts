@@ -1,7 +1,9 @@
-// Editing an open order: its name and items. Server-only.
+// Editing an order: its name and items. Server-only.
 //
-// Anyone who can approve or order it may edit (see canEditOrder). Arrived items are
-// locked — their stock is already counted — so they can't be changed or removed.
+// Anyone who can approve or order it may edit (see canEditOrder). Items already ordered or arrived
+// keep their price and quantity (that's what was paid) and can't be removed; everything else about
+// them can still be fixed. (Setting an item back to To order unlocks it — that's in the history too.)
+// Every change is written to the order's history, field by field, and everyone on the order is told.
 
 import { prisma } from "@/lib/prisma";
 import type { BudgetCategoryType, RequestPriority, SubTeam } from "@/generated/prisma";
@@ -12,6 +14,7 @@ import { highestImportance, itemRef, type Importance } from "./constants";
 import { assignItemNumbers } from "./numbers";
 import { syncOrders } from "./items";
 import type { NewItem } from "./create";
+import { notifyUsers } from "@/lib/notify/deliver";
 
 export type EditedItem = NewItem & { id?: string };
 
@@ -39,6 +42,7 @@ export async function editOrder(input: {
     },
   });
   if (!order) return { success: false, error: "Order not found." };
+  const isReceived = order.status === "RECEIVED";
 
   const def = await definitionFor(order.workflowDefinitionId);
   const resubmit = !!input.resubmit;
@@ -55,21 +59,35 @@ export async function editOrder(input: {
   const name  = input.name.trim();
   const items = input.items.filter((i) => i.name.trim() && i.quantity > 0);
   const existing = new Map(order.lineItems.map((l) => [l.id, l]));
-  const arrived  = order.lineItems.filter((l) => l.status === "ARRIVED");
+  const isLocked = (l: { status: string }) => l.status === "ORDERED" || l.status === "ARRIVED";
+  const lockWord = (l: { status: string }) => (l.status === "ARRIVED" ? "has arrived" : "is already ordered");
 
   if (items.some((i) => i.id && !existing.has(i.id))) return { success: false, error: "An item no longer belongs to this order. Refresh and try again." };
-  if (items.some((i) => i.id && existing.get(i.id)!.status === "ARRIVED")) return { success: false, error: "Arrived items can't be changed." };
-  if (items.length + arrived.length === 0) return { success: false, error: "An order needs at least one item. Cancel it instead." };
+  // Ordered and arrived items: price and quantity are what was paid
+  for (const i of items) {
+    const before = i.id ? existing.get(i.id)! : null;
+    if (!before || !isLocked(before)) continue;
+    const cost = i.unitCost ?? null;
+    if (cost !== (before.unitCost ?? null) || i.quantity !== before.quantity) {
+      return { success: false, error: `${itemRef(before)} ${before.name} ${lockWord(before)}, so its price and quantity can't be changed. (A Buyer can set it back to To order first if it really needs changing.)` };
+    }
+  }
+  if (items.length === 0) return { success: false, error: "An order needs at least one item. Cancel it instead." };
 
   const keptIds = new Set(items.map((i) => i.id).filter(Boolean));
-  const removed = order.lineItems.filter((l) => l.status !== "ARRIVED" && !keptIds.has(l.id));
+  const removedLocked = order.lineItems.find((l) => isLocked(l) && !keptIds.has(l.id));
+  if (removedLocked) return { success: false, error: `${itemRef(removedLocked)} ${removedLocked.name} ${lockWord(removedLocked)}, so it can't be removed.` };
+  if (isReceived && items.some((i) => !i.id)) return { success: false, error: "This order is complete — start a new order for more items." };
+  const removed = order.lineItems.filter((l) => !keptIds.has(l.id));
   // New items join where the order is: still waiting on approval, or already approved
   const newStatus = order.status === "SUBMITTED" || resubmit ? "QUEUED" : "TO_ORDER";
 
   const changes: string[] = [];
-  if (name !== order.title) changes.push(`renamed it to "${name}"`);
+  if (name !== order.title) changes.push(`renamed it from "${order.title}" to "${name}"`);
   const budgetCategory = input.budgetCategory;
-  if (budgetCategory !== order.budgetCategory) changes.push(`charged it to ${BUDGET_CATEGORY_LABELS[budgetCategory]}`);
+  if (budgetCategory !== order.budgetCategory) {
+    changes.push(`budget category ${order.budgetCategory ? BUDGET_CATEGORY_LABELS[order.budgetCategory] : "none"} → ${BUDGET_CATEGORY_LABELS[budgetCategory]}`);
+  }
 
   await prisma.$transaction(async (tx) => {
     for (const r of removed) {
@@ -84,7 +102,7 @@ export async function editOrder(input: {
     }
     if (removed.length) changes.push(`removed ${removed.map((r) => `${itemRef(r)} ${r.name}`).join(", ")}`);
 
-    const changedRefs: string[] = [];
+    const changedItems: string[] = [];
     const added: string[] = [];
     for (const i of items) {
       const data = {
@@ -104,22 +122,23 @@ export async function editOrder(input: {
       };
       if (i.id) {
         const before = existing.get(i.id)!;
-        if (EDITABLE_FIELDS.some((f) => (before[f] ?? null) !== (data[f] ?? null))) {
+        const diffs = EDITABLE_FIELDS.filter((f) => (before[f] ?? null) !== (data[f] ?? null)).map((f) => describe(f, before[f], data[f]));
+        if (diffs.length) {
           await tx.purchaseLineItem.update({ where: { id: i.id }, data });
-          changedRefs.push(itemRef(before));
+          changedItems.push(`${itemRef(before)} ${before.name}: ${diffs.join(", ")}`);
         }
       } else {
         const created = await tx.purchaseLineItem.create({ data: { ...data, requestId: order.id, status: newStatus } });
         added.push(created.id);
       }
     }
-    if (changedRefs.length) changes.push(`changed ${changedRefs.join(", ")}`);
+    changes.push(...changedItems);
 
     if (added.length) {
       // Approved orders are final, so new items get their item IDs straight away
       const numbers = newStatus === "TO_ORDER" ? await assignItemNumbers(tx, actor.teamId, { itemIds: added }) : new Map<string, number>();
       const names = items.filter((i) => !i.id).map((i, idx) =>
-        `${itemRef({ id: added[idx], orderNumber: numbers.get(added[idx]) ?? null })} ${i.name.trim()}`);
+        `${itemRef({ id: added[idx], orderNumber: numbers.get(added[idx]) ?? null })} ${i.name.trim()} (${i.quantity}${i.unitCost != null ? ` × ${money(i.unitCost)}` : ""})`);
       changes.push(`added ${names.join(", ")}`);
     }
 
@@ -154,6 +173,8 @@ export async function editOrder(input: {
     }
   }, { timeout: 20_000 });
 
+  if (changes.length) await tellParticipants(order.id, actor, name || order.title, changes, resubmit);
+
   if (resubmit) {
     await resubmitWorkflow(order.id, actor);
     return { success: true };
@@ -161,4 +182,53 @@ export async function editOrder(input: {
   // Removing the last item that wasn't ordered/arrived can complete a step
   await syncOrders([order.id], actor);
   return { success: true };
+}
+
+const FIELD_LABELS: Record<(typeof EDITABLE_FIELDS)[number], string> = {
+  name: "name", vendorName: "vendor", partNumber: "part number", vendorProductUrl: "link", unitCost: "unit price",
+  quantity: "quantity", subTeam: "sub-team", importance: "importance", reasoning: "reasoning", notes: "notes", budgetCategory: "budget category",
+};
+const money = (v: unknown) => `$${Number(v).toFixed(2)}`;
+
+/** "quantity 4 → 6", "unit price $3.00 → $3.50", "notes changed" */
+function describe(field: (typeof EDITABLE_FIELDS)[number], from: unknown, to: unknown): string {
+  const label = FIELD_LABELS[field];
+  if (field === "reasoning" || field === "notes" || field === "vendorProductUrl") {
+    return from == null || from === "" ? `${label} added` : to == null || to === "" ? `${label} removed` : `${label} changed`;
+  }
+  const show = (v: unknown) => {
+    if (v == null || v === "") return "none";
+    if (field === "unitCost") return money(v);
+    if (field === "budgetCategory") return BUDGET_CATEGORY_LABELS[v as BudgetCategoryType] ?? String(v);
+    if (field === "importance" || field === "subTeam") return String(v).charAt(0) + String(v).slice(1).toLowerCase().replace(/_/g, " ");
+    return field === "quantity" ? String(v) : `"${String(v)}"`;
+  };
+  return `${label} ${show(from)} → ${show(to)}`;
+}
+
+/** Everyone on the order — who placed it and everyone who has acted on it — hears what changed */
+async function tellParticipants(requestId: string, actor: Actor, title: string, changes: string[], resubmit: boolean) {
+  try {
+    const order = await prisma.purchaseRequest.findUnique({
+      where:  { id: requestId },
+      select: { requestedById: true, events: { select: { actorId: true } } },
+    });
+    if (!order) return;
+    const ids = [...new Set([order.requestedById, ...order.events.map((e) => e.actorId)])].filter((id): id is string => !!id && id !== actor.id);
+    if (ids.length === 0) return;
+    // The push shows the first change; the app and the email list them all
+    const first = changes[0].length > 200 ? changes[0].slice(0, 197) + "…" : changes[0];
+    const body = changes.length > 1 ? `${first} — and ${changes.length - 1} more change${changes.length === 2 ? "" : "s"}` : first;
+    await notifyUsers(ids, {
+      topic: "purchase.changes",
+      type:  "ORDER_CHANGED",
+      title: `${actor.name} ${resubmit ? "fixed" : "edited"} "${title}"`,
+      body,
+      details: changes.map((c) => `• ${c}`).join("\n"),
+      url:   `/procurement/requests/${requestId}`,
+      tag:   `order-changed-${requestId}`,
+    });
+  } catch (e) {
+    console.error("[orders] couldn't tell people about an edit:", e);
+  }
 }

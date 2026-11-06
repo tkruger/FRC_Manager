@@ -1484,6 +1484,8 @@ enum NotificationType {
   FEEDBACK
   /// A Head Mentor's broadcast message
   BROADCAST
+  /// Someone edited an order you're part of
+  ORDER_CHANGED
 }
 
 /// A message a Head Mentor sent to some of the team — in the app (and push), Discord, and/or email

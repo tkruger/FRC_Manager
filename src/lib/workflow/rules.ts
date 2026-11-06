@@ -90,11 +90,12 @@ export function canResubmitOrder(def: WorkflowDef, r: StepState & { requestedByI
 }
 
 /**
- * Who can edit an open order: anyone who can approve it or order it (the roles on the
- * workflow's approval and order steps), and Head Mentors.
+ * Who can edit an order: anyone who can approve it or order it (the roles on the workflow's
+ * approval and order steps), and Head Mentors — while it's open, and once it's received (to
+ * fix names, vendors and notes; items already ordered keep their price and quantity).
  */
 export function canEditOrder(def: WorkflowDef, r: StepState, roles: string[]): boolean {
-  if (TERMINAL.includes(r.status)) return false;
+  if (r.status !== "RECEIVED" && TERMINAL.includes(r.status)) return false;
   if (roles.includes("HEAD_MENTOR")) return true;
   return def.steps
     .filter((s) => s.type === "approval" || s.type === "order")

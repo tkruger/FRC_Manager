@@ -43,8 +43,6 @@ export default async function EditOrderPage({ params }: { params: Promise<{ id: 
     : canEditOrder(def, order, session.user.roles);
   if (!allowed) redirect(`/procurement/requests/${order.id}`);
 
-  const open   = order.lineItems.filter((l) => l.status !== "ARRIVED");
-  const locked = order.lineItems.filter((l) => l.status === "ARRIVED");
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
@@ -59,7 +57,10 @@ export default async function EditOrderPage({ params }: { params: Promise<{ id: 
         <p className="text-body text-(--color-text-secondary) mt-1">
           {resubmit
             ? <>This order was {order.status === "DENIED" ? "denied" : "canceled"}{order.approvalNotes ? <> — &ldquo;{order.approvalNotes}&rdquo;</> : ""}. Correct it, then resubmit: it goes through approval again from the start.</>
-            : <>Change, add or remove items. New items {order.status === "SUBMITTED" ? "wait for approval with the rest of the order" : "go straight to the Buyer's To order list"}.</>}
+            : order.status === "RECEIVED"
+              ? <>Everything on this order has arrived. You can still fix names, vendors, links and notes — not prices or quantities. Every change is saved in the order&apos;s history and everyone on the order is told.</>
+              : <>Change, add or remove items. New items {order.status === "SUBMITTED" ? "wait for approval with the rest of the order" : "go straight to the Buyer's To order list"}.
+                 Items already ordered or arrived keep their price and quantity. Every change is saved in the order&apos;s history and everyone on the order is told.</>}
         </p>
       </div>
       <OrderForm
@@ -70,9 +71,10 @@ export default async function EditOrderPage({ params }: { params: Promise<{ id: 
           name:      order.title,
           // Older orders have none yet — the form asks for one
           budgetCategory: order.budgetCategory ?? "",
-          items: open.map((l) => ({
+          items: order.lineItems.map((l) => ({
             id:         l.id,
             ref:        itemRef(l),
+            status:     l.status,
             link:       l.vendorProductUrl ?? "",
             vendorName: l.vendorName ?? "",
             name:       l.name,
@@ -85,8 +87,9 @@ export default async function EditOrderPage({ params }: { params: Promise<{ id: 
             notes:      l.notes ?? "",
             budgetCategory: l.budgetCategory ?? "",
           })),
-          locked: locked.map((l) => ({ ref: itemRef(l), name: l.name, quantity: l.quantity })),
+          locked: [],
           resubmit,
+          complete: order.status === "RECEIVED",
         }}
       />
     </div>

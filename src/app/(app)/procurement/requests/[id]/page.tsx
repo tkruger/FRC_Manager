@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { describeCondition, describeRoles, evaluateCondition } from "@/lib/workflow/types";
 import { ITEM_STATUSES, ITEM_STATUS_INFO, ORDER_ADMIN_ROLES, STATUS_OVERRIDE_ROLES } from "@/lib/orders/constants";
 import { ITEM_ROW_SELECT, toItemRow } from "@/lib/orders/rows";
-import { ItemsTable } from "@/components/orders/ItemsTable";
+import { ChangeStatusButton, ItemsTable } from "@/components/orders/ItemsTable";
+import { isViewOnly } from "@/lib/access/read-only";
 import { PageHeader } from "@/components/PageHeader";
 import { RequestActions } from "./RequestActions";
 import { unusedBudgetCategories } from "@/lib/budget-unused";
@@ -80,6 +81,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   const total = items.reduce((s, i) => s + (i.unitCost ?? 0) * i.quantity, 0);
   const counts = ITEM_STATUSES.map((s) => ({ s, n: items.filter((i) => i.status === s).length })).filter((c) => c.n > 0);
   const closed = order.status === "DENIED" || order.status === "CANCELLED";
+  // Anyone on the team can mark items arrived; Buyers and captains can set any status
+  const canChangeStatus = !closed && !isViewOnly(roles);
   const canResubmit = closed && canResubmitOrder(def, order, { id: session.user.id, roles });
 
   // Items grouped by vendor (trimmed, any case — as the budget matches them), with each one's tax & shipping
@@ -115,7 +118,10 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             {counts.map(({ s, n }) => <Badge key={s} variant={ITEM_STATUS_INFO[s].badge}>{n} {ITEM_STATUS_INFO[s].label.toLowerCase()}</Badge>)}
           </div>
         }
-        actions={(canEdit || canResubmit || actions.length > 0) && <>
+        actions={<>
+          {/* Managing the items: export, change their status, edit the order */}
+          {items.length > 0 && <ExportCsvButton order={order.id} />}
+          {canChangeStatus && <ChangeStatusButton />}
           {canEdit && <Link href={`/procurement/requests/${order.id}/edit`}><Button variant="outline" size="sm">Edit order</Button></Link>}
           {canResubmit && <Link href={`/procurement/requests/${order.id}/edit`}><Button size="sm">Fix and resubmit</Button></Link>}
           {actions.length > 0 && <RequestActions requestId={order.id} actions={actions} />}
@@ -147,10 +153,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       </div>
 
       <section className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-h2 text-(--color-text-primary)">Items</h2>
-          <ExportCsvButton order={order.id} />
-        </div>
+        <h2 className="text-h2 text-(--color-text-primary)">Items</h2>
         {closed && (
           <p className="text-small text-(--color-text-secondary)">
             This order was {order.status.toLowerCase().replace("cancelled", "canceled")}{order.approvalNotes ? <> — &ldquo;{order.approvalNotes}&rdquo;</> : ""}; its items won&apos;t be ordered{canResubmit ? <>. Use <b>Fix and resubmit</b> to correct it and send it for approval again</> : ""}.
@@ -160,6 +163,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           items={items}
           canTrack={!closed && roles.some((r) => ORDER_ADMIN_ROLES.includes(r))}
           canOverride={!closed && roles.some((r) => STATUS_OVERRIDE_ROLES.includes(r))}
+          canChange={canChangeStatus}
+          modeFromPage
         />
       </section>
 
