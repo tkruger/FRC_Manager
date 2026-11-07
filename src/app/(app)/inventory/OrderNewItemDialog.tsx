@@ -11,19 +11,7 @@ import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
 import { orderNewItemAction } from "@/app/actions/procurement";
 import { OrderSubmitted } from "./OrderSubmitted";
 import { useViewOnly } from "@/components/access/ViewOnly";
-
-const CATEGORY_OPTS = [
-  { value: "HARDWARE",    label: "Hardware" },
-  { value: "MECHANICAL",  label: "Mechanical" },
-  { value: "ELECTRICAL",  label: "Electrical" },
-  { value: "ELECTRONICS", label: "Electronics" },
-  { value: "SENSORS",     label: "Sensors" },
-  { value: "PNEUMATICS",  label: "Pneumatics" },
-  { value: "FASTENERS",   label: "Fasteners" },
-  { value: "RAW_STOCK",   label: "Raw stock" },
-  { value: "CONSUMABLES", label: "Consumables" },
-  { value: "SAFETY",      label: "Safety" },
-];
+import { CATEGORY_OPTIONS, DEFAULT_CATEGORY } from "@/lib/inventory/categories";
 
 const UOM_OPTS = [
   { value: "EACH", label: "Each" }, { value: "PACK", label: "Pack" }, { value: "FOOT", label: "Foot" },
@@ -100,7 +88,7 @@ function NewItemForm({ onDone }: { onDone: () => void }) {
         <Field label="Quantity" name="quantity" type="number" min="1" step="any" defaultValue={1} required />
         <Select label="Unit" name="unitOfMeasure" options={UOM_OPTS} defaultValue="EACH" />
         <Field label="Unit cost ($)" name="unitCost" type="number" min="0" step="0.01" placeholder="Optional" />
-        <Select label="Category" name="category" options={CATEGORY_OPTS} defaultValue="HARDWARE" />
+        <Select label="Category" name="category" options={[...CATEGORY_OPTIONS]} defaultValue={DEFAULT_CATEGORY} />
         <Field label="Supplier" name="preferredSupplier" placeholder="Optional, e.g. REV" />
         <Field label="Part number" name="partNumber" placeholder="Optional" />
       </div>

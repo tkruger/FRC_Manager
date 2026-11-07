@@ -38,7 +38,8 @@ interface DragState {
   raf: number;
 }
 
-export function useTouchDrag(handlers: TouchDragHandlers, board: React.RefObject<HTMLElement | null>) {
+/** `target` names the drop targets' attribute: data-kanban-col by default (the Kanban columns) */
+export function useTouchDrag(handlers: TouchDragHandlers, board: React.RefObject<HTMLElement | null>, target = "kanban-col") {
   const handlersRef = useRef(handlers);
   useEffect(() => { handlersRef.current = handlers; });
 
@@ -50,7 +51,7 @@ export function useTouchDrag(handlers: TouchDragHandlers, board: React.RefObject
 
   useEffect(() => {
     function hitTest(s: DragState) {
-      const col = document.elementFromPoint(s.x, s.y)?.closest<HTMLElement>("[data-kanban-col]")?.dataset.kanbanCol ?? null;
+      const col = document.elementFromPoint(s.x, s.y)?.closest<HTMLElement>(`[data-${target}]`)?.getAttribute(`data-${target}`) ?? null;
       if (col !== s.over) { s.over = col; handlersRef.current.onOver(col); }
     }
     function place(s: DragState) {
@@ -139,7 +140,7 @@ export function useTouchDrag(handlers: TouchDragHandlers, board: React.RefObject
       document.removeEventListener("touchcancel", onEnd);
       if (drag.current) finish(drag.current);
     };
-  }, [board]);
+  }, [board, target]);
 
   /** Start watching for a hold on this card (call from onTouchStart) */
   function begin(id: string, el: HTMLElement, e: React.TouchEvent) {

@@ -9,20 +9,7 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { VendorSupplierPicker } from "@/components/ui/VendorSupplierPicker";
 import { UnitFields } from "../../UnitFields";
-
-const CATEGORY_OPTS = [
-  { value: "MECHANICAL",  label: "Mechanical" },  { value: "ELECTRICAL", label: "Electrical" },
-  { value: "PNEUMATICS",  label: "Pneumatics" },  { value: "HARDWARE",   label: "Hardware" },
-  { value: "FASTENERS",   label: "Fasteners" },   { value: "RAW_STOCK",  label: "Raw Stock" },
-  { value: "CONSUMABLES", label: "Consumables" }, { value: "SAFETY",     label: "Safety" },
-  { value: "ELECTRONICS", label: "Electronics" }, { value: "SENSORS",    label: "Sensors" },
-];
-
-const TYPE_OPTS = [
-  { value: "DISCRETE",     label: "Discrete part" },
-  { value: "RAW_MATERIAL", label: "Raw material (continuous)" },
-  { value: "CONSUMABLE",   label: "Consumable" },
-];
+import { CATEGORY_OPTIONS, DEFAULT_CATEGORY, TYPE_OPTIONS } from "@/lib/inventory/categories";
 
 export function NewBaseItemForm({
   onClose,
@@ -49,8 +36,8 @@ export function NewBaseItemForm({
 
       <Field label="Item name" name="name" required placeholder='e.g. Falcon 500 Motor' />
       <div className="grid grid-cols-2 gap-4">
-        <Select label="Category" name="category" options={CATEGORY_OPTS} defaultValue="MECHANICAL" />
-        <Select label="Item type" name="itemType" options={TYPE_OPTS} defaultValue="DISCRETE" />
+        <Select label="Category" name="category" options={[...CATEGORY_OPTIONS]} defaultValue={DEFAULT_CATEGORY} />
+        <Select label="Item type" name="itemType" options={[...TYPE_OPTIONS]} defaultValue="DISCRETE" />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <Field label="Part number / SKU" name="partNumber" placeholder="Optional" />

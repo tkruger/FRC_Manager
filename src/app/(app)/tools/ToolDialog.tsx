@@ -14,6 +14,7 @@ import { ToolImageUploadPanel } from "./[id]/ToolImageUploadPanel";
 import { CheckinButton } from "./CheckinButton";
 import { CONDITION_BADGE, isAvailable, type ToolRow } from "./tool-helpers";
 import { useViewOnly } from "@/components/access/ViewOnly";
+import { ZoomablePhoto } from "@/components/ui/PhotoViewer";
 
 export type ToolTab = "details" | "checkout" | "edit";
 
@@ -82,10 +83,8 @@ export function ToolDialog({ tool, initialTab, canEdit, currentUserId, hasCert, 
             {tab === "details" && (
               <>
                 {tool.image && (
-                  <div className="w-full aspect-video rounded-lg overflow-hidden bg-(--color-surface-overlay) max-h-48">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={tool.image} alt={tool.name} className="w-full h-full object-cover" />
-                  </div>
+                  <ZoomablePhoto src={tool.image} alt={tool.name}
+                    className="w-full aspect-video rounded-lg bg-(--color-surface-overlay) max-h-48" imgClassName="w-full h-full object-cover" />
                 )}
 
                 <div className="flex flex-wrap gap-2">

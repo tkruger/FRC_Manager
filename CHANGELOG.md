@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **Inventory folders**: the list is sorted into a folder per category. Inventory Admins and Head Mentors drag an item onto another folder to file it (on a phone: touch and hold, then drag); its partial pieces move with it. Folders can be closed, and the browser remembers which ones
+- **New items start in Uncategorized** instead of Mechanical, so it's clear what still needs sorting
+- **Filter the inventory** by location and by item type
+- **Tap a photo to see it full screen** (tap again to zoom in on that spot): item and piece photos, list thumbnails and tool photos. Photos are changed only while editing: in **Edit item** for an item, or with a piece card's **Edit** button
 - Inventory on a phone: item names are shown in full across the card; **Use on Robot** is on the item's page (top right)
 
 ## 1.15.0 — 2026-11-07

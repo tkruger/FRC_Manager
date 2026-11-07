@@ -159,7 +159,7 @@ async function stockItem(tx: Tx, item: Awaited<ReturnType<typeof teamItems>>[num
       stockTag:          await nextStockTagForSeason(tx, seasonId),
       name:              item.name,
       partNumber:        item.partNumber,
-      category:          CATEGORY_BY_SUBTEAM[item.subTeam ?? ""] ?? "HARDWARE",
+      category:          CATEGORY_BY_SUBTEAM[item.subTeam ?? ""] ?? "UNCATEGORIZED",
       currentStock:      item.quantity,
       unitCost:          item.unitCost,
       preferredSupplier: item.vendorName,

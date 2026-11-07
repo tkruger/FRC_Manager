@@ -9,21 +9,9 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { VendorSupplierPicker } from "@/components/ui/VendorSupplierPicker";
 import { toast } from "@/components/ui/toast";
+import { ToolImageCapture } from "@/components/ui/ToolImageCapture";
 import { UnitFields } from "../UnitFields";
-
-const CATEGORY_OPTS = [
-  { value: "MECHANICAL",  label: "Mechanical" },  { value: "ELECTRICAL", label: "Electrical" },
-  { value: "PNEUMATICS",  label: "Pneumatics" },  { value: "HARDWARE",   label: "Hardware" },
-  { value: "FASTENERS",   label: "Fasteners" },   { value: "RAW_STOCK",  label: "Raw Stock" },
-  { value: "CONSUMABLES", label: "Consumables" }, { value: "SAFETY",     label: "Safety" },
-  { value: "ELECTRONICS", label: "Electronics" }, { value: "SENSORS",    label: "Sensors" },
-];
-
-const TYPE_OPTS = [
-  { value: "DISCRETE",     label: "Discrete part" },
-  { value: "RAW_MATERIAL", label: "Raw material (continuous)" },
-  { value: "CONSUMABLE",   label: "Consumable" },
-];
+import { CATEGORY_OPTIONS, TYPE_OPTIONS } from "@/lib/inventory/categories";
 
 interface Item {
   id: string;
@@ -45,6 +33,7 @@ interface Item {
   isFirstChoiceItem: boolean;
   notes: string | null;
   amountLeft: string | null;
+  image: string | null;
 }
 
 export function EditBaseItemForm({
@@ -77,14 +66,19 @@ export function EditBaseItemForm({
 
       <Field label="Item name" name="name" required defaultValue={item.name} />
       <div className="grid grid-cols-2 gap-4">
-        <Select label="Category"     name="category"     options={CATEGORY_OPTS} defaultValue={item.category} />
-        <Select label="Item type"    name="itemType"     options={TYPE_OPTS}     defaultValue={item.itemType} />
+        <Select label="Category"     name="category"     options={[...CATEGORY_OPTIONS]} defaultValue={item.category} />
+        <Select label="Item type"    name="itemType"     options={[...TYPE_OPTIONS]} defaultValue={item.itemType} />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <Field label="Part number / SKU" name="partNumber"    defaultValue={item.partNumber ?? ""} />
         <UnitFields unit={item.unitOfMeasure} amountLeft={item.amountLeft} />
       </div>
       <Textarea label="Description" name="description" rows={2} defaultValue={item.description ?? ""} />
+      <div id="edit-photo" className="space-y-1.5 scroll-mt-24">
+        <p className="text-sm font-medium text-(--color-text-primary)">Photo</p>
+        {/* Uploads straight away; saved with the item */}
+        <ToolImageCapture name="imageUrl" defaultUrl={item.image} />
+      </div>
 
       <div className="border-t border-(--color-border) pt-4 space-y-3">
         <p className="text-label font-medium text-(--color-text-secondary) uppercase tracking-wide">Stock &amp; reorder</p>

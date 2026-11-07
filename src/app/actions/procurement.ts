@@ -8,6 +8,7 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import type { SubTeam } from "@/generated/prisma";
 import { performAction, type WorkflowAction, type Actor, type ActionResult } from "@/lib/workflow/engine";
+import { CATEGORY_VALUES, DEFAULT_CATEGORY } from "@/lib/inventory/categories";
 import { createOrder, type NewItem } from "@/lib/orders/create";
 
 // Form-based order entry points (inventory "Order" buttons). The full order form
@@ -80,7 +81,7 @@ export async function createPurchaseRequestAction(
 const NewItemSchema = z.object({
   name:              z.string().trim().max(300).min(1, "Enter what you need ordered.").max(120),
   partNumber:        z.string().trim().max(300).max(80).optional(),
-  category:          z.enum(["MECHANICAL", "ELECTRICAL", "PNEUMATICS", "HARDWARE", "FASTENERS", "RAW_STOCK", "CONSUMABLES", "SAFETY", "ELECTRONICS", "SENSORS"]).default("HARDWARE"),
+  category:          z.enum(CATEGORY_VALUES).default(DEFAULT_CATEGORY),
   unitOfMeasure:     z.enum(["EACH", "PACK", "FOOT", "METER", "INCH", "SHEET", "POUND", "GALLON", "SPOOL", "ROLL"]).default("EACH"),
   quantity:          z.coerce.number().positive("Enter how many you need."),
   unitCost:          z.coerce.number().min(0).optional(),

@@ -12,6 +12,7 @@ import { OrderNewItemDialog } from "./OrderNewItemDialog";
 import { AddInventoryItemDialog } from "./AddInventoryItemDialog";
 import { InventoryTableClient } from "./InventoryTableClient";
 import { PageHeader } from "@/components/PageHeader";
+import { CATEGORY_VALUES, type CategoryValue } from "@/lib/inventory/categories";
 
 // Roles that may see the Low stock and Order queue tabs
 const RESTRICTED_TAB_ROLES = ["HEAD_MENTOR", "TEAM_LEADERSHIP", "BUILD_LEAD", "INVENTORY_ADMIN"];
@@ -42,7 +43,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
       where: {
         seasonId: activeSeason.id,
         ...(showRetired ? {} : { archived: false }),
-        ...(category ? { category: category as any } : {}),
+        ...(category && (CATEGORY_VALUES as readonly string[]).includes(category) ? { category: category as CategoryValue } : {}),
       },
       orderBy: [{ category: "asc" }, { name: "asc" }],
     }),
@@ -176,7 +177,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
           items={allItems}
           robots={seasons_robots}
           emptyMessage="No items found."
-          canAdd={canManageInventory}
+          canSort={canManageInventory}
           retiredToggle={retiredCount > 0 || showRetired ? {
             showing: showRetired,
             count:   retiredCount,

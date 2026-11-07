@@ -607,7 +607,7 @@ model BaseInventoryItem {
   season               Season        @relation(fields: [seasonId], references: [id])
   name                 String
   partNumber           String?
-  category             ItemCategory  @default(MECHANICAL)
+  category             ItemCategory  @default(UNCATEGORIZED)
   itemType             ItemType      @default(DISCRETE)
   description          String?
   unitOfMeasure        UnitOfMeasure @default(EACH)
@@ -645,6 +645,7 @@ model BaseInventoryItem {
 }
 
 enum ItemCategory {
+  UNCATEGORIZED
   MECHANICAL
   ELECTRICAL
   PNEUMATICS

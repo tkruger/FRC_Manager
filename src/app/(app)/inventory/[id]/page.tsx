@@ -152,7 +152,7 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
 
       {/* Photo and label */}
       <div className="grid items-start gap-4 sm:grid-cols-2">
-        <PhotoPanel itemId={item.id} url={item.image} canEdit={canEdit} />
+        <PhotoPanel url={item.image} name={item.name} canEdit={canEdit} />
         <LabelPanel itemId={item.id} name={item.name} code={item.stockTag} detail={partial ? (item.amountLeft ? `Partial — ${item.amountLeft} left` : "Partial piece") : null} action="inventory:print-label" />
       </div>
 
@@ -235,6 +235,7 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
             isFirstChoiceItem: item.isFirstChoiceItem,
             notes:             item.notes,
             amountLeft:        item.amountLeft,
+            image:             item.image,
           }} />
         </div>
       )}

@@ -8,12 +8,14 @@ import type { ItemCategory, ItemType, UnitOfMeasure } from "@/generated/prisma";
 import { maybeQueueReorder } from "@/lib/workflow/reorder";
 import { nextStockTag } from "@/lib/inventory/stock-tags";
 import { acceptPhotoUrl, deletePhotoQuietly } from "@/lib/photos";
+import { CATEGORY_VALUES, DEFAULT_CATEGORY } from "@/lib/inventory/categories";
+import { groupKey } from "@/lib/inventory/units";
 
 const BaseItemSchema = z.object({
   name:               z.string().max(300).min(1),
   partNumber:         z.string().max(300).optional(),
-  category:           z.string().max(300).default("MECHANICAL"),
-  itemType:           z.string().max(300).default("DISCRETE"),
+  category:           z.enum(CATEGORY_VALUES).default(DEFAULT_CATEGORY),
+  itemType:           z.enum(["DISCRETE", "RAW_MATERIAL", "CONSUMABLE"]).default("DISCRETE"),
   description:        z.string().max(5000).optional(),
   unitOfMeasure:      z.string().max(300).default("EACH"),
   currentStock:       z.coerce.number().min(0).default(0),
@@ -55,7 +57,7 @@ export async function createBaseItemAction(
   const parsed = BaseItemSchema.safeParse({
     name:               formData.get("name"),
     partNumber:         formData.get("partNumber") || undefined,
-    category:           formData.get("category") || "MECHANICAL",
+    category:           formData.get("category") || DEFAULT_CATEGORY,
     itemType:           formData.get("itemType") || "DISCRETE",
     description:        formData.get("description") || undefined,
     unitOfMeasure:      formData.get("unitOfMeasure") || "EACH",
@@ -119,7 +121,7 @@ export async function updateBaseItemAction(
   const parsed = BaseItemSchema.safeParse({
     name:               formData.get("name"),
     partNumber:         formData.get("partNumber") || undefined,
-    category:           formData.get("category") || "MECHANICAL",
+    category:           formData.get("category") || DEFAULT_CATEGORY,
     itemType:           formData.get("itemType") || "DISCRETE",
     description:        formData.get("description") || undefined,
     unitOfMeasure:      formData.get("unitOfMeasure") || "EACH",
@@ -138,13 +140,20 @@ export async function updateBaseItemAction(
   });
   if (!parsed.success) return { success: false, error: "Please fill in all required fields." };
 
-  const owned = await prisma.baseInventoryItem.findFirst({ where: { id: itemId, season: { teamId: session.user.teamId } }, select: { id: true } });
+  const owned = await prisma.baseInventoryItem.findFirst({ where: { id: itemId, season: { teamId: session.user.teamId } }, select: { id: true, image: true } });
   if (!owned) return { success: false, error: "Item not found." };
+
+  // The photo is changed here, while editing (the form sends imageUrl — blank when it was removed)
+  const sentPhoto = formData.has("imageUrl");
+  const imageUrl = String(formData.get("imageUrl") ?? "");
+  const image = sentPhoto && imageUrl ? await acceptPhotoUrl(imageUrl, session.user.teamId) : null;
+  if (sentPhoto && imageUrl && !image) return { success: false, error: "That photo didn't upload — try adding it again." };
 
   const d = parsed.data;
   await prisma.baseInventoryItem.update({
     where: { id: itemId },
     data: {
+      ...(sentPhoto ? { image } : {}),
       name:              d.name,
       partNumber:        d.partNumber,
       category:          d.category as ItemCategory,
@@ -165,6 +174,7 @@ export async function updateBaseItemAction(
       amountLeft:        d.unitOfMeasure === "PARTIAL" ? d.amountLeft ?? null : null,
     },
   });
+  if (sentPhoto && owned.image && owned.image !== image) await deletePhotoQuietly(owned.image);
 
   revalidatePath("/inventory");
   revalidatePath(`/inventory/${itemId}`);
@@ -433,4 +443,25 @@ export async function markPieceUsedUpAction(pieceId: string): Promise<InventoryA
   });
   revalidatePath("/inventory", "layout");
   return { success: true };
+}
+
+/**
+ * Move an item to another category (dragged to a folder in the inventory list). The rest of its
+ * group — the same material's full stock and partial pieces — moves with it, so they stay together.
+ */
+export async function moveToCategoryAction(itemId: string, category: string): Promise<InventoryActionState & { moved?: number }> {
+  const session = await auth();
+  if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
+  if (!canManageInventory(session.user.roles)) return { success: false, error: "Only Inventory Admins and Head Mentors can sort the inventory." };
+  const to = z.enum(CATEGORY_VALUES).safeParse(category);
+  if (!to.success) return { success: false, error: "That isn't a category." };
+
+  const item = await prisma.baseInventoryItem.findFirst({ where: { id: itemId, season: { teamId: session.user.teamId } }, select: { name: true, seasonId: true } });
+  if (!item) return { success: false, error: "Item not found." };
+  const season = await prisma.baseInventoryItem.findMany({ where: { seasonId: item.seasonId }, select: { id: true, name: true } });
+  const ids = season.filter((x) => groupKey(x.name) === groupKey(item.name)).map((x) => x.id);
+  const res = await prisma.baseInventoryItem.updateMany({ where: { id: { in: ids } }, data: { category: to.data } });
+
+  revalidatePath("/inventory");
+  return { success: true, moved: res.count };
 }

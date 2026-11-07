@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Maximize2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import QRCode from "react-qr-code";
 import { Button } from "@/components/ui/button";
@@ -8,30 +9,33 @@ import { Field } from "@/components/ui/field";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/toast";
 import { ToolImageCapture } from "@/components/ui/ToolImageCapture";
-import { addPartialPieceAction, updateItemImageAction } from "@/app/actions/inventory";
+import { ZoomablePhoto } from "@/components/ui/PhotoViewer";
+import { addPartialPieceAction } from "@/app/actions/inventory";
 import { usePageAction } from "@/components/page-actions";
 import { escapeHtml } from "@/lib/html";
 
-/** A photo of the material — so people know what they're looking for */
-export function PhotoPanel({ itemId, url, canEdit }: { itemId: string; url: string | null; canEdit: boolean }) {
-  const router = useRouter();
-  const [pending, start] = useTransition();
+/**
+ * A photo of the material — so people know what they are looking for. Tap it to see it full screen;
+ * it is changed in Edit item, further down (editors).
+ */
+export function PhotoPanel({ url, name, canEdit }: { url: string | null; name: string; canEdit: boolean }) {
   return (
     <section className="card space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <h2 className="text-h3 text-(--color-text-primary)">Photo</h2>
-        {pending && <span className="text-small text-(--color-text-secondary)">Saving…</span>}
+        {canEdit && (
+          <a href="#edit-photo" className="text-small font-medium text-(--color-secondary) hover:underline">
+            {url ? "Change photo" : "Add a photo"}
+          </a>
+        )}
       </div>
-      {canEdit ? (
-        <ToolImageCapture name="imageUrl" defaultUrl={url}
-          onUrl={(u) => start(async () => {
-            const res = await updateItemImageAction(itemId, u);
-            if (!res.success) toast.error(res.error ?? "Couldn't save the photo.");
-            router.refresh();
-          })} />
-      ) : url ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={url} alt="" className="w-full max-h-72 rounded-lg border border-(--color-border) object-contain" />
+      {url ? (
+        <ZoomablePhoto src={url} alt={name} className="w-full rounded-lg border border-(--color-border) bg-(--color-surface-overlay)"
+          imgClassName="mx-auto max-h-72 w-full object-contain">
+          <span className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-md bg-black/60 px-2 py-0.5 text-xs text-white">
+            <Maximize2 className="h-3 w-3" aria-hidden /> Tap to zoom
+          </span>
+        </ZoomablePhoto>
       ) : (
         <p className="text-small text-(--color-text-secondary)">No photo yet.</p>
       )}
