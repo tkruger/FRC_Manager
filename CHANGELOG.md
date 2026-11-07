@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.15.0 — 2026-11-07
+
 - **Partial pieces are managed on their item**: the full-stock item has a **Partial pieces** section you scroll through — one card per piece with its own photo (tap to add or change), its own label code and QR, how much is left and where it is (edit in place), and **Label**, **Use on Robot** and **Used up**. Adding several pieces gives each its own code. In the inventory list, a piece opens its item at that piece; a piece's own page links back to all pieces
 - **Photos are stored in the app** (like expense receipts) — tool and inventory photos no longer need Vercel Blob, so uploading works everywhere; they're only shown to the team. Older Blob photos keep working
 
