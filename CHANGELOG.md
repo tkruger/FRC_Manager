@@ -4,7 +4,7 @@
 
 **Inventory**
 - **Grouped like tools**: items with the same name sit together under one heading with the total on hand — the full stock and its partial pieces. On a phone, Inventory is a list of cards instead of a table
-- **Partial pieces**: a new unit, **Partial**, for part-used material (an offcut, a part-used spool), with **Amount left** ("about 18 in", "half a sheet"). **Add a partial piece** on an item copies its details and can take one off the full stock. Deliveries never add to a partial piece
+- **Partial pieces**: a new unit, **Partial**, for part-used material (an offcut, a part-used spool), with **Amount left** ("about 18 in", "half a sheet"). **Add a partial piece** on an item copies its details, takes a photo of the piece, and can take one off the full stock. Deliveries never add to a partial piece
 - **Photos**: upload or take a photo of the material on its page; it shows in the list
 - **QR labels**: every item gets a label code (INV-0001…, existing items included). **Print label** on an item, **Print labels** for the whole inventory; scanning a label on the Scan page opens the item
 - Fixed: a card's own spacing and accent borders were being ignored (e.g. the order's item list and "Waiting on" banner now look as intended)

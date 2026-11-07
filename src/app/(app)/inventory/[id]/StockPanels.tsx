@@ -95,10 +95,11 @@ export function PartialPieceDialog({ itemId, itemName, location, fullStock, acti
       const res = await addPartialPieceAction(itemId, {
         amountLeft: f.get("amountLeft"), storageLocation: f.get("storageLocation") || undefined,
         notes: f.get("notes") || undefined, pieces: f.get("pieces") || 1, takeFromStock: take,
+        image: (f.get("imageUrl") as string) || undefined,
       });
       if (!res.success) { setError(res.error ?? "Couldn't add it."); return; }
       setOpen(false);
-      toast.success("Partial piece added — add a photo and print its label");
+      toast.success("Partial piece added — print its label to stick on it");
       router.push(`/inventory/${res.id}`);
     });
   }
@@ -114,6 +115,11 @@ export function PartialPieceDialog({ itemId, itemName, location, fullStock, acti
             <Field label="Pieces" name="pieces" type="number" min="1" max="50" defaultValue={1} />
           </div>
           <Field label="Notes" name="notes" placeholder="Optional — e.g. has two holes drilled" />
+          <div className="space-y-1.5">
+            <p className="text-sm font-medium text-(--color-text-primary)">Photo of this piece <span className="font-normal text-(--color-text-secondary)">(optional)</span></p>
+            {/* Uploads straight away; its address goes with the form as imageUrl */}
+            <ToolImageCapture name="imageUrl" />
+          </div>
           {fullStock != null && fullStock > 0 && (
             <label className="flex items-start gap-2 text-sm text-(--color-text-primary) cursor-pointer">
               <input type="checkbox" className="mt-0.5" checked={take} onChange={(e) => setTake(e.target.checked)} />

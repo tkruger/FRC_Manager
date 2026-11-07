@@ -307,12 +307,15 @@ export async function restoreItemAction(itemId: string): Promise<InventoryAction
   return { success: true };
 }
 
+/** A photo we stored ourselves (uploaded through /api/tools/upload) */
+const isOurPhoto = (url: string) => /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//i.test(url);
+
 /** A photo of the material (uploaded through /api/tools/upload); null removes it */
 export async function updateItemImageAction(itemId: string, url: string | null): Promise<InventoryActionState> {
   const session = await auth();
   if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
   if (!canManageInventory(session.user.roles)) return { success: false, error: "Only Inventory Admins and Head Mentors can change photos." };
-  if (url && !/^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//i.test(url)) return { success: false, error: "That isn't an uploaded photo." };
+  if (url && !isOurPhoto(url)) return { success: false, error: "That isn't an uploaded photo." };
   const owned = await prisma.baseInventoryItem.findFirst({ where: { id: itemId, season: { teamId: session.user.teamId } }, select: { id: true } });
   if (!owned) return { success: false, error: "Item not found." };
   await prisma.baseInventoryItem.update({ where: { id: itemId }, data: { image: url } });
@@ -328,6 +331,8 @@ const PartialSchema = z.object({
   pieces:          z.coerce.number().int().min(1).max(50).default(1),
   /** The piece was cut from a full one: take one off the full stock */
   takeFromStock:   z.boolean().default(false),
+  /** A photo of this piece (already uploaded) */
+  image:           z.string().max(500).optional(),
 });
 
 /**
@@ -347,6 +352,7 @@ export async function addPartialPieceAction(fromItemId: string, input: unknown):
   });
   if (!from) return { success: false, error: "Item not found." };
   if (d.takeFromStock && (from.unitOfMeasure === "PARTIAL" || from.currentStock < 1)) return { success: false, error: "There's no full stock to take it from." };
+  if (d.image && !isOurPhoto(d.image)) return { success: false, error: "That isn't an uploaded photo." };
 
   const created = await prisma.$transaction(async (tx) => {
     const piece = await tx.baseInventoryItem.create({
@@ -354,7 +360,7 @@ export async function addPartialPieceAction(fromItemId: string, input: unknown):
         seasonId: from.seasonId, stockTag: await nextStockTag(tx, session.user.teamId!),
         name: from.name, partNumber: from.partNumber, category: from.category, itemType: from.itemType,
         unitOfMeasure: "PARTIAL", currentStock: d.pieces, minStockThreshold: 0, reorderQuantity: 0,
-        amountLeft: d.amountLeft, storageLocation: d.storageLocation || from.storageLocation,
+        amountLeft: d.amountLeft, storageLocation: d.storageLocation || from.storageLocation, image: d.image || null,
         unitCost: from.unitCost, preferredSupplier: from.preferredSupplier, notes: d.notes || null,
       },
       select: { id: true },
