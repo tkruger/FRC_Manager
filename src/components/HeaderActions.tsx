@@ -3,7 +3,7 @@
 // The buttons at the top right of a page, the same way on every page:
 //
 //   computer:  [secondary] [secondary] [Primary] [⋯]   (two secondary at most; more go in ⋯)
-//   phone:     [Primary] [⋯]            — everything else is in the ⋯ menu, so nothing wraps
+//   phone:     [Primary] [⋯]            — right-aligned; everything else is in the ⋯ menu, so nothing wraps
 //
 // Pages list their actions once (as data — see HeaderItem); each is drawn as a button or a menu item
 // depending on where it lands. Actions that open a dialog or a panel fire a page action (page-actions.ts)
@@ -122,7 +122,7 @@ export function HeaderActions({ items }: { items: HeaderItem[] }) {
   const menuPhone = [...secondary.filter((i) => i.kind !== "share" && i !== loneOnPhone), ...overflow, ...items.filter((i) => i.place === "menu")].filter((i) => !i.desktopOnly).sort(byDanger);
 
   return (
-    <div className="flex flex-nowrap items-center gap-2 sm:flex-wrap sm:justify-end">
+    <div className="flex flex-nowrap items-center justify-end gap-2 sm:flex-wrap">
       {share.map((i) => <ItemButton key={i.label} item={i} run={run} busy={busy} />)}
       {secondary.filter((i) => i.kind !== "share").map((i) => (
         <span key={i.label} className={i === loneOnPhone ? "inline-flex" : "hidden sm:inline-flex"}><ItemButton item={i} run={run} busy={busy} /></span>
@@ -148,9 +148,8 @@ function MoreMenu({ items, run }: { items: HeaderItem[]; run: (i: HeaderItem) =>
       </Menu.Trigger>
       <Menu.Portal>
         <Menu.Content align="end" sideOffset={6} collisionPadding={12}
-          // Solid (the theme's raised surfaces are see-through): the page color with a light tint over it
-          style={{ background: "linear-gradient(var(--color-surface-overlay), var(--color-surface-overlay)), var(--color-surface)" }}
-          className="z-50 min-w-52 rounded-lg border border-(--color-border-strong) p-1 shadow-2xl">
+          // Solid — never see-through (the theme's raised surfaces are)
+          className="z-50 min-w-52 rounded-lg border border-(--color-border-strong) bg-(--color-surface) p-1 shadow-2xl">
           {items.map((i, n) => {
             const Icon = i.kind === "share" ? ShareIcon : i.icon ? ICONS[i.icon] : null;
             return (

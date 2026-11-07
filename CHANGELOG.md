@@ -3,7 +3,7 @@
 ## Unreleased
 
 - **Page buttons, the same everywhere**: every page header has its title and Guide on the left and its actions on the right — at most two framed buttons and the main (filled) one on a computer, with the rest in a **⋯ More** menu. On a phone it's just the main button and ⋯ (or a page's single button), so nothing wraps. Destructive actions (Cancel order) are last in the menu, in red. On an order: Approve is the main button while it's waiting on you, Change status once it's approved; Export CSV, Check prices and Cancel order are under ⋯
-- The Guide button sits right after the page title, even when the title wraps
+- The Guide button sits right after the page title on a computer (even when the title wraps) and at the right of the title row on a phone; page buttons line up with the title (the breadcrumb sits above), are right-aligned on a phone, and the ⋯ menu is solid
 
 ## 1.14.0 — 2026-11-06
 
