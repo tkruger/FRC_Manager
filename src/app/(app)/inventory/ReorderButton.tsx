@@ -9,6 +9,7 @@ import { Select } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
 import { createPurchaseRequestAction } from "@/app/actions/procurement";
 import { OrderSubmitted } from "./OrderSubmitted";
+import { OrderDestination, destinationButton, firstDestination, type DraftOption } from "./OrderDestination";
 import { useViewOnly } from "@/components/access/ViewOnly";
 
 interface Props {
@@ -17,6 +18,8 @@ interface Props {
   reorderQty: number;
   unitCost:   number | null;
   supplier:   string | null;
+  /** Your open order drafts — the item can go on one of them */
+  drafts?:    DraftOption[];
 }
 
 const PRIORITY_OPTS = [
@@ -25,11 +28,12 @@ const PRIORITY_OPTS = [
   { value: "EMERGENCY", label: "Emergency" },
 ];
 
-export function ReorderButton({ itemId, itemName, reorderQty, unitCost, supplier }: Props) {
+export function ReorderButton({ itemId, itemName, reorderQty, unitCost, supplier, drafts = [] }: Props) {
   const viewOnly = useViewOnly();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [state, action, isPending] = useActionState(createPurchaseRequestAction, null);
+  const [dest, setDest] = useState(() => firstDestination(drafts));
 
   // Refresh only once the dialog closes: the refreshed row swaps this button for
   // an "On request" link, which would unmount the confirmation mid-read.
@@ -48,7 +52,7 @@ export function ReorderButton({ itemId, itemName, reorderQty, unitCost, supplier
       <Dialog open={open} onOpenChange={(o) => !o && close()}>
         <DialogContent title={`Order: ${itemName}`} className="sm:max-w-lg">
           {state?.success ? (
-            <OrderSubmitted requestId={state.requestId} stage={state.stage} itemName={itemName} onDone={close} />
+            <OrderSubmitted state={state} itemName={itemName} onDone={close} />
           ) : (
             <form action={action} className="space-y-4">
               {state && !state.success && (
@@ -89,9 +93,10 @@ export function ReorderButton({ itemId, itemName, reorderQty, unitCost, supplier
                 rows={2}
                 placeholder="Why is this item needed? Low stock, upcoming build session…"
               />
+              <OrderDestination drafts={drafts} value={dest} onChange={setDest} />
 
               <div className="flex gap-2 pt-1">
-                <Button type="submit" isLoading={isPending}>Submit order</Button>
+                <Button type="submit" isLoading={isPending}>{destinationButton(dest)}</Button>
                 <DialogClose asChild>
                   <Button type="button" variant="outline">Cancel</Button>
                 </DialogClose>

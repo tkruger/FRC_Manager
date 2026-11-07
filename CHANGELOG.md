@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Ordering from inventory can go on a draft**: **Order a new item** and the low-stock **Order** button now ask where to add the item — one of your open order drafts (the latest is picked first), a new draft, or its own order submitted straight away. Drafts are finished and submitted from Orders
 - **Dragging inventory on a phone no longer freezes the page**: a drag could miss the finger lifting and stay stuck, keeping the page from scrolling. The task board uses the same dragging and gets the fix too. Moving over folders is smoother as well
 - **The inventory page loads faster**: closed folders are remembered by the server, so the page arrives with them closed; only the phone or the computer layout is drawn; thumbnails load as they scroll into view
 - **Photos get a small copy for lists**: uploads are stored at a size that looks good on a phone or computer, plus a thumbnail the lists use, so they no longer download full photos. Tapping still opens the full photo. Existing photos get thumbnails with `npm run db:photo-thumbs`

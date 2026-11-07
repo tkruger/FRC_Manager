@@ -16,7 +16,47 @@ import { createOrder, type NewItem } from "@/lib/orders/create";
 
 export type PurchaseRequestState =
   | { success: true; requestId: string; stage: string }
+  /** Added to one of your order drafts instead (not submitted) */
+  | { success: true; draft: { id: string; name: string; items: number } }
   | { success: false; error: string };
+
+/**
+ * Where an inventory "Order" dialog sends its item: "submit" (an order of its own, sent now),
+ * "new-draft", or "draft:<id>" (one of your saved drafts — finished and submitted from Orders).
+ */
+function destination(formData: FormData): { kind: "submit" } | { kind: "draft"; id: string | null } {
+  const d = String(formData.get("destination") ?? "submit");
+  if (d === "new-draft") return { kind: "draft", id: null };
+  if (d.startsWith("draft:")) return { kind: "draft", id: d.slice(6) };
+  return { kind: "submit" };
+}
+
+/** Add items to one of your drafts (or a new one), in the order form's own shape */
+async function addToDraft(session: Session, draftId: string | null, name: string, items: NewItem[]): Promise<PurchaseRequestState> {
+  const lines = items.map((i) => ({
+    link: i.link ?? "", vendorName: i.vendorName ?? "", name: i.name, partNumber: i.partNumber ?? "",
+    unitCost: i.unitCost != null ? String(i.unitCost) : "", quantity: String(i.quantity), subTeam: i.subTeam ?? "",
+    importance: i.importance ?? "ROUTINE", reasoning: i.reasoning ?? "", notes: "", budgetCategory: "",
+  }));
+  if (draftId) {
+    const draft = await prisma.orderDraft.findFirst({ where: { id: draftId, userId: session.user.id }, select: { id: true, name: true, items: true } });
+    if (!draft) return { success: false, error: "That draft is gone — pick another or start a new one." };
+    const was = Array.isArray(draft.items) ? draft.items : [];
+    // A draft starts with one empty row; replace it rather than keep a blank item
+    const kept = was.filter((x) => typeof x === "object" && x && String((x as { name?: unknown }).name ?? "").trim());
+    const next = [...kept, ...lines];
+    if (next.length > 100) return { success: false, error: "That draft is full (100 items) — start a new one." };
+    await prisma.orderDraft.update({ where: { id: draft.id }, data: { items: next } });
+    revalidatePath("/procurement");
+    return { success: true, draft: { id: draft.id, name: draft.name, items: next.length } };
+  }
+  const created = await prisma.orderDraft.create({
+    data: { teamId: session.user.teamId!, userId: session.user.id, name: name.slice(0, 120), items: lines },
+    select: { id: true, name: true },
+  });
+  revalidatePath("/procurement");
+  return { success: true, draft: { ...created, items: lines.length } };
+}
 
 type Session = { user: { id: string; name?: string | null; roles: Actor["roles"]; teamId?: string | null } };
 
@@ -73,6 +113,8 @@ export async function createPurchaseRequestAction(
   }
   if (items.length === 0) return { success: false, error: "Add at least one item." };
 
+  const to = destination(formData);
+  if (to.kind === "draft") return addToDraft(session, to.id, title, items);
   const res = await createOrder({ actor: actorFrom(session), seasonId: season.id, name: title, items });
   if (res.success) { revalidatePath("/procurement", "layout"); revalidatePath("/inventory"); }
   return res;
@@ -142,16 +184,14 @@ export async function orderNewItemAction(
     select: { id: true, name: true },
   });
 
-  const res = await createOrder({
-    actor: actorFrom(session),
-    seasonId: season.id,
-    name: `Order: ${item.name}`,
-    items: [{
-      name: item.name, partNumber: d.partNumber, link: d.vendorProductUrl, vendorName: d.preferredSupplier,
-      quantity: d.quantity, unitCost: d.unitCost, baseItemId: item.id,
-      importance: d.priority, reasoning: d.justification,
-    }],
-  });
+  const line: NewItem = {
+    name: item.name, partNumber: d.partNumber, link: d.vendorProductUrl, vendorName: d.preferredSupplier,
+    quantity: d.quantity, unitCost: d.unitCost, baseItemId: item.id,
+    importance: d.priority, reasoning: d.justification,
+  };
+  const to = destination(formData);
+  if (to.kind === "draft") return addToDraft(session, to.id, `Order: ${item.name}`, [line]);
+  const res = await createOrder({ actor: actorFrom(session), seasonId: season.id, name: `Order: ${item.name}`, items: [line] });
   if (res.success) { revalidatePath("/procurement", "layout"); revalidatePath("/inventory"); }
   return res;
 }

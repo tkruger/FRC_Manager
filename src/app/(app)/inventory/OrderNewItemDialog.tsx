@@ -10,6 +10,7 @@ import { Select } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
 import { orderNewItemAction } from "@/app/actions/procurement";
 import { OrderSubmitted } from "./OrderSubmitted";
+import { OrderDestination, destinationButton, firstDestination, type DraftOption } from "./OrderDestination";
 import { useViewOnly } from "@/components/access/ViewOnly";
 import { CATEGORY_OPTIONS, DEFAULT_CATEGORY } from "@/lib/inventory/categories";
 
@@ -27,11 +28,11 @@ const PRIORITY_OPTS = [
 ];
 
 /**
- * Order something that isn't in inventory yet. Creates an empty inventory item
- * (0 in stock) so it can be tracked, puts it in the order queue and submits the request.
+ * Order something that isn't in inventory yet. Creates an empty inventory item (0 in stock) so it
+ * can be tracked, and adds it to one of your order drafts (or a new one) — or sends it as an order of
+ * its own. `action`: opened by that page action (the header) instead of its own button.
  */
-/** `action`: opened by that page action (the header) instead of its own button */
-export function OrderNewItemDialog({ variant = "outline", action }: { variant?: "primary" | "outline"; action?: string }) {
+export function OrderNewItemDialog({ variant = "outline", action, drafts = [] }: { variant?: "primary" | "outline"; action?: string; drafts?: DraftOption[] }) {
   const viewOnly = useViewOnly();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -55,26 +56,27 @@ export function OrderNewItemDialog({ variant = "outline", action }: { variant?: 
       )}
       <Dialog open={open} onOpenChange={(o) => !o && close()}>
         <DialogContent title="Order a new item" className="sm:max-w-lg">
-          <NewItemForm key={formKey} onDone={close} />
+          <NewItemForm key={formKey} onDone={close} drafts={drafts} />
         </DialogContent>
       </Dialog>
     </>
   );
 }
 
-function NewItemForm({ onDone }: { onDone: () => void }) {
+function NewItemForm({ onDone, drafts }: { onDone: () => void; drafts: DraftOption[] }) {
   const [state, action, isPending] = useActionState(orderNewItemAction, null);
   const [name, setName] = useState("");
+  const [dest, setDest] = useState(() => firstDestination(drafts));
 
   if (state?.success) {
-    return <OrderSubmitted requestId={state.requestId} stage={state.stage} itemName={name} onDone={onDone} />;
+    return <OrderSubmitted state={state} itemName={name} onDone={onDone} />;
   }
 
   return (
     <form action={action} className="space-y-4">
       <p className="text-small text-(--color-text-secondary)">
-        For things not in inventory yet. This adds the item to inventory with 0 in stock, puts it in the
-        order queue and sends the order. If an item with this name already exists, it&apos;s used instead.
+        For things not in inventory yet. This adds the item to inventory with 0 in stock and puts it on an
+        order — one of your drafts, or its own. If an item with this name already exists, it&apos;s used instead.
       </p>
 
       {state && !state.success && (
@@ -96,9 +98,10 @@ function NewItemForm({ onDone }: { onDone: () => void }) {
       <Field label="Product link" name="vendorProductUrl" type="url" placeholder="https://… (optional)" />
       <Select label="Priority" name="priority" options={PRIORITY_OPTS} defaultValue="ROUTINE" />
       <Textarea label="Why is it needed?" name="justification" rows={2} placeholder="Optional — helps whoever approves it" />
+      <OrderDestination drafts={drafts} value={dest} onChange={setDest} />
 
       <div className="flex gap-2 pt-1">
-        <Button type="submit" isLoading={isPending}>Submit order</Button>
+        <Button type="submit" isLoading={isPending}>{destinationButton(dest)}</Button>
         <DialogClose asChild>
           <Button type="button" variant="outline">Cancel</Button>
         </DialogClose>

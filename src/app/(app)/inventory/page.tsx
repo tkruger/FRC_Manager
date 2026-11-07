@@ -39,7 +39,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   });
   if (!activeSeason) redirect("/settings/season");
 
-  const [allItems, reorderRequests, vendors, retiredCount, subcategories, seasons_robots] = await Promise.all([
+  const [allItems, reorderRequests, vendors, retiredCount, subcategories, seasons_robots, myDrafts] = await Promise.all([
     prisma.baseInventoryItem.findMany({
       where: {
         seasonId: activeSeason.id,
@@ -66,7 +66,10 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
     prisma.baseInventoryItem.count({ where: { seasonId: activeSeason.id, archived: true } }),
     prisma.inventorySubcategory.findMany({ where: { teamId: session.user.teamId }, select: { id: true, category: true, name: true }, orderBy: { name: "asc" } }),
     prisma.robot.findMany({ where: { seasonId: activeSeason.id, archived: false }, select: { id: true, displayName: true } }),
+    // Your open order drafts — "Order" can add to one of them
+    viewOnly ? [] : prisma.orderDraft.findMany({ where: { userId: session.user.id, teamId: session.user.teamId }, orderBy: { updatedAt: "desc" }, select: { id: true, name: true, items: true } }),
   ]);
+  const drafts = myDrafts.map((d) => ({ id: d.id, name: d.name, items: Array.isArray(d.items) ? d.items.filter((x) => typeof x === "object" && x && String((x as { name?: unknown }).name ?? "").trim()).length : 0 }));
   const items = allItems.filter((i) => !i.archived);
 
   const lowStock  = items.filter((i) => i.currentStock <= i.minStockThreshold && i.minStockThreshold > 0);
@@ -98,7 +101,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
           canManageInventory && { kind: "action", place: "primary", label: "+ Add item", action: "inventory:add" },
         ]}
         actions={<>
-          <OrderNewItemDialog action="inventory:order-new" />
+          <OrderNewItemDialog action="inventory:order-new" drafts={drafts} />
           {canManageInventory && <AddInventoryItemDialog vendors={vendors} subcategories={subcategories} action="inventory:add" />}
         </>}
       />
@@ -142,7 +145,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
                 or when someone orders them, and stay until the delivery is received.
               </p>
             </div>
-            <OrderNewItemDialog variant="primary" />
+            <OrderNewItemDialog variant="primary" drafts={drafts} />
           </div>
           {reorderRequests.length === 0 && (
             <p className="text-small text-(--color-text-secondary)">Nothing is waiting to be ordered.</p>
@@ -240,6 +243,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
                           reorderQty={pendingReorder?.requestedQty ?? item.reorderQuantity ?? 1}
                           unitCost={item.unitCost}
                           supplier={item.preferredSupplier}
+                          drafts={drafts}
                         />
                       )}
                     </Td>
