@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.17.0 — 2026-11-07
+
 - **Inventory sub-categories**: each category can have sub-categories (Gears, Belts, Pulleys, Sprockets, Chain… under Mechanical), shown as sub-folders in the inventory list. Pick one with the new **Sub-category** dropdown when adding or editing an item (it is optional), or drag an item onto a sub-folder. Inventory Admins and Head Mentors set them up under Inventory → ⋯ → **Sub-categories**; every team starts with a suggested set
 - In the inventory list, a material with partial pieces is one row, closed by default — open it to see its full stock and pieces. Its name opens the item
 ## 1.16.0 — 2026-11-07
