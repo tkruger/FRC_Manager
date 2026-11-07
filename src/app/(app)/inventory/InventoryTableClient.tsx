@@ -98,6 +98,12 @@ export function InventoryTableClient({ items, robots, emptyMessage, canSort, ret
       return next;
     });
   }
+  /** Close every folder, or open them all */
+  function setAllFolders(close: boolean) {
+    const next = new Set(close ? CATEGORY_OPTIONS.map((c) => c.value) : []);
+    setClosed(next);
+    try { localStorage.setItem(COLLAPSED_KEY, JSON.stringify([...next])); } catch { /* not available */ }
+  }
 
   /** Move the material `itemId` belongs to into `category` (mouse and touch dragging both end here) */
   function move(itemId: string, category: string) {
@@ -292,11 +298,26 @@ export function InventoryTableClient({ items, robots, emptyMessage, canSort, ret
           </Link>
         )}
       </div>
-      {canSort && displayed.length > 0 && (
-        <p className="-mt-3 text-small text-(--color-text-secondary)">
-          <span className="sm:hidden">To sort an item, touch and hold it, then drag it onto a folder.</span>
-          <span className="hidden sm:inline">To sort an item, drag it onto a folder. Its partial pieces move with it.</span>
-        </p>
+      {displayed.length > 0 && (
+        <div className="-mt-3 flex items-start justify-between gap-3">
+          <p className="text-small text-(--color-text-secondary)">
+            {canSort && <>
+              <span className="sm:hidden">To sort an item, touch and hold it, then drag it onto a folder.</span>
+              <span className="hidden sm:inline">To sort an item, drag it onto a folder. Its partial pieces move with it.</span>
+            </>}
+          </p>
+          {/* While filtering, every folder with a match is open */}
+          {!filtering && (() => {
+            const anyOpen = visible.some((f) => f.groups.length > 0 && isOpen(f.value));
+            const Icon = anyOpen ? Folder : FolderOpen;
+            return (
+              <button type="button" onClick={() => setAllFolders(anyOpen)}
+                className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap text-sm font-medium text-(--color-secondary) hover:underline">
+                <Icon aria-hidden className="h-4 w-4" />{anyOpen ? "Close all folders" : "Open all folders"}
+              </button>
+            );
+          })()}
+        </div>
       )}
 
       {displayed.length === 0 ? (
