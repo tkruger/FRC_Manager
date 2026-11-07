@@ -23,7 +23,8 @@ export default async function ToolScanPage() {
         </nav>
         <h1 className="text-h1 text-(--color-text-primary)">Scan</h1>
         <p className="text-body text-(--color-text-secondary) mt-1">
-          Point your camera at a tool&apos;s or location&apos;s barcode to check out, check in, or put tools away.
+          Point your camera at a tool&apos;s or location&apos;s barcode to check out, check in, or put tools away — or at an
+          inventory label (INV-0001) to open that stock.
         </p>
       </div>
       <ScanClient locations={locations} />

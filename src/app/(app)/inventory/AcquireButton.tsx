@@ -48,7 +48,7 @@ export function AcquireButton({ itemId, itemName, robots, maxQty }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" disabled={maxQty <= 0}>Use on Robot</Button>
+        <Button variant="outline" size="sm" className="shrink-0" disabled={maxQty <= 0}>Use on Robot</Button>
       </DialogTrigger>
       <DialogContent title={`Use on Robot: ${itemName}`}>
         <form onSubmit={handleSubmit} className="space-y-4">

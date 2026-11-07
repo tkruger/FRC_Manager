@@ -273,6 +273,8 @@ model Team {
   nextToolNumber Int      @default(1)
   /// Next number for tool location barcodes (LOC-0001, …)
   nextLocationNumber Int  @default(1)
+  /// Next inventory label code (INV-0001, …)
+  nextStockNumber Int     @default(1)
   /// Next sequential order item ID (0001, 0002, …)
   nextOrderItemNumber Int @default(401)
 
@@ -622,8 +624,13 @@ model BaseInventoryItem {
   firstChoiceCreditCost Float?
   fairMarketValue      Float?
   storageLocation      String?
+  /// A photo of the material
   image                String?
   notes                String?
+  /// Partial pieces: how much is left, in words ("about 18 in", "half a sheet")
+  amountLeft           String?
+  /// Its label's code (INV-0001, …) — the QR code on the stock; scanning it opens the item
+  stockTag             String?
   /// Retired: removed from inventory (kept for history; can be restored)
   archived             Boolean       @default(false)
   retiredAt            DateTime?
@@ -667,6 +674,8 @@ enum UnitOfMeasure {
   GALLON
   SPOOL
   ROLL
+  /// A partly used piece (an offcut, a part-used spool) — how much is left is in amountLeft
+  PARTIAL
 }
 
 model InUseInventoryItem {

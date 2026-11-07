@@ -172,6 +172,7 @@ export async function packScanAction(sessionId: string, code: string, locationId
   const found = await resolveScanCode(me.teamId, code);
   if (found.kind === "location") return { success: true, kind: "location", location: found.location };
   if (found.kind === "unknown") return { success: false, error: `No tool or location found with code "${code}".` };
+  if (found.kind === "inventory") return { success: false, error: `${found.item.name} is inventory, not a tool — pack lists are for tools.` };
 
   return packTool(sessionId, me, found.tool.id, locationId);
 }

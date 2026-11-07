@@ -23,8 +23,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ kind: "location", ...found.location, tools });
   }
 
+  // Inventory stock: the scan page opens the item
+  if (found.kind === "inventory") return NextResponse.json({ kind: "inventory", ...found.item });
+
   if (found.kind !== "tool") {
-    return NextResponse.json({ error: `No tool or location found with code "${code}"` }, { status: 404 });
+    return NextResponse.json({ error: `Nothing found with code "${code}" — not a tool, location or inventory label` }, { status: 404 });
   }
 
   const tool = await prisma.tool.findUniqueOrThrow({

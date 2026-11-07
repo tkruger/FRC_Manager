@@ -207,6 +207,8 @@ export default function HelpPage() {
       <Section id="inventory" title="Inventory & the order queue">
         <ul className="list">
           <li><b>All items</b> lists the team&apos;s stock. Taking something for a robot (<b>Acquire</b>) reduces the stock count.</li>
+          <li><b>Groups and partial pieces:</b> items with the same name sit together, like tools — the full stock and its part-used pieces. On an item, <b>Add a partial piece</b> records an offcut or a part-used spool with how much is left (and can take one off the full stock if it was cut from it). Or pick the unit <b>Partial</b> when adding an item.</li>
+          <li><b>Photos and labels:</b> each item can have a photo of the material, and a label with a QR code (INV-0001…). <b>Print label</b> on the item — or <b>Print labels</b> on Inventory for all of them — then stick it on the bin, sheet or offcut. Scanning it (<b>Scan</b>) opens the item.</li>
           <li>Each item can have a <b>minimum</b>. When stock falls to or below it, the item goes into the <b>order queue</b> automatically.</li>
           <li><b>Low stock</b> shows items at or below their minimum, with an <b>Order</b> button.</li>
           <li>The <b>Order queue</b> shows everything that needs ordering or is on its way, and where each order is. Items stay there until the delivery is received.</li>

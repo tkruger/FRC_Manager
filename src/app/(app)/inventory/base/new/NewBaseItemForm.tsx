@@ -8,6 +8,7 @@ import { Field } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { VendorSupplierPicker } from "@/components/ui/VendorSupplierPicker";
+import { UnitFields } from "../../UnitFields";
 
 const CATEGORY_OPTS = [
   { value: "MECHANICAL",  label: "Mechanical" },  { value: "ELECTRICAL", label: "Electrical" },
@@ -21,14 +22,6 @@ const TYPE_OPTS = [
   { value: "DISCRETE",     label: "Discrete part" },
   { value: "RAW_MATERIAL", label: "Raw material (continuous)" },
   { value: "CONSUMABLE",   label: "Consumable" },
-];
-
-const UOM_OPTS = [
-  { value: "EACH",   label: "Each" },  { value: "PACK",   label: "Pack" },
-  { value: "FOOT",   label: "Foot" },  { value: "METER",  label: "Meter" },
-  { value: "INCH",   label: "Inch" },  { value: "SHEET",  label: "Sheet" },
-  { value: "POUND",  label: "Pound" }, { value: "GALLON", label: "Gallon" },
-  { value: "SPOOL",  label: "Spool" }, { value: "ROLL",   label: "Roll" },
 ];
 
 export function NewBaseItemForm({
@@ -61,7 +54,7 @@ export function NewBaseItemForm({
       </div>
       <div className="grid grid-cols-2 gap-4">
         <Field label="Part number / SKU" name="partNumber" placeholder="Optional" />
-        <Select label="Unit of measure" name="unitOfMeasure" options={UOM_OPTS} defaultValue="EACH" />
+        <UnitFields />
       </div>
       <Textarea label="Description" name="description" rows={2} placeholder="Optional notes about this item" />
 

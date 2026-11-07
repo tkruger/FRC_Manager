@@ -5,9 +5,13 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 import { retireItemAction, restoreItemAction } from "@/app/actions/inventory";
+import { usePageAction } from "@/components/page-actions";
 
-/** Retire an item (remove it from inventory) or bring a retired one back. */
-export function RetireItemButton({ itemId, itemName, retired }: { itemId: string; itemName: string; retired: boolean }) {
+/**
+ * Retire an item (remove it from inventory) or bring a retired one back.
+ * `action`: run by that page action (the header's ⋯ menu) instead of its own button.
+ */
+export function RetireItemButton({ itemId, itemName, retired, action }: { itemId: string; itemName: string; retired: boolean; action?: string }) {
   const router = useRouter();
   const [pending, start] = useTransition();
 
@@ -20,7 +24,9 @@ export function RetireItemButton({ itemId, itemName, retired }: { itemId: string
       router.refresh();
     });
   }
+  usePageAction(action, run);
 
+  if (action) return null;
   return (
     <Button type="button" size="sm" variant={retired ? "primary" : "outline"} isLoading={pending} onClick={run}>
       {retired ? "Restore item" : "Retire item"}

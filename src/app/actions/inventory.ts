@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import type { ItemCategory, ItemType, UnitOfMeasure } from "@/generated/prisma";
 import { maybeQueueReorder } from "@/lib/workflow/reorder";
+import { nextStockTag } from "@/lib/inventory/stock-tags";
 
 const BaseItemSchema = z.object({
   name:               z.string().max(300).min(1),
@@ -25,6 +26,8 @@ const BaseItemSchema = z.object({
   isKopItem:          z.coerce.boolean().optional(),
   isFirstChoiceItem:  z.coerce.boolean().optional(),
   notes:              z.string().max(5000).optional(),
+  /** Partial pieces: how much is left */
+  amountLeft:         z.string().trim().max(120).optional(),
 });
 
 export type InventoryActionState = { success: boolean; error?: string };
@@ -66,6 +69,7 @@ export async function createBaseItemAction(
     isKopItem:          formData.get("isKopItem") === "on",
     isFirstChoiceItem:  formData.get("isFirstChoiceItem") === "on",
     notes:              formData.get("notes") || undefined,
+    amountLeft:         formData.get("amountLeft") || undefined,
   });
   if (!parsed.success) return { success: false, error: "Please fill in all required fields." };
 
@@ -73,6 +77,7 @@ export async function createBaseItemAction(
   await prisma.baseInventoryItem.create({
     data: {
       seasonId:          activeSeason.id,
+      stockTag:          await nextStockTag(prisma, session.user.teamId),
       name:              d.name,
       partNumber:        d.partNumber,
       category:          d.category as ItemCategory,
@@ -90,6 +95,7 @@ export async function createBaseItemAction(
       isKopItem:         d.isKopItem ?? false,
       isFirstChoiceItem: d.isFirstChoiceItem ?? false,
       notes:             d.notes,
+      amountLeft:        d.unitOfMeasure === "PARTIAL" ? d.amountLeft ?? null : null,
     },
   });
 
@@ -127,6 +133,7 @@ export async function updateBaseItemAction(
     isKopItem:          formData.get("isKopItem") === "on",
     isFirstChoiceItem:  formData.get("isFirstChoiceItem") === "on",
     notes:              formData.get("notes") || undefined,
+    amountLeft:         formData.get("amountLeft") || undefined,
   });
   if (!parsed.success) return { success: false, error: "Please fill in all required fields." };
 
@@ -154,6 +161,7 @@ export async function updateBaseItemAction(
       isKopItem:         d.isKopItem ?? false,
       isFirstChoiceItem: d.isFirstChoiceItem ?? false,
       notes:             d.notes,
+      amountLeft:        d.unitOfMeasure === "PARTIAL" ? d.amountLeft ?? null : null,
     },
   });
 
@@ -297,4 +305,67 @@ export async function restoreItemAction(itemId: string): Promise<InventoryAction
 
   revalidatePath("/inventory", "layout");
   return { success: true };
+}
+
+/** A photo of the material (uploaded through /api/tools/upload); null removes it */
+export async function updateItemImageAction(itemId: string, url: string | null): Promise<InventoryActionState> {
+  const session = await auth();
+  if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
+  if (!canManageInventory(session.user.roles)) return { success: false, error: "Only Inventory Admins and Head Mentors can change photos." };
+  if (url && !/^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//i.test(url)) return { success: false, error: "That isn't an uploaded photo." };
+  const owned = await prisma.baseInventoryItem.findFirst({ where: { id: itemId, season: { teamId: session.user.teamId } }, select: { id: true } });
+  if (!owned) return { success: false, error: "Item not found." };
+  await prisma.baseInventoryItem.update({ where: { id: itemId }, data: { image: url } });
+  revalidatePath("/inventory");
+  revalidatePath(`/inventory/${itemId}`);
+  return { success: true };
+}
+
+const PartialSchema = z.object({
+  amountLeft:      z.string().trim().min(1, "Say how much is left — e.g. about 18 in, or half a sheet.").max(120),
+  storageLocation: z.string().trim().max(300).optional(),
+  notes:           z.string().trim().max(5000).optional(),
+  pieces:          z.coerce.number().int().min(1).max(50).default(1),
+  /** The piece was cut from a full one: take one off the full stock */
+  takeFromStock:   z.boolean().default(false),
+});
+
+/**
+ * A part-used piece of an item (an offcut, a part-used spool): its own entry in the same group — same
+ * name, category and part number — with how much is left, where it is and its own label.
+ */
+export async function addPartialPieceAction(fromItemId: string, input: unknown): Promise<InventoryActionState & { id?: string }> {
+  const session = await auth();
+  if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
+  if (!canManageInventory(session.user.roles)) return { success: false, error: "Only Inventory Admins and Head Mentors can add stock." };
+  const parsed = PartialSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Check the details." };
+  const d = parsed.data;
+  const from = await prisma.baseInventoryItem.findFirst({
+    where:  { id: fromItemId, season: { teamId: session.user.teamId } },
+    select: { id: true, seasonId: true, name: true, partNumber: true, category: true, itemType: true, unitCost: true, preferredSupplier: true, storageLocation: true, currentStock: true, unitOfMeasure: true, minStockThreshold: true, reorderQuantity: true },
+  });
+  if (!from) return { success: false, error: "Item not found." };
+  if (d.takeFromStock && (from.unitOfMeasure === "PARTIAL" || from.currentStock < 1)) return { success: false, error: "There's no full stock to take it from." };
+
+  const created = await prisma.$transaction(async (tx) => {
+    const piece = await tx.baseInventoryItem.create({
+      data: {
+        seasonId: from.seasonId, stockTag: await nextStockTag(tx, session.user.teamId!),
+        name: from.name, partNumber: from.partNumber, category: from.category, itemType: from.itemType,
+        unitOfMeasure: "PARTIAL", currentStock: d.pieces, minStockThreshold: 0, reorderQuantity: 0,
+        amountLeft: d.amountLeft, storageLocation: d.storageLocation || from.storageLocation,
+        unitCost: from.unitCost, preferredSupplier: from.preferredSupplier, notes: d.notes || null,
+      },
+      select: { id: true },
+    });
+    if (d.takeFromStock) await tx.baseInventoryItem.update({ where: { id: from.id }, data: { currentStock: { decrement: 1 } } });
+    return piece;
+  });
+  // Cut from the full stock: that may bring it to its minimum
+  if (d.takeFromStock) await maybeQueueReorder(from, from.currentStock - 1, session.user.teamId).catch(() => {});
+
+  revalidatePath("/inventory");
+  revalidatePath(`/inventory/${fromItemId}`);
+  return { success: true, id: created.id };
 }

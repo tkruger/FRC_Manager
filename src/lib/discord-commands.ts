@@ -1,6 +1,7 @@
 // Slash command handlers — each returns a Discord interaction response
 // All DB access uses the team's active season and the caller's linked account
 
+import { stockText } from "@/lib/inventory/units";
 import { prisma } from "@/lib/prisma";
 import { appUrl } from "@/lib/app-url";
 import { withImpliedRoles } from "@/lib/rbac";
@@ -635,7 +636,7 @@ export async function handleStockCheck(
     embed({
       title: `📦 ${item.name}`,
       fields: [
-        { name: "In stock",   value: `${item.currentStock} ${item.unitOfMeasure.toLowerCase()}`, inline: true },
+        { name: "In stock",   value: stockText(item), inline: true },
         { name: "Threshold",  value: `${item.minStockThreshold} ${item.unitOfMeasure.toLowerCase()}`, inline: true },
         { name: "Status",     value: `${statusEmoji} ${statusLabel}`, inline: true },
         ...(item.storageLocation ? [{ name: "Location", value: item.storageLocation, inline: true }] : []),
@@ -826,7 +827,7 @@ export async function handleStockList(ctx: InteractionContext, options: any[]): 
 
   const MAX = 40;
   const lines = items.slice(0, MAX).map((i) =>
-    `${level(i)} **${i.name}** — ${i.currentStock} ${i.unitOfMeasure.toLowerCase()}` +
+    `${level(i)} **${i.name}** — ${stockText(i)}` +
     (i.minStockThreshold > 0 ? ` (min ${i.minStockThreshold})` : ""));
 
   return reply(null, [

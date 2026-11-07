@@ -1,6 +1,7 @@
 // Item-level order operations: tracking links, status changes, arrivals, CSV export.
 // Server-only. Callers check who is allowed to do what; these enforce team scope.
 
+import { nextStockTagForSeason } from "@/lib/inventory/stock-tags";
 import { prisma } from "@/lib/prisma";
 import type { ItemCategory, OrderItemStatus, Prisma } from "@/generated/prisma";
 import { definitionFor, resolveCurrentStep, performCurrentStepAction, type Actor } from "@/lib/workflow/engine";
@@ -140,11 +141,11 @@ async function stockItem(tx: Tx, item: Awaited<ReturnType<typeof teamItems>>[num
   const existing =
     (item.baseItemId && await tx.baseInventoryItem.findFirst({ where: { id: item.baseItemId, seasonId, archived: false }, select: { id: true } })) ||
     (item.partNumber && await tx.baseInventoryItem.findFirst({
-      where:  { seasonId, archived: false, partNumber: { equals: item.partNumber, mode: "insensitive" } },
+      where:  { seasonId, archived: false, unitOfMeasure: { not: "PARTIAL" }, partNumber: { equals: item.partNumber, mode: "insensitive" } },
       select: { id: true },
     })) ||
     await tx.baseInventoryItem.findFirst({
-      where:  { seasonId, archived: false, name: { equals: item.name, mode: "insensitive" } },
+      where:  { seasonId, archived: false, unitOfMeasure: { not: "PARTIAL" }, name: { equals: item.name, mode: "insensitive" } },
       select: { id: true },
     });
 
@@ -155,6 +156,7 @@ async function stockItem(tx: Tx, item: Awaited<ReturnType<typeof teamItems>>[num
   const created = await tx.baseInventoryItem.create({
     data: {
       seasonId,
+      stockTag:          await nextStockTagForSeason(tx, seasonId),
       name:              item.name,
       partNumber:        item.partNumber,
       category:          CATEGORY_BY_SUBTEAM[item.subTeam ?? ""] ?? "HARDWARE",

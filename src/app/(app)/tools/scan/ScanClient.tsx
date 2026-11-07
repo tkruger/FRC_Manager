@@ -32,7 +32,10 @@ interface ScannedLocation {
   tools: { id: string; name: string; assetTag: string | null }[];
 }
 
-type Scanned = ScannedTool | ScannedLocation;
+/** Inventory stock (INV-0001): opens the item */
+interface ScannedInventory { kind: "inventory"; id: string; name: string; stockTag: string | null }
+
+type Scanned = ScannedTool | ScannedLocation | ScannedInventory;
 
 export interface LocationOption { id: string; name: string; code: string }
 
@@ -88,9 +91,11 @@ export function ScanClient({ locations }: { locations: LocationOption[] }) {
     if ("error" in data) { setLookupError(data.error); return; }
 
     if (current?.kind === "where") {
-      if (data.kind !== "location") { setLookupError(`That's a tool (${data.name}). Scan a location barcode to say where ${current.tool.name} is going.`); setFound(current.tool); return; }
+      if (data.kind !== "location") { setLookupError(`That's ${data.kind === "tool" ? "a tool" : "inventory"} (${data.name}). Scan a location barcode to say where ${current.tool.name} is going.`); setFound(current.tool); return; }
       return move(current.tool, data.id, data.name);
     }
+    // Inventory label: straight to the item
+    if (data.kind === "inventory") { router.push(`/inventory/${data.id}`); return; }
     setFound(data);
   }
 

@@ -1,5 +1,6 @@
 "use server";
 
+import { nextStockTag } from "@/lib/inventory/stock-tags";
 import { z } from "zod";
 import { issueMessage } from "@/lib/validation";
 import { prisma } from "@/lib/prisma";
@@ -120,11 +121,12 @@ export async function orderNewItemAction(
   const d = parsed.data;
 
   const item = await prisma.baseInventoryItem.findFirst({
-    where:  { seasonId: season.id, archived: false, name: { equals: d.name, mode: "insensitive" } },
+    where:  { seasonId: season.id, archived: false, unitOfMeasure: { not: "PARTIAL" }, name: { equals: d.name, mode: "insensitive" } },
     select: { id: true, name: true },
   }) ?? await prisma.baseInventoryItem.create({
     data: {
       seasonId:          season.id,
+      stockTag:          await nextStockTag(prisma, session.user.teamId),
       name:              d.name,
       partNumber:        d.partNumber,
       category:          d.category,
