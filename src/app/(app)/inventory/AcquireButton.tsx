@@ -8,12 +8,15 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
 import { useViewOnly } from "@/components/access/ViewOnly";
+import { usePageAction } from "@/components/page-actions";
 
 interface Props {
   itemId: string;
   itemName: string;
   robots: { id: string; displayName: string }[];
   maxQty: number;
+  /** Opened by this page action (the item page's header) instead of its own button */
+  action?: string;
 }
 
 const SUBSYSTEM_OPTS = [
@@ -24,10 +27,11 @@ const SUBSYSTEM_OPTS = [
   { value: "BUMPERS", label: "Bumpers" },       { value: "OTHER", label: "Other" },
 ];
 
-export function AcquireButton({ itemId, itemName, robots, maxQty }: Props) {
+export function AcquireButton({ itemId, itemName, robots, maxQty, action }: Props) {
   const viewOnly = useViewOnly();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  usePageAction(action, () => setOpen(true));
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -47,9 +51,11 @@ export function AcquireButton({ itemId, itemName, robots, maxQty }: Props) {
   if (viewOnly) return null;
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="shrink-0" disabled={maxQty <= 0}>Use on Robot</Button>
-      </DialogTrigger>
+      {!action && (
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm" className="shrink-0" disabled={maxQty <= 0}>Use on Robot</Button>
+        </DialogTrigger>
+      )}
       <DialogContent title={`Use on Robot: ${itemName}`}>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && <div className="text-sm text-(--color-danger) bg-(--color-danger)/10 rounded px-3 py-2">{error}</div>}

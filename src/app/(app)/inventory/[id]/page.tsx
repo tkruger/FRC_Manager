@@ -8,6 +8,8 @@ import { EditBaseItemForm } from "./EditBaseItemForm";
 import { RetireItemButton } from "./RetireItemButton";
 import { LabelPanel, PartialPieceDialog, PhotoPanel } from "./StockPanels";
 import { PiecesStrip } from "./PiecesStrip";
+import { AcquireButton } from "../AcquireButton";
+import { isViewOnly } from "@/lib/access/read-only";
 import { PageHeader } from "@/components/PageHeader";
 import { isPartial, stockText } from "@/lib/inventory/units";
 
@@ -50,7 +52,8 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
   const pieces = partial ? [] : siblings.filter((x) => x.unitOfMeasure === "PARTIAL" && x.currentStock > 0);
   // A piece without a full-stock item (only offcuts left) still lists the others
   const looseGroup = partial && !parent ? siblings : [];
-  const robots = pieces.length ? await prisma.robot.findMany({ where: { seasonId: item.seasonId, archived: false }, select: { id: true, displayName: true } }) : [];
+  const robots = await prisma.robot.findMany({ where: { seasonId: item.seasonId, archived: false }, select: { id: true, displayName: true } });
+  const canUse = !item.archived && item.currentStock > 0 && !isViewOnly(session.user.roles);
 
   const recentAcquisitions = await prisma.inUseInventoryItem.findMany({
     where: { baseItemId: id },
@@ -91,6 +94,7 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
           // Pieces are added on the full-stock item (or on a piece when there's none)
           canEdit && !item.archived && !parent && { kind: "action", place: "primary", label: "+ Add a partial piece", action: "inventory:add-partial" },
           parent && { kind: "link", place: "secondary", label: "All pieces", href: `/inventory/${parent.id}#piece-${item.id}` },
+          canUse && { kind: "action", place: "secondary", label: "Use on Robot", action: "inventory:use" },
           { kind: "action", place: "secondary", icon: "print", label: "Print label", action: "inventory:print-label" },
           pieces.length > 0 && { kind: "link", place: "menu", icon: "print", label: "Print piece labels", href: `/inventory/labels?ids=${pieces.map((p) => p.id).join(",")}` },
           { kind: "link", place: "menu", label: "Scan labels", href: "/tools/scan" },
@@ -98,6 +102,7 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
         ]}
         actions={<>
           {canEdit && <RetireItemButton itemId={item.id} itemName={item.name} retired={item.archived} action="inventory:retire" />}
+          {canUse && <AcquireButton itemId={item.id} itemName={item.name} robots={robots} maxQty={item.currentStock} action="inventory:use" />}
           {canEdit && !item.archived && !parent && <PartialPieceDialog itemId={item.id} itemName={item.name} location={item.storageLocation}
             fullStock={fullStock && fullStock.unitOfMeasure !== "PARTIAL" ? fullStock.currentStock : null} action="inventory:add-partial" />}
         </>}

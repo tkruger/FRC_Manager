@@ -148,22 +148,19 @@ export function InventoryTableClient({ items, robots, emptyMessage, retiredToggl
               )}
               <ul className="divide-y divide-(--color-border)">
                 {list.map((item) => (
-                  <li key={item.id} className={`flex flex-wrap items-center justify-end gap-3 px-4 py-3 ${item.archived ? "opacity-60" : ""}`}>
-                    <Link href={hrefOf(item)} className="flex min-w-[12rem] flex-1 items-center gap-3 overflow-hidden">
+                  <li key={item.id} className={item.archived ? "opacity-60" : ""}>
+                    <Link href={hrefOf(item)} className="flex items-center gap-3 px-4 py-3">
                       <Thumb src={item.image} name={item.name} />
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate font-medium text-(--color-secondary)">
+                        <span className="block break-words font-medium text-(--color-secondary)">
                           {list.length > 1 ? (isPartial(item) ? "Partial piece" : "Full stock") : item.name}
                         </span>
-                        <span className="block truncate text-small text-(--color-text-secondary)">
+                        <span className="block break-words text-small text-(--color-text-secondary)">
                           {[isPartial(item) && item.amountLeft && `${item.amountLeft} left`, item.storageLocation, item.stockTag].filter(Boolean).join(" · ")}
                         </span>
                         <span className="mt-1 block"><Badge variant={stockVariant(item)}>{stockText(item)}</Badge></span>
                       </span>
                     </Link>
-                    {!item.archived && item.currentStock > 0 && (
-                      <AcquireButton itemId={item.id} itemName={item.name} robots={robots} maxQty={item.currentStock} />
-                    )}
                   </li>
                 ))}
               </ul>
