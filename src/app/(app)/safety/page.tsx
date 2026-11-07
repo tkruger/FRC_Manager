@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { isViewOnly } from "@/lib/access/read-only";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
 import { PageHeader } from "@/components/PageHeader";
@@ -46,11 +45,11 @@ export default async function SafetyPage() {
         title="Safety & Compliance"
         help="safety"
         subtitle="Incidents, certifications, and inspection checklists"
-        actions={<>
-          <Link href="/safety/certifications"><Button variant="outline" size="sm">Cert matrix</Button></Link>
-          <Link href="/safety/inspection"><Button variant="outline" size="sm">Inspection</Button></Link>
-          {!isViewOnly(session.user.roles) && <Link href="/safety/incidents/new"><Button size="sm">+ File incident</Button></Link>}
-        </>}
+        items={[
+          { kind: "link", place: "secondary", label: "Cert matrix", href: "/safety/certifications" },
+          { kind: "link", place: "secondary", label: "Inspection", href: "/safety/inspection" },
+          !isViewOnly(session.user.roles) && { kind: "link", place: "primary", label: "+ File incident", href: "/safety/incidents/new" },
+        ]}
       />
 
       {/* Expiring certs warning */}

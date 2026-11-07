@@ -63,16 +63,14 @@ export default async function TemplatesPage() {
           <span className="mx-2">›</span>Templates
         </>}
         subtitle="Apply a task template to instantly populate your build season schedule."
-        actions={<>
-          <a href="/api/templates/empty" download>
-            <Button variant="outline" size="sm">Download blank CSV</Button>
-          </a>
-          {isMentor && (
-            <>
-              {activeSeason && taskCount > 0 && <SaveSeasonDialog />}
-              <NewTemplateDialog />
-            </>
-          )}
+        items={[
+          isMentor && activeSeason && taskCount > 0 && { kind: "action", place: "secondary", label: "Save season as template", action: "templates:save-season" },
+          { kind: "download", place: "menu", icon: "download", label: "Download blank CSV", href: "/api/templates/empty" },
+          isMentor && { kind: "action", place: "primary", label: "+ New template", action: "templates:new" },
+        ]}
+        actions={isMentor && <>
+          {activeSeason && taskCount > 0 && <SaveSeasonDialog action="templates:save-season" />}
+          <NewTemplateDialog action="templates:new" />
         </>}
       />
 

@@ -2,8 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { PageTitle } from "@/components/PageHeader";
-import { ShareButton } from "@/components/ShareButton";
+import { PageHeader } from "@/components/PageHeader";
 import { designation } from "@/lib/competition";
 import { tbaFor } from "@/lib/frc/team-keys";
 import type { TbaAward } from "@/lib/frc/tba";
@@ -45,18 +44,17 @@ export default async function CompetitionPage({ params }: { params: Promise<{ id
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       {when === "live" && live && <AutoRefresh />}
-      <div>
-        <nav className="text-small text-(--color-text-secondary) mb-1">
-          <Link href="/competitions" className="hover:text-(--color-primary)">Competitions</Link>
-          <span className="mx-2">›</span>{designation(comp.stage, comp.stageNumber)}
-        </nav>
-        <PageTitle help="competitions" share={<ShareButton path={`/competitions/${comp.id}`} title={comp.name} />}>{comp.name}</PageTitle>
-        <p className="mt-1 text-sm text-(--color-text-secondary)">
+      <PageHeader
+        breadcrumb={<><Link href="/competitions" className="hover:text-(--color-primary)">Competitions</Link><span className="mx-2">›</span>{designation(comp.stage, comp.stageNumber)}</>}
+        title={comp.name}
+        help="competitions"
+        subtitle={<span className="text-sm">
           {DAY(comp.startDate)}{comp.endDate.toISOString().slice(0, 10) !== comp.startDate.toISOString().slice(0, 10) && ` – ${DAY(comp.endDate)}`}
           {(live?.event?.location_name || comp.location) && ` · ${[live?.event?.location_name, comp.location].filter(Boolean).join(", ")}`}
           {when === "live" && <span className="ml-2 rounded-full bg-(--color-danger) px-2 py-0.5 text-xs font-bold uppercase text-white">Live</span>}
-        </p>
-      </div>
+        </span>}
+        items={[{ kind: "share", place: "secondary", label: "Share", path: `/competitions/${comp.id}`, title: comp.name }]}
+      />
 
       {!comp.tbaEventKey && (
         <div className="card border-l-4 border-l-(--color-warning) text-sm">

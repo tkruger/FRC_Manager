@@ -6,20 +6,17 @@ import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { statusBadgeVariant, statusLabel } from "@/lib/procurement-helpers";
 import { definitionFor, resolveCurrentStep, availableActions, canEditOrder, canResubmitOrder } from "@/lib/workflow/engine";
-import { Button } from "@/components/ui/button";
 import { describeCondition, describeRoles, evaluateCondition } from "@/lib/workflow/types";
 import { ITEM_STATUSES, ITEM_STATUS_INFO, ORDER_ADMIN_ROLES, STATUS_OVERRIDE_ROLES } from "@/lib/orders/constants";
 import { ITEM_ROW_SELECT, toItemRow } from "@/lib/orders/rows";
-import { ChangeStatusButton, ItemsTable } from "@/components/orders/ItemsTable";
+import { ItemsTable } from "@/components/orders/ItemsTable";
 import { PriceCheckButton } from "@/components/orders/PriceCheckButton";
 import { OrderComments } from "@/components/orders/OrderComments";
 import { isViewOnly } from "@/lib/access/read-only";
-import { ShareButton } from "@/components/ShareButton";
 import { PageHeader } from "@/components/PageHeader";
 import { RequestActions } from "./RequestActions";
 import { unusedBudgetCategories } from "@/lib/budget-unused";
 import { RequestTimeline, type TimelineEntry } from "./RequestTimeline";
-import { ExportCsvButton } from "@/components/orders/ExportCsvButton";
 import { itemRef } from "@/lib/orders/constants";
 import { canSetOrderBudget } from "@/lib/orders/spend";
 import { OrderBudgetCard } from "./OrderBudgetCard";
@@ -87,6 +84,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   const closed = order.status === "DENIED" || order.status === "CANCELLED";
   // Anyone on the team can mark items arrived; Buyers and captains can set any status
   const canChangeStatus = !closed && !isViewOnly(roles);
+  const canCheckPrices = !closed && roles.some((r) => ORDER_ADMIN_ROLES.includes(r)) && order.lineItems.some((l) => (l.status === "QUEUED" || l.status === "TO_ORDER") && l.vendorProductUrl);
   const canResubmit = closed && canResubmitOrder(def, order, { id: session.user.id, roles });
 
   // Items grouped by vendor (trimmed, any case — as the budget matches them), and each vendor's orders
@@ -112,13 +110,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-      <nav className="text-small text-(--color-text-secondary)">
-        <Link href="/procurement" className="hover:text-(--color-primary)">Orders</Link>
-        <span className="mx-2">›</span>
-        <span className="text-(--color-text-primary)">{order.title}</span>
-      </nav>
-
       <PageHeader
+        breadcrumb={<><Link href="/procurement" className="hover:text-(--color-primary)">Orders</Link><span className="mx-2">›</span><span className="text-(--color-text-primary)">{order.title}</span></>}
         title={order.title}
         help="purchasing"
         subtitle={
@@ -127,18 +120,25 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             {counts.map(({ s, n }) => <Badge key={s} variant={ITEM_STATUS_INFO[s].badge}>{n} {ITEM_STATUS_INFO[s].label.toLowerCase()}</Badge>)}
           </div>
         }
-        actions={<>
-          <ShareButton path={`/procurement/requests/${order.id}`} title={`Order: ${order.title}`} />
-          {/* Managing the items: export, change their status, edit the order */}
-          {items.length > 0 && <ExportCsvButton order={order.id} />}
-          {/* Buyer: prices may have moved since the order was placed */}
-          {!closed && roles.some((r) => ORDER_ADMIN_ROLES.includes(r)) && order.lineItems.some((l) => (l.status === "QUEUED" || l.status === "TO_ORDER") && l.vendorProductUrl) && <PriceCheckButton requestId={order.id} />}
-          {canChangeStatus && <ChangeStatusButton />}
-          {canEdit && <Link href={`/procurement/requests/${order.id}/edit`}><Button variant="outline" size="sm">Edit order</Button></Link>}
-          {canResubmit && <Link href={`/procurement/requests/${order.id}/edit`}><Button size="sm">Fix and resubmit</Button></Link>}
-          {actions.length > 0 && <RequestActions requestId={order.id} actions={actions} />}
-        </>}
+        items={[
+          { kind: "share", place: "secondary", label: "Share", path: `/procurement/requests/${order.id}`, title: `Order: ${order.title}` },
+          // The decision waiting on this person comes first
+          actions.some((a) => a.action === "deny") && { kind: "action", place: "secondary", danger: true, icon: "deny", label: "Deny", action: "order:deny" },
+          canEdit && { kind: "link", place: "secondary", icon: "edit", label: "Edit order", href: `/procurement/requests/${order.id}/edit` },
+          // Once approved, changing item statuses is the main thing to do with an order
+          canChangeStatus && { kind: "link", place: !beforeApproval && !actions.some((a) => a.action === "approve") ? "primary" : "secondary", icon: "status", label: "Change status", href: `/procurement/requests/${order.id}?change=status` },
+          actions.some((a) => a.action === "approve") && { kind: "action", place: "primary", label: "Approve", action: "order:approve" },
+          canResubmit && { kind: "link", place: "primary", label: "Fix and resubmit", href: `/procurement/requests/${order.id}/edit` },
+          // Buyer: prices may have moved since the order was placed
+          canCheckPrices && { kind: "action", place: "menu", icon: "refresh", label: "Check prices", action: "order:check-prices" },
+          items.length > 0 && { kind: "csv", place: "menu", icon: "download", label: "Export CSV", order: order.id },
+          actions.some((a) => a.action === "cancel") && { kind: "action", place: "menu", danger: true, icon: "cancel", label: "Cancel order", action: "order:cancel" },
+        ]}
       />
+
+      {/* What the header's Approve / Deny / Cancel and Check prices do */}
+      {actions.length > 0 && <RequestActions requestId={order.id} actions={actions} />}
+      {canCheckPrices && <PriceCheckButton requestId={order.id} action="order:check-prices" />}
 
       {currentStep && (
         <div className="card py-3 px-4 border-l-4" style={{ borderLeftColor: "var(--color-warning)" }}>

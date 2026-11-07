@@ -23,6 +23,21 @@ async function copy(text: string): Promise<boolean> {
   }
 }
 
+/** Open the share sheet (phones) or copy the link (computers) — the button, and the header menu */
+export async function shareLink(path: string, title: string, text?: string) {
+  const url = new URL(path, window.location.origin).toString();
+  if (navigator.share && touch()) {
+    try {
+      await navigator.share({ title, text: text ?? title, url });
+      return;
+    } catch (e) {
+      if (e instanceof DOMException && e.name === "AbortError") return; // closed the share sheet
+    }
+  }
+  if (await copy(url)) toast.success("Link copied — paste it anywhere");
+  else window.prompt("Copy this link:", url);
+}
+
 export function ShareButton({ path, title, text, label = false, className }: {
   /** The page to share, e.g. /procurement/requests/abc */
   path: string;
@@ -38,19 +53,7 @@ export function ShareButton({ path, title, text, label = false, className }: {
   const apple = useSyncExternalStore(noop, isApple, () => false);
   const Icon = apple ? Share : Share2;
 
-  async function share() {
-    const url = new URL(path, window.location.origin).toString();
-    if (navigator.share && touch()) {
-      try {
-        await navigator.share({ title, text: text ?? title, url });
-        return;
-      } catch (e) {
-        if (e instanceof DOMException && e.name === "AbortError") return; // closed the share sheet
-      }
-    }
-    if (await copy(url)) toast.success("Link copied — paste it anywhere");
-    else window.prompt("Copy this link:", url);
-  }
+  const share = () => shareLink(path, title, text);
 
   return (
     <Button

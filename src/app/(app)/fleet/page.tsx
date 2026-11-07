@@ -68,11 +68,7 @@ export default async function FleetPage() {
         title="Robot Fleet"
         help="fleet"
         subtitle={activeSeason ? activeSeason.name : "No active season"}
-        actions={activeSeason && (
-          <Link href="/settings/season">
-            <Button variant="outline" size="sm">+ Add robot</Button>
-          </Link>
-        )}
+        items={[activeSeason && { kind: "link", place: "secondary", icon: "plus", label: "Add robot", href: "/settings/season" }]}
       />
 
       {/* Active robots */}

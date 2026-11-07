@@ -1,3 +1,4 @@
+import { isViewOnly } from "@/lib/access/read-only";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
@@ -23,6 +24,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   if (!session?.user?.teamId) redirect("/dashboard");
 
   const canSeeRestrictedTabs  = session.user.roles.some((r) => RESTRICTED_TAB_ROLES.includes(r));
+  const viewOnly = isViewOnly(session.user.roles);
   const canManageInventory    = session.user.roles.some((r) => ["INVENTORY_ADMIN", "HEAD_MENTOR"].includes(r));
 
   // Redirect unauthorized users away from restricted tabs
@@ -88,9 +90,13 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
         title="Base Inventory"
         help="inventory"
         subtitle={<>{items.length} items · {activeSeason.name}</>}
+        items={[
+          !viewOnly && { kind: "action", place: "secondary", icon: "plus", label: "Order a new item", action: "inventory:order-new" },
+          canManageInventory && { kind: "action", place: "primary", label: "+ Add item", action: "inventory:add" },
+        ]}
         actions={<>
-          <OrderNewItemDialog />
-          {canManageInventory && <AddInventoryItemDialog vendors={vendors} />}
+          <OrderNewItemDialog action="inventory:order-new" />
+          {canManageInventory && <AddInventoryItemDialog vendors={vendors} action="inventory:add" />}
         </>}
       />
 

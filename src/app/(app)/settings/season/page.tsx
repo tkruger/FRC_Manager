@@ -63,7 +63,8 @@ export default async function SeasonSettingsPage() {
         title="Season"
         help="season"
         subtitle="The season today falls in is active. Set up the next one ahead of time — it takes over on its start date."
-        actions={isHeadMentor && <NewSeasonButton hasActiveSeason={!!activeSeason} />}
+        items={[isHeadMentor && { kind: "action", place: activeSeason ? "secondary" : "primary", icon: "plus", label: activeSeason ? "New season" : "+ New season", action: "season:new" }]}
+        actions={isHeadMentor && <NewSeasonButton hasActiveSeason={!!activeSeason} action="season:new" />}
       />
 
       {/* No active season prompt */}

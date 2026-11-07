@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Page buttons, the same everywhere**: every page header has its title and Guide on the left and its actions on the right — at most two framed buttons and the main (filled) one on a computer, with the rest in a **⋯ More** menu. On a phone it's just the main button and ⋯ (or a page's single button), so nothing wraps. Destructive actions (Cancel order) are last in the menu, in red. On an order: Approve is the main button while it's waiting on you, Change status once it's approved; Export CSV, Check prices and Cancel order are under ⋯
+- The Guide button sits right after the page title, even when the title wraps
+
 ## 1.14.0 — 2026-11-06
 
 - **Split vendor orders**: when some items are out of stock, the Buyer can split a vendor's items over more than one order (**+ Split … items onto another order** under Vendor orders) — each with its own vendor order number, tax and shipping, and the items picked for it. Tax counts toward that order's items; the order's history records each one

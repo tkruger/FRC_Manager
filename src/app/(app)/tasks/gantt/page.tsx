@@ -114,12 +114,8 @@ export default async function GanttPage({ searchParams }: { searchParams: Promis
         title="Tasks"
         help="tasks"
         subtitle={activeSeason.name}
-        actions={<>
-          <RobotFilterSelect robots={robots.robots} robotId={activeRobotId} />
-          <Link href="/tasks/present?show=timeline" className="hidden sm:inline-flex">
-            <Button variant="outline" size="sm">Present on TV</Button>
-          </Link>
-        </>}
+        filters={<RobotFilterSelect robots={robots.robots} robotId={activeRobotId} />}
+        items={[{ kind: "link", place: "secondary", desktopOnly: true, icon: "tv", label: "Present on TV", href: "/tasks/present?show=timeline" }]}
       />
 
       <SeasonProgressBar

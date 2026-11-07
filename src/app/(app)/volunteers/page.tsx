@@ -1,9 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
-import { Button } from "@/components/ui/button";
 import { FALLBACK_TIMEZONE, isValidTimezone, localParts } from "@/lib/notify/time";
 import { canCoordinate, clearanceDaysLeft, DEFAULT_MIN_ADULTS, isAdult, isCleared, shiftWhen } from "@/lib/volunteers";
 import { VolunteersClient, type AdultRow, type MeetingRow } from "./VolunteersClient";
@@ -90,9 +88,7 @@ export default async function VolunteersPage({ searchParams }: { searchParams: P
         title="Volunteers"
         help="volunteers"
         subtitle={<>Every meeting needs at least {minAdults} confirmed adult{minAdults === 1 ? "" : "s"}. {season ? `${season.name} · the next ${WEEKS_AHEAD} weeks.` : "There's no active season yet."}</>}
-        actions={coordinating && (
-          <Link href="/volunteers/settings"><Button size="sm" variant="outline">Edit Shift Instructions</Button></Link>
-        )}
+        items={[coordinating && { kind: "link", place: "secondary", icon: "edit", label: "Edit Shift Instructions", href: "/volunteers/settings" }]}
       />
 
       <VolunteersClient

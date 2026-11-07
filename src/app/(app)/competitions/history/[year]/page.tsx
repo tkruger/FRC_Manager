@@ -34,7 +34,7 @@ export default async function HistoryYearPage({ params }: { params: Promise<{ ye
           <Link href="/competitions" className="hover:text-(--color-primary)">Competitions</Link><span className="mx-2">›</span>
           <Link href="/competitions/history" className="hover:text-(--color-primary)">History</Link><span className="mx-2">›</span>{year}
         </>}
-        actions={<a href={links.tbaTeam(n, year)} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-(--color-secondary) hover:underline">On The Blue Alliance ↗</a>}
+        items={[{ kind: "link", place: "secondary", external: true, icon: "external", label: "On The Blue Alliance", href: links.tbaTeam(n, year) }]}
       />
 
       {list.length === 0 && <div className="card text-sm text-(--color-text-secondary)">No events found for {year}.</div>}

@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/PageHeader";
-import { PrintButton } from "@/components/PrintButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canSeeAudit } from "@/lib/packing";
@@ -78,12 +77,10 @@ export default async function AuditLogPage({ searchParams }: { searchParams: Pro
       <PageHeader
         title="Audit log"
         subtitle={<>Team {team?.teamNumber} · {dayText(from)} – {dayText(to)}</>}
-        actions={<>
-          <a href={`/api/audit/csv?from=${from}&to=${to}&show=${show}`} download>
-            <Button variant="outline" size="sm">Export CSV</Button>
-          </a>
-          <PrintButton />
-        </>}
+        items={[
+          { kind: "download", place: "secondary", icon: "download", label: "Export CSV", href: `/api/audit/csv?from=${from}&to=${to}&show=${show}` },
+          { kind: "print", place: "secondary", icon: "print", label: "Print" },
+        ]}
       />
 
       {/* Filters */}

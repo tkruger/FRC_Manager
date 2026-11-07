@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { AddToolDialog } from "./AddToolDialog";
-import { Button } from "@/components/ui/button";
 import { ToolsClient } from "./ToolsClient";
 import { toolGroups } from "./tool-helpers";
 import type { ToolRow } from "./tool-helpers";
@@ -85,20 +84,13 @@ export default async function ToolsPage({ searchParams }: { searchParams: Promis
         title="Tools"
         help="tools"
         subtitle={<>{rows.length} tools · {rows.length - checkedOut.length} in the shop</>}
-        actions={<>
-          <Link href="/tools/scan">
-            <Button variant="secondary" size="sm" className="flex items-center gap-1.5">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75v-.75zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 19.5h.75v.75h-.75v-.75zM19.5 13.5h.75v.75h-.75v-.75zM19.5 19.5h.75v.75h-.75v-.75zM16.5 16.5h.75v.75h-.75v-.75z" />
-              </svg>
-              Scan
-            </Button>
-          </Link>
-          <Link href="/tools/pack"><Button variant="outline" size="sm">Pack lists</Button></Link>
-          <Link href="/tools/locations"><Button variant="outline" size="sm">Locations</Button></Link>
-          <AddToolDialog names={groups.names} />
-        </>}
+        items={[
+          { kind: "action", place: "secondary", icon: "plus", label: "Add tool", action: "tools:add" },
+          { kind: "link", place: "secondary", label: "Pack lists", href: "/tools/pack" },
+          { kind: "link", place: "menu", label: "Locations", href: "/tools/locations" },
+          { kind: "link", place: "primary", label: "Scan", href: "/tools/scan" },
+        ]}
+        actions={<AddToolDialog names={groups.names} action="tools:add" />}
       />
 
       {/* Packing for a competition: anyone can help */}

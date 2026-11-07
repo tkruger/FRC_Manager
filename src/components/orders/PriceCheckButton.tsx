@@ -1,5 +1,6 @@
 "use client";
 
+import { usePageAction } from "@/components/page-actions";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { RefreshCw } from "lucide-react";
@@ -14,7 +15,8 @@ import type { PriceCheck } from "@/lib/orders/prices";
  * Buyer: before placing an order, look up each item's price on its store again and see what changed.
  * Accepting saves the new prices (in the order's history, and everyone on the order is told).
  */
-export function PriceCheckButton({ requestId }: { requestId: string }) {
+/** `action`: opened by that page action (the header) instead of its own button */
+export function PriceCheckButton({ requestId, action }: { requestId: string; action?: string }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<PriceCheck[] | null>(null);
@@ -46,11 +48,14 @@ export function PriceCheckButton({ requestId }: { requestId: string }) {
     });
   }
 
+  usePageAction(action, check);
   return (
     <>
-      <Button size="sm" variant="outline" onClick={check} title="Look up each item's price on its store again">
-        <RefreshCw className="h-4 w-4" aria-hidden /> Check prices
-      </Button>
+      {!action && (
+        <Button size="sm" variant="outline" onClick={check} title="Look up each item's price on its store again">
+          <RefreshCw className="h-4 w-4" aria-hidden /> Check prices
+        </Button>
+      )}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent title="Check prices" description="Each item still to order, looked up again on its store.">
           {checking || (!items && !error) ? (

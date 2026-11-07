@@ -41,7 +41,7 @@ export default async function CompetitionsPage() {
         title="Competitions"
         help="competitions"
         subtitle="Our events — match schedules, bumper colors, results and where to watch"
-        actions={<Link href="/competitions/history" className="text-sm font-medium text-(--color-secondary) hover:underline">Team history →</Link>}
+        items={[{ kind: "link", place: "secondary", label: "Team history", href: "/competitions/history" }]}
       />
 
       {shown.length === 0 && (

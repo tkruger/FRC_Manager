@@ -97,18 +97,13 @@ export default async function BudgetDashboard() {
         title="Budget"
         help="budget"
         subtitle={activeSeason.name}
-        actions={<>
-          {!canEdit && (
-            <span className="text-small text-(--color-text-secondary) italic">Read-only view</span>
-          )}
-          {canEdit && (
-            <Link href="/budget/setup"><Button variant="outline" size="sm">Edit budget</Button></Link>
-          )}
-          <Link href="/budget/bom"><Button variant="outline" size="sm">Robot BOM</Button></Link>
-          <Link href="/budget/claims"><Button variant="outline" size="sm">Expenses &amp; refunds</Button></Link>
-          {/* Anyone can report an expense (and ask to be paid back); Treasurers review it */}
-          <Link href="/budget/claims/new"><Button size="sm">+ Add expense</Button></Link>
-        </>}
+        items={[
+          canEdit && { kind: "link", place: "secondary", icon: "edit", label: "Edit budget", href: "/budget/setup" },
+          { kind: "link", place: "secondary", label: "Expenses & refunds", href: "/budget/claims" },
+          { kind: "link", place: "menu", label: "Robot BOM", href: "/budget/bom" },
+          // Anyone can report an expense (and ask to be paid back); Treasurers review it
+          { kind: "link", place: "primary", label: "+ Add expense", href: "/budget/claims/new" },
+        ]}
       />
 
       {/* Goal, raised and spent over the season */}

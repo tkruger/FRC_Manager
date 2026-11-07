@@ -2,13 +2,10 @@
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { canCoordinate, DEFAULT_MIN_ADULTS, isAdult, isCleared } from "@/lib/volunteers";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { CalendarClient } from "./CalendarClient";
 import { SubscribeCalendarButton } from "@/components/calendar/SubscribeCalendarButton";
 import { GenerateShareLinkButton } from "./GenerateShareLinkButton";
 import { PageHeader } from "@/components/PageHeader";
-import { ShareButton } from "@/components/ShareButton";
 import { appUrl } from "@/lib/app-url";
 import { kickoffOf } from "@/lib/competition";
 
@@ -69,17 +66,14 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
         title="Calendar"
         help="calendar"
         subtitle={<>{activeSeason.name} · {activeSeason.meetings.filter((m) => !m.cancelled).length} meetings</>}
-        actions={<>
-          <ShareButton path="/calendar" title={`Team calendar — ${activeSeason.name}`} />
-          {calendarUrl
-            ? <SubscribeCalendarButton icsUrl={calendarUrl} />
-            : <GenerateShareLinkButton seasonId={activeSeason.id} />}
-          {publicUrl && (
-            <Link href={publicUrl} target="_blank">
-              <Button variant="outline" size="sm">Public view ↗</Button>
-            </Link>
-          )}
-        </>}
+        items={[
+          { kind: "share", place: "secondary", label: "Share", path: "/calendar", title: `Team calendar — ${activeSeason.name}` },
+          calendarUrl
+            ? { kind: "action", place: "secondary", icon: "calendar", label: "Subscribe to calendar", action: "calendar:subscribe" }
+            : { kind: "action", place: "secondary", icon: "calendar", label: "Generate share link", action: "calendar:generate" },
+          publicUrl && { kind: "link", place: "menu", external: true, label: "Public view", href: publicUrl },
+        ]}
+        actions={calendarUrl ? <SubscribeCalendarButton icsUrl={calendarUrl} action="calendar:subscribe" /> : <GenerateShareLinkButton seasonId={activeSeason.id} action="calendar:generate" />}
       />
 
       <CalendarClient

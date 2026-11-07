@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import { usePageAction } from "@/components/page-actions";
 import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createTemplateAction } from "@/app/actions/templates";
@@ -8,9 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 
-export function NewTemplateDialog() {
+/** `action`: opened by that page action (the header) instead of its own button */
+export function NewTemplateDialog({ action: openOn }: { action?: string } = {}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  usePageAction(openOn, () => setOpen(true));
   const [state, action, pending] = useActionState(createTemplateAction, null);
 
   useEffect(() => {
@@ -22,9 +25,11 @@ export function NewTemplateDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm">+ New template</Button>
-      </DialogTrigger>
+      {!openOn && (
+        <DialogTrigger asChild>
+          <Button size="sm">+ New template</Button>
+        </DialogTrigger>
+      )}
       <DialogContent title="Create template" description="Give your template a name, then add tasks on the next screen.">
         <form action={action} className="space-y-4">
           {state && !state.success && (

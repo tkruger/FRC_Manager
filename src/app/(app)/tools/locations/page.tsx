@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/PageHeader";
-import { Button } from "@/components/ui/button";
 import { canEditLocations } from "@/lib/packing";
 import { LocationsClient } from "./LocationsClient";
 
@@ -25,9 +24,7 @@ export default async function ToolLocationsPage() {
         help="tools"
         breadcrumb={<><Link href="/tools" className="hover:text-(--color-primary)">Tools</Link><span className="mx-2">›</span>Locations</>}
         subtitle="Shelves, cabinets, totes and cases. Print their barcodes, then scan a tool and a location to put the tool there."
-        actions={locations.length > 0 && (
-          <Link href="/tools/locations/labels"><Button variant="outline" size="sm">Print all labels</Button></Link>
-        )}
+        items={[locations.length > 0 && { kind: "link", place: "secondary", icon: "print", label: "Print all labels", href: "/tools/locations/labels" }]}
       />
       <LocationsClient
         locations={locations.map((l) => ({ ...l, tools: counts.get(l.name) ?? 0 }))}

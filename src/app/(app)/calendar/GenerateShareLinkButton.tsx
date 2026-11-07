@@ -1,11 +1,13 @@
 ﻿"use client";
 
+import { usePageAction } from "@/components/page-actions";
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { generateCalendarTokenAction } from "@/app/actions/meetings";
 import { Button } from "@/components/ui/button";
 
-export function GenerateShareLinkButton({ seasonId }: { seasonId: string }) {
+/** `action`: run by that page action (the header) instead of its own button */
+export function GenerateShareLinkButton({ seasonId, action }: { seasonId: string; action?: string }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -16,6 +18,8 @@ export function GenerateShareLinkButton({ seasonId }: { seasonId: string }) {
     });
   }
 
+  usePageAction(action, handle);
+  if (action) return null;
   return (
     <Button variant="outline" size="sm" onClick={handle} isLoading={isPending}>
       Generate share link

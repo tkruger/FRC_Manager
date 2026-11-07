@@ -1,11 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { usePageAction } from "@/components/page-actions";
 import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
-export function SubscribeCalendarButton({ icsUrl }: { icsUrl: string }) {
+/** `action`: opened by that page action (the header) instead of its own button */
+export function SubscribeCalendarButton({ icsUrl, action }: { icsUrl: string; action?: string }) {
   const [open, setOpen] = useState(false);
+  usePageAction(action, () => setOpen(true));
   const [copied, setCopied] = useState(false);
 
   function copy() {
@@ -21,12 +24,12 @@ export function SubscribeCalendarButton({ icsUrl }: { icsUrl: string }) {
 
   return (
     <>
-      <Button variant="outline" size="sm" className="gap-1.5" title="Subscribe to the team calendar" onClick={() => setOpen(true)}>
+      {!action && <Button variant="outline" size="sm" className="gap-1.5" title="Subscribe to the team calendar" onClick={() => setOpen(true)}>
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
         </svg>
         Subscribe
-      </Button>
+      </Button>}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent title="Subscribe to calendar" description="Get live meeting updates in Google Calendar, Apple Calendar, or Outlook.">

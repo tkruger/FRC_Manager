@@ -10,7 +10,6 @@ import { statusBadgeVariant, statusLabel } from "@/lib/procurement-helpers";
 import { definitionFor, resolveCurrentStep } from "@/lib/workflow/engine";
 import { ITEM_STATUSES, ITEM_STATUS_INFO, ORDER_ADMIN_ROLES } from "@/lib/orders/constants";
 import { PageHeader } from "@/components/PageHeader";
-import { ExportCsvButton } from "@/components/orders/ExportCsvButton";
 import { DeleteDraftButton } from "./DeleteDraftButton";
 
 const OPEN = ["SUBMITTED", "APPROVED", "ORDERED", "PARTIAL_RECEIVED"] as const;
@@ -93,12 +92,12 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         title="Orders"
         help="purchasing"
         subtitle={activeSeason.name}
-        actions={<>
-          {isAdmin && <Link href="/procurement/buyer"><Button variant="secondary" size="sm">Buyer</Button></Link>}
-          <ExportCsvButton view={view} title="Every order on this tab, one item per line" />
-          <Link href="/procurement/vendors"><Button variant="outline" size="sm">Vendors</Button></Link>
-          {!viewOnly && <Link href="/procurement/requests/new"><Button size="sm">+ New order</Button></Link>}
-        </>}
+        items={[
+          isAdmin && { kind: "link", place: "secondary", icon: "truck", label: "Buyer", href: "/procurement/buyer" },
+          { kind: "link", place: "secondary", label: "Vendors", href: "/procurement/vendors" },
+          { kind: "csv", place: "menu", icon: "download", label: "Export CSV", view, hint: "Every order on this tab, one item per line" },
+          !viewOnly && { kind: "link", place: "primary", label: "+ New order", href: "/procurement/requests/new" },
+        ]}
       />
 
       {/* Items across open orders, by status */}

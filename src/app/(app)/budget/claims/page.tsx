@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/PageHeader";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 import { canReviewClaims, claimStatusInfo } from "@/lib/expense-claims";
@@ -73,7 +72,7 @@ export default async function ClaimsPage() {
         title="Expenses & refunds"
         help="expenses"
         subtitle={reviewer ? "Review what people spent for the team, and pay back refunds" : "What you've spent for the team, and refunds you've asked for"}
-        actions={<Link href="/budget/claims/new"><Button size="sm">+ Submit an expense</Button></Link>}
+        items={[{ kind: "link", place: "primary", label: "+ Submit an expense", href: "/budget/claims/new" }]}
       />
 
       {reviewer && (

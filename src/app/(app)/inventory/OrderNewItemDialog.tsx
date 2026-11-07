@@ -1,5 +1,6 @@
 "use client";
 
+import { usePageAction } from "@/components/page-actions";
 import { useActionState, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -41,7 +42,8 @@ const PRIORITY_OPTS = [
  * Order something that isn't in inventory yet. Creates an empty inventory item
  * (0 in stock) so it can be tracked, puts it in the order queue and submits the request.
  */
-export function OrderNewItemDialog({ variant = "outline" }: { variant?: "primary" | "outline" }) {
+/** `action`: opened by that page action (the header) instead of its own button */
+export function OrderNewItemDialog({ variant = "outline", action }: { variant?: "primary" | "outline"; action?: string }) {
   const viewOnly = useViewOnly();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -52,13 +54,17 @@ export function OrderNewItemDialog({ variant = "outline" }: { variant?: "primary
     setOpen(false);
     router.refresh();
   }
+  const openIt = () => { setFormKey((k) => k + 1); setOpen(true); };
+  usePageAction(action, openIt);
 
   if (viewOnly) return null;
   return (
     <>
-      <Button size="sm" variant={variant} onClick={() => { setFormKey((k) => k + 1); setOpen(true); }}>
-        + Order a new item
-      </Button>
+      {!action && (
+        <Button size="sm" variant={variant} onClick={openIt}>
+          + Order a new item
+        </Button>
+      )}
       <Dialog open={open} onOpenChange={(o) => !o && close()}>
         <DialogContent title="Order a new item" className="sm:max-w-lg">
           <NewItemForm key={formKey} onDone={close} />

@@ -4,7 +4,6 @@ import { competitionCountdown } from "@/lib/competition";
 import { redirect } from "next/navigation";
 import { isViewOnly } from "@/lib/access/read-only";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { daysBetween, isOverdue, SUBTEAM_OPTIONS } from "@/lib/schedule-helpers";
 import { robotFilter } from "@/lib/robot-filter";
 import { RobotFilterSelect } from "@/components/RobotFilterSelect";
@@ -167,23 +166,13 @@ export default async function SchedulePage({
         subtitle={<>
           {activeSeason.name}
         </>}
-        actions={<>
-          <RobotFilterSelect robots={robots.robots} robotId={activeRobotId} />
-          {/* The board and an 11-day timeline for a TV (refreshes itself) */}
-          <Link href="/tasks/present" className="hidden sm:inline-flex">
-            <Button variant="outline" size="sm">Present on TV</Button>
-          </Link>
-          {canEdit && (
-            <Link href="/tasks/templates">
-              <Button variant="outline" size="sm">Templates</Button>
-            </Link>
-          )}
-          {!isViewOnly(session.user.roles) && (
-            <Link href="/tasks/new">
-              <Button size="sm">+ New task</Button>
-            </Link>
-          )}
-        </>}
+        filters={<RobotFilterSelect robots={robots.robots} robotId={activeRobotId} />}
+        items={[
+          // The board and an 11-day timeline for a TV (refreshes itself)
+          { kind: "link", place: "secondary", desktopOnly: true, icon: "tv", label: "Present on TV", href: "/tasks/present" },
+          canEdit && { kind: "link", place: "secondary", label: "Templates", href: "/tasks/templates" },
+          !isViewOnly(session.user.roles) && { kind: "link", place: "primary", label: "+ New task", href: "/tasks/new" },
+        ]}
       />
 
       {/* Season progress bar */}
