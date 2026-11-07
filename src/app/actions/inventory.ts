@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import type { ItemCategory, ItemType, UnitOfMeasure } from "@/generated/prisma";
 import { maybeQueueReorder } from "@/lib/workflow/reorder";
 import { nextStockTag } from "@/lib/inventory/stock-tags";
+import { acceptPhotoUrl, deletePhotoQuietly } from "@/lib/photos";
 
 const BaseItemSchema = z.object({
   name:               z.string().max(300).min(1),
@@ -307,18 +308,19 @@ export async function restoreItemAction(itemId: string): Promise<InventoryAction
   return { success: true };
 }
 
-/** A photo we stored ourselves (uploaded through /api/tools/upload) */
-const isOurPhoto = (url: string) => /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//i.test(url);
 
 /** A photo of the material (uploaded through /api/tools/upload); null removes it */
 export async function updateItemImageAction(itemId: string, url: string | null): Promise<InventoryActionState> {
   const session = await auth();
   if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
   if (!canManageInventory(session.user.roles)) return { success: false, error: "Only Inventory Admins and Head Mentors can change photos." };
-  if (url && !isOurPhoto(url)) return { success: false, error: "That isn't an uploaded photo." };
-  const owned = await prisma.baseInventoryItem.findFirst({ where: { id: itemId, season: { teamId: session.user.teamId } }, select: { id: true } });
+  const image = url ? await acceptPhotoUrl(url, session.user.teamId) : null;
+  if (url && !image) return { success: false, error: "That isn't an uploaded photo." };
+  const owned = await prisma.baseInventoryItem.findFirst({ where: { id: itemId, season: { teamId: session.user.teamId } }, select: { id: true, image: true } });
   if (!owned) return { success: false, error: "Item not found." };
-  await prisma.baseInventoryItem.update({ where: { id: itemId }, data: { image: url } });
+  await prisma.baseInventoryItem.update({ where: { id: itemId }, data: { image } });
+  // The old photo isn't needed any more (unless something else shows it)
+  if (owned.image && owned.image !== image) await deletePhotoQuietly(owned.image);
   revalidatePath("/inventory");
   revalidatePath(`/inventory/${itemId}`);
   return { success: true };
@@ -352,21 +354,27 @@ export async function addPartialPieceAction(fromItemId: string, input: unknown):
   });
   if (!from) return { success: false, error: "Item not found." };
   if (d.takeFromStock && (from.unitOfMeasure === "PARTIAL" || from.currentStock < 1)) return { success: false, error: "There's no full stock to take it from." };
-  if (d.image && !isOurPhoto(d.image)) return { success: false, error: "That isn't an uploaded photo." };
+  const image = d.image ? await acceptPhotoUrl(d.image, session.user.teamId) : null;
+  if (d.image && !image) return { success: false, error: "That isn't an uploaded photo." };
 
   const created = await prisma.$transaction(async (tx) => {
-    const piece = await tx.baseInventoryItem.create({
-      data: {
-        seasonId: from.seasonId, stockTag: await nextStockTag(tx, session.user.teamId!),
-        name: from.name, partNumber: from.partNumber, category: from.category, itemType: from.itemType,
-        unitOfMeasure: "PARTIAL", currentStock: d.pieces, minStockThreshold: 0, reorderQuantity: 0,
-        amountLeft: d.amountLeft, storageLocation: d.storageLocation || from.storageLocation, image: d.image || null,
-        unitCost: from.unitCost, preferredSupplier: from.preferredSupplier, notes: d.notes || null,
-      },
-      select: { id: true },
-    });
+    // One entry per piece, each with its own label code
+    let first: { id: string } | null = null;
+    for (let n = 0; n < d.pieces; n++) {
+      const piece = await tx.baseInventoryItem.create({
+        data: {
+          seasonId: from.seasonId, stockTag: await nextStockTag(tx, session.user.teamId!),
+          name: from.name, partNumber: from.partNumber, category: from.category, itemType: from.itemType,
+          unitOfMeasure: "PARTIAL", currentStock: 1, minStockThreshold: 0, reorderQuantity: 0,
+          amountLeft: d.amountLeft, storageLocation: d.storageLocation || from.storageLocation, image,
+          unitCost: from.unitCost, preferredSupplier: from.preferredSupplier, notes: d.notes || null,
+        },
+        select: { id: true },
+      });
+      first ??= piece;
+    }
     if (d.takeFromStock) await tx.baseInventoryItem.update({ where: { id: from.id }, data: { currentStock: { decrement: 1 } } });
-    return piece;
+    return first!;
   });
   // Cut from the full stock: that may bring it to its minimum
   if (d.takeFromStock) await maybeQueueReorder(from, from.currentStock - 1, session.user.teamId).catch(() => {});
@@ -374,4 +382,55 @@ export async function addPartialPieceAction(fromItemId: string, input: unknown):
   revalidatePath("/inventory");
   revalidatePath(`/inventory/${fromItemId}`);
   return { success: true, id: created.id };
+}
+
+/** A partial piece the person may change: on their team, and a partial */
+async function ownPiece(teamId: string, pieceId: string) {
+  return prisma.baseInventoryItem.findFirst({
+    where:  { id: pieceId, unitOfMeasure: "PARTIAL", season: { teamId } },
+    select: { id: true, name: true, seasonId: true },
+  });
+}
+
+const PieceSchema = z.object({
+  amountLeft:      z.string().trim().max(120).optional(),
+  storageLocation: z.string().trim().max(300).optional(),
+  notes:           z.string().trim().max(5000).optional(),
+});
+
+/** Change one partial piece in place (how much is left, where it is, notes) */
+export async function updatePieceAction(pieceId: string, input: unknown): Promise<InventoryActionState> {
+  const session = await auth();
+  if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
+  if (!canManageInventory(session.user.roles)) return { success: false, error: "Only Inventory Admins and Head Mentors can change stock." };
+  const parsed = PieceSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Check the details." };
+  const piece = await ownPiece(session.user.teamId, pieceId);
+  if (!piece) return { success: false, error: "Piece not found." };
+  const d = parsed.data;
+  await prisma.baseInventoryItem.update({
+    where: { id: piece.id },
+    data: {
+      ...(d.amountLeft !== undefined ? { amountLeft: d.amountLeft || null } : {}),
+      ...(d.storageLocation !== undefined ? { storageLocation: d.storageLocation || null } : {}),
+      ...(d.notes !== undefined ? { notes: d.notes || null } : {}),
+    },
+  });
+  revalidatePath("/inventory", "layout");
+  return { success: true };
+}
+
+/** A piece that's been used up: out of stock and retired (its history stays) */
+export async function markPieceUsedUpAction(pieceId: string): Promise<InventoryActionState> {
+  const session = await auth();
+  if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
+  if (!canManageInventory(session.user.roles)) return { success: false, error: "Only Inventory Admins and Head Mentors can change stock." };
+  const piece = await ownPiece(session.user.teamId, pieceId);
+  if (!piece) return { success: false, error: "Piece not found." };
+  await prisma.baseInventoryItem.update({
+    where: { id: piece.id },
+    data:  { currentStock: 0, archived: true, retiredAt: new Date(), retiredById: session.user.id },
+  });
+  revalidatePath("/inventory", "layout");
+  return { success: true };
 }

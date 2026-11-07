@@ -39,6 +39,21 @@ export function PhotoPanel({ itemId, url, canEdit }: { itemId: string; url: stri
   );
 }
 
+/** Print one label (QR code + name + detail + code) in a small window */
+export function printStockLabel({ name, code, detail, svgId }: { name: string; code: string; detail?: string | null; svgId: string }) {
+  const win = window.open("", "_blank", "width=400,height=520");
+  if (!win) { toast.error("Allow pop-ups to print the label."); return; }
+  // The QR code is our own SVG; the text is escaped (it's user-editable)
+  const svg = document.getElementById(svgId)?.outerHTML ?? "";
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Label — ${escapeHtml(name)}</title>
+<style>body{margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;padding:24px}
+svg{width:180px;height:180px}h1{font-size:14px;font-weight:700;margin:12px 0 4px;text-align:center}p{font-size:11px;color:#555;margin:0;text-align:center}
+.code{font-family:monospace}@media print{@page{margin:0}}</style></head>
+<body>${svg}<h1>${escapeHtml(name)}</h1>${detail ? `<p>${escapeHtml(detail)}</p>` : ""}<p class="code">${escapeHtml(code)}</p>
+<script>window.onload=()=>{window.print();window.close();}</script></body></html>`);
+  win.document.close();
+}
+
 /**
  * The label for the stock: a QR code with the item's code (INV-0001). Stick it on the bin, the sheet or
  * the offcut; scanning it (Tools → Scan) opens this item. The header's "Print label" fires `action`.
@@ -47,19 +62,7 @@ export function LabelPanel({ itemId, name, code, detail, action }: { itemId: str
   const value = code ?? itemId;
   const svgId = `stock-qr-${itemId}`;
 
-  function print() {
-    const win = window.open("", "_blank", "width=400,height=520");
-    if (!win) { toast.error("Allow pop-ups to print the label."); return; }
-    // The QR code is our own SVG; the text is escaped (it's user-editable)
-    const svg = document.getElementById(svgId)?.outerHTML ?? "";
-    win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Label — ${escapeHtml(name)}</title>
-<style>body{margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;padding:24px}
-svg{width:180px;height:180px}h1{font-size:14px;font-weight:700;margin:12px 0 4px;text-align:center}p{font-size:11px;color:#555;margin:0;text-align:center}
-.code{font-family:monospace}@media print{@page{margin:0}}</style></head>
-<body>${svg}<h1>${escapeHtml(name)}</h1>${detail ? `<p>${escapeHtml(detail)}</p>` : ""}<p class="code">${escapeHtml(value)}</p>
-<script>window.onload=()=>{window.print();window.close();}</script></body></html>`);
-    win.document.close();
-  }
+  const print = () => printStockLabel({ name, code: value, detail, svgId });
   usePageAction(action, print);
 
   return (
@@ -100,13 +103,14 @@ export function PartialPieceDialog({ itemId, itemName, location, fullStock, acti
       if (!res.success) { setError(res.error ?? "Couldn't add it."); return; }
       setOpen(false);
       toast.success("Partial piece added — print its label to stick on it");
-      router.push(`/inventory/${res.id}`);
+      window.location.hash = `piece-${res.id}`;
+      router.refresh();
     });
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent title="Add a partial piece" description={`A part-used piece of ${itemName} — it's listed with the full stock, with its own label.`}>
+      <DialogContent title="Add a partial piece" description={`A part-used piece of ${itemName} — it's listed under this item with its own label code. Several pieces get a code each.`}>
         <form onSubmit={submit} className="space-y-4">
           {error && <div className="rounded-md bg-(--color-danger)/10 px-3 py-2 text-sm text-(--color-danger)">{error}</div>}
           <Field label="Amount left" name="amountLeft" required maxLength={120} placeholder="e.g. about 18 in, half a sheet" autoFocus />

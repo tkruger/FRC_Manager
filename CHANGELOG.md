@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Partial pieces are managed on their item**: the full-stock item has a **Partial pieces** section you scroll through — one card per piece with its own photo (tap to add or change), its own label code and QR, how much is left and where it is (edit in place), and **Label**, **Use on Robot** and **Used up**. Adding several pieces gives each its own code. In the inventory list, a piece opens its item at that piece; a piece's own page links back to all pieces
+- **Photos are stored in the app** (like expense receipts) — tool and inventory photos no longer need Vercel Blob, so uploading works everywhere; they're only shown to the team. Older Blob photos keep working
+
 **Inventory**
 - **Grouped like tools**: items with the same name sit together under one heading with the total on hand — the full stock and its partial pieces. On a phone, Inventory is a list of cards instead of a table
 - **Partial pieces**: a new unit, **Partial**, for part-used material (an offcut, a part-used spool), with **Amount left** ("about 18 in", "half a sheet"). **Add a partial piece** on an item copies its details, takes a photo of the piece, and can take one off the full stock. Deliveries never add to a partial piece

@@ -1,5 +1,7 @@
-import { put } from "@vercel/blob";
+// Tool and inventory photo uploads — stored in the database (like expense receipts) and shown at
+// /api/photos/<id> to the team. The browser shrinks photos first (to a few hundred KB).
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { rateLimit } from "@/lib/security/rate-limit";
 
@@ -27,8 +29,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No file provided." }, { status: 400 });
   }
 
-  if (file.size > 8 * 1024 * 1024) {
-    return NextResponse.json({ error: "Image must be under 8 MB." }, { status: 400 });
+  if (file.size > 4 * 1024 * 1024) {
+    return NextResponse.json({ error: "That photo is too big — keep it under 4 MB." }, { status: 400 });
   }
 
   const bytes = new Uint8Array(await file.arrayBuffer());
@@ -37,19 +39,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Use a JPEG, PNG or WebP photo." }, { status: 400 });
   }
 
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    return NextResponse.json(
-      { error: "Image storage is not configured on this server." },
-      { status: 503 }
-    );
-  }
-
-  // Name and type come from the bytes, never from the upload
-  const blob = await put(
-    `tools/${session.user.teamId}/${Date.now()}.${kind.ext}`,
-    new Blob([bytes], { type: kind.type }),
-    { access: "public", contentType: kind.type }
-  );
-
-  return NextResponse.json({ url: blob.url });
+  // The type comes from the bytes, never from the upload
+  const photo = await prisma.storedPhoto.create({
+    data:   { teamId: session.user.teamId, uploadedById: session.user.id, contentType: kind.type, size: bytes.length, data: Buffer.from(bytes) },
+    select: { id: true },
+  });
+  return NextResponse.json({ url: `/api/photos/${photo.id}` });
 }

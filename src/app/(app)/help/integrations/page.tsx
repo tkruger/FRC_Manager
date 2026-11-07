@@ -69,7 +69,7 @@ export default function IntegrationGuidePage() {
           ["DISCORD_CLIENT_SECRET", "Sign in with Discord (uses DISCORD_APPLICATION_ID as the client ID, or DISCORD_CLIENT_ID)."],
           ["RESEND_API_KEY, EMAIL_FROM", "The app's own email (resend.com) — account emails, and the fallback for teams without their own. EMAIL_FROM like FRC Manager <noreply@yourdomain>, on a domain verified in Resend."],
           ["VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT", "Push notifications (see Push below)."],
-          ["BLOB_READ_WRITE_TOKEN", "Tool photos (Vercel Blob — added automatically when you create a Blob store for the project)."],
+          ["BLOB_READ_WRITE_TOKEN", "Optional — only for tool photos uploaded before photos were stored in the app's database (Vercel Blob)."],
           ["CRON_SECRET", "Protects the background job addresses; the same value goes in the GitHub secret."],
           ["TBA_API_KEY", "Optional shared The Blue Alliance key, used by teams that haven't added their own."],
           ["DEFAULT_TIMEZONE", "Time zone for teams that haven't set one (default America/New_York)."],

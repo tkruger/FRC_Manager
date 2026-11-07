@@ -1150,6 +1150,20 @@ enum ExpenseClaimStatus {
 /// A receipt (photo or PDF) for an expense claim. Kept in the database, private to the team:
 /// served only to the submitter and the people who review claims. A receipt uploaded but never
 /// attached to a claim is removed by the hourly job.
+/// A tool or inventory photo, stored in the database like expense receipts (no outside file storage).
+/// Shown at /api/photos/<id> to the team it belongs to; ones nothing uses are swept daily.
+model StoredPhoto {
+  id           String   @id @default(cuid())
+  teamId       String
+  uploadedById String?
+  contentType  String
+  size         Int
+  data         Bytes
+  createdAt    DateTime @default(now())
+
+  @@index([teamId, createdAt])
+}
+
 model ExpenseReceipt {
   id           String        @id @default(cuid())
   claimId      String?

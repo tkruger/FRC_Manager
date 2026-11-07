@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { pruneChangeLog } from "@/lib/audit/changes";
 import { postVolunteerDigests } from "@/lib/notify/discord-volunteers";
 import { sweepUnusedToolPhotos } from "@/lib/blob-cleanup";
+import { sweepUnusedStoredPhotos } from "@/lib/photos";
 
 const DAY = 86_400_000;
 
@@ -44,7 +45,10 @@ export async function GET(request: Request) {
     prisma.discordInteractionLog.deleteMany({ where: { createdAt: { lt: ago(90) } } }).then((r) => r.count),
   ]).catch(() => [0, 0, 0]);
   // Once a day (the 8:05 UTC run — the early hours in the US): tool photos that nothing uses any more
-  const photosCleared = new Date().getUTCHours() === 8 ? await sweepUnusedToolPhotos().catch((e) => { console.error("[cron] photo sweep", e); return 0; }) : 0;
+  const photosCleared = new Date().getUTCHours() === 8
+    ? (await sweepUnusedToolPhotos().catch((e) => { console.error("[cron] photo sweep", e); return 0; }))
+      + (await sweepUnusedStoredPhotos().catch((e) => { console.error("[cron] stored photo sweep", e); return 0; }))
+    : 0;
   return NextResponse.json({
     ...result, seasonsSwitched, rateLimitsCleared, tokensCleared, changesCleared, receiptsCleared, volunteerPosts,
     notificationsCleared, remindersCleared, discordLogsCleared, photosCleared, ms: Date.now() - started,

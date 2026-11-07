@@ -68,11 +68,16 @@ export function InventoryTableClient({ items, robots, emptyMessage, retiredToggl
   const groups = new Map<string, Item[]>();
   for (const i of displayed) groups.set(groupKey(i.name), [...(groups.get(groupKey(i.name)) ?? []), i]);
   for (const list of groups.values()) list.sort((a, b) => Number(isPartial(a)) - Number(isPartial(b)));
+  // A piece opens its full-stock item's page, scrolled to it (that's where pieces are managed)
+  const hrefOf = (item: Item) => {
+    const parent = isPartial(item) ? groups.get(groupKey(item.name))?.find((x) => !isPartial(x) && !x.archived) : null;
+    return parent ? `/inventory/${parent.id}#piece-${item.id}` : `/inventory/${item.id}`;
+  };
 
   const row = (item: Item, inGroup: boolean) => (
     <Tr key={item.id} className={item.archived ? "group opacity-60" : "group"}>
       <Td>
-        <Link href={`/inventory/${item.id}`} className={`flex items-center gap-3 ${inGroup ? "pl-6" : ""}`}>
+        <Link href={hrefOf(item)} className={`flex items-center gap-3 ${inGroup ? "pl-6" : ""}`}>
           <Thumb src={item.image} name={item.name} />
           <span className="min-w-0">
             <span className="block font-medium text-(--color-secondary) group-hover:text-(--color-primary) group-hover:underline transition-colors">
@@ -144,7 +149,7 @@ export function InventoryTableClient({ items, robots, emptyMessage, retiredToggl
               <ul className="divide-y divide-(--color-border)">
                 {list.map((item) => (
                   <li key={item.id} className={`flex flex-wrap items-center justify-end gap-3 px-4 py-3 ${item.archived ? "opacity-60" : ""}`}>
-                    <Link href={`/inventory/${item.id}`} className="flex min-w-[12rem] flex-1 items-center gap-3 overflow-hidden">
+                    <Link href={hrefOf(item)} className="flex min-w-[12rem] flex-1 items-center gap-3 overflow-hidden">
                       <Thumb src={item.image} name={item.name} />
                       <span className="min-w-0 flex-1">
                         <span className="block truncate font-medium text-(--color-secondary)">

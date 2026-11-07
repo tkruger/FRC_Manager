@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { deleteBlobQuietly } from "@/lib/blob-cleanup";
+import { acceptPhotoUrl, deletePhotoQuietly } from "@/lib/photos";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
@@ -26,16 +26,6 @@ const ToolSchema = z.object({
   notes:                   z.string().max(5000).optional(),
 });
 
-/** Tool photos must be ones uploaded to our Vercel Blob store (not any URL on the internet) */
-function blobImageUrl(v: unknown): string | null {
-  if (typeof v !== "string" || !v) return null;
-  try {
-    const u = new URL(v);
-    return u.protocol === "https:" && u.hostname.endsWith(".public.blob.vercel-storage.com") ? u.toString() : null;
-  } catch {
-    return null;
-  }
-}
 
 const TOOL_EDIT_ROLES = ["INVENTORY_ADMIN", "BUILD_LEAD", "TEAM_LEADERSHIP", "HEAD_MENTOR"];
 const TOOL_CONDITIONS = ["EXCELLENT", "GOOD", "FAIR", "NEEDS_REPAIR", "OUT_OF_SERVICE", "OUT_FOR_MAINTENANCE"] as const;
@@ -114,7 +104,8 @@ export async function createToolAction(
     tags = await allocateToolTags(teamId, count);
   }
 
-  const imageUrl = blobImageUrl(formData.get("imageUrl"));
+  // Only photos uploaded to the app (not any address on the internet)
+  const imageUrl = await acceptPhotoUrl(formData.get("imageUrl"), teamId);
   await prisma.tool.createMany({
     data: tags.map((assetTag) => ({
       teamId,
@@ -146,7 +137,7 @@ export async function updateToolImageAction(
   const session = await auth();
   if (!session?.user?.teamId) return { success: false };
 
-  const image = blobImageUrl(imageUrl);
+  const image = await acceptPhotoUrl(imageUrl, session.user.teamId);
   if (imageUrl && !image) return { success: false };
 
   const before = await prisma.tool.findFirst({ where: { id: toolId, teamId: session.user.teamId }, select: { image: true } });
@@ -156,7 +147,7 @@ export async function updateToolImageAction(
     data:  { image },
   });
   // The old photo isn't needed any more
-  if (before.image && before.image !== image) await deleteBlobQuietly(before.image);
+  if (before.image && before.image !== image) await deletePhotoQuietly(before.image);
 
   revalidatePath(`/tools/${toolId}`);
   revalidatePath("/tools");

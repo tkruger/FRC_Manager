@@ -1,6 +1,5 @@
-// Keeping Vercel Blob tidy: tool photos that nothing uses any more are deleted — when a photo is
-// replaced or removed, and in a daily sweep for uploads that were never saved (a form closed
-// after picking a photo). Server-only; does nothing without BLOB_READ_WRITE_TOKEN.
+// Older tool photos on Vercel Blob (new ones are stored in the database — see photos.ts): a daily sweep
+// deletes the ones nothing uses any more. Server-only; does nothing without BLOB_READ_WRITE_TOKEN.
 
 import { del, list } from "@vercel/blob";
 import { prisma } from "@/lib/prisma";
@@ -9,18 +8,6 @@ const isOurBlob = (url: string | null | undefined): url is string => {
   if (!url) return false;
   try { return new URL(url).hostname.endsWith(".public.blob.vercel-storage.com"); } catch { return false; }
 };
-
-/** Delete a photo that was just replaced or removed (best-effort) */
-export async function deleteBlobQuietly(url: string | null | undefined): Promise<void> {
-  if (!process.env.BLOB_READ_WRITE_TOKEN || !isOurBlob(url)) return;
-  try {
-    // Another tool might share the same photo (copied tools) — keep it then
-    const inUse = await prisma.tool.count({ where: { image: url } });
-    if (inUse === 0) await del(url);
-  } catch (e) {
-    console.warn("[blob] delete failed:", e instanceof Error ? e.message : e);
-  }
-}
 
 /** Uploads younger than this are left alone — the form they belong to may still be open */
 const GRACE_MS = 24 * 60 * 60 * 1000;

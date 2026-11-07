@@ -7,6 +7,7 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { EditBaseItemForm } from "./EditBaseItemForm";
 import { RetireItemButton } from "./RetireItemButton";
 import { LabelPanel, PartialPieceDialog, PhotoPanel } from "./StockPanels";
+import { PiecesStrip } from "./PiecesStrip";
 import { PageHeader } from "@/components/PageHeader";
 import { isPartial, stockText } from "@/lib/inventory/units";
 
@@ -41,9 +42,15 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
   const siblings = await prisma.baseInventoryItem.findMany({
     where:   { seasonId: item.seasonId, archived: false, id: { not: item.id }, name: { equals: item.name.trim(), mode: "insensitive" } },
     orderBy: [{ unitOfMeasure: "asc" }, { createdAt: "asc" }],
-    select:  { id: true, unitOfMeasure: true, currentStock: true, amountLeft: true, storageLocation: true, stockTag: true, image: true },
+    select:  { id: true, name: true, unitOfMeasure: true, currentStock: true, amountLeft: true, storageLocation: true, stockTag: true, image: true },
   });
-  const fullStock = partial ? siblings.find((x) => x.unitOfMeasure !== "PARTIAL") : item;
+  // The full-stock item is the parent; its partial pieces are managed on its page
+  const parent = partial ? siblings.find((x) => x.unitOfMeasure !== "PARTIAL") ?? null : null;
+  const fullStock = partial ? parent : item;
+  const pieces = partial ? [] : siblings.filter((x) => x.unitOfMeasure === "PARTIAL" && x.currentStock > 0);
+  // A piece without a full-stock item (only offcuts left) still lists the others
+  const looseGroup = partial && !parent ? siblings : [];
+  const robots = pieces.length ? await prisma.robot.findMany({ where: { seasonId: item.seasonId, archived: false }, select: { id: true, displayName: true } }) : [];
 
   const recentAcquisitions = await prisma.inUseInventoryItem.findMany({
     where: { baseItemId: id },
@@ -69,10 +76,11 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
 
       <PageHeader
         breadcrumb={<><Link href="/inventory" className="hover:text-(--color-primary)">Inventory</Link><span className="mx-2">›</span><span className="text-(--color-text-primary)">{item.name}</span></>}
-        title={partial ? <>{item.name} <span className="font-normal text-(--color-text-secondary)">— partial</span></> : item.name}
+        title={partial ? <>{item.name} <span className="font-normal text-(--color-text-secondary)">— partial piece</span></> : item.name}
         help="inventory"
         subtitle={<span className="flex gap-2 pt-1 flex-wrap">
           <Badge variant={stockVariant(item.currentStock, item.minStockThreshold, partial)}>{stockText(item)}{partial ? "" : " in stock"}</Badge>
+          {pieces.length > 0 && <Badge variant="info">{pieces.length} partial piece{pieces.length === 1 ? "" : "s"}</Badge>}
           {partial && item.amountLeft && <Badge variant="info">{item.amountLeft} left</Badge>}
           <Badge variant="neutral">{item.category.replace(/_/g, " ")}</Badge>
           {item.stockTag && <Badge variant="neutral">{item.stockTag}</Badge>}
@@ -80,17 +88,41 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
           {item.isFirstChoiceItem && <Badge variant="info">FIRST Choice</Badge>}
         </span>}
         items={[
-          canEdit && !item.archived && { kind: "action", place: "secondary", icon: "plus", label: "Add a partial piece", action: "inventory:add-partial" },
+          // Pieces are added on the full-stock item (or on a piece when there's none)
+          canEdit && !item.archived && !parent && { kind: "action", place: "primary", label: "+ Add a partial piece", action: "inventory:add-partial" },
+          parent && { kind: "link", place: "secondary", label: "All pieces", href: `/inventory/${parent.id}#piece-${item.id}` },
           { kind: "action", place: "secondary", icon: "print", label: "Print label", action: "inventory:print-label" },
+          pieces.length > 0 && { kind: "link", place: "menu", icon: "print", label: "Print piece labels", href: `/inventory/labels?ids=${pieces.map((p) => p.id).join(",")}` },
           { kind: "link", place: "menu", label: "Scan labels", href: "/tools/scan" },
           canEdit && { kind: "action", place: "menu", danger: !item.archived, label: item.archived ? "Restore item" : "Retire item", action: "inventory:retire" },
         ]}
         actions={<>
           {canEdit && <RetireItemButton itemId={item.id} itemName={item.name} retired={item.archived} action="inventory:retire" />}
-          {canEdit && !item.archived && <PartialPieceDialog itemId={item.id} itemName={item.name} location={item.storageLocation}
+          {canEdit && !item.archived && !parent && <PartialPieceDialog itemId={item.id} itemName={item.name} location={item.storageLocation}
             fullStock={fullStock && fullStock.unitOfMeasure !== "PARTIAL" ? fullStock.currentStock : null} action="inventory:add-partial" />}
         </>}
       />
+
+      {parent && (
+        <div className="card flex flex-wrap items-center justify-between gap-3 border-l-4 border-l-(--color-info) py-3">
+          <p className="text-sm text-(--color-text-primary)">
+            A partial piece of <b>{parent.name}</b> — its pieces are managed together on the full-stock item.
+          </p>
+          <Link href={`/inventory/${parent.id}#piece-${item.id}`} className="text-sm font-medium text-(--color-secondary) hover:underline">Go to all pieces →</Link>
+        </div>
+      )}
+
+      {/* Partial pieces: scroll through them and manage each one */}
+      {!partial && (pieces.length > 0 || canEdit) && (
+        <section id="pieces" className="card space-y-3 scroll-mt-24">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="text-h3 text-(--color-text-primary)">Partial pieces <span className="text-small font-normal text-(--color-text-secondary)">({pieces.length})</span></h2>
+            {pieces.length > 1 && <span className="text-small text-(--color-text-secondary)">Scroll for more →</span>}
+          </div>
+          <PiecesStrip name={item.name} canEdit={canEdit} robots={robots}
+            pieces={pieces.map((p) => ({ id: p.id, code: p.stockTag ?? p.id, amountLeft: p.amountLeft, storageLocation: p.storageLocation, image: p.image, count: p.currentStock }))} />
+        </section>
+      )}
 
       {/* Quick stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -120,11 +152,11 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
       </div>
 
       {/* The rest of this material: the full stock and its partial pieces */}
-      {siblings.length > 0 && (
+      {looseGroup.length > 0 && (
         <section className="card space-y-2">
-          <h2 className="text-h3 text-(--color-text-primary)">Also in this group</h2>
+          <h2 className="text-h3 text-(--color-text-primary)">Other pieces</h2>
           <ul className="divide-y divide-(--color-border)">
-            {siblings.map((x) => (
+            {looseGroup.map((x) => (
               <li key={x.id}>
                 <Link href={`/inventory/${x.id}`} className="flex items-center gap-3 py-2 hover:text-(--color-primary)">
                   {x.image
