@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.18.0 — 2026-11-07
+
 - **Ordering from inventory can go on a draft**: **Order a new item** and the low-stock **Order** button now ask where to add the item — one of your open order drafts (the latest is picked first), a new draft, or its own order submitted straight away. Drafts are finished and submitted from Orders
 - **Dragging inventory on a phone no longer freezes the page**: a drag could miss the finger lifting and stay stuck, keeping the page from scrolling. The task board uses the same dragging and gets the fix too. Moving over folders is smoother as well
 - **The inventory page loads faster**: closed folders are remembered by the server, so the page arrives with them closed; only the phone or the computer layout is drawn; thumbnails load as they scroll into view
