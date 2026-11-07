@@ -11,13 +11,15 @@ import { VendorSupplierPicker } from "@/components/ui/VendorSupplierPicker";
 import { toast } from "@/components/ui/toast";
 import { ToolImageCapture } from "@/components/ui/ToolImageCapture";
 import { UnitFields } from "../UnitFields";
-import { CATEGORY_OPTIONS, TYPE_OPTIONS } from "@/lib/inventory/categories";
+import { TYPE_OPTIONS } from "@/lib/inventory/categories";
+import { CategoryFields, type SubcategoryOption } from "../CategoryFields";
 
 interface Item {
   id: string;
   name: string;
   partNumber: string | null;
   category: string;
+  subcategoryId: string | null;
   itemType: string;
   description: string | null;
   unitOfMeasure: string;
@@ -39,9 +41,11 @@ interface Item {
 export function EditBaseItemForm({
   item,
   vendors = [],
+  subcategories = [],
 }: {
   item: Item;
   vendors?: { id: string; name: string }[];
+  subcategories?: SubcategoryOption[];
 }) {
   const router = useRouter();
   const boundAction = updateBaseItemAction.bind(null, item.id);
@@ -66,7 +70,9 @@ export function EditBaseItemForm({
 
       <Field label="Item name" name="name" required defaultValue={item.name} />
       <div className="grid grid-cols-2 gap-4">
-        <Select label="Category"     name="category"     options={[...CATEGORY_OPTIONS]} defaultValue={item.category} />
+        <CategoryFields subcategories={subcategories} category={item.category} subcategoryId={item.subcategoryId} />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
         <Select label="Item type"    name="itemType"     options={[...TYPE_OPTIONS]} defaultValue={item.itemType} />
       </div>
       <div className="grid grid-cols-2 gap-4">

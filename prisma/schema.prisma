@@ -277,6 +277,8 @@ model Team {
   nextStockNumber Int     @default(1)
   /// Next sequential order item ID (0001, 0002, …)
   nextOrderItemNumber Int @default(401)
+  /// Inventory sub-categories (Gears, Belts, … under Mechanical)
+  inventorySubcategories InventorySubcategory[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -601,6 +603,20 @@ enum CertStatus {
 // MODULE 3 — PARTS & MATERIALS INVENTORY
 // ─────────────────────────────────────────────
 
+/// A sub-category of an inventory category, set up by the team (e.g. Gears under Mechanical)
+model InventorySubcategory {
+  id        String       @id @default(cuid())
+  teamId    String
+  team      Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  category  ItemCategory
+  name      String
+  createdAt DateTime     @default(now())
+
+  items BaseInventoryItem[]
+
+  @@unique([teamId, category, name])
+}
+
 model BaseInventoryItem {
   id                   String        @id @default(cuid())
   seasonId             String
@@ -608,6 +624,9 @@ model BaseInventoryItem {
   name                 String
   partNumber           String?
   category             ItemCategory  @default(UNCATEGORIZED)
+  /// Optional: a sub-category of its category (a sub-folder in the inventory list)
+  subcategoryId        String?
+  subcategory          InventorySubcategory? @relation(fields: [subcategoryId], references: [id], onDelete: SetNull)
   itemType             ItemType      @default(DISCRETE)
   description          String?
   unitOfMeasure        UnitOfMeasure @default(EACH)

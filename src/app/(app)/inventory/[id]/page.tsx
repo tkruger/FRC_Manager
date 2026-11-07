@@ -8,6 +8,7 @@ import { EditBaseItemForm } from "./EditBaseItemForm";
 import { RetireItemButton } from "./RetireItemButton";
 import { LabelPanel, PartialPieceDialog, PhotoPanel } from "./StockPanels";
 import { PiecesStrip } from "./PiecesStrip";
+import { categoryLabel } from "@/lib/inventory/categories";
 import { AcquireButton } from "../AcquireButton";
 import { isViewOnly } from "@/lib/access/read-only";
 import { PageHeader } from "@/components/PageHeader";
@@ -28,7 +29,7 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
   const [item, vendors] = await Promise.all([
     prisma.baseInventoryItem.findFirst({
       where:   { id, season: { teamId: session.user.teamId } },
-      include: { retiredBy: { select: { name: true } } },
+      include: { retiredBy: { select: { name: true } }, subcategory: { select: { name: true } } },
     }),
     prisma.vendor.findMany({
       where: { teamId: session.user.teamId },
@@ -52,6 +53,7 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
   const pieces = partial ? [] : siblings.filter((x) => x.unitOfMeasure === "PARTIAL" && x.currentStock > 0);
   // A piece without a full-stock item (only offcuts left) still lists the others
   const looseGroup = partial && !parent ? siblings : [];
+  const subcategories = canEdit ? await prisma.inventorySubcategory.findMany({ where: { teamId: session.user.teamId }, select: { id: true, category: true, name: true }, orderBy: { name: "asc" } }) : [];
   const robots = await prisma.robot.findMany({ where: { seasonId: item.seasonId, archived: false }, select: { id: true, displayName: true } });
   const canUse = !item.archived && item.currentStock > 0 && !isViewOnly(session.user.roles);
 
@@ -85,7 +87,7 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
           <Badge variant={stockVariant(item.currentStock, item.minStockThreshold, partial)}>{stockText(item)}{partial ? "" : " in stock"}</Badge>
           {pieces.length > 0 && <Badge variant="info">{pieces.length} partial piece{pieces.length === 1 ? "" : "s"}</Badge>}
           {partial && item.amountLeft && <Badge variant="info">{item.amountLeft} left</Badge>}
-          <Badge variant="neutral">{item.category.replace(/_/g, " ")}</Badge>
+          <Badge variant="neutral">{categoryLabel(item.category)}{item.subcategory ? ` › ${item.subcategory.name}` : ""}</Badge>
           {item.stockTag && <Badge variant="neutral">{item.stockTag}</Badge>}
           {item.isKopItem && <Badge variant="info">KOP</Badge>}
           {item.isFirstChoiceItem && <Badge variant="info">FIRST Choice</Badge>}
@@ -215,11 +217,12 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
       {canEdit && (
         <div className="card space-y-4">
           <h2 className="text-h3 text-(--color-text-primary)">Edit item</h2>
-          <EditBaseItemForm key={item.updatedAt.toISOString()} vendors={vendors} item={{
+          <EditBaseItemForm key={item.updatedAt.toISOString()} vendors={vendors} subcategories={subcategories} item={{
             id:                item.id,
             name:              item.name,
             partNumber:        item.partNumber,
             category:          item.category,
+            subcategoryId:     item.subcategoryId,
             itemType:          item.itemType,
             description:       item.description,
             unitOfMeasure:     item.unitOfMeasure,

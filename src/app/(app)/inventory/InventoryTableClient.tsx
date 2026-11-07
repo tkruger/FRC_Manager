@@ -13,12 +13,14 @@ import { CATEGORY_OPTIONS, TYPE_OPTIONS, categoryLabel, typeLabel } from "@/lib/
 import { moveToCategoryAction } from "@/app/actions/inventory";
 import { useFinePointer, useTouchDrag } from "../tasks/useTouchDrag";
 import { AcquireButton } from "./AcquireButton";
+import type { SubcategoryOption } from "./CategoryFields";
 
 interface Item {
   id: string;
   name: string;
   partNumber: string | null;
   category: string;
+  subcategoryId: string | null;
   itemType: string;
   currentStock: number;
   minStockThreshold: number;
@@ -35,11 +37,13 @@ interface Item {
 }
 
 interface Props {
-  items:        Item[];
-  robots:       { id: string; displayName: string }[];
-  emptyMessage: string;
+  items:         Item[];
+  robots:        { id: string; displayName: string }[];
+  /** The team's sub-categories (sub-folders) */
+  subcategories: SubcategoryOption[];
+  emptyMessage:  string;
   /** May sort items into folders (drag them between folders) */
-  canSort:      boolean;
+  canSort:       boolean;
   /** "Show retired items" link, when there are any */
   retiredToggle?: { showing: boolean; count: number; href: string };
 }
@@ -48,6 +52,10 @@ interface Props {
 const NO_LOCATION = "\u0000none";
 /** Which folders are closed, kept per browser */
 const COLLAPSED_KEY = "frc:inventory-folders-closed";
+
+/** A drop target / folder key: the category, or category|sub-category id for a sub-folder */
+const folderKey = (category: string, subId?: string | null) => (subId ? `${category}|${subId}` : category);
+const parseKey = (key: string) => { const [category, subId] = key.split("|"); return { category, subId: subId ?? null }; };
 
 function stockVariant(item: Item): "danger" | "warning" | "success" | "info" {
   if (isPartial(item)) return item.currentStock > 0 ? "info" : "danger";
@@ -63,25 +71,40 @@ function Thumb({ src, name }: { src: string | null; name: string }) {
     : <span aria-hidden className="h-10 w-10 shrink-0 rounded-md border border-dashed border-(--color-border)" />;
 }
 
+/** What a material has on hand in total: "10 foot + 2 partial" */
+function groupStock(list: Item[]) {
+  const full = list.filter((i) => !isPartial(i)).reduce((s, i) => s + i.currentStock, 0);
+  const partials = list.filter(isPartial).reduce((s, i) => s + i.currentStock, 0);
+  const unit = list.find((i) => !isPartial(i))?.unitOfMeasure.toLowerCase() ?? "";
+  return [full > 0 || !partials ? `${full} ${unit}` : null, partials ? `${partials} partial` : null].filter(Boolean).join(" + ");
+}
+
 const selectCls = "rounded-md border border-(--color-border) bg-(--color-surface) text-(--color-text-primary) px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-(--color-primary)/40 focus:border-(--color-primary)";
 
+type Group = Item[];
+interface SubFolder { id: string; name: string; key: string; groups: Group[] }
+interface FolderNode { value: string; label: string; subs: SubFolder[]; loose: Group[]; count: number }
+
 /**
- * Inventory in folders by category. Inside a folder, entries with the same name — the full stock and
- * its partial pieces — sit together under one heading, like tools. Editors sort items by dragging them
- * to another folder (on phones: touch and hold, then drag); the whole material moves together.
+ * Inventory in folders by category, and sub-folders by sub-category (an item doesn't need one). Inside,
+ * entries with the same name — the full stock and its partial pieces — are one material: a row you can
+ * open to see its entries. Editors sort items by dragging them to another folder or sub-folder (on
+ * phones: touch and hold, then drag); the whole material moves together.
  */
-export function InventoryTableClient({ items, robots, emptyMessage, canSort, retiredToggle }: Props) {
+export function InventoryTableClient({ items, robots, subcategories, emptyMessage, canSort, retiredToggle }: Props) {
   const [search, setSearch] = useState("");
   const [location, setLocation] = useState("");
   const [type, setType] = useState("");
   const [closed, setClosed] = useState<Set<string>>(new Set());
+  /** Materials opened to show their entries (closed by default) */
+  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
   const [dragging, setDragging] = useState<string | null>(null);
   const [over, setOver] = useState<string | null>(null);
   const [, startMove] = useTransition();
 
   // Moved items show in their new folder straight away
-  const [shown, moveShown] = useOptimistic(items, (state, m: { key: string; category: string }) =>
-    state.map((i) => (groupKey(i.name) === m.key ? { ...i, category: m.category } : i)));
+  const [shown, moveShown] = useOptimistic(items, (state, m: { key: string; category: string; subId: string | null }) =>
+    state.map((i) => (groupKey(i.name) === m.key ? { ...i, category: m.category, subcategoryId: m.subId } : i)));
 
   // Closed folders are remembered (read after the first render, so it matches the server's)
   useEffect(() => {
@@ -90,29 +113,35 @@ export function InventoryTableClient({ items, robots, emptyMessage, canSort, ret
     }, 0);
     return () => clearTimeout(t);
   }, []);
-  function toggleFolder(cat: string) {
+  function saveClosed(next: Set<string>) {
+    try { localStorage.setItem(COLLAPSED_KEY, JSON.stringify([...next])); } catch { /* not available */ }
+    return next;
+  }
+  function toggleFolder(key: string) {
     setClosed((prev) => {
       const next = new Set(prev);
-      if (!next.delete(cat)) next.add(cat);
-      try { localStorage.setItem(COLLAPSED_KEY, JSON.stringify([...next])); } catch { /* not available */ }
-      return next;
+      if (!next.delete(key)) next.add(key);
+      return saveClosed(next);
     });
   }
-  /** Close every folder, or open them all */
+  /** Close every folder and sub-folder, or open them all */
   function setAllFolders(close: boolean) {
-    const next = new Set(close ? CATEGORY_OPTIONS.map((c) => c.value) : []);
-    setClosed(next);
-    try { localStorage.setItem(COLLAPSED_KEY, JSON.stringify([...next])); } catch { /* not available */ }
+    setClosed(saveClosed(new Set(close ? [...CATEGORY_OPTIONS.map((c) => c.value), ...subcategories.map((s) => folderKey(s.category, s.id))] : [])));
+  }
+  function toggleGroup(key: string) {
+    setOpenGroups((prev) => { const next = new Set(prev); if (!next.delete(key)) next.add(key); return next; });
   }
 
-  /** Move the material `itemId` belongs to into `category` (mouse and touch dragging both end here) */
-  function move(itemId: string, category: string) {
+  /** Move the material `itemId` belongs to into a folder or sub-folder (mouse and touch dragging both end here) */
+  function move(itemId: string, target: string) {
     const item = shown.find((i) => i.id === itemId);
-    if (!canSort || !item || item.category === category) return;
+    const { category, subId } = parseKey(target);
+    if (!canSort || !item || (item.category === category && (item.subcategoryId ?? null) === subId)) return;
+    const where = subId ? `${categoryLabel(category)} › ${subcategories.find((s) => s.id === subId)?.name ?? ""}` : categoryLabel(category);
     startMove(async () => {
-      moveShown({ key: groupKey(item.name), category });
-      const res = await moveToCategoryAction(itemId, category);
-      if (res.success) toast.success(`Moved ${item.name} to ${categoryLabel(category)}`);
+      moveShown({ key: groupKey(item.name), category, subId });
+      const res = await moveToCategoryAction(itemId, category, subId);
+      if (res.success) toast.success(`Moved ${item.name} to ${where}`);
       else toast.error(res.error ?? "Couldn't move it.");
     });
   }
@@ -121,8 +150,8 @@ export function InventoryTableClient({ items, robots, emptyMessage, canSort, ret
   const listRef = useRef<HTMLDivElement>(null);
   const touch = useTouchDrag({
     onStart:  (id) => setDragging(id),
-    onOver:   (cat) => setOver(cat),
-    onDrop:   (id, cat) => { setDragging(null); setOver(null); if (cat) move(id, cat); },
+    onOver:   (key) => setOver(key),
+    onDrop:   (id, key) => { setDragging(null); setOver(null); if (key) move(id, key); },
     onCancel: () => { setDragging(null); setOver(null); },
   }, listRef, "inv-folder");
   const mouseDrag = useFinePointer() && canSort;
@@ -142,16 +171,18 @@ export function InventoryTableClient({ items, robots, emptyMessage, canSort, ret
     // No long-press menu — holding an item picks it up
     onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
   } : {};
-  const dropTarget = (cat: string) => ({
-    "data-inv-folder": cat,
+  // (A sub-folder sits inside its folder on phones: the innermost target takes the drop)
+  const dropTarget = (key: string) => ({
+    "data-inv-folder": key,
     ...(mouseDrag ? {
-      onDragOver: (e: React.DragEvent) => { if (!dragging) return; e.preventDefault(); e.dataTransfer.dropEffect = "move"; if (over !== cat) setOver(cat); },
-      onDragLeave: (e: React.DragEvent) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setOver((o) => (o === cat ? null : o)); },
+      onDragOver: (e: React.DragEvent) => { if (!dragging) return; e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = "move"; if (over !== key) setOver(key); },
+      onDragLeave: (e: React.DragEvent) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setOver((o) => (o === key ? null : o)); },
       onDrop: (e: React.DragEvent) => {
         e.preventDefault();
+        e.stopPropagation();
         const id = e.dataTransfer.getData("text/plain") || dragging;
         setDragging(null); setOver(null);
-        if (id) move(id, cat);
+        if (id) move(id, key);
       },
     } : {}),
   });
@@ -162,51 +193,75 @@ export function InventoryTableClient({ items, robots, emptyMessage, canSort, ret
   const hasUnplaced = items.some((i) => !i.storageLocation?.trim());
   const q = search.trim().toLowerCase();
   const filtering = !!(q || location || type);
+  const subName = new Map(subcategories.map((s) => [s.id, s.name]));
   const displayed = shown.filter((i) =>
-    (!q || [i.name, i.partNumber, i.storageLocation, i.stockTag, i.amountLeft].some((v) => (v ?? "").toLowerCase().includes(q))) &&
+    (!q || [i.name, i.partNumber, i.storageLocation, i.stockTag, i.amountLeft, i.subcategoryId && subName.get(i.subcategoryId)].some((v) => (v || "").toLowerCase().includes(q))) &&
     (!location || (location === NO_LOCATION ? !i.storageLocation?.trim() : i.storageLocation?.trim() === location)) &&
     (!type || i.itemType === type));
 
-  // Materials (same-name groups) in list order; full stock first, then partial pieces
-  const groups = new Map<string, Item[]>();
-  for (const i of displayed) groups.set(groupKey(i.name), [...(groups.get(groupKey(i.name)) ?? []), i]);
-  for (const list of groups.values()) list.sort((a, b) => Number(isPartial(a)) - Number(isPartial(b)) || a.name.localeCompare(b.name));
-  // Folders: a material sits in its full stock's category
-  const folders = CATEGORY_OPTIONS.map((c) => ({
-    ...c,
-    groups: [...groups.values()].filter((list) => list[0].category === c.value).sort((a, b) => a[0].name.localeCompare(b[0].name)),
-  }));
-  // Empty folders show while dragging, as places to drop — at the end, so nothing shifts under the pointer
-  const visible = [...folders.filter((f) => f.groups.length > 0), ...(dragging ? folders.filter((f) => f.groups.length === 0) : [])];
-  const isOpen = (cat: string) => filtering || !closed.has(cat);
+  // Materials (same-name groups); full stock first, then partial pieces. A material sits where its first entry is filed.
+  const groupMap = new Map<string, Item[]>();
+  for (const i of displayed) groupMap.set(groupKey(i.name), [...(groupMap.get(groupKey(i.name)) ?? []), i]);
+  for (const list of groupMap.values()) list.sort((a, b) => Number(isPartial(a)) - Number(isPartial(b)) || a.name.localeCompare(b.name));
+  const byName = (a: Group, b: Group) => a[0].name.localeCompare(b[0].name);
+  const all = [...groupMap.values()];
+
+  const folders: FolderNode[] = CATEGORY_OPTIONS.map((c) => {
+    const inCat = all.filter((list) => list[0].category === c.value);
+    const known = subcategories.filter((s) => s.category === c.value);
+    const subs = known.map((s) => ({ id: s.id, name: s.name, key: folderKey(c.value, s.id), groups: inCat.filter((l) => l[0].subcategoryId === s.id).sort(byName) }));
+    const loose = inCat.filter((l) => !known.some((s) => s.id === l[0].subcategoryId)).sort(byName);
+    // Empty sub-folders show while dragging, as places to drop — after the others, so nothing shifts
+    const shownSubs = [...subs.filter((s) => s.groups.length > 0), ...(dragging ? subs.filter((s) => s.groups.length === 0) : [])];
+    return { value: c.value, label: c.label, subs: shownSubs, loose, count: inCat.length };
+  });
+  // Empty folders show while dragging too, at the end
+  const visible = [...folders.filter((f) => f.count > 0), ...(dragging ? folders.filter((f) => f.count === 0) : [])];
+  const isOpen = (key: string) => filtering || !closed.has(key);
+  const isGroupOpen = (list: Group) => filtering || openGroups.has(groupKey(list[0].name));
 
   // A piece opens its full-stock item's page, scrolled to it (that's where pieces are managed)
+  const parentOf = (list: Group) => list.find((x) => !isPartial(x) && !x.archived) ?? list.find((x) => !isPartial(x)) ?? null;
   const hrefOf = (item: Item) => {
-    const parent = isPartial(item) ? groups.get(groupKey(item.name))?.find((x) => !isPartial(x) && !x.archived) : null;
+    const parent = isPartial(item) ? groupMap.get(groupKey(item.name))?.find((x) => !isPartial(x) && !x.archived) : null;
     return parent ? `/inventory/${parent.id}#piece-${item.id}` : `/inventory/${item.id}`;
   };
+  const groupHref = (list: Group) => `/inventory/${(parentOf(list) ?? list[0]).id}`;
   const detailOf = (item: Item, inGroup: boolean) =>
     [isPartial(item) && item.amountLeft && `${item.amountLeft} left`, item.partNumber && !inGroup && item.partNumber, item.stockTag].filter(Boolean).join(" · ") || "—";
 
-  const folderHeader = (f: (typeof folders)[number], phone: boolean) => {
-    const open = isOpen(f.value);
-    const Icon = open && f.groups.length ? FolderOpen : Folder;
+  const folderHeader = (key: string, label: string, count: number, opts: { phone: boolean; sub?: boolean; warn?: boolean }) => {
+    const open = isOpen(key);
+    const Icon = open && count ? FolderOpen : Folder;
     return (
-      <button type="button" onClick={() => toggleFolder(f.value)} disabled={filtering} aria-expanded={open}
-        className={cn("flex w-full items-center gap-2 text-left", phone ? "px-4 py-3" : "px-4 py-2.5")}>
-        <ChevronRight aria-hidden className={cn("h-4 w-4 shrink-0 text-(--color-text-secondary) transition-transform", open && f.groups.length && "rotate-90", filtering && "invisible")} />
-        <Icon aria-hidden className={cn("h-4 w-4 shrink-0", f.value === "UNCATEGORIZED" ? "text-(--color-warning)" : "text-(--color-primary)")} />
-        <span className="font-semibold text-(--color-text-primary)">{f.label}</span>
-        <span className="text-small text-(--color-text-secondary)">{f.groups.length || (dragging ? "drop here" : 0)}</span>
+      <button type="button" onClick={() => toggleFolder(key)} disabled={filtering} aria-expanded={open}
+        className={cn("flex w-full items-center gap-2 text-left", opts.phone ? "px-4 py-3" : "py-2.5", !opts.phone && (opts.sub ? "pl-10 pr-4" : "px-4"))}>
+        <ChevronRight aria-hidden className={cn("h-4 w-4 shrink-0 text-(--color-text-secondary) transition-transform", open && count && "rotate-90", filtering && "invisible")} />
+        <Icon aria-hidden className={cn("shrink-0", opts.sub ? "h-3.5 w-3.5" : "h-4 w-4", opts.warn ? "text-(--color-warning)" : opts.sub ? "text-(--color-secondary)" : "text-(--color-primary)")} />
+        <span className={cn("text-(--color-text-primary)", opts.sub ? "font-medium" : "font-semibold")}>{label}</span>
+        <span className="text-small text-(--color-text-secondary)">{count || (dragging ? "drop here" : 0)}</span>
       </button>
     );
   };
 
-  const row = (item: Item, inGroup: boolean) => (
+  /** The open / close toggle of a material with several entries */
+  const groupToggle = (list: Group) => {
+    const open = isGroupOpen(list);
+    return (
+      <button type="button" onClick={() => toggleGroup(groupKey(list[0].name))} disabled={filtering} aria-expanded={open}
+        aria-label={open ? `Hide the entries of ${list[0].name}` : `Show the ${list.length} entries of ${list[0].name}`}
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-(--color-text-secondary) hover:bg-(--color-surface-overlay) hover:text-(--color-text-primary) disabled:opacity-40">
+        <ChevronRight aria-hidden className={cn("h-4 w-4 transition-transform", open && "rotate-90")} />
+      </button>
+    );
+  };
+
+  // ── Computers ──
+  const row = (item: Item, inGroup: boolean, indent: boolean) => (
     <tr key={item.id} {...dragSource(item.id)}
       className={cn("frc-tr group transition-colors", item.archived && "opacity-60", dragging === item.id && "opacity-40", mouseDrag && "cursor-grab")}>
       <Td className="whitespace-normal">
-        <div className={cn("flex items-center gap-3", inGroup && "pl-6")}>
+        <div className={cn("flex items-center gap-3", indent && "pl-6", inGroup && "pl-14")}>
           {mouseDrag && <GripVertical aria-hidden className="-ml-2 h-4 w-4 shrink-0 text-(--color-text-disabled) opacity-0 group-hover:opacity-100" />}
           <Thumb src={item.image} name={item.name} />
           <Link href={hrefOf(item)} draggable={false} className="min-w-0">
@@ -231,37 +286,80 @@ export function InventoryTableClient({ items, robots, emptyMessage, canSort, ret
     </tr>
   );
 
-  const groupRows = (list: Item[]) => {
-    if (list.length === 1) return row(list[0], false);
+  const groupRows = (list: Group, indent: boolean) => {
+    if (list.length === 1) return row(list[0], false, indent);
     const first = list[0];
-    const full = list.filter((i) => !isPartial(i)).reduce((s, i) => s + i.currentStock, 0);
-    const partials = list.filter(isPartial).reduce((s, i) => s + i.currentStock, 0);
-    const unit = list.find((i) => !isPartial(i))?.unitOfMeasure.toLowerCase() ?? "";
+    const locs = [...new Set(list.map((i) => i.storageLocation).filter(Boolean))];
     return (
       <Fragment key={groupKey(first.name)}>
-        <tr {...dragSource(first.id)} className={cn("group bg-(--color-surface-overlay)", dragging === first.id && "opacity-40", mouseDrag && "cursor-grab")}>
+        <tr {...dragSource(first.id)} className={cn("frc-tr group transition-colors", dragging === first.id && "opacity-40", mouseDrag && "cursor-grab")}>
           <Td className="whitespace-normal">
-            <span className="flex items-center gap-3">
+            <span className={cn("flex items-center gap-3", indent && "pl-6")}>
               {mouseDrag && <GripVertical aria-hidden className="-ml-2 h-4 w-4 shrink-0 text-(--color-text-disabled) opacity-0 group-hover:opacity-100" />}
               <Thumb src={list.find((i) => i.image)?.image ?? null} name={first.name} />
-              <span className="min-w-0">
-                <span className="block font-semibold text-(--color-text-primary)">{first.name}</span>
+              <Link href={groupHref(list)} draggable={false} className="min-w-0">
+                <span className="block font-medium text-(--color-secondary) group-hover:text-(--color-primary) group-hover:underline transition-colors">{first.name}</span>
                 <span className="block text-small text-(--color-text-secondary)">{list.length} entries{first.partNumber ? ` · ${first.partNumber}` : ""}</span>
-              </span>
+              </Link>
+              {groupToggle(list)}
             </span>
           </Td>
           <Td><span className="text-(--color-text-secondary)">{typeLabel(first.itemType)}</span></Td>
-          <Td right>
-            <span className="text-sm font-medium text-(--color-text-primary) whitespace-nowrap">
-              {[full > 0 || !partials ? `${full} ${unit}` : null, partials ? `${partials} partial` : null].filter(Boolean).join(" + ")}
-            </span>
-          </Td>
-          <Td /><Td /><Td /><Td />
+          <Td right><span className="text-sm font-medium text-(--color-text-primary) whitespace-nowrap">{groupStock(list)}</span></Td>
+          <Td />
+          <Td className="whitespace-normal">{locs.length ? locs.join(", ") : "—"}</Td>
+          <Td /><Td />
         </tr>
-        {list.map((i) => row(i, true))}
+        {isGroupOpen(list) && list.map((i) => row(i, true, indent))}
       </Fragment>
     );
   };
+
+  // ── Phones ──
+  const groupCard = (list: Group) => {
+    const first = list[0];
+    const many = list.length > 1;
+    return (
+      <li key={groupKey(first.name)} {...touchSource(first.id)}
+        className={cn("card p-0 overflow-hidden", canSort && "select-none [-webkit-touch-callout:none]", dragging === first.id && "opacity-40")}>
+        {many ? (
+          <>
+            <div className="flex items-center gap-3 px-4 py-3">
+              <Thumb src={list.find((i) => i.image)?.image ?? null} name={first.name} />
+              <Link href={groupHref(list)} draggable={false} className="min-w-0 flex-1">
+                <span className="block break-words font-medium text-(--color-secondary)">{first.name}</span>
+                <span className="block text-small text-(--color-text-secondary)">{groupStock(list)} · {list.length} entries</span>
+              </Link>
+              {groupToggle(list)}
+            </div>
+            {isGroupOpen(list) && (
+              <ul className="divide-y divide-(--color-border) border-t border-(--color-border) bg-(--color-surface-overlay)">
+                {list.map((item) => entry(item, true))}
+              </ul>
+            )}
+          </>
+        ) : (
+          <ul>{entry(first, false)}</ul>
+        )}
+      </li>
+    );
+  };
+  const entry = (item: Item, inGroup: boolean) => (
+    <li key={item.id} className={cn("flex items-center gap-3 px-4 py-3", item.archived && "opacity-60")}>
+      <Thumb src={item.image} name={item.name} />
+      <Link href={hrefOf(item)} draggable={false} className="min-w-0 flex-1">
+        <span className="block break-words font-medium text-(--color-secondary)">
+          {inGroup ? (isPartial(item) ? "Partial piece" : "Full stock") : item.name}
+        </span>
+        <span className="block break-words text-small text-(--color-text-secondary)">
+          {[isPartial(item) && item.amountLeft && `${item.amountLeft} left`, item.storageLocation, item.stockTag].filter(Boolean).join(" · ")}
+        </span>
+        <span className="mt-1 block"><Badge variant={stockVariant(item)}>{stockText(item)}</Badge></span>
+      </Link>
+    </li>
+  );
+  const highlight = (key: string, base: string) =>
+    over === key ? "border-(--color-primary) bg-(--color-primary)/10 ring-2 ring-(--color-primary)/40" : base;
 
   return (
     <>
@@ -308,7 +406,7 @@ export function InventoryTableClient({ items, robots, emptyMessage, canSort, ret
           </p>
           {/* While filtering, every folder with a match is open */}
           {!filtering && (() => {
-            const anyOpen = visible.some((f) => f.groups.length > 0 && isOpen(f.value));
+            const anyOpen = visible.some((f) => f.count > 0 && isOpen(f.value));
             const Icon = anyOpen ? Folder : FolderOpen;
             return (
               <button type="button" onClick={() => setAllFolders(anyOpen)}
@@ -329,52 +427,31 @@ export function InventoryTableClient({ items, robots, emptyMessage, canSort, ret
       ) : (
         // After a touch drag, the lifted finger isn't also a tap on the item
         <div ref={listRef} onClickCapture={(e) => { if (touch.justDragged.current) { e.preventDefault(); e.stopPropagation(); } }}>
-        {/* Phones: a folder per category, a card per material */}
+        {/* Phones: a folder per category, sub-folders inside, a card per material */}
         <div className="space-y-3 sm:hidden">
           {visible.map((f) => (
             <section key={f.value} {...dropTarget(f.value)}
-              className={cn("rounded-xl border transition-colors",
-                over === f.value ? "border-(--color-primary) bg-(--color-primary)/10 ring-2 ring-(--color-primary)/40" : "border-(--color-border) bg-(--color-surface-raised)")}>
-              {folderHeader(f, true)}
-              {isOpen(f.value) && f.groups.length > 0 && (
-                <ul className="space-y-3 px-3 pb-3">
-                  {f.groups.map((list) => (
-                    <li key={groupKey(list[0].name)} {...touchSource(list[0].id)}
-                      className={cn("card p-0 overflow-hidden", canSort && "select-none [-webkit-touch-callout:none]", dragging === list[0].id && "opacity-40")}>
-                      {list.length > 1 && (
-                        <div className="flex items-center gap-3 border-b border-(--color-border) bg-(--color-surface-overlay) px-4 py-3">
-                          <Thumb src={list.find((i) => i.image)?.image ?? null} name={list[0].name} />
-                          <span className="min-w-0">
-                            <span className="block break-words font-semibold text-(--color-text-primary)">{list[0].name}</span>
-                            <span className="block text-small text-(--color-text-secondary)">{typeLabel(list[0].itemType)} · {list.length} entries</span>
-                          </span>
-                        </div>
+              className={cn("rounded-xl border transition-colors", highlight(f.value, "border-(--color-border) bg-(--color-surface-raised)"))}>
+              {folderHeader(f.value, f.label, f.count, { phone: true, warn: f.value === "UNCATEGORIZED" })}
+              {isOpen(f.value) && (f.subs.length > 0 || f.loose.length > 0) && (
+                <div className="space-y-3 px-3 pb-3">
+                  {f.subs.map((s) => (
+                    <section key={s.key} {...dropTarget(s.key)}
+                      className={cn("rounded-lg border transition-colors", highlight(s.key, "border-(--color-border) bg-(--color-surface)/40"))}>
+                      {folderHeader(s.key, s.name, s.groups.length, { phone: true, sub: true })}
+                      {isOpen(s.key) && s.groups.length > 0 && (
+                        <ul className="space-y-3 px-2 pb-2">{s.groups.map(groupCard)}</ul>
                       )}
-                      <ul className="divide-y divide-(--color-border)">
-                        {list.map((item) => (
-                          <li key={item.id} className={cn("flex items-center gap-3 px-4 py-3", item.archived && "opacity-60")}>
-                            <Thumb src={item.image} name={item.name} />
-                            <Link href={hrefOf(item)} draggable={false} className="min-w-0 flex-1">
-                              <span className="block break-words font-medium text-(--color-secondary)">
-                                {list.length > 1 ? (isPartial(item) ? "Partial piece" : "Full stock") : item.name}
-                              </span>
-                              <span className="block break-words text-small text-(--color-text-secondary)">
-                                {[isPartial(item) && item.amountLeft && `${item.amountLeft} left`, item.storageLocation, item.stockTag].filter(Boolean).join(" · ")}
-                              </span>
-                              <span className="mt-1 block"><Badge variant={stockVariant(item)}>{stockText(item)}</Badge></span>
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    </li>
+                    </section>
                   ))}
-                </ul>
+                  {f.loose.length > 0 && <ul className="space-y-3">{f.loose.map(groupCard)}</ul>}
+                </div>
               )}
             </section>
           ))}
         </div>
 
-        {/* Computers: one table, a section per folder */}
+        {/* Computers: one table — a section per folder and sub-folder */}
         <div className="hidden sm:block">
           <Table>
             <TableHead>
@@ -384,16 +461,38 @@ export function InventoryTableClient({ items, robots, emptyMessage, canSort, ret
                 <Th right>Unit cost</Th><Th>Action</Th>
               </tr>
             </TableHead>
-            {visible.map((f) => (
-              <tbody key={f.value} {...dropTarget(f.value)}
-                className={cn("divide-y divide-(--color-table-border) border-t border-(--color-table-border) transition-colors",
-                  over === f.value ? "bg-(--color-primary)/10" : "bg-(--color-surface)")}>
-                <tr className={cn(over === f.value ? "bg-(--color-primary)/15" : "bg-(--color-surface-raised)")}>
-                  <td colSpan={7} className={cn("p-0", over === f.value && "shadow-[inset_3px_0_0_var(--color-primary)]")}>{folderHeader(f, false)}</td>
-                </tr>
-                {isOpen(f.value) && f.groups.map(groupRows)}
-              </tbody>
-            ))}
+            {visible.map((f) => {
+              const open = isOpen(f.value);
+              const body = (key: string) => cn("divide-y divide-(--color-table-border) border-t border-(--color-table-border) transition-colors",
+                over === key ? "bg-(--color-primary)/10" : "bg-(--color-surface)");
+              const header = (key: string, cls: string) => cn(over === key ? "bg-(--color-primary)/15" : cls);
+              return (
+                <Fragment key={f.value}>
+                  <tbody {...dropTarget(f.value)} className={body(f.value)}>
+                    <tr className={header(f.value, "bg-(--color-surface-raised)")}>
+                      <td colSpan={7} className={cn("p-0", over === f.value && "shadow-[inset_3px_0_0_var(--color-primary)]")}>
+                        {folderHeader(f.value, f.label, f.count, { phone: false, warn: f.value === "UNCATEGORIZED" })}
+                      </td>
+                    </tr>
+                  </tbody>
+                  {open && f.subs.map((s) => (
+                    <tbody key={s.key} {...dropTarget(s.key)} className={body(s.key)}>
+                      <tr className={header(s.key, "bg-(--color-surface-overlay)")}>
+                        <td colSpan={7} className={cn("p-0", over === s.key && "shadow-[inset_3px_0_0_var(--color-primary)]")}>
+                          {folderHeader(s.key, s.name, s.groups.length, { phone: false, sub: true })}
+                        </td>
+                      </tr>
+                      {isOpen(s.key) && s.groups.map((l) => groupRows(l, true))}
+                    </tbody>
+                  ))}
+                  {open && f.loose.length > 0 && (
+                    <tbody {...dropTarget(f.value)} className={body(f.value)}>
+                      {f.loose.map((l) => groupRows(l, false))}
+                    </tbody>
+                  )}
+                </Fragment>
+              );
+            })}
           </Table>
         </div>
         </div>

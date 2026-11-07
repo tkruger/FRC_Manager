@@ -9,14 +9,17 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { VendorSupplierPicker } from "@/components/ui/VendorSupplierPicker";
 import { UnitFields } from "../../UnitFields";
-import { CATEGORY_OPTIONS, DEFAULT_CATEGORY, TYPE_OPTIONS } from "@/lib/inventory/categories";
+import { TYPE_OPTIONS } from "@/lib/inventory/categories";
+import { CategoryFields, type SubcategoryOption } from "../../CategoryFields";
 
 export function NewBaseItemForm({
   onClose,
   vendors = [],
+  subcategories = [],
 }: {
   onClose?: () => void;
   vendors?: { id: string; name: string }[];
+  subcategories?: SubcategoryOption[];
 } = {}) {
   const router = useRouter();
   const [state, action, pending] = useActionState(createBaseItemAction, null);
@@ -36,7 +39,9 @@ export function NewBaseItemForm({
 
       <Field label="Item name" name="name" required placeholder='e.g. Falcon 500 Motor' />
       <div className="grid grid-cols-2 gap-4">
-        <Select label="Category" name="category" options={[...CATEGORY_OPTIONS]} defaultValue={DEFAULT_CATEGORY} />
+        <CategoryFields subcategories={subcategories} />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
         <Select label="Item type" name="itemType" options={[...TYPE_OPTIONS]} defaultValue="DISCRETE" />
       </div>
       <div className="grid grid-cols-2 gap-4">

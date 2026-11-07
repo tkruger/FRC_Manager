@@ -38,7 +38,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   });
   if (!activeSeason) redirect("/settings/season");
 
-  const [allItems, reorderRequests, vendors, retiredCount] = await Promise.all([
+  const [allItems, reorderRequests, vendors, retiredCount, subcategories] = await Promise.all([
     prisma.baseInventoryItem.findMany({
       where: {
         seasonId: activeSeason.id,
@@ -63,6 +63,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
       orderBy: { name: "asc" },
     }),
     prisma.baseInventoryItem.count({ where: { seasonId: activeSeason.id, archived: true } }),
+    prisma.inventorySubcategory.findMany({ where: { teamId: session.user.teamId }, select: { id: true, category: true, name: true }, orderBy: { name: "asc" } }),
   ]);
   const items = allItems.filter((i) => !i.archived);
 
@@ -95,11 +96,12 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
           { kind: "link", place: "secondary", label: "Scan", href: "/tools/scan" },
           !viewOnly && { kind: "action", place: "secondary", icon: "plus", label: "Order a new item", action: "inventory:order-new" },
           { kind: "link", place: "menu", icon: "print", label: "Print labels", href: "/inventory/labels" },
+          canManageInventory && { kind: "link", place: "menu", label: "Sub-categories", href: "/inventory/subcategories" },
           canManageInventory && { kind: "action", place: "primary", label: "+ Add item", action: "inventory:add" },
         ]}
         actions={<>
           <OrderNewItemDialog action="inventory:order-new" />
-          {canManageInventory && <AddInventoryItemDialog vendors={vendors} action="inventory:add" />}
+          {canManageInventory && <AddInventoryItemDialog vendors={vendors} subcategories={subcategories} action="inventory:add" />}
         </>}
       />
 
@@ -176,6 +178,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
         <InventoryTableClient
           items={allItems}
           robots={seasons_robots}
+          subcategories={subcategories}
           emptyMessage="No items found."
           canSort={canManageInventory}
           retiredToggle={retiredCount > 0 || showRetired ? {

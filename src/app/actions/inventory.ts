@@ -15,6 +15,7 @@ const BaseItemSchema = z.object({
   name:               z.string().max(300).min(1),
   partNumber:         z.string().max(300).optional(),
   category:           z.enum(CATEGORY_VALUES).default(DEFAULT_CATEGORY),
+  subcategoryId:      z.string().max(40).optional(),
   itemType:           z.enum(["DISCRETE", "RAW_MATERIAL", "CONSUMABLE"]).default("DISCRETE"),
   description:        z.string().max(5000).optional(),
   unitOfMeasure:      z.string().max(300).default("EACH"),
@@ -34,6 +35,13 @@ const BaseItemSchema = z.object({
 });
 
 export type InventoryActionState = { success: boolean; error?: string };
+
+/** A sub-category id the item may have: this team's, in the item's category (anything else: none) */
+async function subcategoryFor(teamId: string, category: string, id: string | null | undefined): Promise<string | null> {
+  if (!id) return null;
+  const sub = await prisma.inventorySubcategory.findFirst({ where: { id, teamId, category: category as ItemCategory }, select: { id: true } });
+  return sub?.id ?? null;
+}
 
 const INVENTORY_MANAGER_ROLES = ["INVENTORY_ADMIN", "HEAD_MENTOR"] as const;
 
@@ -58,6 +66,7 @@ export async function createBaseItemAction(
     name:               formData.get("name"),
     partNumber:         formData.get("partNumber") || undefined,
     category:           formData.get("category") || DEFAULT_CATEGORY,
+    subcategoryId:      formData.get("subcategoryId") || undefined,
     itemType:           formData.get("itemType") || "DISCRETE",
     description:        formData.get("description") || undefined,
     unitOfMeasure:      formData.get("unitOfMeasure") || "EACH",
@@ -84,6 +93,7 @@ export async function createBaseItemAction(
       name:              d.name,
       partNumber:        d.partNumber,
       category:          d.category as ItemCategory,
+      subcategoryId:     await subcategoryFor(session.user.teamId, d.category, d.subcategoryId),
       itemType:          d.itemType as ItemType,
       description:       d.description,
       unitOfMeasure:     d.unitOfMeasure as UnitOfMeasure,
@@ -122,6 +132,7 @@ export async function updateBaseItemAction(
     name:               formData.get("name"),
     partNumber:         formData.get("partNumber") || undefined,
     category:           formData.get("category") || DEFAULT_CATEGORY,
+    subcategoryId:      formData.get("subcategoryId") || undefined,
     itemType:           formData.get("itemType") || "DISCRETE",
     description:        formData.get("description") || undefined,
     unitOfMeasure:      formData.get("unitOfMeasure") || "EACH",
@@ -157,6 +168,7 @@ export async function updateBaseItemAction(
       name:              d.name,
       partNumber:        d.partNumber,
       category:          d.category as ItemCategory,
+      subcategoryId:     await subcategoryFor(session.user.teamId, d.category, d.subcategoryId),
       itemType:          d.itemType as ItemType,
       description:       d.description,
       unitOfMeasure:     d.unitOfMeasure as UnitOfMeasure,
@@ -360,7 +372,7 @@ export async function addPartialPieceAction(fromItemId: string, input: unknown):
   const d = parsed.data;
   const from = await prisma.baseInventoryItem.findFirst({
     where:  { id: fromItemId, season: { teamId: session.user.teamId } },
-    select: { id: true, seasonId: true, name: true, partNumber: true, category: true, itemType: true, unitCost: true, preferredSupplier: true, storageLocation: true, currentStock: true, unitOfMeasure: true, minStockThreshold: true, reorderQuantity: true },
+    select: { id: true, seasonId: true, name: true, partNumber: true, category: true, subcategoryId: true, itemType: true, unitCost: true, preferredSupplier: true, storageLocation: true, currentStock: true, unitOfMeasure: true, minStockThreshold: true, reorderQuantity: true },
   });
   if (!from) return { success: false, error: "Item not found." };
   if (d.takeFromStock && (from.unitOfMeasure === "PARTIAL" || from.currentStock < 1)) return { success: false, error: "There's no full stock to take it from." };
@@ -374,7 +386,7 @@ export async function addPartialPieceAction(fromItemId: string, input: unknown):
       const piece = await tx.baseInventoryItem.create({
         data: {
           seasonId: from.seasonId, stockTag: await nextStockTag(tx, session.user.teamId!),
-          name: from.name, partNumber: from.partNumber, category: from.category, itemType: from.itemType,
+          name: from.name, partNumber: from.partNumber, category: from.category, subcategoryId: from.subcategoryId, itemType: from.itemType,
           unitOfMeasure: "PARTIAL", currentStock: 1, minStockThreshold: 0, reorderQuantity: 0,
           amountLeft: d.amountLeft, storageLocation: d.storageLocation || from.storageLocation, image,
           unitCost: from.unitCost, preferredSupplier: from.preferredSupplier, notes: d.notes || null,
@@ -446,10 +458,10 @@ export async function markPieceUsedUpAction(pieceId: string): Promise<InventoryA
 }
 
 /**
- * Move an item to another category (dragged to a folder in the inventory list). The rest of its
+ * Move an item to another category, or a sub-category of one (dragged to a folder or sub-folder in the inventory list). The rest of its
  * group — the same material's full stock and partial pieces — moves with it, so they stay together.
  */
-export async function moveToCategoryAction(itemId: string, category: string): Promise<InventoryActionState & { moved?: number }> {
+export async function moveToCategoryAction(itemId: string, category: string, subcategoryId: string | null = null): Promise<InventoryActionState & { moved?: number }> {
   const session = await auth();
   if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
   if (!canManageInventory(session.user.roles)) return { success: false, error: "Only Inventory Admins and Head Mentors can sort the inventory." };
@@ -460,7 +472,9 @@ export async function moveToCategoryAction(itemId: string, category: string): Pr
   if (!item) return { success: false, error: "Item not found." };
   const season = await prisma.baseInventoryItem.findMany({ where: { seasonId: item.seasonId }, select: { id: true, name: true } });
   const ids = season.filter((x) => groupKey(x.name) === groupKey(item.name)).map((x) => x.id);
-  const res = await prisma.baseInventoryItem.updateMany({ where: { id: { in: ids } }, data: { category: to.data } });
+  const sub = await subcategoryFor(session.user.teamId, to.data, subcategoryId);
+  if (subcategoryId && !sub) return { success: false, error: "That sub-category is gone." };
+  const res = await prisma.baseInventoryItem.updateMany({ where: { id: { in: ids } }, data: { category: to.data, subcategoryId: sub } });
 
   revalidatePath("/inventory");
   return { success: true, moved: res.count };

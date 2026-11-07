@@ -14,6 +14,7 @@ import { after } from "next/server";
 import { TERMS_REQUIRED } from "@/components/legal/TermsCheckbox";
 import { fullNameSchema } from "@/lib/names";
 import { linkNewMember } from "@/lib/parents";
+import { suggestedSubcategories } from "@/lib/inventory/categories";
 
 const RegisterSchema = z.object({
   name: fullNameSchema,
@@ -97,7 +98,7 @@ async function joinTeamOnRegistration(opts: {
   const newTeam = !team;
   if (!team) {
     team = await prisma.team.create({
-      data: { teamNumber, name: `Team ${teamNumber}`, status: "PENDING" },
+      data: { teamNumber, name: `Team ${teamNumber}`, status: "PENDING", inventorySubcategories: { create: suggestedSubcategories() } },
     });
   }
   if (team.status === "DENIED") {
