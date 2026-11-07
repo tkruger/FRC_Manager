@@ -9,6 +9,7 @@ import { RetireItemButton } from "./RetireItemButton";
 import { LabelPanel, PartialPieceDialog, PhotoPanel } from "./StockPanels";
 import { PiecesStrip } from "./PiecesStrip";
 import { categoryLabel } from "@/lib/inventory/categories";
+import { thumbUrl } from "@/lib/photo-url";
 import { AcquireButton } from "../AcquireButton";
 import { isViewOnly } from "@/lib/access/read-only";
 import { PageHeader } from "@/components/PageHeader";
@@ -168,7 +169,7 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
                 <Link href={`/inventory/${x.id}`} className="flex items-center gap-3 py-2 hover:text-(--color-primary)">
                   {x.image
                     // eslint-disable-next-line @next/next/no-img-element
-                    ? <img src={x.image} alt="" className="h-9 w-9 rounded-md border border-(--color-border) object-cover" />
+                    ? <img src={thumbUrl(x.image)} alt="" loading="lazy" className="h-9 w-9 rounded-md border border-(--color-border) object-cover" />
                     : <span aria-hidden className="h-9 w-9 rounded-md border border-dashed border-(--color-border)" />}
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm font-medium text-(--color-text-primary)">{x.unitOfMeasure === "PARTIAL" ? `Partial piece${x.amountLeft ? ` — ${x.amountLeft} left` : ""}` : "Full stock"}</span>

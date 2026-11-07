@@ -1179,6 +1179,8 @@ model StoredPhoto {
   contentType  String
   size         Int
   data         Bytes
+  /// A small copy (about 320px) for lists; the full photo when missing
+  thumb        Bytes?
   createdAt    DateTime @default(now())
 
   @@index([teamId, createdAt])

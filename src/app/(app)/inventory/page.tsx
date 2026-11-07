@@ -12,7 +12,8 @@ import { OrderNewItemDialog } from "./OrderNewItemDialog";
 import { AddInventoryItemDialog } from "./AddInventoryItemDialog";
 import { InventoryTableClient } from "./InventoryTableClient";
 import { PageHeader } from "@/components/PageHeader";
-import { CATEGORY_VALUES, type CategoryValue } from "@/lib/inventory/categories";
+import { CATEGORY_VALUES, CLOSED_FOLDERS_COOKIE, parseClosedFolders, type CategoryValue } from "@/lib/inventory/categories";
+import { cookies } from "next/headers";
 
 // Roles that may see the Low stock and Order queue tabs
 const RESTRICTED_TAB_ROLES = ["HEAD_MENTOR", "TEAM_LEADERSHIP", "BUILD_LEAD", "INVENTORY_ADMIN"];
@@ -38,7 +39,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   });
   if (!activeSeason) redirect("/settings/season");
 
-  const [allItems, reorderRequests, vendors, retiredCount, subcategories] = await Promise.all([
+  const [allItems, reorderRequests, vendors, retiredCount, subcategories, seasons_robots] = await Promise.all([
     prisma.baseInventoryItem.findMany({
       where: {
         seasonId: activeSeason.id,
@@ -64,6 +65,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
     }),
     prisma.baseInventoryItem.count({ where: { seasonId: activeSeason.id, archived: true } }),
     prisma.inventorySubcategory.findMany({ where: { teamId: session.user.teamId }, select: { id: true, category: true, name: true }, orderBy: { name: "asc" } }),
+    prisma.robot.findMany({ where: { seasonId: activeSeason.id, archived: false }, select: { id: true, displayName: true } }),
   ]);
   const items = allItems.filter((i) => !i.archived);
 
@@ -78,10 +80,6 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
     return "success";
   }
 
-  const seasons_robots = await prisma.robot.findMany({
-    where: { seasonId: activeSeason.id, archived: false },
-    select: { id: true, displayName: true },
-  });
 
   // Build reorder request lookup for the reorder tab
   const reorderByItemId = new Map(reorderRequests.map((r) => [r.baseItemId, r]));
@@ -179,6 +177,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
           items={allItems}
           robots={seasons_robots}
           subcategories={subcategories}
+          initialClosed={parseClosedFolders((await cookies()).get(CLOSED_FOLDERS_COOKIE)?.value)}
           emptyMessage="No items found."
           canSort={canManageInventory}
           retiredToggle={retiredCount > 0 || showRetired ? {

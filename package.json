@@ -12,7 +12,8 @@
     "db:export": "node scripts/db/export-data.mjs",
     "db:import": "node scripts/db/import-data.mjs",
     "db:super-admin": "node scripts/db/super-admin.mjs",
-    "db:migrate": "node scripts/db/migrate-deploy.mjs --force"
+    "db:migrate": "node scripts/db/migrate-deploy.mjs --force",
+    "db:photo-thumbs": "node scripts/db/photo-thumbs.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",

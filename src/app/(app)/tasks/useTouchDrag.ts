@@ -36,6 +36,8 @@ interface DragState {
   over: string | null;
   ghost: HTMLElement | null;
   raf: number;
+  /** Where the finger went down — its touch events keep going there even if it leaves the page */
+  src: EventTarget | null;
 }
 
 /** `target` names the drop targets' attribute: data-kanban-col by default (the Kanban columns) */
@@ -46,8 +48,10 @@ export function useTouchDrag(handlers: TouchDragHandlers, board: React.RefObject
   const drag = useRef<DragState | null>(null);
   /** True just after a drag, so the tap that ends it doesn't also open the card */
   const justDragged = useRef(false);
-  /** Lifts the card once the hold completes (set up in the effect below) */
+  /** Lifts the card once the hold completes, and ends a drag (set up in the effect below) */
   const activateRef = useRef<((s: DragState) => void) | null>(null);
+  const finishRef = useRef<((s: DragState) => void) | null>(null);
+  const listenRef = useRef<{ move: (e: TouchEvent) => void; end: (e: TouchEvent) => void } | null>(null);
 
   useEffect(() => {
     function hitTest(s: DragState) {
@@ -97,12 +101,22 @@ export function useTouchDrag(handlers: TouchDragHandlers, board: React.RefObject
       cancelAnimationFrame(s.raf);
       s.ghost?.remove();
       s.el.style.opacity = "";
-      drag.current = null;
+      unlisten(s);
+      if (drag.current === s) drag.current = null;
+    }
+    function unlisten(s: DragState) {
+      s.src?.removeEventListener("touchmove", onMove as EventListener);
+      s.src?.removeEventListener("touchend", onEnd as EventListener);
+      s.src?.removeEventListener("touchcancel", onEnd as EventListener);
+      s.src = null;
     }
 
+    // The same event can arrive twice — at the finger's element and at the page — but counts once
+    let last: TouchEvent | null = null;
     function onMove(e: TouchEvent) {
       const s = drag.current;
-      if (!s) return;
+      if (!s || e === last) return;
+      last = e;
       const t = e.touches[0];
       s.x = t.clientX;
       s.y = t.clientY;
@@ -117,7 +131,8 @@ export function useTouchDrag(handlers: TouchDragHandlers, board: React.RefObject
     }
     function onEnd(e: TouchEvent) {
       const s = drag.current;
-      if (!s) return;
+      if (!s || e === last) return;
+      last = e;
       const wasActive = s.active;
       const over = s.over;
       finish(s);
@@ -134,6 +149,8 @@ export function useTouchDrag(handlers: TouchDragHandlers, board: React.RefObject
     document.addEventListener("touchend", onEnd, { passive: false });
     document.addEventListener("touchcancel", onEnd);
     activateRef.current = activate;
+    finishRef.current = finish;
+    listenRef.current = { move: onMove, end: onEnd };
     return () => {
       document.removeEventListener("touchmove", onMove);
       document.removeEventListener("touchend", onEnd);
@@ -144,14 +161,24 @@ export function useTouchDrag(handlers: TouchDragHandlers, board: React.RefObject
 
   /** Start watching for a hold on this card (call from onTouchStart) */
   function begin(id: string, el: HTMLElement, e: React.TouchEvent) {
+    // A drag that never heard its finger lift is over now
+    if (drag.current) finishRef.current?.(drag.current);
     if (e.touches.length !== 1) return;
     const t = e.touches[0];
     const s: DragState = {
       id, el, startX: t.clientX, startY: t.clientY, x: t.clientX, y: t.clientY,
-      offX: 0, offY: 0, active: false, over: null, ghost: null, raf: 0,
+      offX: 0, offY: 0, active: false, over: null, ghost: null, raf: 0, src: e.target,
       timer: setTimeout(() => activateRef.current?.(s), HOLD_MS),
     };
     drag.current = s;
+    // Touch events go to the element the finger went down on. If a re-render takes it off the page,
+    // they no longer reach the page's listeners — so listen on it too, or the drag never ends
+    const l = listenRef.current;
+    if (l && s.src) {
+      s.src.addEventListener("touchmove", l.move as EventListener, { passive: false });
+      s.src.addEventListener("touchend", l.end as EventListener, { passive: false });
+      s.src.addEventListener("touchcancel", l.end as EventListener);
+    }
   }
 
   return { begin, justDragged };

@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useOptimistic, useRef, useState, useTransition } from "react";
+import { Fragment, useOptimistic, useRef, useState, useSyncExternalStore, useTransition } from "react";
 import Link from "next/link";
 import { ChevronRight, Folder, FolderOpen, GripVertical } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +9,7 @@ import { toast } from "@/components/ui/toast";
 import { ZoomablePhoto } from "@/components/ui/PhotoViewer";
 import { cn, formatCurrency } from "@/lib/utils";
 import { groupKey, isPartial, stockText } from "@/lib/inventory/units";
-import { CATEGORY_OPTIONS, TYPE_OPTIONS, categoryLabel, typeLabel } from "@/lib/inventory/categories";
+import { CATEGORY_OPTIONS, CLOSED_FOLDERS_COOKIE, TYPE_OPTIONS, categoryLabel, typeLabel } from "@/lib/inventory/categories";
 import { moveToCategoryAction } from "@/app/actions/inventory";
 import { useFinePointer, useTouchDrag } from "../tasks/useTouchDrag";
 import { AcquireButton } from "./AcquireButton";
@@ -46,16 +46,21 @@ interface Props {
   canSort:       boolean;
   /** "Show retired items" link, when there are any */
   retiredToggle?: { showing: boolean; count: number; href: string };
+  /** Folders this person closed (from their cookie) */
+  initialClosed: string[];
 }
 
 /** The location filter's choice for entries with no location */
 const NO_LOCATION = "\u0000none";
-/** Which folders are closed, kept per browser */
-const COLLAPSED_KEY = "frc:inventory-folders-closed";
 
 /** A drop target / folder key: the category, or category|sub-category id for a sub-folder */
 const folderKey = (category: string, subId?: string | null) => (subId ? `${category}|${subId}` : category);
 const parseKey = (key: string) => { const [category, subId] = key.split("|"); return { category, subId: subId ?? null }; };
+
+/** Remember the closed folders (read by the page on the next visit) */
+function writeClosedCookie(closed: Set<string>) {
+  document.cookie = `${CLOSED_FOLDERS_COOKIE}=${encodeURIComponent(JSON.stringify([...closed]))}; path=/inventory; max-age=31536000; samesite=lax`;
+}
 
 function stockVariant(item: Item): "danger" | "warning" | "success" | "info" {
   if (isPartial(item)) return item.currentStock > 0 ? "info" : "danger";
@@ -67,7 +72,7 @@ function stockVariant(item: Item): "danger" | "warning" | "success" | "info" {
 /** A small photo of the material — tap it to see it full screen (a placeholder square when there's none) */
 function Thumb({ src, name }: { src: string | null; name: string }) {
   return src
-    ? <ZoomablePhoto src={src} alt={name} className="h-10 w-10 shrink-0 rounded-md border border-(--color-border)" imgClassName="h-full w-full object-cover" />
+    ? <ZoomablePhoto src={src} alt={name} thumb className="h-10 w-10 shrink-0 rounded-md border border-(--color-border)" imgClassName="h-full w-full object-cover" />
     : <span aria-hidden className="h-10 w-10 shrink-0 rounded-md border border-dashed border-(--color-border)" />;
 }
 
@@ -83,7 +88,7 @@ const selectCls = "rounded-md border border-(--color-border) bg-(--color-surface
 
 type Group = Item[];
 interface SubFolder { id: string; name: string; key: string; groups: Group[] }
-interface FolderNode { value: string; label: string; subs: SubFolder[]; loose: Group[]; count: number }
+interface FolderNode { value: string; label: string; subs: SubFolder[]; emptySubs: SubFolder[]; loose: Group[]; count: number }
 
 /**
  * Inventory in folders by category, and sub-folders by sub-category (an item doesn't need one). Inside,
@@ -91,38 +96,35 @@ interface FolderNode { value: string; label: string; subs: SubFolder[]; loose: G
  * open to see its entries. Editors sort items by dragging them to another folder or sub-folder (on
  * phones: touch and hold, then drag); the whole material moves together.
  */
-export function InventoryTableClient({ items, robots, subcategories, emptyMessage, canSort, retiredToggle }: Props) {
+export function InventoryTableClient({ items, robots, subcategories, emptyMessage, canSort, retiredToggle, initialClosed }: Props) {
   const [search, setSearch] = useState("");
   const [location, setLocation] = useState("");
   const [type, setType] = useState("");
-  const [closed, setClosed] = useState<Set<string>>(new Set());
+  const [closed, setClosed] = useState<Set<string>>(() => new Set(initialClosed));
   /** Materials opened to show their entries (closed by default) */
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
   const [dragging, setDragging] = useState<string | null>(null);
-  const [over, setOver] = useState<string | null>(null);
+  // Phones get the cards, computers the table — only the one on screen is drawn (both until it's known)
+  const wide = useSyncExternalStore(
+    (onChange) => { const mq = window.matchMedia("(min-width: 640px)"); mq.addEventListener("change", onChange); return () => mq.removeEventListener("change", onChange); },
+    () => window.matchMedia("(min-width: 640px)").matches,
+    () => null,
+  );
   const [, startMove] = useTransition();
 
   // Moved items show in their new folder straight away
   const [shown, moveShown] = useOptimistic(items, (state, m: { key: string; category: string; subId: string | null }) =>
     state.map((i) => (groupKey(i.name) === m.key ? { ...i, category: m.category, subcategoryId: m.subId } : i)));
 
-  // Closed folders are remembered (read after the first render, so it matches the server's)
-  useEffect(() => {
-    const t = setTimeout(() => {
-      try { const v = JSON.parse(localStorage.getItem(COLLAPSED_KEY) ?? "[]"); if (Array.isArray(v)) setClosed(new Set(v)); } catch { /* not available */ }
-    }, 0);
-    return () => clearTimeout(t);
-  }, []);
+  // Closed folders are remembered in a cookie, so the page arrives with them closed
   function saveClosed(next: Set<string>) {
-    try { localStorage.setItem(COLLAPSED_KEY, JSON.stringify([...next])); } catch { /* not available */ }
+    writeClosedCookie(next);
     return next;
   }
   function toggleFolder(key: string) {
-    setClosed((prev) => {
-      const next = new Set(prev);
-      if (!next.delete(key)) next.add(key);
-      return saveClosed(next);
-    });
+    const next = new Set(closed);
+    if (!next.delete(key)) next.add(key);
+    setClosed(saveClosed(next));
   }
   /** Close every folder and sub-folder, or open them all */
   function setAllFolders(close: boolean) {
@@ -148,6 +150,16 @@ export function InventoryTableClient({ items, robots, subcategories, emptyMessag
 
   // Phones and tablets: touch and hold an item, then drag it to a folder
   const listRef = useRef<HTMLDivElement>(null);
+  /** Mark the folder under the pointer (data-over — styled below) */
+  const overRef = useRef<string | null>(null);
+  function setOver(key: string | null) {
+    if (overRef.current === key) return;
+    overRef.current = key;
+    const root = listRef.current;
+    if (!root) return;
+    root.querySelectorAll("[data-over]").forEach((el) => el.removeAttribute("data-over"));
+    if (key) root.querySelectorAll(`[data-inv-folder="${CSS.escape(key)}"]`).forEach((el) => el.setAttribute("data-over", ""));
+  }
   const touch = useTouchDrag({
     onStart:  (id) => setDragging(id),
     onOver:   (key) => setOver(key),
@@ -175,8 +187,8 @@ export function InventoryTableClient({ items, robots, subcategories, emptyMessag
   const dropTarget = (key: string) => ({
     "data-inv-folder": key,
     ...(mouseDrag ? {
-      onDragOver: (e: React.DragEvent) => { if (!dragging) return; e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = "move"; if (over !== key) setOver(key); },
-      onDragLeave: (e: React.DragEvent) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setOver((o) => (o === key ? null : o)); },
+      onDragOver: (e: React.DragEvent) => { if (!dragging) return; e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = "move"; setOver(key); },
+      onDragLeave: (e: React.DragEvent) => { if (!e.currentTarget.contains(e.relatedTarget as Node) && overRef.current === key) setOver(null); },
       onDrop: (e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
@@ -212,8 +224,7 @@ export function InventoryTableClient({ items, robots, subcategories, emptyMessag
     const subs = known.map((s) => ({ id: s.id, name: s.name, key: folderKey(c.value, s.id), groups: inCat.filter((l) => l[0].subcategoryId === s.id).sort(byName) }));
     const loose = inCat.filter((l) => !known.some((s) => s.id === l[0].subcategoryId)).sort(byName);
     // Empty sub-folders show while dragging, as places to drop — after the others, so nothing shifts
-    const shownSubs = [...subs.filter((s) => s.groups.length > 0), ...(dragging ? subs.filter((s) => s.groups.length === 0) : [])];
-    return { value: c.value, label: c.label, subs: shownSubs, loose, count: inCat.length };
+    return { value: c.value, label: c.label, subs: subs.filter((s) => s.groups.length > 0), emptySubs: dragging ? subs.filter((s) => s.groups.length === 0) : [], loose, count: inCat.length };
   });
   // Empty folders show while dragging too, at the end
   const visible = [...folders.filter((f) => f.count > 0), ...(dragging ? folders.filter((f) => f.count === 0) : [])];
@@ -358,8 +369,16 @@ export function InventoryTableClient({ items, robots, subcategories, emptyMessag
       </Link>
     </li>
   );
-  const highlight = (key: string, base: string) =>
-    over === key ? "border-(--color-primary) bg-(--color-primary)/10 ring-2 ring-(--color-primary)/40" : base;
+  const highlight = "data-[over]:border-(--color-primary) data-[over]:bg-(--color-primary)/10 data-[over]:ring-2 data-[over]:ring-(--color-primary)/40";
+  const subFolderCard = (s: SubFolder) => (
+    <section key={s.key} {...dropTarget(s.key)}
+      className={cn("rounded-lg border border-(--color-border) bg-(--color-surface)/40 transition-colors", highlight)}>
+      {folderHeader(s.key, s.name, s.groups.length, { phone: true, sub: true })}
+      {isOpen(s.key) && s.groups.length > 0 && (
+        <ul className="space-y-3 px-2 pb-2">{s.groups.map(groupCard)}</ul>
+      )}
+    </section>
+  );
 
   return (
     <>
@@ -428,31 +447,24 @@ export function InventoryTableClient({ items, robots, subcategories, emptyMessag
         // After a touch drag, the lifted finger isn't also a tap on the item
         <div ref={listRef} onClickCapture={(e) => { if (touch.justDragged.current) { e.preventDefault(); e.stopPropagation(); } }}>
         {/* Phones: a folder per category, sub-folders inside, a card per material */}
-        <div className="space-y-3 sm:hidden">
+        {wide !== true && <div className="space-y-3 sm:hidden">
           {visible.map((f) => (
             <section key={f.value} {...dropTarget(f.value)}
-              className={cn("rounded-xl border transition-colors", highlight(f.value, "border-(--color-border) bg-(--color-surface-raised)"))}>
+              className={cn("rounded-xl border border-(--color-border) bg-(--color-surface-raised) transition-colors", highlight)}>
               {folderHeader(f.value, f.label, f.count, { phone: true, warn: f.value === "UNCATEGORIZED" })}
-              {isOpen(f.value) && (f.subs.length > 0 || f.loose.length > 0) && (
+              {isOpen(f.value) && (f.subs.length > 0 || f.loose.length > 0 || f.emptySubs.length > 0) && (
                 <div className="space-y-3 px-3 pb-3">
-                  {f.subs.map((s) => (
-                    <section key={s.key} {...dropTarget(s.key)}
-                      className={cn("rounded-lg border transition-colors", highlight(s.key, "border-(--color-border) bg-(--color-surface)/40"))}>
-                      {folderHeader(s.key, s.name, s.groups.length, { phone: true, sub: true })}
-                      {isOpen(s.key) && s.groups.length > 0 && (
-                        <ul className="space-y-3 px-2 pb-2">{s.groups.map(groupCard)}</ul>
-                      )}
-                    </section>
-                  ))}
+                  {f.subs.map(subFolderCard)}
                   {f.loose.length > 0 && <ul className="space-y-3">{f.loose.map(groupCard)}</ul>}
+                  {f.emptySubs.map(subFolderCard)}
                 </div>
               )}
             </section>
           ))}
-        </div>
+        </div>}
 
         {/* Computers: one table — a section per folder and sub-folder */}
-        <div className="hidden sm:block">
+        {wide !== false && <div className="hidden sm:block">
           <Table>
             <TableHead>
               <tr>
@@ -463,38 +475,38 @@ export function InventoryTableClient({ items, robots, subcategories, emptyMessag
             </TableHead>
             {visible.map((f) => {
               const open = isOpen(f.value);
-              const body = (key: string) => cn("divide-y divide-(--color-table-border) border-t border-(--color-table-border) transition-colors",
-                over === key ? "bg-(--color-primary)/10" : "bg-(--color-surface)");
-              const header = (key: string, cls: string) => cn(over === key ? "bg-(--color-primary)/15" : cls);
+              const body = "group/f divide-y divide-(--color-table-border) border-t border-(--color-table-border) bg-(--color-surface) transition-colors data-[over]:bg-(--color-primary)/10";
+              const header = (cls: string) => cn(cls, "group-data-[over]/f:bg-(--color-primary)/15");
+              const bar = "p-0 group-data-[over]/f:shadow-[inset_3px_0_0_var(--color-primary)]";
+              const subBody = (s: SubFolder) => (
+                <tbody key={s.key} {...dropTarget(s.key)} className={body}>
+                  <tr className={header("bg-(--color-surface-overlay)")}>
+                    <td colSpan={7} className={bar}>{folderHeader(s.key, s.name, s.groups.length, { phone: false, sub: true })}</td>
+                  </tr>
+                  {isOpen(s.key) && s.groups.map((l) => groupRows(l, true))}
+                </tbody>
+              );
               return (
                 <Fragment key={f.value}>
-                  <tbody {...dropTarget(f.value)} className={body(f.value)}>
-                    <tr className={header(f.value, "bg-(--color-surface-raised)")}>
-                      <td colSpan={7} className={cn("p-0", over === f.value && "shadow-[inset_3px_0_0_var(--color-primary)]")}>
+                  <tbody {...dropTarget(f.value)} className={body}>
+                    <tr className={header("bg-(--color-surface-raised)")}>
+                      <td colSpan={7} className={bar}>
                         {folderHeader(f.value, f.label, f.count, { phone: false, warn: f.value === "UNCATEGORIZED" })}
                       </td>
                     </tr>
                   </tbody>
-                  {open && f.subs.map((s) => (
-                    <tbody key={s.key} {...dropTarget(s.key)} className={body(s.key)}>
-                      <tr className={header(s.key, "bg-(--color-surface-overlay)")}>
-                        <td colSpan={7} className={cn("p-0", over === s.key && "shadow-[inset_3px_0_0_var(--color-primary)]")}>
-                          {folderHeader(s.key, s.name, s.groups.length, { phone: false, sub: true })}
-                        </td>
-                      </tr>
-                      {isOpen(s.key) && s.groups.map((l) => groupRows(l, true))}
-                    </tbody>
-                  ))}
+                  {open && f.subs.map(subBody)}
                   {open && f.loose.length > 0 && (
-                    <tbody {...dropTarget(f.value)} className={body(f.value)}>
+                    <tbody {...dropTarget(f.value)} className={body}>
                       {f.loose.map((l) => groupRows(l, false))}
                     </tbody>
                   )}
+                  {open && f.emptySubs.map(subBody)}
                 </Fragment>
               );
             })}
           </Table>
-        </div>
+        </div>}
         </div>
       )}
     </>

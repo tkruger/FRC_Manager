@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **Dragging inventory on a phone no longer freezes the page**: a drag could miss the finger lifting and stay stuck, keeping the page from scrolling. The task board uses the same dragging and gets the fix too. Moving over folders is smoother as well
+- **The inventory page loads faster**: closed folders are remembered by the server, so the page arrives with them closed; only the phone or the computer layout is drawn; thumbnails load as they scroll into view
+- **Photos get a small copy for lists**: uploads are stored at a size that looks good on a phone or computer, plus a thumbnail the lists use, so they no longer download full photos. Tapping still opens the full photo. Existing photos get thumbnails with `npm run db:photo-thumbs`
+- Notifications menu: **Clear all** and **View all** line up on phones
 ## 1.17.0 — 2026-11-07
 
 - **Inventory sub-categories**: each category can have sub-categories (Gears, Belts, Pulleys, Sprockets, Chain… under Mechanical), shown as sub-folders in the inventory list. Pick one with the new **Sub-category** dropdown when adding or editing an item (it is optional), or drag an item onto a sub-folder. Inventory Admins and Head Mentors set them up under Inventory → ⋯ → **Sub-categories**; every team starts with a suggested set

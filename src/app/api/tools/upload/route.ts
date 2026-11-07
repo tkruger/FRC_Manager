@@ -39,9 +39,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Use a JPEG, PNG or WebP photo." }, { status: 400 });
   }
 
+  // A small copy for lists (optional; a JPEG the browser made)
+  const t = form.get("thumb");
+  let thumb: Uint8Array<ArrayBuffer> | null = null;
+  if (t instanceof File && t.size > 0 && t.size <= 300 * 1024) {
+    const tb = new Uint8Array(await t.arrayBuffer());
+    if (sniffImage(tb.subarray(0, 16))?.type === "image/jpeg") thumb = tb;
+  }
+
   // The type comes from the bytes, never from the upload
   const photo = await prisma.storedPhoto.create({
-    data:   { teamId: session.user.teamId, uploadedById: session.user.id, contentType: kind.type, size: bytes.length, data: Buffer.from(bytes) },
+    data:   { teamId: session.user.teamId, uploadedById: session.user.id, contentType: kind.type, size: bytes.length, data: Buffer.from(bytes), thumb },
     select: { id: true },
   });
   return NextResponse.json({ url: `/api/photos/${photo.id}` });

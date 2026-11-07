@@ -20,3 +20,21 @@ export async function shrinkImage(file: File, opts: { maxSide?: number; quality?
     return file; // The server says if it can't take it
   }
 }
+
+/** A small JPEG copy of a photo for lists (longest side `side`); null if the browser can't make one */
+export async function thumbnail(file: File, side = 320): Promise<File | null> {
+  if (!file.type.startsWith("image/")) return null;
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, side / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+    const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/jpeg", 0.75));
+    return blob ? new File([blob], "thumb.jpg", { type: "image/jpeg" }) : null;
+  } catch {
+    return null;
+  }
+}

@@ -102,11 +102,11 @@ export function NotificationsDropdown({ unreadCount }: { unreadCount: number }) 
             <p className="text-sm font-semibold text-(--color-text-primary)">Notifications</p>
             {notifications.length > 0 && (
               <span className="flex items-center gap-3">
-                <button type="button" onClick={() => clear()} className="text-xs text-(--color-text-secondary) hover:text-(--color-text-primary) hover:underline">
+                <button type="button" onClick={() => clear()} className="inline-flex items-center text-xs text-(--color-text-secondary) hover:text-(--color-text-primary) hover:underline">
                   Clear all
                 </button>
                 <Link href="/notifications" onClick={() => setOpen(false)}
-                  className="text-xs text-(--color-secondary) hover:underline">
+                  className="inline-flex items-center text-xs text-(--color-secondary) hover:underline">
                   View all
                 </Link>
               </span>

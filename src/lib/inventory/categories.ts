@@ -20,6 +20,15 @@ export const CATEGORY_VALUES = CATEGORY_OPTIONS.map((c) => c.value) as [Category
 /** What a new item is filed under until someone sorts it */
 export const DEFAULT_CATEGORY: CategoryValue = "UNCATEGORIZED";
 
+/** Cookie with the inventory folders a person has closed (so the page arrives with them closed) */
+export const CLOSED_FOLDERS_COOKIE = "inv-closed";
+
+/** The closed folders in that cookie */
+export function parseClosedFolders(value: string | undefined): string[] {
+  if (!value) return [];
+  try { const v = JSON.parse(decodeURIComponent(value)); return Array.isArray(v) ? v.filter((x): x is string => typeof x === "string").slice(0, 200) : []; } catch { return []; }
+}
+
 export const categoryLabel = (v: string) => CATEGORY_OPTIONS.find((c) => c.value === v)?.label ?? v.replace(/_/g, " ");
 
 export const TYPE_OPTIONS = [

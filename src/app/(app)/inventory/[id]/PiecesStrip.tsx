@@ -13,6 +13,7 @@ import { uploadPhoto } from "@/lib/upload-photo";
 import { AcquireButton } from "../AcquireButton";
 import { printStockLabel } from "./StockPanels";
 import { ZoomablePhoto } from "@/components/ui/PhotoViewer";
+import { thumbUrl } from "@/lib/photo-url";
 
 export interface Piece {
   id: string;
@@ -104,7 +105,7 @@ function PieceCard({ piece, name, canEdit, robots, focused }: {
             className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-lg border border-dashed border-(--color-primary) bg-(--color-surface-overlay) text-(--color-text-secondary)">
             {piece.image
               // eslint-disable-next-line @next/next/no-img-element
-              ? <img src={piece.image} alt={`${name} — ${detail}`} className="h-full w-full object-cover" />
+              ? <img src={thumbUrl(piece.image)} alt={`${name} — ${detail}`} className="h-full w-full object-cover" />
               : <span className="flex flex-col items-center gap-1 text-small"><Camera className="h-6 w-6" aria-hidden />Add a photo</span>}
             {piece.image && <span className="absolute bottom-1.5 right-1.5 rounded-md bg-black/60 px-2 py-0.5 text-xs text-white">Change photo</span>}
             {uploading && <span className="absolute inset-0 flex items-center justify-center bg-black/50 text-sm text-white">Uploading…</span>}
@@ -117,7 +118,7 @@ function PieceCard({ piece, name, canEdit, robots, focused }: {
             onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void photo(f); }} />
         </div>
       ) : piece.image ? (
-        <ZoomablePhoto src={piece.image} alt={`${name} — ${detail}`} className="aspect-[4/3] w-full rounded-lg border border-(--color-border)"
+        <ZoomablePhoto src={piece.image} thumb alt={`${name} — ${detail}`} className="aspect-[4/3] w-full rounded-lg border border-(--color-border)"
           imgClassName="h-full w-full object-cover">
           <span className="absolute bottom-1.5 right-1.5 rounded-md bg-black/60 p-1 text-white"><Maximize2 className="h-3.5 w-3.5" aria-hidden /></span>
         </ZoomablePhoto>

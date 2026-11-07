@@ -4,6 +4,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 import * as RadixDialog from "@radix-ui/react-dialog";
 import { X, ZoomIn, ZoomOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { thumbUrl } from "@/lib/photo-url";
 
 // A photo you can tap to see full screen. In the viewer, tap the photo to zoom in on that spot (drag or
 // scroll to look around) and tap again to fit it back; tap outside it, ✕ or Esc to close.
@@ -61,9 +62,12 @@ export function PhotoViewer({ src, alt, open, onOpenChange }: {
   );
 }
 
-/** An image that opens full screen when tapped. `className` styles the button around it. */
-export function ZoomablePhoto({ src, alt, className, imgClassName, children }: {
-  src: string; alt: string; className?: string; imgClassName?: string; children?: React.ReactNode;
+/**
+ * An image that opens full screen when tapped. `className` styles the button around it; `thumb` shows
+ * the small copy (for a small image) — the full photo still opens.
+ */
+export function ZoomablePhoto({ src, alt, className, imgClassName, thumb, children }: {
+  src: string; alt: string; className?: string; imgClassName?: string; thumb?: boolean; children?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -72,7 +76,7 @@ export function ZoomablePhoto({ src, alt, className, imgClassName, children }: {
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpen(true); }}
         className={cn("relative block cursor-zoom-in overflow-hidden", className)}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={src} alt={alt} draggable={false} className={imgClassName} />
+        <img src={thumb ? thumbUrl(src) : src} alt={alt} draggable={false} loading="lazy" decoding="async" className={imgClassName} />
         {children}
       </button>
       <PhotoViewer src={src} alt={alt} open={open} onOpenChange={setOpen} />
