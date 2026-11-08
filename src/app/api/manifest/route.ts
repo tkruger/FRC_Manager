@@ -22,7 +22,10 @@ export function GET(req: Request) {
       background_color: "#080A10",
       theme_color:      "#080A10",
       orientation:      "portrait-primary",
+      // iOS 26 takes the home-screen icon from here (no longer from the page's apple-touch-icon) — the
+      // 180px one it's made for comes first; the maskable one (Android) last
       icons: [
+        { src: appIconPath(icon, "apple-touch-icon.png"),  sizes: "180x180", type: "image/png", purpose: "any" },
         { src: appIconPath(icon, "icon-192.png"),          sizes: "192x192", type: "image/png", purpose: "any" },
         { src: appIconPath(icon, "icon-512.png"),          sizes: "512x512", type: "image/png", purpose: "any" },
         { src: appIconPath(icon, "icon-512-maskable.png"), sizes: "512x512", type: "image/png", purpose: "maskable" },

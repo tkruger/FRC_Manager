@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Home-screen icon on iOS 26**: iPhones now take the icon from the app's manifest, which lists the 180px home-screen icon first; the fallback icon iPhones look for also exists now. Adding FRC Manager to the home screen showed a plain letter "F" instead of the icon
 - **The home-screen icon you choose is used right away**: after picking one in Settings → Profile & appearance, adding FRC Manager to the home screen uses it without reloading the page first (before, iPhones could still get the old icon)
 - **New default app icon**: the full-color robot on orange. Notifications use it too
 ## 1.18.1 — 2026-11-08
