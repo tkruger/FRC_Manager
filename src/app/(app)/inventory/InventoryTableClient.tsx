@@ -2,6 +2,7 @@
 
 import { Fragment, useOptimistic, useRef, useState, useSyncExternalStore, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ChevronRight, Folder, FolderOpen, GripVertical } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableHead, Th, Td } from "@/components/ui/table";
@@ -82,6 +83,23 @@ function groupStock(list: Item[]) {
   const partials = list.filter(isPartial).reduce((s, i) => s + i.currentStock, 0);
   const unit = list.find((i) => !isPartial(i))?.unitOfMeasure.toLowerCase() ?? "";
   return [full > 0 || !partials ? `${full} ${unit}` : null, partials ? `${partials} partial` : null].filter(Boolean).join(" + ");
+}
+
+/**
+ * A phone card's tappable area: opens `href` like a link, but isn't one. Holding a real link makes
+ * iPhones start their own long-press (link preview, dragging the link) and pause the page until the
+ * finger moves — so touch-and-hold to sort took seconds to pick a card up. (Task cards work the same way.)
+ */
+function CardLink({ href, className, children }: { href: string; className?: string; children: React.ReactNode }) {
+  const router = useRouter();
+  return (
+    <div role="link" tabIndex={0} className={cn("cursor-pointer", className)}
+      onClick={() => router.push(href)}
+      onKeyDown={(e) => { if (e.key === "Enter") router.push(href); }}
+      onTouchStart={() => router.prefetch(href)}>
+      {children}
+    </div>
+  );
 }
 
 const selectCls = "rounded-md border border-(--color-border) bg-(--color-surface) text-(--color-text-primary) px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-(--color-primary)/40 focus:border-(--color-primary)";
@@ -332,15 +350,15 @@ export function InventoryTableClient({ items, robots, subcategories, emptyMessag
     const many = list.length > 1;
     return (
       <li key={groupKey(first.name)} {...touchSource(first.id)}
-        className={cn("card p-0 overflow-hidden", canSort && "select-none [-webkit-touch-callout:none]", dragging === first.id && "opacity-40")}>
+        className={cn("card p-0 overflow-hidden", canSort && "select-none [-webkit-touch-callout:none] [&_*]:[-webkit-user-drag:none]", dragging === first.id && "opacity-40")}>
         {many ? (
           <>
             <div className="flex items-center gap-3 px-4 py-3">
               <Thumb src={list.find((i) => i.image)?.image ?? null} name={first.name} />
-              <Link href={groupHref(list)} draggable={false} className="min-w-0 flex-1">
+              <CardLink href={groupHref(list)} className="min-w-0 flex-1">
                 <span className="block break-words font-medium text-(--color-secondary)">{first.name}</span>
                 <span className="block text-small text-(--color-text-secondary)">{groupStock(list)} · {list.length} entries</span>
-              </Link>
+              </CardLink>
               {groupToggle(list)}
             </div>
             {isGroupOpen(list) && (
@@ -358,7 +376,7 @@ export function InventoryTableClient({ items, robots, subcategories, emptyMessag
   const entry = (item: Item, inGroup: boolean) => (
     <li key={item.id} className={cn("flex items-center gap-3 px-4 py-3", item.archived && "opacity-60")}>
       <Thumb src={item.image} name={item.name} />
-      <Link href={hrefOf(item)} draggable={false} className="min-w-0 flex-1">
+      <CardLink href={hrefOf(item)} className="min-w-0 flex-1">
         <span className="block break-words font-medium text-(--color-secondary)">
           {inGroup ? (isPartial(item) ? "Partial piece" : "Full stock") : item.name}
         </span>
@@ -366,7 +384,7 @@ export function InventoryTableClient({ items, robots, subcategories, emptyMessag
           {[isPartial(item) && item.amountLeft && `${item.amountLeft} left`, item.storageLocation, item.stockTag].filter(Boolean).join(" · ")}
         </span>
         <span className="mt-1 block"><Badge variant={stockVariant(item)}>{stockText(item)}</Badge></span>
-      </Link>
+      </CardLink>
     </li>
   );
   const highlight = "data-[over]:border-(--color-primary) data-[over]:bg-(--color-primary)/10 data-[over]:ring-2 data-[over]:ring-(--color-primary)/40";
