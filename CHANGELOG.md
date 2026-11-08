@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Certification matrix on phones**: a list of each member with their certifications (and when they expire), or pick a certification to see who has it — the wide grid didn't fit. On computers the pinned Member column no longer lets the scrolling columns show through, and the page uses the standard header
 ## 1.18.0 — 2026-11-07
 
 - **Ordering from inventory can go on a draft**: **Order a new item** and the low-stock **Order** button now ask where to add the item — one of your open order drafts (the latest is picked first), a new draft, or its own order submitted straight away. Drafts are finished and submitted from Orders

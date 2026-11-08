@@ -5,6 +5,8 @@ import Link from "next/link";
 import { formatDate } from "@/lib/utils";
 import { AwardCertDialog } from "./AwardCertDialog";
 import { RevokeCertButton } from "./RevokeCertButton";
+import { CertListPhone } from "./CertListPhone";
+import { PageHeader } from "@/components/PageHeader";
 
 // Well-known FRC certification names
 const STANDARD_CERTS = [
@@ -54,23 +56,32 @@ export default async function CertificationsPage() {
 
   return (
     <div className="max-w-full px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <nav className="text-small text-(--color-text-secondary) mb-1">
-            <Link href="/safety" className="hover:text-(--color-primary)">Safety</Link>
-            <span className="mx-2">›</span>Certifications
-          </nav>
-          <h1 className="text-h1 text-(--color-text-primary)">Certification matrix</h1>
-          <p className="text-body text-(--color-text-secondary) mt-1">{members.length} members × {allCertNames.length} certifications</p>
-        </div>
-        {isAdmin && <AwardCertDialog members={members} certNames={allCertNames} />}
+      <PageHeader
+        title="Certification matrix"
+        help="safety"
+        breadcrumb={<><Link href="/safety" className="hover:text-(--color-primary)">Safety</Link><span className="mx-2">›</span>Certifications</>}
+        subtitle={<>{members.length} members × {allCertNames.length} certifications</>}
+        items={[isAdmin && { kind: "action", place: "primary", label: "+ Award certification", action: "safety:award-cert" }]}
+        actions={isAdmin && <AwardCertDialog members={members} certNames={allCertNames} action="safety:award-cert" />}
+      />
+
+      {/* Phones: a list (the grid is too wide) */}
+      <div className="sm:hidden">
+        <CertListPhone isAdmin={isAdmin} certNames={allCertNames}
+          members={members.map((m) => ({
+            id: m.id, name: m.name,
+            certs: allCertNames.flatMap((name) => {
+              const c = matrix[m.id]?.[name];
+              return c?.status ? [{ name, status: c.status, expires: c.expiresAt ? formatDate(c.expiresAt) : null }] : [];
+            }),
+          }))} />
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-(--color-border)">
+      <div className="hidden overflow-x-auto rounded-lg border border-(--color-border) sm:block">
         <table className="text-sm">
           <thead className="bg-(--color-surface-raised) border-b border-(--color-border)">
             <tr>
-              <th className="px-4 py-3 text-left text-label font-medium text-(--color-text-secondary) whitespace-nowrap sticky left-0 bg-(--color-surface-raised) z-10 min-w-[160px]">
+              <th className="px-4 py-3 text-left text-label font-medium text-(--color-text-secondary) whitespace-nowrap sticky left-0 z-10 min-w-[160px] border-r border-(--color-border)" style={{ backgroundColor: "var(--color-surface)" }}>
                 Member
               </th>
               {allCertNames.map((cert) => (
@@ -83,7 +94,7 @@ export default async function CertificationsPage() {
           <tbody className="divide-y divide-(--color-border)">
             {members.map((m) => (
               <tr key={m.id} className="hover:bg-(--color-surface-raised) transition-colors">
-                <td className="px-4 py-3 font-medium text-(--color-text-primary) sticky left-0 bg-(--color-surface) z-10 border-r border-(--color-border)">
+                <td className="px-4 py-3 font-medium text-(--color-text-primary) sticky left-0 z-10 border-r border-(--color-border)" style={{ backgroundColor: "var(--color-surface)" }}>
                   {m.name}
                 </td>
                 {allCertNames.map((cert) => {

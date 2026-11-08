@@ -7,15 +7,19 @@ import { Dialog, DialogContent, DialogTrigger, DialogClose } from "@/components/
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
+import { usePageAction } from "@/components/page-actions";
 
 interface Props {
   members: { id: string; name: string }[];
   certNames: string[];
+  /** Opened by this page action (the header) instead of its own button */
+  action?: string;
 }
 
-export function AwardCertDialog({ members, certNames }: Props) {
+export function AwardCertDialog({ members, certNames, action }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  usePageAction(action, () => setOpen(true));
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [customCert, setCustomCert] = useState("");
@@ -38,7 +42,7 @@ export function AwardCertDialog({ members, certNames }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button size="sm">+ Award certification</Button></DialogTrigger>
+      {!action && <DialogTrigger asChild><Button size="sm">+ Award certification</Button></DialogTrigger>}
       <DialogContent title="Award certification">
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && <div className="text-sm text-(--color-danger) bg-(--color-danger)/10 rounded px-3 py-2">{error}</div>}
