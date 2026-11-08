@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Touch-and-hold drags lift on time on iPhones**: iOS could hold back the app's hold timer for several seconds while a finger rested on a card, so it took 4–5 seconds to pick a card up (inventory folders and the task board). The hold is now also checked every screen frame and on small finger movements
 - **Drag timing readout (for troubleshooting)**: open any page with `?debugdrag=1` and each touch-and-hold drag (inventory folders, task board) shows how long it took to lift and where the time went; `?debugdrag=0` turns it off
 ## 1.18.4 — 2026-11-08
 

@@ -40,11 +40,15 @@ interface DragState {
   src: EventTarget | null;
   /** Timings for the debug readout (performance.now) */
   t: { down: number; queued: number; fired?: number; ghost?: number; started?: number };
+  /** The frame loop watching for the hold to complete */
+  holdRaf: number;
+  /** What noticed the hold was long enough: the timer, a screen frame, or a small finger movement */
+  by?: "timer" | "frame" | "move";
 }
 
 // ── Debug readout ──────────────────────────────────────────────────────────
 // Open any page with ?debugdrag=1 (and ?debugdrag=0 to turn it off). After each hold, a strip at the
-// top shows where the time went: the hold itself, how late the timer fired (a busy phone), the app's
+// top shows where the time went: the hold itself, how late the end of the hold was noticed, the app's
 // work when the card lifts, and when the lifted card reached the screen. Kept on this device.
 
 const DEBUG_KEY = "frc-debug-drag";
@@ -82,7 +86,8 @@ export function useTouchDrag(handlers: TouchDragHandlers, board: React.RefObject
   /** True just after a drag, so the tap that ends it doesn't also open the card */
   const justDragged = useRef(false);
   /** Lifts the card once the hold completes, and ends a drag (set up in the effect below) */
-  const activateRef = useRef<((s: DragState) => void) | null>(null);
+  const activateRef = useRef<((s: DragState, by: "timer" | "frame" | "move") => void) | null>(null);
+  const holdRef = useRef<((s: DragState) => void) | null>(null);
   const finishRef = useRef<((s: DragState) => void) | null>(null);
   const listenRef = useRef<{ move: (e: TouchEvent) => void; end: (e: TouchEvent) => void } | null>(null);
 
@@ -107,8 +112,11 @@ export function useTouchDrag(handlers: TouchDragHandlers, board: React.RefObject
       hitTest(s);
       s.raf = requestAnimationFrame(tick);
     }
-    function activate(s: DragState) {
-      if (drag.current !== s) return;
+    function activate(s: DragState, by: "timer" | "frame" | "move") {
+      if (drag.current !== s || s.active) return;
+      s.by = by;
+      cancelAnimationFrame(s.holdRaf);
+      clearTimeout(s.timer);
       s.t.fired = performance.now();
       s.active = true;
       const r = s.el.getBoundingClientRect();
@@ -136,8 +144,8 @@ export function useTouchDrag(handlers: TouchDragHandlers, board: React.RefObject
         requestAnimationFrame(() => requestAnimationFrame(() => {
           const t = s.t, shown = performance.now();
           debugShow([
-            `lifted ${ms(shown - t.down)} after the finger went down`,
-            `  hold ${HOLD_MS}ms · timer late ${ms(t.fired! - t.queued - HOLD_MS)} · touch reached the app ${ms(t.queued - t.down)}`,
+            `lifted ${ms(shown - t.down)} after the finger went down (noticed by the ${s.by})`,
+            `  hold ${HOLD_MS}ms · noticed late ${ms(t.fired! - t.queued - HOLD_MS)} · touch reached the app ${ms(t.queued - t.down)}`,
             `  copy card ${ms(t.ghost! - t.fired!)} · app on lift ${ms(t.started! - t.ghost!)} · to screen ${ms(shown - t.started!)}`,
           ].join("\n"));
         }));
@@ -145,6 +153,7 @@ export function useTouchDrag(handlers: TouchDragHandlers, board: React.RefObject
     }
     function finish(s: DragState) {
       clearTimeout(s.timer);
+      cancelAnimationFrame(s.holdRaf);
       cancelAnimationFrame(s.raf);
       s.ghost?.remove();
       s.el.style.opacity = "";
@@ -173,8 +182,12 @@ export function useTouchDrag(handlers: TouchDragHandlers, board: React.RefObject
         if (moved > SLOP_PX) {
           if (debugOn()) debugShow(`cancelled: the finger moved ${Math.round(moved)}px after ${ms(performance.now() - s.t.down)} (more than ${SLOP_PX}px = a scroll)`);
           finish(s);
+        } else if (performance.now() - s.t.queued >= HOLD_MS) {
+          activate(s, "move"); // held long enough (the timer may not have run yet — see begin)
+        } else {
+          return;
         }
-        return;
+        if (!s.active) return;
       }
       e.preventDefault(); // keep the page still while dragging
       place(s);
@@ -203,6 +216,16 @@ export function useTouchDrag(handlers: TouchDragHandlers, board: React.RefObject
     document.addEventListener("touchend", onEnd, { passive: false });
     document.addEventListener("touchcancel", onEnd);
     activateRef.current = activate;
+    holdRef.current = (s: DragState) => {
+      // iPhones can hold back timers for seconds while a finger rests on the page, so the hold is also
+      // checked on every screen frame (and on small finger movements, above) — whichever comes first
+      const poll = () => {
+        if (drag.current !== s || s.active) return;
+        if (performance.now() - s.t.queued >= HOLD_MS) activate(s, "frame");
+        else s.holdRaf = requestAnimationFrame(poll);
+      };
+      s.holdRaf = requestAnimationFrame(poll);
+    };
     finishRef.current = finish;
     listenRef.current = { move: onMove, end: onEnd };
     return () => {
@@ -225,10 +248,11 @@ export function useTouchDrag(handlers: TouchDragHandlers, board: React.RefObject
     const s: DragState = {
       id, el, startX: t.clientX, startY: t.clientY, x: t.clientX, y: t.clientY,
       offX: 0, offY: 0, active: false, over: null, ghost: null, raf: 0, src: e.target,
-      t: { down, queued: now },
-      timer: setTimeout(() => activateRef.current?.(s), HOLD_MS),
+      t: { down, queued: now }, holdRaf: 0,
+      timer: setTimeout(() => activateRef.current?.(s, "timer"), HOLD_MS),
     };
     drag.current = s;
+    holdRef.current?.(s);
     // Touch events go to the element the finger went down on. If a re-render takes it off the page,
     // they no longer reach the page's listeners — so listen on it too, or the drag never ends
     const l = listenRef.current;
