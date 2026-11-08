@@ -420,6 +420,9 @@ input::-webkit-date-and-time-value { text-align: left; }
 /* A save bar that floats while the page scrolls: just above the phone tab bar (3.5rem + the
    iPhone's bottom safe area), and near the bottom on computers, where there's no tab bar */
 .sticky-above-tabs { position: sticky; bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px) + 0.25rem); }
+/* The home-screen app scrolls inside <main>, whose bottom padding already clears the tab bar — and a
+   sticky bar's offset is measured from inside that padding, so only the small gap is added */
+@media (max-width: 1023px) { html.standalone .sticky-above-tabs { bottom: 0.25rem; } }
 @media (min-width: 1024px) { .sticky-above-tabs { bottom: 1rem; } }
 
 /* Top safe area — pads the fixed header below the Dynamic Island / notch */
