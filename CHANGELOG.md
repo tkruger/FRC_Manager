@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.18.1 — 2026-11-08
+
 - **Certification matrix on phones**: a list of each member with their certifications (and when they expire), or pick a certification to see who has it — the wide grid didn't fit. On computers the pinned Member column no longer lets the scrolling columns show through, and the page uses the standard header
 ## 1.18.0 — 2026-11-07
 
