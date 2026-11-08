@@ -417,6 +417,10 @@ input::-webkit-date-and-time-value { text-align: left; }
 
 /* ─── Safe area ─── */
 .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+/* A save bar that floats while the page scrolls: just above the phone tab bar (3.5rem + the
+   iPhone's bottom safe area), and near the bottom on computers, where there's no tab bar */
+.sticky-above-tabs { position: sticky; bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px) + 0.25rem); }
+@media (min-width: 1024px) { .sticky-above-tabs { bottom: 1rem; } }
 
 /* Top safe area — pads the fixed header below the Dynamic Island / notch */
 .safe-top-pad { padding-top: env(safe-area-inset-top, 0px); }

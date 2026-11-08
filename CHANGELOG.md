@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **WCP links fill in again**: WCP changed how its family pages (Aluminum HTD Timing Pulleys, GT2 Pulleys & Belts, …) load their parts list, so they only gave the placeholder product. All three link shapes work — /products/…, /collections/…/products/… and /products/wcp-1234. The parts list no longer fetches every part's price at once (WCP turned the app away for asking too much, which stopped even single links working); a picked part's price fills in from its own page
+- **Order form's floating bar sits just above the phone tab bar** (it was a little too high), and the workflow editor's too
 ## 1.18.5 — 2026-11-08
 
 - **Touch-and-hold drags lift on time on iPhones**: iOS could hold back the app's hold timer for several seconds while a finger rested on a card, so it took 4–5 seconds to pick a card up (inventory folders and the task board). The hold is now also checked every screen frame and on small finger movements. On inventory, the cards on phones are no longer links underneath — holding a link made iPhones start their own long-press and pause the page, which was the real cause there

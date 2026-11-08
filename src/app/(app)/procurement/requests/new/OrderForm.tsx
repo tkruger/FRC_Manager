@@ -364,7 +364,7 @@ export function OrderForm({ vendors, edit, draft, unusedCategories = [] }: {
               </Button>
             </div>
             {item.lookup === "failed" && (
-              <p className="text-small text-(--color-text-secondary)">Couldn&apos;t read that page — some stores block it. Fill in the details below.</p>
+              <p className="text-small text-(--color-text-secondary)">Couldn&apos;t read that page — some stores block it, or ask the app to slow down for a minute (then try Fill again). You can also fill in the details below.</p>
             )}
           </div>
 
@@ -428,7 +428,7 @@ export function OrderForm({ vendors, edit, draft, unusedCategories = [] }: {
         </button>
       )}
 
-      <div className="sticky bottom-16 lg:bottom-4 z-10 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-(--color-surface) border border-(--color-border) p-3 shadow-lg">
+      <div className="sticky-above-tabs z-10 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-(--color-surface) border border-(--color-border) p-3 shadow-lg">
         <p className="text-sm text-(--color-text-primary)">
           {items.length} item{items.length === 1 ? "" : "s"} · <b>{formatCurrency(total)}</b>
           {locked.length > 0 && <span className="text-(--color-text-secondary)"> + {locked.length} arrived</span>}

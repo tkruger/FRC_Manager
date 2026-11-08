@@ -190,7 +190,7 @@ export function WorkflowEditor({ def, counts, isCustom }: Props) {
       {error && (
         <p className="text-sm text-(--color-danger) bg-(--color-danger)/10 rounded px-3 py-2">{error}</p>
       )}
-      <div className="sticky bottom-16 lg:bottom-4 z-10 flex justify-end gap-2 rounded-lg bg-(--color-surface) border border-(--color-border) p-3 shadow-lg">
+      <div className="sticky-above-tabs z-10 flex justify-end gap-2 rounded-lg bg-(--color-surface) border border-(--color-border) p-3 shadow-lg">
         <Button variant="outline" onClick={() => setEditing(false)} disabled={pending}>Cancel</Button>
         <Button onClick={save} isLoading={pending}>Save as new version</Button>
       </div>

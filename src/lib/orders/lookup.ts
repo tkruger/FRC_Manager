@@ -201,14 +201,38 @@ function parseCsv(text: string): string[][] {
 const WCP_SHEET = /https:\/\/docs\.google\.com\/spreadsheets\/d\/e\/[A-Za-z0-9_-]+\/pub\?[^"'\s<]*output=csv/;
 
 /**
+ * The published spreadsheet tab a WCP family page lists its parts from. Pages now build the address
+ * in a script: the sheet (PUB = '2PACX-…') plus a tab number — from the block's data-gid when set,
+ * otherwise a table of page handle → tab (GIDS = {"htd-timing-pulleys": 931764922, …}). Older pages
+ * had the whole address in the page.
+ */
+function wcpSheetUrl(html: string, url: URL): URL | null {
+  const pub = html.match(/\bPUB\s*=\s*['"]([A-Za-z0-9_-]+)['"]/)?.[1];
+  if (pub) {
+    let gid = html.match(/data-gid=["'](\d+)["']/)?.[1] ?? null;
+    if (!gid) {
+      const parts = url.pathname.split("/").filter(Boolean);
+      const handle = parts[parts.indexOf("products") + 1]?.toLowerCase();
+      try {
+        const gids = JSON.parse(html.match(/\bGIDS\s*=\s*(\{[^}]*\})/)?.[1] ?? "{}") as Record<string, number>;
+        if (handle && Number.isFinite(gids[handle])) gid = String(gids[handle]);
+      } catch { /* not the table we know */ }
+    }
+    if (gid) return new URL(`https://docs.google.com/spreadsheets/d/e/${pub}/pub?gid=${gid}&single=true&output=csv`);
+  }
+  const old = html.match(WCP_SHEET)?.[0];
+  return old ? new URL(old.replace(/&amp;/g, "&")) : null;
+}
+
+/**
  * WCP pages like "Aluminum HTD Timing Pulleys" list many parts from a published Google
  * Sheet (part number + description); each part is its own product with its own price.
  */
 async function fromWcpFamily(url: URL): Promise<ProductInfo | null> {
   const html = await safeFetch(url, "text/html");
-  const sheet = html?.match(WCP_SHEET)?.[0];
+  const sheet = html ? wcpSheetUrl(html, url) : null;
   if (!sheet) return null;
-  const csv = await safeFetch(new URL(sheet.replace(/&amp;/g, "&")), "text/csv");
+  const csv = await safeFetch(sheet, "text/csv");
   if (!csv) return null;
 
   const [header = [], ...rows] = parseCsv(csv);
@@ -222,15 +246,12 @@ async function fromWcpFamily(url: URL): Promise<ProductInfo | null> {
     .map((r) => ({ partNumber: r[pn].trim().toUpperCase(), label: (desc >= 0 ? r[desc]?.trim() : "") || r[pn].trim() }));
   if (parts.length < 2) return null;
 
-  // Prices live on each part's own product page; fetch them together
-  const choices = await Promise.all(parts.map(async (p) => {
-    const productUrl = new URL(`/products/${p.partNumber.toLowerCase()}`, url.origin);
-    let unitCost: number | null = null;
-    try {
-      const body = await safeFetch(new URL(`${productUrl.pathname}.js`, url.origin), "application/json");
-      unitCost = body ? shopifyPrice((JSON.parse(body) as ShopifyProduct).variants?.[0]) : null;
-    } catch { /* price stays blank; filled in when picked */ }
-    return { label: p.label, partNumber: p.partNumber, unitCost, url: productUrl.toString() };
+  // Prices live on each part's own product page. They're not fetched here: asking WCP for dozens at
+  // once makes it turn the app away ("too many requests") — then even single links stopped working.
+  // The order form fills in each picked part's price from its page instead.
+  const choices: ProductChoice[] = parts.map((p) => ({
+    label: p.label, partNumber: p.partNumber, unitCost: null,
+    url:   new URL(`/products/${p.partNumber.toLowerCase()}`, url.origin).toString(),
   }));
 
   return { vendorName: "West Coast Products", name: null, partNumber: null, unitCost: null, choices };
