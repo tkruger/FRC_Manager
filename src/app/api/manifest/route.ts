@@ -11,7 +11,7 @@ export function GET(req: Request) {
     {
       name:             "FRC Manager",
       short_name:       "FRC Manager",
-      description:      "Robot fleet, tools, inventory, orders, budget, and schedule — all in one place.",
+      description:      "Robot fleet, tools, inventory, orders, budget, and schedule - all in one place.",
       id:               "/dashboard",
       start_url:        "/dashboard",
       scope:            "/",
@@ -34,7 +34,7 @@ export function GET(req: Request) {
     },
     {
       headers: {
-        "Content-Type":  "application/manifest+json",
+        "Content-Type":  "application/manifest+json; charset=utf-8",
         "Cache-Control": "public, max-age=300",
       },
     },
