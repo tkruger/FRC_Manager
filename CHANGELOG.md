@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Tapping a photo opens a card straight away**: the small copy stands in (blurred, with "Loading photo…") while the full photo loads, and ✕ closes it at any time — before it has loaded too. If a photo can't load, the card says so
 ## 1.18.6 — 2026-11-08
 
 - **WCP links fill in again**: WCP changed how its family pages (Aluminum HTD Timing Pulleys, GT2 Pulleys & Belts, …) load their parts list, so they only gave the placeholder product. All three link shapes work — /products/…, /collections/…/products/… and /products/wcp-1234. The parts list no longer fetches every part's price at once (WCP turned the app away for asking too much, which stopped even single links working); a picked part's price fills in from its own page
