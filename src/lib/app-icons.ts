@@ -5,9 +5,9 @@
 // per device, kept in a cookie the layout and manifest read.
 
 export const APP_ICONS = [
+  { id: "02_fullcolor_orange",           label: "Full color — orange" },
   { id: "06_lineart_orange",             label: "Line art — orange" },
   { id: "01_fullcolor_charcoal",         label: "Full color — charcoal" },
-  { id: "02_fullcolor_orange",           label: "Full color — orange" },
   { id: "03_silhouette_black_on_orange", label: "Silhouette — black on orange" },
   { id: "04_stencil_orange_on_black",    label: "Stencil — orange on black" },
   { id: "05_duotone_orange",             label: "Duotone — orange" },
@@ -21,7 +21,7 @@ export const APP_ICONS = [
 
 export type AppIconId = (typeof APP_ICONS)[number]["id"];
 
-export const DEFAULT_APP_ICON: AppIconId = "06_lineart_orange";
+export const DEFAULT_APP_ICON: AppIconId = "02_fullcolor_orange";
 export const APP_ICON_COOKIE = "frc-app-icon";
 
 export function resolveAppIcon(value: string | null | undefined): AppIconId {

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **The home-screen icon you choose is used right away**: after picking one in Settings → Profile & appearance, adding FRC Manager to the home screen uses it without reloading the page first (before, iPhones could still get the old icon)
+- **New default app icon**: the full-color robot on orange. Notifications use it too
 ## 1.18.1 — 2026-11-08
 
 - **Certification matrix on phones**: a list of each member with their certifications (and when they expire), or pick a certification to see who has it — the wide grid didn't fit. On computers the pinned Member column no longer lets the scrolling columns show through, and the page uses the standard header

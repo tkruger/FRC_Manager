@@ -8,6 +8,17 @@ import { APP_ICONS, APP_ICON_COOKIE, appIconPath, type AppIconId } from "@/lib/a
 
 const ONE_YEAR = 60 * 60 * 24 * 365;
 
+/**
+ * Remember the icon for this device, and point this page's icon links at it straight away. Refreshing doesn't replace the tags in
+ * <head>, and Safari's Add to Home Screen reads the first one it finds — so without this the old icon
+ * was used until the page was reloaded.
+ */
+function saveIcon(id: AppIconId) {
+  document.cookie = `${APP_ICON_COOKIE}=${id}; path=/; max-age=${ONE_YEAR}; samesite=lax`;
+  for (const l of document.querySelectorAll<HTMLLinkElement>('link[rel="apple-touch-icon"]')) l.href = appIconPath(id, "apple-touch-icon.png");
+  for (const l of document.querySelectorAll<HTMLLinkElement>('link[rel="manifest"]')) l.href = `/api/manifest?icon=${id}`;
+}
+
 /** Choose the home-screen icon for this device. Applies the next time the app is added. */
 export function AppIconPicker({ current }: { current: AppIconId }) {
   const router = useRouter();
@@ -15,9 +26,9 @@ export function AppIconPicker({ current }: { current: AppIconId }) {
 
   function choose(id: AppIconId) {
     setSelected(id);
-    document.cookie = `${APP_ICON_COOKIE}=${id}; path=/; max-age=${ONE_YEAR}; samesite=lax`;
+    saveIcon(id);
     toast.success("App icon saved — re-add FRC Manager to your home screen to see it");
-    router.refresh(); // re-render the page head with the new icon links
+    router.refresh();
   }
 
   return (
