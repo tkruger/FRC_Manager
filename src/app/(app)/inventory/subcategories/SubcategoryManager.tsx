@@ -47,11 +47,10 @@ function CategoryCard({ category, label, subs }: { category: string; label: stri
           <span className="text-small font-normal text-(--color-text-secondary)">{subs.length}</span>
         </h2>
         {missing.length > 0 && (
-          <button type="button" disabled={pending} title={missing.join(", ")}
-            onClick={() => run(() => addSuggestedSubcategoriesAction(category))}
-            className="text-small font-medium text-(--color-secondary) hover:underline disabled:opacity-50">
+          <Button type="button" variant="outline" size="sm" disabled={pending} title={missing.join(", ")}
+            onClick={() => run(() => addSuggestedSubcategoriesAction(category))}>
             Add suggested ({missing.length})
-          </button>
+          </Button>
         )}
       </div>
 

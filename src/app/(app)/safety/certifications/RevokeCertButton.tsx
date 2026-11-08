@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { revokeCertificationAction } from "@/app/actions/safety";
+import { Button } from "@/components/ui/button";
 
 export function RevokeCertButton({ userId, certName }: { userId: string; certName: string }) {
   const router = useRouter();
@@ -17,9 +18,8 @@ export function RevokeCertButton({ userId, certName }: { userId: string; certNam
   }
 
   return (
-    <button onClick={handle} disabled={isPending}
-      className="text-[10px] text-(--color-danger) hover:underline disabled:opacity-50 mt-0.5">
+    <Button type="button" variant="dangerOutline" size="xs" onClick={handle} disabled={isPending} className="mt-0.5">
       Revoke
-    </button>
+    </Button>
   );
 }

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Row buttons have borders**: Delete, Remove, Revoke, Copy link, Unpack, Add suggested, + Add condition and similar actions are now proper buttons like the page actions (destructive ones outlined in red) instead of bare text. On Members, the row reads Edit roles, Volunteer clearance, Delete — Delete last, and on phones they fit on one line
+- **Order comment emails no longer repeat the comment**
 ## 1.18.2 — 2026-11-08
 
 - **Home-screen icon on iOS 26**: iPhones now take the icon from the app's manifest, which lists the 180px home-screen icon first; the fallback icon iPhones look for also exists now. Adding FRC Manager to the home screen showed a plain letter "F" instead of the icon

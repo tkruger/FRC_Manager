@@ -246,9 +246,9 @@ export function PackSessionClient({ sessionId, title, subtitle, finished, manage
                           <span className="min-w-0 flex-1 text-small text-(--color-text-secondary)">{e.packedBy ? `by ${e.packedBy}` : ""}</span>
                           {locationPicker(e)}
                           {!finished && (
-                            <button className="no-print text-small text-(--color-text-secondary) hover:text-(--color-danger)" onClick={() => act(() => unpackEntryAction(e.id))}>
+                            <Button type="button" variant="outline" size="sm" className="no-print" onClick={() => act(() => unpackEntryAction(e.id))}>
                               Unpack
-                            </button>
+                            </Button>
                           )}
                         </li>
                       ))}
@@ -277,7 +277,7 @@ export function PackSessionClient({ sessionId, title, subtitle, finished, manage
                 <span className="min-w-0 flex-1 text-sm text-(--color-text-primary)">{entryLabel(e)}</span>
                 {locationPicker(e)}
                 {!finished && (
-                  <button className="no-print text-small text-(--color-text-secondary) hover:text-(--color-danger)" onClick={() => act(() => unpackEntryAction(e.id))}>Unpack</button>
+                  <Button type="button" variant="outline" size="sm" className="no-print" onClick={() => act(() => unpackEntryAction(e.id))}>Unpack</Button>
                 )}
               </li>
             ))}

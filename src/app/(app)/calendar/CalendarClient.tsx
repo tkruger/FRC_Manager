@@ -363,10 +363,9 @@ export function CalendarClient({ season, meetings, allTasks, isLeadership, openM
         </div>
 
         {isLeadership && (
-          <button onClick={handleGenerate} disabled={isPending}
-            className="mt-3 text-small text-(--color-secondary) hover:underline disabled:opacity-50">
+          <Button type="button" variant="outline" size="sm" onClick={handleGenerate} disabled={isPending} className="mt-3">
             {meetings.length > 0 ? "Regenerate meetings from the season's meeting days…" : "Generate meetings from the season's meeting days"}
-          </button>
+          </Button>
         )}
       </div>
 

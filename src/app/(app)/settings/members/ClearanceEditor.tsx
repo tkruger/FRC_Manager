@@ -30,7 +30,7 @@ export function ClearanceEditor({ userId, name, cleared, until }: { userId: stri
   return (
     <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (o) { setOn(cleared); setDate(until?.slice(0, 10) ?? ""); setError(null); } }}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">Volunteer clearance</Button>
+        <Button variant="outline" size="sm">{/* Short on phones so the row's buttons fit on one line */}<span className="sm:hidden">Clearance</span><span className="hidden sm:inline">Volunteer clearance</span></Button>
       </DialogTrigger>
       <DialogContent title="Cleared to volunteer?" description={`Only cleared adults can sign up to cover meetings. Mark ${name} cleared once your school's requirements (such as a background check) are done.`}>
         <div className="space-y-4">

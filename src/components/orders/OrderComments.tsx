@@ -56,9 +56,9 @@ export function OrderComments({ requestId, comments, canComment, canModerate }: 
                   <span className="text-small text-(--color-text-secondary)"> · {when(c.at)}</span>
                 </p>
                 {(c.mine || canModerate) && (
-                  <button type="button" disabled={pending} onClick={() => remove(c.id)} className="text-small text-(--color-text-secondary) hover:text-(--color-danger) hover:underline">
+                  <Button type="button" variant="dangerOutline" size="xs" disabled={pending} onClick={() => remove(c.id)}>
                     Remove
-                  </button>
+                  </Button>
                 )}
               </div>
               <p className="mt-0.5 whitespace-pre-wrap break-words text-sm text-(--color-text-primary)">{c.body}</p>

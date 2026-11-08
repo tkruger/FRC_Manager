@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { TimeSelect } from "@/components/ui/time-select";
 import type { Slot } from "@/lib/meeting-schedule";
+import { Button } from "@/components/ui/button";
 
 const DAYS = [
   { value: "MON", label: "Monday" },
@@ -81,9 +82,9 @@ export function MeetingScheduleFields({ initialDays, initialSlots }: {
                       )}
                     </div>
                   ))}
-                  <button type="button" onClick={() => add(value)} className="text-small text-(--color-secondary) hover:underline self-start sm:self-end">
+                  <Button type="button" variant="outline" size="sm" onClick={() => add(value)} className="self-start sm:self-end">
                     + another time
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>

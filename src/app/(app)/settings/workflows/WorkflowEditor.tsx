@@ -339,10 +339,10 @@ function ConditionEditor({ value, onChange }: { value: Condition | null; onChang
               </div>
             );
           })}
-          <button type="button" className="text-small font-medium text-(--color-secondary) hover:underline"
+          <Button type="button" variant="outline" size="sm" className="self-start"
             onClick={() => onChange({ ...value, rules: [...value.rules, { field: "priority", op: "eq", value: "EMERGENCY" }] })}>
             + Add condition
-          </button>
+          </Button>
         </div>
       )}
     </div>

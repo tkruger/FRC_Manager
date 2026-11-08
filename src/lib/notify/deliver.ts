@@ -97,6 +97,16 @@ export async function notifyUsers(userIds: string[], n: OutgoingNotification): P
   return { inApp: inAppIds.length, pushed, emailed };
 }
 
+/**
+ * The email's paragraphs: the short text and the details — unless the details already hold the short
+ * text (e.g. a comment, shortened for push), which would print it twice
+ */
+function emailParts(n: OutgoingNotification): string[] {
+  const body = n.body?.trim(), details = n.details?.trim();
+  if (body && details && details.startsWith(body.replace(/…$/, ""))) return [details];
+  return [body, details].filter(Boolean) as string[];
+}
+
 /** The notification as a short email with a button back to the app */
 async function sendEmails(to: { email: string; name: string; teamNumber: number | null; teamId: string | null }[], n: OutgoingNotification): Promise<number> {
   if (to.length === 0) return 0;
@@ -106,7 +116,7 @@ async function sendEmails(to: { email: string; name: string; teamNumber: number 
   const results = await Promise.allSettled(to.map((r) => {
     const first = r.name.split(" ")[0] || r.name;
     const team = r.teamNumber ? `Team ${r.teamNumber}` : "your team";
-    const parts = [n.body, n.details].filter(Boolean) as string[];
+    const parts = emailParts(n);
     return sendEmail({
       to: r.email,
       subject,

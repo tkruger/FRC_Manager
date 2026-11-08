@@ -30,6 +30,12 @@ const HOVER_STYLE: React.CSSProperties = {
   boxShadow: "0 2px 12px -2px color-mix(in srgb, var(--color-secondary) 55%, transparent), inset 0 1px 0 rgb(255 255 255 / .15)",
 };
 
+// Outlined destructive action (Delete, Remove, Revoke in a row) — hover tints red
+const DANGER_OUTLINE_HOVER_STYLE: React.CSSProperties = {
+  backgroundColor: "color-mix(in srgb, var(--color-danger) 12%, transparent)",
+  borderColor: "var(--color-danger)",
+};
+
 // For outline/ghost buttons — hover tints with the secondary color
 const OUTLINE_HOVER_STYLE: React.CSSProperties = {
   backgroundColor: "color-mix(in srgb, var(--color-secondary) 10%, transparent)",
@@ -47,8 +53,11 @@ const buttonVariants = cva(
         danger:    "focus-visible:ring-(--color-secondary)",
         outline:   "border border-(--color-border) bg-(--color-surface) text-(--color-text-primary)",
         ghost:     "bg-transparent text-(--color-text-primary)",
+        /** A destructive action that isn't the main one on its row: outlined, red */
+        dangerOutline: "border border-(--color-danger)/50 bg-(--color-surface) text-(--color-danger)",
       },
       size: {
+        xs:   "h-7 px-2.5 text-xs",
         sm:   "h-9 px-3 text-sm",
         md:   "h-10 px-4 text-sm",
         lg:   "h-11 px-6 text-base",
@@ -77,6 +86,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       inlineStyle = hovered ? HOVER_STYLE : (VARIANT_STYLES[v] ?? {});
     } else if ((v === "outline" || v === "ghost") && hovered) {
       inlineStyle = OUTLINE_HOVER_STYLE;
+    } else if (v === "dangerOutline" && hovered) {
+      inlineStyle = DANGER_OUTLINE_HOVER_STYLE;
     }
 
     return (

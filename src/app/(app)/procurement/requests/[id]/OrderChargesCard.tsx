@@ -176,9 +176,9 @@ export function OrderChargesCard({ requestId, vendors, canChange, beforeApproval
                   </div>
                 )}
                 {editing && v.items.length > 1 && drafts.length < 10 && (
-                  <button type="button" onClick={() => split(v.name)} className="text-small font-medium text-(--color-secondary) hover:underline">
+                  <Button type="button" variant="outline" size="sm" className="self-start" onClick={() => split(v.name)}>
                     + Split {v.name || "these"} items onto another order
-                  </button>
+                  </Button>
                 )}
               </li>
             );

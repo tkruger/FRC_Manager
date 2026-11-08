@@ -323,10 +323,10 @@ export function OrderForm({ vendors, edit, draft, unusedCategories = [] }: {
               {isPaid(item) && <span className="ml-2 align-middle badge badge-info">{item.status === "ARRIVED" ? "Arrived" : "Ordered"}</span>}
             </legend>
             {(items.length > 1 || locked.length > 0) && !isPaid(item) && (
-              <button type="button" className="text-small text-(--color-danger) hover:underline"
+              <Button type="button" variant="dangerOutline" size="sm"
                 onClick={() => setItems((list) => list.filter((i) => i.key !== item.key))}>
                 Remove
-              </button>
+              </Button>
             )}
           </div>
 

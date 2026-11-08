@@ -38,13 +38,14 @@ function RolePicker({ options, value, onChange }: { options: RoleOption[]; value
 
 function CopyLink({ url }: { url: string }) {
   return (
-    <button
+    <Button
       type="button"
+      variant="outline"
+      size="sm"
       onClick={() => { navigator.clipboard?.writeText(url).then(() => toast.success("Link copied")).catch(() => toast.error("Couldn't copy — select the link instead")); }}
-      className="text-small font-medium text-(--color-secondary) hover:underline"
     >
       Copy link
-    </button>
+    </Button>
   );
 }
 

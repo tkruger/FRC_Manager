@@ -111,8 +111,8 @@ function PieceCard({ piece, name, canEdit, robots, focused }: {
             {uploading && <span className="absolute inset-0 flex items-center justify-center bg-black/50 text-sm text-white">Uploading…</span>}
           </button>
           {piece.image && !uploading && (
-            <button type="button" className="text-xs text-(--color-danger) hover:underline"
-              onClick={() => { if (confirm("Remove this photo?")) void photo(null); }}>Remove photo</button>
+            <Button type="button" variant="dangerOutline" size="xs"
+              onClick={() => { if (confirm("Remove this photo?")) void photo(null); }}>Remove photo</Button>
           )}
           <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden"
             onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void photo(f); }} />

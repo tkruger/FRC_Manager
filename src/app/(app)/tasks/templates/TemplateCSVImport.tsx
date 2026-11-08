@@ -89,7 +89,7 @@ export function TemplateCSVImport({ templateId }: Props) {
                 <span className="ml-2 text-(--color-warning)">({preview.errors.length} warning{preview.errors.length !== 1 ? "s" : ""})</span>
               )}
             </p>
-            <button onClick={handleClear} className="text-(--color-text-secondary) hover:text-(--color-danger) text-sm transition-colors">Cancel</button>
+            <Button type="button" variant="outline" size="sm" onClick={handleClear}>Cancel</Button>
           </div>
 
           {preview.errors.length > 0 && (

@@ -4,14 +4,17 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/components/ui/toast";
 import { deleteMemberAction } from "@/app/actions/members";
+import { Button } from "@/components/ui/button";
 
 /** Delete a member (or erase their details, if they have history the team needs to keep) */
 export function DeleteMemberButton({ userId, name }: { userId: string; name: string }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   return (
-    <button
+    <Button
       type="button"
+      variant="dangerOutline"
+      size="sm"
       disabled={pending}
       onClick={() => {
         if (!confirm(
@@ -26,9 +29,8 @@ export function DeleteMemberButton({ userId, name }: { userId: string; name: str
           router.refresh();
         });
       }}
-      className="text-small font-medium text-(--color-danger) hover:underline disabled:opacity-50"
     >
       {pending ? "Deleting…" : "Delete"}
-    </button>
+    </Button>
   );
 }

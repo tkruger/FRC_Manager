@@ -150,7 +150,7 @@ export function ClaimForm({ email, contact, categories, canRecordDirectly, today
                 </a>
                 <span className="flex shrink-0 items-center gap-3">
                   <span className="text-xs text-(--color-text-secondary)">{sizeText(r.size)}</span>
-                  <button type="button" onClick={() => removeReceipt(r.id)} className="text-xs text-(--color-danger) hover:underline">Remove</button>
+                  <Button type="button" variant="dangerOutline" size="xs" onClick={() => removeReceipt(r.id)}>Remove</Button>
                 </span>
               </li>
             ))}

@@ -150,7 +150,7 @@ export default async function MembersPage() {
                   )}
                 </div>
                 {u.id === session.user.id && (isHeadMentor || session.user.isSuperAdmin) && (
-                  <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-2">
                     {isHeadMentor && <ClearanceEditor userId={u.id} name={u.name} cleared={!!u.volunteerClearedAt} until={u.volunteerClearedUntil?.toISOString() ?? null} />}
                     {/* Super admins can change their own roles (but always keep Head Mentor) */}
                     {session.user.isSuperAdmin && (
@@ -160,12 +160,13 @@ export default async function MembersPage() {
                   </div>
                 )}
                 {u.id !== session.user.id && (
-                  <div className="flex flex-wrap items-center gap-3">
-                    <DeleteMemberButton userId={u.id} name={u.name} />
-                    {/* Volunteer clearance is for adults (or to remove one someone still has) */}
-                    {isHeadMentor && (isAdult(u.roles.map((r) => r.role)) || !!u.volunteerClearedAt) && <ClearanceEditor userId={u.id} name={u.name} cleared={!!u.volunteerClearedAt} until={u.volunteerClearedUntil?.toISOString() ?? null} />}
+                  // The main action first, Delete last
+                  <div className="flex flex-wrap items-center gap-2">
                     <MemberRoleEditor userId={u.id} currentRoles={u.roles.map((r) => r.role as Role)} grantable={grantable} subTeams={u.subTeams}
                       locked={u.isSuperAdmin && u.roles.some((r) => r.role === "HEAD_MENTOR") ? ["HEAD_MENTOR"] : []} />
+                    {/* Volunteer clearance is for adults (or to remove one someone still has) */}
+                    {isHeadMentor && (isAdult(u.roles.map((r) => r.role)) || !!u.volunteerClearedAt) && <ClearanceEditor userId={u.id} name={u.name} cleared={!!u.volunteerClearedAt} until={u.volunteerClearedUntil?.toISOString() ?? null} />}
+                    <DeleteMemberButton userId={u.id} name={u.name} />
                   </div>
                 )}
               </div>

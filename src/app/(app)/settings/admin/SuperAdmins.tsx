@@ -46,14 +46,15 @@ export function SuperAdmins({ admins, currentUserId }: { admins: Admin[]; curren
               </p>
             </div>
             {admins.length > 1 && (
-              <button
+              <Button
                 type="button"
+                variant="dangerOutline"
+                size="sm"
                 disabled={pending}
                 onClick={() => { if (confirm(`Remove ${a.name} as a super admin?`)) run(() => revokeSuperAdminAction(a.id)); }}
-                className="text-small font-medium text-(--color-danger) hover:underline disabled:opacity-50"
               >
                 Remove
-              </button>
+              </Button>
             )}
           </div>
         ))}
