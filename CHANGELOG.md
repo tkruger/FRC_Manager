@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.18.3 — 2026-11-08
+
 - **Row buttons have borders**: Delete, Remove, Revoke, Copy link, Unpack, Add suggested, + Add condition and similar actions are now proper buttons like the page actions (destructive ones outlined in red) instead of bare text. On Members, the row reads Edit roles, Volunteer clearance, Delete — Delete last, and on phones they fit on one line
 - **Order comment emails no longer repeat the comment**
 ## 1.18.2 — 2026-11-08
