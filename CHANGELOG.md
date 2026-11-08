@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.18.4 — 2026-11-08
+
 - **Label printing removed for now**: the Print label / Print labels buttons on inventory, partial pieces, tools and tool locations didn't work and are gone (a better way to print labels is planned). Items, pieces, tools and locations still show their code and QR code, so labels already on things keep scanning
 ## 1.18.3 — 2026-11-08
 
