@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Drag timing readout (for troubleshooting)**: open any page with `?debugdrag=1` and each touch-and-hold drag (inventory folders, task board) shows how long it took to lift and where the time went; `?debugdrag=0` turns it off
 ## 1.18.4 — 2026-11-08
 
 - **Label printing removed for now**: the Print label / Print labels buttons on inventory, partial pieces, tools and tool locations didn't work and are gone (a better way to print labels is planned). Items, pieces, tools and locations still show their code and QR code, so labels already on things keep scanning

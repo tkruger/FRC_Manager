@@ -38,7 +38,40 @@ interface DragState {
   raf: number;
   /** Where the finger went down — its touch events keep going there even if it leaves the page */
   src: EventTarget | null;
+  /** Timings for the debug readout (performance.now) */
+  t: { down: number; queued: number; fired?: number; ghost?: number; started?: number };
 }
+
+// ── Debug readout ──────────────────────────────────────────────────────────
+// Open any page with ?debugdrag=1 (and ?debugdrag=0 to turn it off). After each hold, a strip at the
+// top shows where the time went: the hold itself, how late the timer fired (a busy phone), the app's
+// work when the card lifts, and when the lifted card reached the screen. Kept on this device.
+
+const DEBUG_KEY = "frc-debug-drag";
+function debugOn(): boolean {
+  try {
+    const p = new URLSearchParams(window.location.search).get("debugdrag");
+    if (p === "1") localStorage.setItem(DEBUG_KEY, "1");
+    if (p === "0") localStorage.removeItem(DEBUG_KEY);
+    return localStorage.getItem(DEBUG_KEY) === "1";
+  } catch { return false; }
+}
+function debugShow(text: string) {
+  console.info("[drag]", text);
+  let el = document.getElementById("frc-drag-debug");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "frc-drag-debug";
+    Object.assign(el.style, {
+      position: "fixed", left: "8px", right: "8px", top: "calc(env(safe-area-inset-top) + 8px)", zIndex: "2147483647",
+      background: "rgba(0,0,0,.85)", color: "#7CFC9A", font: "12px/1.4 ui-monospace,monospace", padding: "6px 8px",
+      borderRadius: "8px", whiteSpace: "pre-wrap", pointerEvents: "none",
+    });
+    document.body.appendChild(el);
+  }
+  el.textContent = text;
+}
+const ms = (n: number) => `${Math.round(n)}ms`;
 
 /** `target` names the drop targets' attribute: data-kanban-col by default (the Kanban columns) */
 export function useTouchDrag(handlers: TouchDragHandlers, board: React.RefObject<HTMLElement | null>, target = "kanban-col") {
@@ -76,6 +109,7 @@ export function useTouchDrag(handlers: TouchDragHandlers, board: React.RefObject
     }
     function activate(s: DragState) {
       if (drag.current !== s) return;
+      s.t.fired = performance.now();
       s.active = true;
       const r = s.el.getBoundingClientRect();
       s.offX = s.x - r.left;
@@ -90,11 +124,24 @@ export function useTouchDrag(handlers: TouchDragHandlers, board: React.RefObject
       document.body.appendChild(g);
       s.ghost = g;
       s.el.style.opacity = "0.35";
+      s.t.ghost = performance.now();
       navigator.vibrate?.(25); // Android; iPhone browsers don't allow vibration
       handlersRef.current.onStart(s.id);
+      s.t.started = performance.now();
       place(s);
       hitTest(s);
       s.raf = requestAnimationFrame(tick);
+      if (debugOn()) {
+        // Two frames later the lifted card has been drawn
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          const t = s.t, shown = performance.now();
+          debugShow([
+            `lifted ${ms(shown - t.down)} after the finger went down`,
+            `  hold ${HOLD_MS}ms · timer late ${ms(t.fired! - t.queued - HOLD_MS)} · touch reached the app ${ms(t.queued - t.down)}`,
+            `  copy card ${ms(t.ghost! - t.fired!)} · app on lift ${ms(t.started! - t.ghost!)} · to screen ${ms(shown - t.started!)}`,
+          ].join("\n"));
+        }));
+      }
     }
     function finish(s: DragState) {
       clearTimeout(s.timer);
@@ -122,7 +169,11 @@ export function useTouchDrag(handlers: TouchDragHandlers, board: React.RefObject
       s.y = t.clientY;
       if (!s.active) {
         // Moved before the hold finished: it's a scroll, not a drag
-        if (Math.hypot(s.x - s.startX, s.y - s.startY) > SLOP_PX) finish(s);
+        const moved = Math.hypot(s.x - s.startX, s.y - s.startY);
+        if (moved > SLOP_PX) {
+          if (debugOn()) debugShow(`cancelled: the finger moved ${Math.round(moved)}px after ${ms(performance.now() - s.t.down)} (more than ${SLOP_PX}px = a scroll)`);
+          finish(s);
+        }
         return;
       }
       e.preventDefault(); // keep the page still while dragging
@@ -136,7 +187,10 @@ export function useTouchDrag(handlers: TouchDragHandlers, board: React.RefObject
       const wasActive = s.active;
       const over = s.over;
       finish(s);
-      if (!wasActive) return; // a plain tap — let it open the card
+      if (!wasActive) { // a plain tap — let it open the card
+        if (debugOn()) debugShow(`released after ${ms(performance.now() - s.t.down)} — before the ${HOLD_MS}ms hold`);
+        return;
+      }
       e.preventDefault();
       justDragged.current = true;
       setTimeout(() => { justDragged.current = false; }, 400);
@@ -165,9 +219,13 @@ export function useTouchDrag(handlers: TouchDragHandlers, board: React.RefObject
     if (drag.current) finishRef.current?.(drag.current);
     if (e.touches.length !== 1) return;
     const t = e.touches[0];
+    // e.timeStamp: when the touch happened (same clock as performance.now in current browsers)
+    const now = performance.now();
+    const down = e.timeStamp > 0 && e.timeStamp <= now ? e.timeStamp : now;
     const s: DragState = {
       id, el, startX: t.clientX, startY: t.clientY, x: t.clientX, y: t.clientY,
       offX: 0, offY: 0, active: false, over: null, ghost: null, raf: 0, src: e.target,
+      t: { down, queued: now },
       timer: setTimeout(() => activateRef.current?.(s), HOLD_MS),
     };
     drag.current = s;
