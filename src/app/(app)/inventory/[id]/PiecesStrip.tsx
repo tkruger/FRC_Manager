@@ -4,14 +4,13 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import QRCode from "react-qr-code";
-import { Camera, Maximize2, MapPin, Pencil, Printer } from "lucide-react";
+import { Camera, Maximize2, MapPin, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import { updateItemImageAction, updatePieceAction, markPieceUsedUpAction } from "@/app/actions/inventory";
 import { uploadPhoto } from "@/lib/upload-photo";
 import { AcquireButton } from "../AcquireButton";
-import { printStockLabel } from "./StockPanels";
 import { ZoomablePhoto } from "@/components/ui/PhotoViewer";
 import { thumbUrl } from "@/lib/photo-url";
 
@@ -175,9 +174,6 @@ function PieceCard({ piece, name, canEdit, robots, focused }: {
         </div>
       ) : (
         <div className="flex flex-wrap gap-2">
-          <Button type="button" size="sm" variant="outline" onClick={() => printStockLabel({ name, code: piece.code, detail, svgId })}>
-            <Printer className="h-4 w-4" aria-hidden /> Label
-          </Button>
           <AcquireButton itemId={piece.id} itemName={`${name} (${piece.code})`} robots={robots} maxQty={piece.count} />
           {canEdit && (
             <Button type="button" size="sm" variant="outline" onClick={() => setEditing(true)}>

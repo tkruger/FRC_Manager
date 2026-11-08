@@ -98,8 +98,6 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
           canEdit && !item.archived && !parent && { kind: "action", place: "primary", label: "+ Add a partial piece", action: "inventory:add-partial" },
           parent && { kind: "link", place: "secondary", label: "All pieces", href: `/inventory/${parent.id}#piece-${item.id}` },
           canUse && { kind: "action", place: "secondary", label: "Use on Robot", action: "inventory:use" },
-          { kind: "action", place: "secondary", icon: "print", label: "Print label", action: "inventory:print-label" },
-          pieces.length > 0 && { kind: "link", place: "menu", icon: "print", label: "Print piece labels", href: `/inventory/labels?ids=${pieces.map((p) => p.id).join(",")}` },
           { kind: "link", place: "menu", label: "Scan labels", href: "/tools/scan" },
           canEdit && { kind: "action", place: "menu", danger: !item.archived, label: item.archived ? "Restore item" : "Retire item", action: "inventory:retire" },
         ]}
@@ -156,7 +154,7 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
       {/* Photo and label */}
       <div className="grid items-start gap-4 sm:grid-cols-2">
         <PhotoPanel url={item.image} name={item.name} canEdit={canEdit} />
-        <LabelPanel itemId={item.id} name={item.name} code={item.stockTag} detail={partial ? (item.amountLeft ? `Partial — ${item.amountLeft} left` : "Partial piece") : null} action="inventory:print-label" />
+        <LabelPanel itemId={item.id} code={item.stockTag} />
       </div>
 
       {/* The rest of this material: the full stock and its partial pieces */}

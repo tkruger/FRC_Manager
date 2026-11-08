@@ -23,8 +23,7 @@ export default async function ToolLocationsPage() {
         title="Tool locations"
         help="tools"
         breadcrumb={<><Link href="/tools" className="hover:text-(--color-primary)">Tools</Link><span className="mx-2">›</span>Locations</>}
-        subtitle="Shelves, cabinets, totes and cases. Print their barcodes, then scan a tool and a location to put the tool there."
-        items={[locations.length > 0 && { kind: "link", place: "secondary", icon: "print", label: "Print all labels", href: "/tools/locations/labels" }]}
+        subtitle="Shelves, cabinets, totes and cases. Each has a code (LOC-0001) — scan a tool and a location's code to put the tool there."
       />
       <LocationsClient
         locations={locations.map((l) => ({ ...l, tools: counts.get(l.name) ?? 0 }))}

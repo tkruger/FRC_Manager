@@ -96,7 +96,6 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
         items={[
           { kind: "link", place: "secondary", label: "Scan", href: "/tools/scan" },
           !viewOnly && { kind: "action", place: "secondary", icon: "plus", label: "Order a new item", action: "inventory:order-new" },
-          { kind: "link", place: "menu", icon: "print", label: "Print labels", href: "/inventory/labels" },
           canManageInventory && { kind: "link", place: "menu", label: "Sub-categories", href: "/inventory/subcategories" },
           canManageInventory && { kind: "action", place: "primary", label: "+ Add item", action: "inventory:add" },
         ]}

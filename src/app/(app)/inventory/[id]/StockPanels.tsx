@@ -12,7 +12,6 @@ import { ToolImageCapture } from "@/components/ui/ToolImageCapture";
 import { ZoomablePhoto } from "@/components/ui/PhotoViewer";
 import { addPartialPieceAction } from "@/app/actions/inventory";
 import { usePageAction } from "@/components/page-actions";
-import { escapeHtml } from "@/lib/html";
 
 /**
  * A photo of the material — so people know what they are looking for. Tap it to see it full screen;
@@ -43,42 +42,19 @@ export function PhotoPanel({ url, name, canEdit }: { url: string | null; name: s
   );
 }
 
-/** Print one label (QR code + name + detail + code) in a small window */
-export function printStockLabel({ name, code, detail, svgId }: { name: string; code: string; detail?: string | null; svgId: string }) {
-  const win = window.open("", "_blank", "width=400,height=520");
-  if (!win) { toast.error("Allow pop-ups to print the label."); return; }
-  // The QR code is our own SVG; the text is escaped (it's user-editable)
-  const svg = document.getElementById(svgId)?.outerHTML ?? "";
-  win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Label — ${escapeHtml(name)}</title>
-<style>body{margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;padding:24px}
-svg{width:180px;height:180px}h1{font-size:14px;font-weight:700;margin:12px 0 4px;text-align:center}p{font-size:11px;color:#555;margin:0;text-align:center}
-.code{font-family:monospace}@media print{@page{margin:0}}</style></head>
-<body>${svg}<h1>${escapeHtml(name)}</h1>${detail ? `<p>${escapeHtml(detail)}</p>` : ""}<p class="code">${escapeHtml(code)}</p>
-<script>window.onload=()=>{window.print();window.close();}</script></body></html>`);
-  win.document.close();
-}
-
 /**
- * The label for the stock: a QR code with the item's code (INV-0001). Stick it on the bin, the sheet or
- * the offcut; scanning it (Tools → Scan) opens this item. The header's "Print label" fires `action`.
+ * The stock's code (INV-0001) and its QR code — what goes on its label. Scanning it (Tools → Scan)
+ * opens this item. (Printing labels from the app is off for now; a better way is coming.)
  */
-export function LabelPanel({ itemId, name, code, detail, action }: { itemId: string; name: string; code: string | null; detail?: string | null; action?: string }) {
+export function LabelPanel({ itemId, code }: { itemId: string; code: string | null }) {
   const value = code ?? itemId;
-  const svgId = `stock-qr-${itemId}`;
-
-  const print = () => printStockLabel({ name, code: value, detail, svgId });
-  usePageAction(action, print);
-
   return (
     <section className="card space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="text-h3 text-(--color-text-primary)">Label</h2>
-        <Button type="button" size="sm" variant="outline" onClick={print}>Print label</Button>
-      </div>
+      <h2 className="text-h3 text-(--color-text-primary)">Label code</h2>
       <div className="flex flex-col items-center gap-2 py-1">
-        <div className="rounded-lg bg-white p-3"><QRCode id={svgId} value={value} size={140} level="M" /></div>
+        <div className="rounded-lg bg-white p-3"><QRCode value={value} size={140} level="M" /></div>
         <p className="font-mono text-sm text-(--color-text-primary)">{value}</p>
-        <p className="text-center text-small text-(--color-text-secondary)">Stick it on the stock — scanning it (Tools → Scan) opens this item.</p>
+        <p className="text-center text-small text-(--color-text-secondary)">Scanning this code (Tools → Scan) opens this item.</p>
       </div>
     </section>
   );

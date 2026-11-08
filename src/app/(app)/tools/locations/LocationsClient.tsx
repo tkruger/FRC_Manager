@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { createLocationAction, renameLocationAction, deleteLocationAction } from "@/app/actions/tool-locations";
 
@@ -81,9 +80,8 @@ export function LocationsClient({ locations, canEdit }: { locations: Location[];
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                    <Link href={`/tools/locations/labels?id=${l.id}`}><Button size="sm" variant="outline">Label</Button></Link>
                     {canEdit && <Button size="sm" variant="outline" onClick={() => setEditing({ id: l.id, name: l.name })}>Rename</Button>}
-                    {canEdit && <Button size="sm" variant="danger" onClick={() => remove(l)}>Delete</Button>}
+                    {canEdit && <Button size="sm" variant="dangerOutline" onClick={() => remove(l)}>Delete</Button>}
                   </div>
                 </>
               )}

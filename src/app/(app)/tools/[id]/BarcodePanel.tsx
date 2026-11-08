@@ -1,7 +1,7 @@
 "use client";
 
 import QRCode from "react-qr-code";
-import { escapeHtml } from "@/lib/html";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   toolId:   string;
@@ -9,42 +9,9 @@ interface Props {
   assetTag: string | null;
 }
 
-export function BarcodePanel({ toolId, toolName, assetTag }: Props) {
+export function BarcodePanel({ toolId, assetTag }: Props) {
   // The scan page looks up by assetTag OR id
   const codeValue = assetTag ?? toolId;
-
-  function printBarcode() {
-    const win = window.open("", "_blank", "width=400,height=500");
-    if (!win) return;
-    // The QR code is our own SVG; the name and code are escaped (they're user-editable)
-    const svg = document.getElementById("tool-qr-svg")?.outerHTML ?? "";
-    const name = escapeHtml(toolName);
-    const code = escapeHtml(codeValue);
-    win.document.write(`<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8"/>
-  <title>Barcode — ${name}</title>
-  <style>
-    body { margin: 0; display: flex; flex-direction: column; align-items: center;
-           justify-content: center; min-height: 100vh; font-family: sans-serif; padding: 24px; }
-    svg { width: 180px; height: 180px; }
-    h1  { font-size: 14px; font-weight: 700; margin: 12px 0 4px; text-align: center; }
-    p   { font-size: 11px; color: #555; margin: 0; text-align: center; font-family: monospace; }
-    @media print {
-      @page { margin: 0; }
-    }
-  </style>
-</head>
-<body>
-  ${svg}
-  <h1>${name}</h1>
-  <p>${code}</p>
-  <script>window.onload = () => { window.print(); window.close(); }</script>
-</body>
-</html>`);
-    win.document.close();
-  }
 
   function downloadSvg() {
     const svg  = document.getElementById("tool-qr-svg")?.outerHTML;
@@ -62,20 +29,7 @@ export function BarcodePanel({ toolId, toolName, assetTag }: Props) {
     <div className="card space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-h3 text-(--color-text-primary)">Barcode</h2>
-        <div className="flex gap-2">
-          <button
-            onClick={downloadSvg}
-            className="text-sm text-(--color-text-secondary) hover:text-(--color-text-primary) transition-colors px-2 py-1 rounded hover:bg-(--color-surface-overlay)"
-          >
-            Download SVG
-          </button>
-          <button
-            onClick={printBarcode}
-            className="text-sm font-medium px-3 py-1.5 rounded-lg border border-(--color-border) hover:border-(--color-border-strong) text-(--color-text-secondary) hover:text-(--color-text-primary) transition-colors"
-          >
-            Print barcode
-          </button>
-        </div>
+        <Button type="button" variant="outline" size="sm" onClick={downloadSvg}>Download SVG</Button>
       </div>
 
       <div className="flex flex-col items-center gap-3 py-2">
