@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.18.7 — 2026-11-09
+
 - **Tapping a photo opens a card straight away**: the small copy stands in (blurred, with "Loading photo…") while the full photo loads, and ✕ closes it at any time — before it has loaded too. If a photo can't load, the card says so
 ## 1.18.6 — 2026-11-08
 
