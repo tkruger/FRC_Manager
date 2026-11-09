@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.18.8 — 2026-11-09
+
 - **Two new app icons**: red & blue bumpers, in studio (light) and charcoal (dark)
 - **The logo at the top left is a home button**: it shows a house (it always went home, but the tools icon didn't say so). On the home page itself it shows the team robot with red and blue bumpers — red along the front, blue down the side (light or dark to match the app). On phones the header also has the light/dark switch and the calendar again
 ## 1.18.7 — 2026-11-09
