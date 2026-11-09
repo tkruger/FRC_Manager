@@ -14,6 +14,7 @@ import { InventoryTableClient } from "./InventoryTableClient";
 import { PageHeader } from "@/components/PageHeader";
 import { CATEGORY_VALUES, CLOSED_FOLDERS_COOKIE, parseClosedFolders, type CategoryValue } from "@/lib/inventory/categories";
 import { cookies } from "next/headers";
+import { editableDrafts } from "@/lib/orders/drafts";
 
 // Roles that may see the Low stock and Order queue tabs
 const RESTRICTED_TAB_ROLES = ["HEAD_MENTOR", "TEAM_LEADERSHIP", "BUILD_LEAD", "INVENTORY_ADMIN"];
@@ -67,7 +68,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
     prisma.inventorySubcategory.findMany({ where: { teamId: session.user.teamId }, select: { id: true, category: true, name: true }, orderBy: { name: "asc" } }),
     prisma.robot.findMany({ where: { seasonId: activeSeason.id, archived: false }, select: { id: true, displayName: true } }),
     // Your open order drafts — "Order" can add to one of them
-    viewOnly ? [] : prisma.orderDraft.findMany({ where: { userId: session.user.id, teamId: session.user.teamId }, orderBy: { updatedAt: "desc" }, select: { id: true, name: true, items: true } }),
+    viewOnly ? [] : prisma.orderDraft.findMany({ where: { teamId: session.user.teamId, ...editableDrafts(session.user.id) }, orderBy: { updatedAt: "desc" }, select: { id: true, name: true, items: true } }),
   ]);
   const drafts = myDrafts.map((d) => ({ id: d.id, name: d.name, items: Array.isArray(d.items) ? d.items.filter((x) => typeof x === "object" && x && String((x as { name?: unknown }).name ?? "").trim()).length : 0 }));
   const items = allItems.filter((i) => !i.archived);

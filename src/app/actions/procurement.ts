@@ -10,6 +10,7 @@ import type { SubTeam } from "@/generated/prisma";
 import { performAction, type WorkflowAction, type Actor, type ActionResult } from "@/lib/workflow/engine";
 import { CATEGORY_VALUES, DEFAULT_CATEGORY } from "@/lib/inventory/categories";
 import { createOrder, type NewItem } from "@/lib/orders/create";
+import { editableDrafts } from "@/lib/orders/drafts";
 
 // Form-based order entry points (inventory "Order" buttons). The full order form
 // uses createOrderAction in ./orders; both go through lib/orders/create.
@@ -39,19 +40,19 @@ async function addToDraft(session: Session, draftId: string | null, name: string
     importance: i.importance ?? "ROUTINE", reasoning: i.reasoning ?? "", notes: "", budgetCategory: "",
   }));
   if (draftId) {
-    const draft = await prisma.orderDraft.findFirst({ where: { id: draftId, userId: session.user.id }, select: { id: true, name: true, items: true } });
+    const draft = await prisma.orderDraft.findFirst({ where: { id: draftId, teamId: session.user.teamId!, ...editableDrafts(session.user.id) }, select: { id: true, name: true, items: true } });
     if (!draft) return { success: false, error: "That draft is gone — pick another or start a new one." };
     const was = Array.isArray(draft.items) ? draft.items : [];
     // A draft starts with one empty row; replace it rather than keep a blank item
     const kept = was.filter((x) => typeof x === "object" && x && String((x as { name?: unknown }).name ?? "").trim());
     const next = [...kept, ...lines];
     if (next.length > 100) return { success: false, error: "That draft is full (100 items) — start a new one." };
-    await prisma.orderDraft.update({ where: { id: draft.id }, data: { items: next } });
+    await prisma.orderDraft.update({ where: { id: draft.id }, data: { items: next, lastEditedById: session.user.id } });
     revalidatePath("/procurement");
     return { success: true, draft: { id: draft.id, name: draft.name, items: next.length } };
   }
   const created = await prisma.orderDraft.create({
-    data: { teamId: session.user.teamId!, userId: session.user.id, name: name.slice(0, 120), items: lines },
+    data: { teamId: session.user.teamId!, userId: session.user.id, name: name.slice(0, 120), items: lines, lastEditedById: session.user.id },
     select: { id: true, name: true },
   });
   revalidatePath("/procurement");

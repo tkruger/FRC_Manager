@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Shared order drafts**: everyone on the team can see drafts (Orders → Drafts, split into yours and the team's). Whoever starts one can **Invite a teammate** on the draft; people invited get a notification and can edit it, add items to it (also from Inventory's Order buttons) and submit it, or leave it. Only the maker can delete it or remove people. Drafts show who's on them and who saved last
 ## 1.18.10 — 2026-11-09
 
 - **Renaming an item renames its group**: when the item has a full stock and partial pieces (they share a name), saving a new name asks "Rename all N entries…?" and renames them all, so they stay together. Cancel keeps everything as it was

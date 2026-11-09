@@ -53,6 +53,13 @@ export const TOPICS = [
     defaultInApp: true, defaultPush: true, defaultEmail: true,
   },
   {
+    id: "purchase.draft_invites", group: "Purchasing",
+    label: "Invited to a draft order",
+    description: "Someone invites you to work on an order draft with them — add items, edit and submit it.",
+    audience: "The person invited",
+    defaultInApp: true, defaultPush: true, defaultEmail: true,
+  },
+  {
     id: "purchase.comments", group: "Purchasing",
     label: "Comments on orders I'm part of",
     description: "Someone comments on an order you placed, approved, are buying or commented on — back orders, broken links, questions.",

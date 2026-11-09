@@ -82,6 +82,10 @@ model User {
   userCertifications   UserCertification[]
   purchaseRequests     PurchaseRequest[]   @relation("Requester")
   orderDrafts          OrderDraft[]
+  /// Drafts someone invited this person to work on
+  draftCollaborations  OrderDraftCollaborator[] @relation("DraftCollaborator")
+  /// Drafts this person last saved
+  draftsEdited         OrderDraft[]             @relation("DraftLastEditedBy")
   precheckUpdates      Robot[]             @relation("PrecheckUpdatedBy")
   teamsReviewed        Team[]              @relation("TeamReviewedBy")
   invitesSent          Invite[]            @relation("InviteSentBy")
@@ -1537,6 +1541,7 @@ enum NotificationType {
   BROADCAST
   /// Someone commented on an order you're part of
   ORDER_COMMENT
+  ORDER_DRAFT_INVITE
   /// Someone edited an order you're part of
   ORDER_CHANGED
 }
@@ -1879,10 +1884,28 @@ model OrderDraft {
   items     Json
   /// The order's budget category, if picked yet
   budgetCategory BudgetCategoryType?
+  /// Who saved it last (the maker or a collaborator)
+  lastEditedById String?
+  lastEditedBy   User?    @relation("DraftLastEditedBy", fields: [lastEditedById], references: [id], onDelete: SetNull)
+  /// People the maker invited to work on it (edit, add items, submit)
+  collaborators  OrderDraftCollaborator[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([userId, updatedAt])
+  @@index([teamId, updatedAt])
+}
+
+/// Someone invited to work on an order draft
+model OrderDraftCollaborator {
+  draftId   String
+  draft     OrderDraft @relation(fields: [draftId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User       @relation("DraftCollaborator", fields: [userId], references: [id], onDelete: Cascade)
+  addedAt   DateTime   @default(now())
+
+  @@id([draftId, userId])
+  @@index([userId])
 }
 
 /// Invitation to join a team. EMAIL invites are for one person and used once; LINK invites

@@ -56,11 +56,15 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
       where: { request: { seasonId: activeSeason.id, status: { in: [...OPEN] } } },
       _count: { _all: true },
     }),
-    // Your own unsubmitted orders
+    // The team's unsubmitted orders (shared: everyone sees them; the maker and collaborators edit)
     prisma.orderDraft.findMany({
-      where:   { userId: session.user.id, teamId: session.user.teamId },
+      where:   { teamId: session.user.teamId },
       orderBy: { updatedAt: "desc" },
-      select:  { id: true, name: true, items: true, updatedAt: true },
+      select:  {
+        id: true, name: true, items: true, updatedAt: true, userId: true,
+        user: { select: { name: true } },
+        collaborators: { select: { userId: true, user: { select: { name: true } } } },
+      },
     }),
   ]);
 
@@ -79,11 +83,13 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   })));
 
   const count = (s: string) => itemCounts.find((c) => c.status === s)?._count._all ?? 0;
+  const myDrafts = drafts.filter((d) => d.userId === session.user.id || d.collaborators.some((c) => c.userId === session.user.id));
+  const teamDrafts = drafts.filter((d) => !myDrafts.includes(d));
   const tabs = [
     { key: "open", label: "Open" },
     { key: "mine", label: "Mine" },
     { key: "all",  label: "All" },
-    ...(drafts.length > 0 || view === "drafts" ? [{ key: "drafts", label: `My drafts (${drafts.length})` }] : []),
+    ...(drafts.length > 0 || view === "drafts" ? [{ key: "drafts", label: `Drafts (${drafts.length})` }] : []),
   ];
 
   return (
@@ -125,32 +131,49 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
       {view === "drafts" ? (
         drafts.length === 0 ? (
           <div className="card text-center py-10">
-            <p className="text-body text-(--color-text-secondary)">No drafts. Use <b>Save draft</b> on a new order to finish it later.</p>
+            <p className="text-body text-(--color-text-secondary)">No drafts. Use <b>Save draft</b> on a new order to finish it later — and invite teammates to help.</p>
           </div>
         ) : (
-          <div className="grid gap-3 md:grid-cols-2">
-            {drafts.map((d) => {
-              const items = Array.isArray(d.items) ? (d.items as { name?: string; unitCost?: string; quantity?: string }[]) : [];
-              const total = items.reduce((s, i) => s + (Number(i.unitCost) || 0) * (Number(i.quantity) || 0), 0);
-              const named = items.map((i) => i.name?.trim()).filter(Boolean) as string[];
-              return (
-                <div key={d.id} className="card space-y-2">
-                  <div className="flex items-start justify-between gap-3">
-                    <p className="text-sm font-semibold text-(--color-text-primary)">{d.name}</p>
-                    <p className="text-sm font-semibold text-(--color-text-primary) whitespace-nowrap">{formatCurrency(total)}</p>
-                  </div>
-                  <p className="text-small text-(--color-text-secondary)">
-                    {items.length} item{items.length === 1 ? "" : "s"}
-                    {named.length > 0 && ` · ${named.slice(0, 3).join(", ")}${named.length > 3 ? ` +${named.length - 3}` : ""}`}
-                    {" · "}saved {formatDate(d.updatedAt)}
-                  </p>
-                  <div className="flex items-center gap-3 pt-1">
-                    <Link href={`/procurement/requests/new?draft=${d.id}`}><Button size="sm">Continue</Button></Link>
-                    <DeleteDraftButton draftId={d.id} name={d.name} />
-                  </div>
+          <div className="space-y-6">
+            {[
+              { title: "Yours", hint: "Drafts you started or were invited to", list: myDrafts },
+              { title: "The team's", hint: "Anyone can look; ask whoever started one to invite you to help", list: teamDrafts },
+            ].filter((g) => g.list.length > 0).map((g) => (
+              <section key={g.title} className="space-y-3">
+                <div>
+                  <h2 className="text-h3 text-(--color-text-primary)">{g.title} ({g.list.length})</h2>
+                  <p className="text-small text-(--color-text-secondary)">{g.hint}</p>
                 </div>
-              );
-            })}
+                <div className="grid gap-3 md:grid-cols-2">
+                  {g.list.map((d) => {
+                    const items = Array.isArray(d.items) ? (d.items as { name?: string; unitCost?: string; quantity?: string }[]) : [];
+                    const total = items.reduce((s, i) => s + (Number(i.unitCost) || 0) * (Number(i.quantity) || 0), 0);
+                    const named = items.map((i) => i.name?.trim()).filter(Boolean) as string[];
+                    const mine = d.userId === session.user.id;
+                    const canEdit = mine || d.collaborators.some((c) => c.userId === session.user.id);
+                    const people = [mine ? "You" : d.user.name, ...d.collaborators.map((c) => (c.userId === session.user.id ? "you" : c.user.name))];
+                    return (
+                      <div key={d.id} className="card space-y-2">
+                        <div className="flex items-start justify-between gap-3">
+                          <p className="text-sm font-semibold text-(--color-text-primary)">{d.name}</p>
+                          <p className="text-sm font-semibold text-(--color-text-primary) whitespace-nowrap">{formatCurrency(total)}</p>
+                        </div>
+                        <p className="text-small text-(--color-text-secondary)">
+                          {named.length} item{named.length === 1 ? "" : "s"}
+                          {named.length > 0 && ` · ${named.slice(0, 3).join(", ")}${named.length > 3 ? ` +${named.length - 3}` : ""}`}
+                          {" · "}saved {formatDate(d.updatedAt)}
+                        </p>
+                        <p className="text-small text-(--color-text-secondary)">{people.length > 1 ? `${people[0]} with ${people.slice(1).join(", ")}` : `By ${people[0]}`}</p>
+                        <div className="flex items-center gap-2 pt-1">
+                          <Link href={`/procurement/requests/new?draft=${d.id}`}><Button size="sm" variant={canEdit ? "primary" : "outline"}>{canEdit ? "Continue" : "View"}</Button></Link>
+                          {mine && <DeleteDraftButton draftId={d.id} name={d.name} />}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
           </div>
         )
       ) : rows.length === 0 ? (

@@ -4,13 +4,16 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { deleteOrderDraftAction } from "@/app/actions/orders";
 import { toast } from "@/components/ui/toast";
+import { Button } from "@/components/ui/button";
 
 export function DeleteDraftButton({ draftId, name }: { draftId: string; name: string }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   return (
-    <button
+    <Button
       type="button"
+      variant="dangerOutline"
+      size="sm"
       disabled={pending}
       onClick={() => {
         if (!confirm(`Delete the draft "${name}"?`)) return;
@@ -20,9 +23,8 @@ export function DeleteDraftButton({ draftId, name }: { draftId: string; name: st
           else toast.error(res.error);
         });
       }}
-      className="text-small font-medium text-(--color-danger) hover:underline disabled:opacity-50"
     >
       {pending ? "Deleting…" : "Delete"}
-    </button>
+    </Button>
   );
 }

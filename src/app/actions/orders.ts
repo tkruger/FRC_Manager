@@ -18,6 +18,8 @@ import { BUDGET_CATEGORY_LABELS } from "@/lib/budget-categories";
 import { ORDER_BUDGET_CATEGORIES } from "@/lib/budget-categories";
 import type { BudgetCategoryType } from "@/generated/prisma";
 import { issueMessage } from "@/lib/validation";
+import { editableDrafts } from "@/lib/orders/drafts";
+import { notifyUsers } from "@/lib/notify/deliver";
 
 const CATEGORIES = ORDER_BUDGET_CATEGORIES as [BudgetCategoryType, ...BudgetCategoryType[]];
 /** An order's budget category (required) */
@@ -96,7 +98,8 @@ export async function createOrderAction(input: unknown): Promise<Result<{ reques
 
   const res = await createOrder({ actor: who, seasonId: season.id, name: parsed.data.name, items: parsed.data.items, budgetCategory: parsed.data.budgetCategory });
   if (res.success) {
-    if (parsed.data.draftId) await prisma.orderDraft.deleteMany({ where: { id: parsed.data.draftId, userId: who.id } });
+    // Submitting a draft (by its maker or a collaborator) uses it up
+    if (parsed.data.draftId) await prisma.orderDraft.deleteMany({ where: { id: parsed.data.draftId, teamId: who.teamId, ...editableDrafts(who.id) } });
     refresh([res.requestId]);
   }
   return res;
@@ -117,7 +120,7 @@ const DraftSchema = z.object({
   })).max(100),
 });
 
-/** Save an in-progress order (private to its author). Creates it the first time. */
+/** Save an in-progress order. Creates it the first time; after that its maker and collaborators save it. */
 export async function saveOrderDraftAction(input: unknown): Promise<Result<{ draftId: string }>> {
   const who = await actor();
   if (!who) return { success: false, error: "Not authenticated." };
@@ -128,13 +131,50 @@ export async function saveOrderDraftAction(input: unknown): Promise<Result<{ dra
   const budgetCategory = parsed.data.budgetCategory ?? null;
   const name = parsed.data.name.trim() || "Untitled order";
   if (draftId) {
-    const updated = await prisma.orderDraft.updateMany({ where: { id: draftId, userId: who.id }, data: { name, items, budgetCategory } });
+    const updated = await prisma.orderDraft.updateMany({ where: { id: draftId, teamId: who.teamId, ...editableDrafts(who.id) }, data: { name, items, budgetCategory, lastEditedById: who.id } });
     if (updated.count === 1) { revalidatePath("/procurement"); return { success: true, draftId }; }
-    // Deleted meanwhile (or someone else's id) — save as a new draft instead
+    // Deleted meanwhile (or not one this person may edit) — save as a new draft instead
   }
-  const created = await prisma.orderDraft.create({ data: { teamId: who.teamId, userId: who.id, name, items, budgetCategory } });
+  const created = await prisma.orderDraft.create({ data: { teamId: who.teamId, userId: who.id, name, items, budgetCategory, lastEditedById: who.id } });
   revalidatePath("/procurement");
   return { success: true, draftId: created.id };
+}
+
+/** Invite a teammate to work on your draft (its maker only) */
+export async function inviteDraftCollaboratorAction(draftId: string, userId: string): Promise<Result> {
+  const who = await actor();
+  if (!who) return { success: false, error: "Not authenticated." };
+  const draft = await prisma.orderDraft.findFirst({ where: { id: draftId, teamId: who.teamId }, select: { id: true, name: true, userId: true } });
+  if (!draft) return { success: false, error: "That draft is gone." };
+  if (draft.userId !== who.id) return { success: false, error: "Only the person who started the draft can invite people." };
+  if (userId === who.id) return { success: false, error: "That's you." };
+  const person = await prisma.user.findFirst({ where: { id: userId, teamId: who.teamId, status: "ACTIVE" }, select: { id: true, name: true } });
+  if (!person) return { success: false, error: "That person isn't on the team." };
+  await prisma.orderDraftCollaborator.upsert({ where: { draftId_userId: { draftId, userId } }, create: { draftId, userId }, update: {} });
+  await notifyUsers([userId], {
+    topic: "purchase.draft_invites",
+    type:  "ORDER_DRAFT_INVITE",
+    title: `${who.name ?? "Someone"} invited you to the order draft "${draft.name}"`,
+    body:  "Add items, edit it and submit it when it's ready.",
+    url:   `/procurement/requests/new?draft=${draftId}`,
+    tag:   `draft-invite-${draftId}`,
+  }).catch((e) => console.error("[orders] draft invite notification:", e));
+  revalidatePath("/procurement");
+  revalidatePath("/procurement/requests/new");
+  return { success: true };
+}
+
+/** Take someone off a draft — its maker can remove anyone; a collaborator can leave */
+export async function removeDraftCollaboratorAction(draftId: string, userId: string): Promise<Result> {
+  const who = await actor();
+  if (!who) return { success: false, error: "Not authenticated." };
+  const draft = await prisma.orderDraft.findFirst({ where: { id: draftId, teamId: who.teamId }, select: { userId: true } });
+  if (!draft) return { success: false, error: "That draft is gone." };
+  if (draft.userId !== who.id && userId !== who.id) return { success: false, error: "Only the person who started the draft can remove people." };
+  await prisma.orderDraftCollaborator.deleteMany({ where: { draftId, userId } });
+  revalidatePath("/procurement");
+  revalidatePath("/procurement/requests/new");
+  return { success: true };
 }
 
 export async function deleteOrderDraftAction(draftId: string): Promise<Result> {
