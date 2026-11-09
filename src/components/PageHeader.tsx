@@ -1,5 +1,6 @@
 import { HelpLink, type HelpTopic } from "@/components/HelpLink";
 import { HeaderActions, type HeaderItem } from "@/components/HeaderActions";
+import { cn } from "@/lib/utils";
 
 /**
  * Page title with its Guide button: on a phone at the right of the title row; on a computer right after
@@ -59,8 +60,8 @@ export function PageHeader({
         {subtitle && <div className="text-body text-(--color-text-secondary) mt-1">{subtitle}</div>}
       </div>
       {right && (
-        <div className="flex flex-wrap items-center justify-end gap-2 sm:max-w-[65%] sm:shrink-0">
-          {filters && <div className="mr-auto sm:mr-0">{filters}</div>}
+        <div className={cn("flex items-center justify-end gap-2 sm:max-w-[65%] sm:shrink-0", filters ? "flex-nowrap sm:flex-wrap" : "flex-wrap")}>
+          {filters && <div className="mr-auto min-w-0 flex-1 sm:mr-0 sm:flex-none">{filters}</div>}
           {actions}
           <HeaderActions items={list} />
         </div>

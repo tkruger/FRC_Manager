@@ -14,11 +14,12 @@ export function RobotFilterSelect({ robots, robotId }: { robots: { id: string; d
   const [pending, start] = useTransition();
   if (robots.length < 2) return null;
   return (
-    <label className="flex items-center gap-2 text-sm">
-      <span className="text-small text-(--color-text-secondary)">Robot</span>
+    // Phones: no label (the choice says "All robots" or the robot) and it shrinks to fit beside the buttons
+    <label className="flex min-w-0 items-center gap-2 text-sm">
+      <span className="hidden text-small text-(--color-text-secondary) sm:inline">Robot</span>
       <select
         className={cn(
-          "h-9 max-w-[11rem] truncate rounded-md border bg-(--color-surface) px-2.5 text-sm font-medium text-(--color-text-primary) focus:outline-none focus:ring-2 focus:ring-(--color-primary)/30 cursor-pointer",
+          "h-9 w-full min-w-0 max-w-[11rem] truncate rounded-md border bg-(--color-surface) px-2.5 text-sm font-medium text-(--color-text-primary) focus:outline-none focus:ring-2 focus:ring-(--color-primary)/30 cursor-pointer",
           robotId ? "border-(--color-primary)" : "border-(--color-border)",
           pending && "opacity-50",
         )}
