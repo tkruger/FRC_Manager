@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- The logo at the top left is the same size as the profile button on the right
 ## 1.18.8 — 2026-11-09
 
 - **Two new app icons**: red & blue bumpers, in studio (light) and charcoal (dark)

@@ -615,7 +615,7 @@ function UserCircleIcon({ className }: { className?: string }) {
 }
 
 /**
- * The logo at the top left, which goes home: a house — and on the home page itself, the team robot
+ * The logo at the top left (the same size as the profile button on the right), which goes home: a house — and on the home page itself, the team robot
  * with red and blue bumpers
  */
 function AppMark({ home }: { home: boolean }) {
@@ -624,18 +624,18 @@ function AppMark({ home }: { home: boolean }) {
     // studio icon in light mode, the charcoal one in dark mode
     const img = (src: string, cls: string) => (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={src} alt="" className={cn("absolute inset-0 h-full w-full scale-[1.45]", cls)} />
+      <img src={src} alt="" className={cn("absolute inset-0 h-full w-full scale-[1.2]", cls)} />
     );
     return (
-      <span aria-hidden className="relative block w-7 h-7 shrink-0 overflow-hidden rounded">
+      <span aria-hidden className="relative block w-8 h-8 [@media(pointer:coarse)]:w-11 [@media(pointer:coarse)]:h-11 rounded-md shrink-0 overflow-hidden">
         {img("/app-icons/13_split_bumpers_studio/icon-192.png", "in-data-[theme=dark]:hidden")}
         {img("/app-icons/14_split_bumpers_charcoal/icon-192.png", "hidden in-data-[theme=dark]:block")}
       </span>
     );
   }
   return (
-    <span aria-hidden className="w-7 h-7 rounded flex items-center justify-center shrink-0" style={{ backgroundColor: "var(--color-primary)" }}>
-      <House className="w-4 h-4 text-white" strokeWidth={2.5} />
+    <span aria-hidden className="w-8 h-8 [@media(pointer:coarse)]:w-11 [@media(pointer:coarse)]:h-11 rounded-md flex items-center justify-center shrink-0" style={{ backgroundColor: "var(--color-primary)" }}>
+      <House className="w-4 h-4 [@media(pointer:coarse)]:w-5 [@media(pointer:coarse)]:h-5 text-white" strokeWidth={2.5} />
     </span>
   );
 }
