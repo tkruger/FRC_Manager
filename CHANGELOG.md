@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.18.10 — 2026-11-09
+
 - **Renaming an item renames its group**: when the item has a full stock and partial pieces (they share a name), saving a new name asks "Rename all N entries…?" and renames them all, so they stay together. Cancel keeps everything as it was
 ## 1.18.9 — 2026-11-09
 
