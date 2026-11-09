@@ -12,8 +12,25 @@
 import { lookupMouser } from "./mouser";
 import { lookup as dnsLookup } from "node:dns/promises";
 import { isIP } from "node:net";
+import { AsyncLocalStorage } from "node:async_hooks";
+
+/** Why the store's pages didn't come back (for the message under the link) — one list per lookup */
+const failures = new AsyncLocalStorage<string[]>();
+const noteFailure = (why: string) => failures.getStore()?.push(why);
+
+/** The most telling reason a lookup got nothing, in words */
+function explain(reasons: string[]): string | null {
+  if (reasons.some((r) => r === "429")) return "The store asked the app to slow down (too many requests). Wait a minute, then try Fill again.";
+  if (reasons.some((r) => r === "403" || r === "401")) return "The store refused the app's request (it may block automated requests). Fill in the details below.";
+  if (reasons.some((r) => r === "timeout")) return "The store took too long to answer. Try Fill again.";
+  const status = reasons.find((r) => /^\d+$/.test(r));
+  if (status) return `The store answered with an error (${status}). Fill in the details below.`;
+  return null;
+}
 
 export interface ProductInfo {
+  /** Nothing found: why, when we know (the store refused, asked us to slow down, timed out) */
+  problem?:   string | null;
   vendorName: string | null;
   name:       string | null;
   partNumber: string | null;
@@ -99,11 +116,21 @@ async function safeFetch(url: URL, accept: string, headers: Record<string, strin
   let current = url;
   for (let hop = 0; hop < 4; hop++) {
     await assertPublicUrl(current);
-    const res = await fetch(current, {
-      redirect: "manual",
-      signal:   AbortSignal.timeout(6000),
-      headers:  { Accept: accept, "User-Agent": "FRC-Manager/1.0 (team order list)", ...headers },
-    });
+    let res: Response;
+    try {
+      res = await fetch(current, {
+        redirect: "manual",
+        signal:   AbortSignal.timeout(6000),
+        headers:  { Accept: accept, "User-Agent": "FRC-Manager/1.0 (team order list)", ...headers },
+      });
+    } catch (e) {
+      noteFailure((e as Error)?.name === "TimeoutError" ? "timeout" : "network");
+      throw e;
+    }
+    if (!res.ok && !(res.status >= 300 && res.status < 400)) {
+      noteFailure(String(res.status));
+      console.warn(`[lookup] ${current.hostname}${current.pathname} → ${res.status}`);
+    }
     if (res.status >= 300 && res.status < 400 && res.headers.get("location")) {
       current = new URL(res.headers.get("location")!, current);
       continue;
@@ -370,6 +397,13 @@ function fromHtml(html: string): Partial<ProductInfo> {
 
 /** Best-effort product details from a link. Never throws for unreachable pages. */
 export async function lookupProduct(rawUrl: string, opts: { teamId?: string | null } = {}): Promise<ProductInfo> {
+  const reasons: string[] = [];
+  const found = await failures.run(reasons, () => lookupOnce(rawUrl, opts));
+  if (found.name || found.choices?.length) return found;
+  return { ...found, problem: explain(reasons) };
+}
+
+async function lookupOnce(rawUrl: string, opts: { teamId?: string | null }): Promise<ProductInfo> {
   const url = new URL(rawUrl);
   const vendorName = vendorFromHost(url.hostname);
   const empty: ProductInfo = { vendorName, name: null, partNumber: null, unitCost: null };

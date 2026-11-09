@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Fill says why it couldn't read a link**: when a store turns the app away, the message under the link now says so — asked to slow down, refused, timed out or an error — instead of a general "couldn't read that page"
 ## 1.19.0 — 2026-11-09
 
 - **Shared order drafts**: everyone on the team can see drafts (Orders → Drafts, split into yours and the team's). Whoever starts one can **Invite a teammate** on the draft; people invited get a notification and can edit it, add items to it (also from Inventory's Order buttons) and submit it, or leave it. Only the maker can delete it or remove people. Drafts show who's on them and who saved last

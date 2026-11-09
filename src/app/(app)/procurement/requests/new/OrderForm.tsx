@@ -35,6 +35,8 @@ interface Item {
   /** "" = same as the order */
   budgetCategory: string;
   lookup:     "idle" | "loading" | "done" | "failed";
+  /** Why the link couldn't be read, when the store said */
+  lookupProblem?: string | null;
 }
 
 const inputCls =
@@ -135,7 +137,7 @@ export function OrderForm({ vendors, edit, draft, unusedCategories = [] }: {
     if (url !== item.link) update(item.key, { link: url });
     update(item.key, { lookup: "loading" });
     const res = await lookupProductAction(url);
-    if (!res.success) { update(item.key, { lookup: "failed" }); return; }
+    if (!res.success) { update(item.key, { lookup: "failed", lookupProblem: null }); return; }
     const p = res.product;
     if (p.choices?.length) {
       // Several products on that page: in a batch (CSV import) leave it for the person to fill
@@ -148,6 +150,7 @@ export function OrderForm({ vendors, edit, draft, unusedCategories = [] }: {
     setItems((list) => list.map((i) => i.key !== item.key ? i : {
       ...i,
       lookup:     p.name ? "done" : "failed",
+      lookupProblem: p.name ? null : p.problem ?? null,
       vendorName: i.vendorName || p.vendorName || "",
       name:       i.name || p.name || "",
       partNumber: i.partNumber || p.partNumber || "",
@@ -364,7 +367,9 @@ export function OrderForm({ vendors, edit, draft, unusedCategories = [] }: {
               </Button>
             </div>
             {item.lookup === "failed" && (
-              <p className="text-small text-(--color-text-secondary)">Couldn&apos;t read that page — some stores block it, or ask the app to slow down for a minute (then try Fill again). You can also fill in the details below.</p>
+              <p className="text-small text-(--color-text-secondary)">
+                Couldn&apos;t read that page. {item.lookupProblem ?? "Some stores block it, or ask the app to slow down for a minute (then try Fill again). You can also fill in the details below."}
+              </p>
             )}
           </div>
 
