@@ -8,6 +8,7 @@ import { formatCurrency } from "@/lib/utils";
 import { AddBomItemDialog } from "./AddBomItemDialog";
 import { BomItemActions } from "./BomItemActions";
 import { RobotSwitcher } from "./RobotSwitcher";
+import { WORKING_ROBOT_STATUSES } from "@/lib/robot-filter";
 import { getActiveRobotId } from "@/app/actions/robot-context";
 
 export default async function BomPage({ searchParams }: { searchParams: Promise<{ robotId?: string }> }) {
@@ -26,7 +27,10 @@ export default async function BomPage({ searchParams }: { searchParams: Promise<
   if (!activeSeason) redirect("/settings/season");
 
   const effectiveRobotId = selectedRobotId ?? cookieRobotId ?? undefined;
-  const compBot = activeSeason.robots.find((r) => r.role === "COMPETITION") ?? activeSeason.robots[0];
+  // Robots being built or ready to compete — the picker only shows when there's more than one
+  const working = activeSeason.robots.filter((r) => WORKING_ROBOT_STATUSES.includes(r.status));
+  const compBot = (working.length === 1 ? working[0] : null)
+    ?? activeSeason.robots.find((r) => r.role === "COMPETITION") ?? activeSeason.robots[0];
   const robot = effectiveRobotId
     ? activeSeason.robots.find((r) => r.id === effectiveRobotId) ?? compBot
     : compBot;
@@ -66,8 +70,8 @@ export default async function BomPage({ searchParams }: { searchParams: Promise<
           </p>
         </div>
         <div className="flex flex-wrap gap-2 items-center">
-          {activeSeason.robots.length > 1 && (
-            <RobotSwitcher robots={activeSeason.robots} currentId={robot.id} />
+          {working.length > 1 && (
+            <RobotSwitcher robots={working.some((r) => r.id === robot.id) ? working : [robot, ...working]} currentId={robot.id} />
           )}
           <AddBomItemDialog robotId={robot.id} />
           <a

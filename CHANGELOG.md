@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Robot picker only when there's a choice**: Tasks, the Gantt chart and the BOM show it only when two or more robots are in Build or Competition-ready status; with one, that robot is used. On phones the picker sits on the left of the button row instead of above it
 - The logo at the top left is the same size as the profile button on the right
 ## 1.18.8 — 2026-11-09
 

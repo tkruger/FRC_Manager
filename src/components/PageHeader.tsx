@@ -24,7 +24,8 @@ export function PageTitle({ children, help, share }: { children: React.ReactNode
  *   computer:  breadcrumb / title · Guide / subtitle            [filters] [secondary] [Primary] [⋯]
  *   phone:     breadcrumb / title                     Guide
  *              subtitle
- *                                      [filters] [Primary] [⋯]   (right-aligned; secondary actions move into ⋯)
+ *              [filters]                       [Primary] [⋯]   (one row: the filter left, actions right;
+ *                                                                 secondary actions move into ⋯)
  *
  * `items` are the page's actions (see HeaderItem). `actions` is for anything that isn't one (rare).
  */
@@ -59,7 +60,7 @@ export function PageHeader({
       </div>
       {right && (
         <div className="flex flex-wrap items-center justify-end gap-2 sm:max-w-[65%] sm:shrink-0">
-          {filters}
+          {filters && <div className="mr-auto sm:mr-0">{filters}</div>}
           {actions}
           <HeaderActions items={list} />
         </div>
