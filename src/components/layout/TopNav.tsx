@@ -180,13 +180,12 @@ export function TopNav({ session, pendingMemberCount = 0, unreadNotificationCoun
           </div>
           {/* min-w-0 + flex-1 let the robot picker shrink so the row never exceeds the screen */}
           <div className="flex min-w-0 flex-1 items-center justify-end gap-1">
-            {/* Phones: theme lives in Profile & appearance, calendar in the bottom bar */}
-            <button onClick={toggle} aria-label="Toggle light/dark mode" className="hidden sm:flex h-9 w-9 shrink-0 rounded-md items-center justify-center text-(--color-text-secondary) hover:bg-(--color-surface-overlay) transition-colors">
+            <button onClick={toggle} aria-label="Toggle light/dark mode" className="flex h-9 w-9 shrink-0 rounded-md items-center justify-center text-(--color-text-secondary) hover:bg-(--color-surface-overlay) transition-colors">
               {resolvedTheme === "dark" ? <SunIcon /> : <MoonIcon />}
             </button>
             <Link
               href="/calendar"
-              className="hidden sm:flex h-9 w-9 shrink-0 rounded-md items-center justify-center text-(--color-text-secondary) hover:bg-(--color-surface-overlay) transition-colors"
+              className="flex h-9 w-9 shrink-0 rounded-md items-center justify-center text-(--color-text-secondary) hover:bg-(--color-surface-overlay) transition-colors"
               aria-label="Meeting calendar"
             >
               <CalendarIcon className="w-4 h-4" />
@@ -621,15 +620,23 @@ function UserCircleIcon({ className }: { className?: string }) {
  */
 function AppMark({ home }: { home: boolean }) {
   if (home) {
+    const half = (src: string, clip: string) => (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={src} alt="" className="absolute inset-0 h-full w-full scale-[1.45]" style={{ clipPath: clip }} />
+    );
+    const RED = "polygon(0 0, 100% 0, 0 100%)", BLUE = "polygon(100% 0, 100% 100%, 0 100%)";
     return (
       <span aria-hidden className="relative block w-7 h-7 shrink-0 overflow-hidden rounded">
-        {/* Zoomed in past the icon's empty background, so the robot fills the small square */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/app-icons/10_red_bumpers_studio/icon-192.png" alt="" className="absolute inset-0 h-full w-full scale-[1.45]"
-          style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)" }} />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/app-icons/12_blue_bumpers_studio/icon-192.png" alt="" className="absolute inset-0 h-full w-full scale-[1.45]"
-          style={{ clipPath: "polygon(100% 0, 100% 100%, 0 100%)" }} />
+        {/* Zoomed in past the icon's empty background, so the robot fills the small square; the light
+            studio icons in light mode, the charcoal ones in dark mode */}
+        <span className="in-data-[theme=dark]:hidden">
+          {half("/app-icons/10_red_bumpers_studio/icon-192.png", RED)}
+          {half("/app-icons/12_blue_bumpers_studio/icon-192.png", BLUE)}
+        </span>
+        <span className="hidden in-data-[theme=dark]:block">
+          {half("/app-icons/09_red_bumpers_charcoal/icon-192.png", RED)}
+          {half("/app-icons/11_blue_bumpers_charcoal/icon-192.png", BLUE)}
+        </span>
       </span>
     );
   }
