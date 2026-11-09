@@ -151,7 +151,7 @@ export async function updateBaseItemAction(
   });
   if (!parsed.success) return { success: false, error: "Please fill in all required fields." };
 
-  const owned = await prisma.baseInventoryItem.findFirst({ where: { id: itemId, season: { teamId: session.user.teamId } }, select: { id: true, image: true } });
+  const owned = await prisma.baseInventoryItem.findFirst({ where: { id: itemId, season: { teamId: session.user.teamId } }, select: { id: true, image: true, name: true, seasonId: true } });
   if (!owned) return { success: false, error: "Item not found." };
 
   // The photo is changed here, while editing (the form sends imageUrl — blank when it was removed)
@@ -187,6 +187,14 @@ export async function updateBaseItemAction(
     },
   });
   if (sentPhoto && owned.image && owned.image !== image) await deletePhotoQuietly(owned.image);
+
+  // A new name for an item in a group (its full stock and partial pieces share a name): the person
+  // agreed to rename the whole group, so the entries stay together
+  if (formData.get("renameGroup") === "1" && groupKey(d.name) !== groupKey(owned.name)) {
+    const season = await prisma.baseInventoryItem.findMany({ where: { seasonId: owned.seasonId, id: { not: itemId } }, select: { id: true, name: true } });
+    const others = season.filter((x) => groupKey(x.name) === groupKey(owned.name)).map((x) => x.id);
+    if (others.length) await prisma.baseInventoryItem.updateMany({ where: { id: { in: others } }, data: { name: d.name } });
+  }
 
   revalidatePath("/inventory");
   revalidatePath(`/inventory/${itemId}`);

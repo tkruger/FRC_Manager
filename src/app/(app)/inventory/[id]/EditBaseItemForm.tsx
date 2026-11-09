@@ -42,10 +42,13 @@ export function EditBaseItemForm({
   item,
   vendors = [],
   subcategories = [],
+  groupSize = 1,
 }: {
   item: Item;
   vendors?: { id: string; name: string }[];
   subcategories?: SubcategoryOption[];
+  /** How many entries share this item's name (its full stock and partial pieces) */
+  groupSize?: number;
 }) {
   const router = useRouter();
   const boundAction = updateBaseItemAction.bind(null, item.id);
@@ -55,8 +58,24 @@ export function EditBaseItemForm({
     if (state?.success) { toast.success("Item saved"); router.refresh(); }
   }, [state, router]);
 
+  // Renaming an item in a group renames the whole group — ask first
+  function confirmRename(e: React.FormEvent<HTMLFormElement>) {
+    const form = e.currentTarget;
+    const name = String(new FormData(form).get("name") ?? "").trim();
+    const flag = form.elements.namedItem("renameGroup") as HTMLInputElement | null;
+    if (flag) flag.value = "";
+    if (groupSize < 2 || !name || name.toLowerCase() === item.name.trim().toLowerCase()) return;
+    const ok = confirm(
+      `Rename all ${groupSize} entries of "${item.name}" to "${name}"?\n\n` +
+      `Its full stock and partial pieces share a name, so they\u2019re renamed together.`,
+    );
+    if (!ok) { e.preventDefault(); return; }
+    if (flag) flag.value = "1";
+  }
+
   return (
-    <form action={action} className="space-y-5">
+    <form action={action} onSubmit={confirmRename} className="space-y-5">
+      <input type="hidden" name="renameGroup" defaultValue="" />
       {state && !state.success && (
         <div className="rounded-md bg-(--color-danger)/10 border border-(--color-danger)/20 px-4 py-3 text-sm text-(--color-danger)">
           {state.error}

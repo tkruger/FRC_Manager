@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Renaming an item renames its group**: when the item has a full stock and partial pieces (they share a name), saving a new name asks "Rename all N entries…?" and renames them all, so they stay together. Cancel keeps everything as it was
 ## 1.18.9 — 2026-11-09
 
 - **Robot picker only when there's a choice**: Tasks, the Gantt chart and the BOM show it only when two or more robots are in Build or Competition-ready status; with one, that robot is used. On phones the picker sits on the left of the button row instead of above it
