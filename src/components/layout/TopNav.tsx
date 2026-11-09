@@ -615,28 +615,21 @@ function UserCircleIcon({ className }: { className?: string }) {
 }
 
 /**
- * The logo at the top left, which goes home: a house — and on the home page itself, the team robot,
- * half red bumpers and half blue (split corner to corner)
+ * The logo at the top left, which goes home: a house — and on the home page itself, the team robot
+ * with red and blue bumpers
  */
 function AppMark({ home }: { home: boolean }) {
   if (home) {
-    const half = (src: string, clip: string) => (
+    // Zoomed in past the icon's empty background, so the robot fills the small square; the light
+    // studio icon in light mode, the charcoal one in dark mode
+    const img = (src: string, cls: string) => (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={src} alt="" className="absolute inset-0 h-full w-full scale-[1.45]" style={{ clipPath: clip }} />
+      <img src={src} alt="" className={cn("absolute inset-0 h-full w-full scale-[1.45]", cls)} />
     );
-    const RED = "polygon(0 0, 100% 0, 0 100%)", BLUE = "polygon(100% 0, 100% 100%, 0 100%)";
     return (
       <span aria-hidden className="relative block w-7 h-7 shrink-0 overflow-hidden rounded">
-        {/* Zoomed in past the icon's empty background, so the robot fills the small square; the light
-            studio icons in light mode, the charcoal ones in dark mode */}
-        <span className="in-data-[theme=dark]:hidden">
-          {half("/app-icons/10_red_bumpers_studio/icon-192.png", RED)}
-          {half("/app-icons/12_blue_bumpers_studio/icon-192.png", BLUE)}
-        </span>
-        <span className="hidden in-data-[theme=dark]:block">
-          {half("/app-icons/09_red_bumpers_charcoal/icon-192.png", RED)}
-          {half("/app-icons/11_blue_bumpers_charcoal/icon-192.png", BLUE)}
-        </span>
+        {img("/app-icons/13_split_bumpers_studio/icon-192.png", "in-data-[theme=dark]:hidden")}
+        {img("/app-icons/14_split_bumpers_charcoal/icon-192.png", "hidden in-data-[theme=dark]:block")}
       </span>
     );
   }

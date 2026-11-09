@@ -17,6 +17,8 @@ export const APP_ICONS = [
   { id: "10_red_bumpers_studio",         label: "Red bumpers — studio" },
   { id: "11_blue_bumpers_charcoal",      label: "Blue bumpers — charcoal" },
   { id: "12_blue_bumpers_studio",        label: "Blue bumpers — studio" },
+  { id: "13_split_bumpers_studio",       label: "Red & blue bumpers — studio" },
+  { id: "14_split_bumpers_charcoal",     label: "Red & blue bumpers — charcoal" },
 ] as const;
 
 export type AppIconId = (typeof APP_ICONS)[number]["id"];
