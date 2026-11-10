@@ -222,6 +222,14 @@ html.standalone #app-shell > main {
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
 }
+/* Pages outside the app shell (Terms, Privacy, What's new) scroll the same way */
+html.standalone .page-scroll {
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
 
 /* ─── Typography ─── */
 .text-display { font-size: 2.5rem;   font-weight: 700; line-height: 1.1;  letter-spacing: -0.03em; }

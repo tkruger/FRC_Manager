@@ -95,7 +95,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <a href={SOURCE_URL} target="_blank" rel="noopener noreferrer" className="hover:text-(--color-primary)">Source code</a>
             <span className="mx-2">·</span>
             {/* What's new — opens outside the app (Safari / the browser) from the home-screen app */}
-            <a href="/changelog" target="_blank" rel="noopener noreferrer" className="hover:text-(--color-primary)" title="What's new">v{APP_VERSION}</a>
+            <a href="/changelog?from=app" target="_blank" rel="noopener noreferrer" className="hover:text-(--color-primary)" title="What's new">v{APP_VERSION}</a>
           </footer>
         </main>
         {/* First visit on a device: offer push notifications (once) */}

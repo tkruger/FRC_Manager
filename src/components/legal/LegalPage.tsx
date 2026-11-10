@@ -1,14 +1,17 @@
 import Link from "next/link";
+import { ClosePageButton } from "./ClosePageButton";
 
 /** Where the source code lives (for anyone who wants to host it themselves) */
 export const SOURCE_URL = "https://github.com/tkruger/FRC_Manager";
 
 /** Shared layout for the public Terms of Service, Privacy Policy and What's new pages. */
-export function LegalPage({ title, updated, updatedLabel = "Last updated", children }: { title: string; updated: string; updatedLabel?: string; children: React.ReactNode }) {
+/** closable: opened from the app in its own window or tab — a floating ✕ closes it. */
+export function LegalPage({ title, updated, updatedLabel = "Last updated", closable = false, children }: { title: string; updated: string; updatedLabel?: string; closable?: boolean; children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-(--color-surface)">
+    <div className="page-scroll min-h-screen bg-(--color-surface)">
+      {closable && <ClosePageButton />}
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 space-y-6">
-        <nav className="flex flex-wrap gap-4 text-small text-(--color-text-secondary)">
+        <nav className={`flex flex-wrap gap-4 text-small text-(--color-text-secondary) ${closable ? "pr-12" : ""}`}>
           <Link href="/" className="font-semibold text-(--color-text-primary) hover:text-(--color-primary)">FRC Manager</Link>
           <Link href="/terms" className="hover:text-(--color-primary)">Terms of Service</Link>
           <Link href="/privacy" className="hover:text-(--color-primary)">Privacy Policy</Link>

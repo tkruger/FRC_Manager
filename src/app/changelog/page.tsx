@@ -182,9 +182,11 @@ const RELEASES: Release[] = [
   },
 ];
 
-export default function ChangelogPage() {
+export default async function ChangelogPage({ searchParams }: { searchParams: Promise<{ from?: string }> }) {
+  // Opened from the footer in the app (its own window or tab, or over the home-screen app): show a ✕
+  const fromApp = (await searchParams).from === "app";
   return (
-    <LegalPage title="What's new" updated={`v${APP_VERSION}`} updatedLabel="Current version">
+    <LegalPage title="What's new" updated={`v${APP_VERSION}`} updatedLabel="Current version" closable={fromApp}>
       <p>What has shipped in FRC Manager, release by release, newest first.</p>
       {RELEASES.map((r) => (
         <section key={r.version} id={`v${r.version}`} className="space-y-2">
