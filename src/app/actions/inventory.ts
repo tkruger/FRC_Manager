@@ -10,6 +10,7 @@ import { nextStockTag } from "@/lib/inventory/stock-tags";
 import { acceptPhotoUrl, deletePhotoQuietly } from "@/lib/photos";
 import { CATEGORY_VALUES, DEFAULT_CATEGORY } from "@/lib/inventory/categories";
 import { groupKey } from "@/lib/inventory/units";
+import { plainArgs } from "@/lib/action-args";
 
 const BaseItemSchema = z.object({
   name:               z.string().max(300).min(1),
@@ -122,6 +123,7 @@ export async function updateBaseItemAction(
   _prev: InventoryActionState | null,
   formData: FormData
 ): Promise<InventoryActionState> {
+  plainArgs(itemId);
   const session = await auth();
   if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
 
@@ -213,6 +215,7 @@ export async function acquireItemAction(
   baseItemId: string,
   formData: FormData
 ): Promise<InventoryActionState> {
+  plainArgs(baseItemId);
   const session = await auth();
   if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
 
@@ -266,6 +269,7 @@ export async function updateStockAction(
   baseItemId: string,
   delta: number
 ): Promise<InventoryActionState> {
+  plainArgs(baseItemId, delta);
   const session = await auth();
   if (!session?.user?.teamId) return { success: false };
   if (!canManageInventory(session.user.roles)) return { success: false, error: "Not authorized." };
@@ -286,6 +290,7 @@ export async function updateStockAction(
 }
 
 export async function dismissReorderAction(reqId: string): Promise<void> {
+  plainArgs(reqId);
   const session = await auth();
   if (!session?.user?.teamId || !canManageInventory(session.user.roles)) return;
 
@@ -303,6 +308,7 @@ export async function dismissReorderAction(reqId: string): Promise<void> {
  * but its history stays and it can be restored. Inventory Admins and Head Mentors.
  */
 export async function retireItemAction(itemId: string): Promise<InventoryActionState> {
+  plainArgs(itemId);
   const session = await auth();
   if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
   if (!canManageInventory(session.user.roles)) return { success: false, error: "Only Inventory Admins and Head Mentors can retire items." };
@@ -324,6 +330,7 @@ export async function retireItemAction(itemId: string): Promise<InventoryActionS
 }
 
 export async function restoreItemAction(itemId: string): Promise<InventoryActionState> {
+  plainArgs(itemId);
   const session = await auth();
   if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
   if (!canManageInventory(session.user.roles)) return { success: false, error: "Only Inventory Admins and Head Mentors can restore items." };
@@ -341,6 +348,7 @@ export async function restoreItemAction(itemId: string): Promise<InventoryAction
 
 /** A photo of the material (uploaded through /api/tools/upload); null removes it */
 export async function updateItemImageAction(itemId: string, url: string | null): Promise<InventoryActionState> {
+  plainArgs(itemId, url);
   const session = await auth();
   if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
   if (!canManageInventory(session.user.roles)) return { success: false, error: "Only Inventory Admins and Head Mentors can change photos." };
@@ -372,6 +380,7 @@ const PartialSchema = z.object({
  * name, category and part number — with how much is left, where it is and its own label.
  */
 export async function addPartialPieceAction(fromItemId: string, input: unknown): Promise<InventoryActionState & { id?: string }> {
+  plainArgs(fromItemId);
   const session = await auth();
   if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
   if (!canManageInventory(session.user.roles)) return { success: false, error: "Only Inventory Admins and Head Mentors can add stock." };
@@ -430,6 +439,7 @@ const PieceSchema = z.object({
 
 /** Change one partial piece in place (how much is left, where it is, notes) */
 export async function updatePieceAction(pieceId: string, input: unknown): Promise<InventoryActionState> {
+  plainArgs(pieceId);
   const session = await auth();
   if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
   if (!canManageInventory(session.user.roles)) return { success: false, error: "Only Inventory Admins and Head Mentors can change stock." };
@@ -452,6 +462,7 @@ export async function updatePieceAction(pieceId: string, input: unknown): Promis
 
 /** A piece that's been used up: out of stock and retired (its history stays) */
 export async function markPieceUsedUpAction(pieceId: string): Promise<InventoryActionState> {
+  plainArgs(pieceId);
   const session = await auth();
   if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
   if (!canManageInventory(session.user.roles)) return { success: false, error: "Only Inventory Admins and Head Mentors can change stock." };
@@ -470,6 +481,7 @@ export async function markPieceUsedUpAction(pieceId: string): Promise<InventoryA
  * group — the same material's full stock and partial pieces — moves with it, so they stay together.
  */
 export async function moveToCategoryAction(itemId: string, category: string, subcategoryId: string | null = null): Promise<InventoryActionState & { moved?: number }> {
+  plainArgs(itemId, category, subcategoryId);
   const session = await auth();
   if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
   if (!canManageInventory(session.user.roles)) return { success: false, error: "Only Inventory Admins and Head Mentors can sort the inventory." };

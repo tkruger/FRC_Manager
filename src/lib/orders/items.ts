@@ -8,6 +8,7 @@ import { definitionFor, resolveCurrentStep, performCurrentStepAction, type Actor
 import { itemRef } from "./constants";
 import { assignItemNumbers } from "./numbers";
 import { csvCell } from "@/lib/csv";
+import { isWebUrl } from "@/lib/web-url";
 
 type Tx = Prisma.TransactionClient;
 
@@ -25,10 +26,6 @@ async function teamItems(teamId: string, itemIds: string[]) {
   });
 }
 
-function isHttpUrl(v: string) {
-  try { const u = new URL(v); return u.protocol === "https:" || u.protocol === "http:"; } catch { return false; }
-}
-
 async function logItemEvent(tx: Tx | typeof prisma, requestId: string, actorId: string, note: string) {
   await tx.purchaseRequestEvent.create({ data: { requestId, action: "effect", actorId, note } });
 }
@@ -38,7 +35,7 @@ async function logItemEvent(tx: Tx | typeof prisma, requestId: string, actorId: 
 /** One tracking link for many items (they shipped together); those items become Ordered. */
 export async function addTracking(teamId: string, actor: Actor, itemIds: string[], url: string, label?: string) {
   const link = url.trim();
-  if (!isHttpUrl(link)) return { success: false as const, error: "Enter a full tracking link (https://…)." };
+  if (!isWebUrl(link)) return { success: false as const, error: "Enter a full tracking link (https://…)." };
 
   const items = (await teamItems(teamId, itemIds)).filter((i) => i.status === "TO_ORDER" || i.status === "ORDERED");
   if (items.length === 0) return { success: false as const, error: "Choose items that are To order or Ordered." };

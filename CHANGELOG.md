@@ -3,6 +3,17 @@
 ## Unreleased
 
 - **Fill says why it couldn't read a link**: when a store turns the app away, the message under the link now says so — asked to slow down, refused, timed out or an error — instead of a general "couldn't read that page"
+- **Security fixes** (from the 2026-11-10 review):
+  - Someone who has only *asked* to join a team (signed in with Google or Discord, waiting for approval) can no longer read or change that team's data — their session carries no team until they're approved, and the database refuses their changes
+  - Fill and price checks have a rate limit, and only ever connect to public addresses (checked as the connection is made)
+  - Uploads: a team-wide daily limit and storage cap, oversized pictures are refused, and a photo can't point at someone else's file storage
+  - Links on order items and vendors must be web addresses (a bare "site.com/…" gets https:// added)
+  - Every server action checks its arguments are plain values
+  - Parents (view-only) can't download the orders or BOM exports — those pages were already hidden from them
+  - An emailed invite that gives more than Team Member or Parent must be accepted with the invited address, and each emailed invite works exactly once
+  - Scripts on every page need a per-request nonce (Content Security Policy without 'unsafe-inline')
+  - The Gmail connect error and the TBA webhook verification can't be spoofed through the address bar or flooded
+  - Dependencies updated: zod, undici, nodemailer 10 (no known vulnerabilities in production packages)
 ## 1.19.0 — 2026-11-09
 
 - **Shared order drafts**: everyone on the team can see drafts (Orders → Drafts, split into yours and the team's). Whoever starts one can **Invite a teammate** on the draft; people invited get a notification and can edit it, add items to it (also from Inventory's Order buttons) and submit it, or leave it. Only the maker can delete it or remove people. Drafts show who's on them and who saved last

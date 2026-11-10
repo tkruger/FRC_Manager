@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { rateLimit } from "@/lib/security/rate-limit";
+import { sensibleImage, teamUploadProblem } from "@/lib/security/uploads";
 
 /** What the file really is, from its first bytes (the browser's type and name can't be trusted) */
 function sniffImage(head: Uint8Array): { type: string; ext: string } | null {
@@ -38,14 +39,20 @@ export async function POST(request: Request) {
   if (!kind) {
     return NextResponse.json({ error: "Use a JPEG, PNG or WebP photo." }, { status: 400 });
   }
+  if (!sensibleImage(bytes, kind.type)) {
+    return NextResponse.json({ error: "That photo is too large (or isn't a photo). Take or pick a normal photo." }, { status: 400 });
+  }
 
   // A small copy for lists (optional; a JPEG the browser made)
   const t = form.get("thumb");
   let thumb: Uint8Array<ArrayBuffer> | null = null;
   if (t instanceof File && t.size > 0 && t.size <= 300 * 1024) {
     const tb = new Uint8Array(await t.arrayBuffer());
-    if (sniffImage(tb.subarray(0, 16))?.type === "image/jpeg") thumb = tb;
+    if (sniffImage(tb.subarray(0, 16))?.type === "image/jpeg" && sensibleImage(tb, "image/jpeg")) thumb = tb;
   }
+
+  const full = await teamUploadProblem(session.user.teamId, bytes.length + (thumb?.length ?? 0));
+  if (full) return NextResponse.json({ error: full }, { status: 429 });
 
   // The type comes from the bytes, never from the upload
   const photo = await prisma.storedPhoto.create({

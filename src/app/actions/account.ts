@@ -15,6 +15,7 @@ import { rateLimitAll, rateLimit, clearRateLimit, TOO_MANY } from "@/lib/securit
 import { clientIp } from "@/lib/security/request";
 import { consumeAuthToken } from "@/lib/security/auth-tokens";
 import { sendPasswordResetEmail, sendVerificationEmail, sendEmailChangeEmail } from "@/lib/notify/auth-emails";
+import { plainArgs } from "@/lib/action-args";
 
 type Result = { success: true; message?: string } | { success: false; error: string };
 
@@ -34,6 +35,7 @@ async function me() {
 
 /** Email a reset link. Always answers the same way, so it never reveals who has an account. */
 export async function requestPasswordResetAction(rawEmail: string): Promise<Result> {
+  plainArgs(rawEmail);
   const parsed = Email.safeParse(rawEmail);
   if (!parsed.success) return { success: false, error: issueMessage(parsed.error) };
   const email = parsed.data;
@@ -55,6 +57,7 @@ export async function requestPasswordResetAction(rawEmail: string): Promise<Resu
 
 /** Set a new password from an emailed link. Signs out every other session. */
 export async function resetPasswordAction(token: string, newPassword: string): Promise<Result> {
+  plainArgs(token, newPassword);
   const parsed = Password.safeParse(newPassword);
   if (!parsed.success) return { success: false, error: issueMessage(parsed.error) };
   if (!await rateLimit(`reset-submit:ip:${await clientIp()}`, 20, 60 * 60)) return { success: false, error: TOO_MANY };
@@ -83,6 +86,7 @@ export async function resetPasswordAction(token: string, newPassword: string): P
  * signed out; this one is signed straight back in.
  */
 export async function changePasswordAction(currentPassword: string, newPassword: string): Promise<Result> {
+  plainArgs(currentPassword, newPassword);
   const user = await me();
   if (!user) return { success: false, error: "Sign in first." };
   const parsed = Password.safeParse(newPassword);
@@ -128,6 +132,7 @@ export async function sendVerificationAction(): Promise<Result> {
  * email changes only when it's clicked. Needs the current password if the account has one.
  */
 export async function changeEmailAction(rawEmail: string, currentPassword: string): Promise<Result> {
+  plainArgs(rawEmail, currentPassword);
   const user = await me();
   if (!user) return { success: false, error: "Sign in first." };
   const parsed = Email.safeParse(rawEmail);

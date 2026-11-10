@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import type { ToolType, ToolSpace, ToolCondition } from "@/generated/prisma";
+import { plainArgs } from "@/lib/action-args";
 
 // Every physical tool is its own record. "Two drills" = two Tool rows with the same
 // name, each with its own asset tag, condition, checkouts and barcode.
@@ -134,6 +135,7 @@ export async function updateToolImageAction(
   toolId: string,
   imageUrl: string | null
 ): Promise<{ success: boolean }> {
+  plainArgs(toolId, imageUrl);
   const session = await auth();
   if (!session?.user?.teamId) return { success: false };
 
@@ -159,6 +161,7 @@ export async function updateToolAction(
   _prev: { success: boolean; error?: string } | null,
   formData: FormData
 ): Promise<{ success: boolean; error?: string; renamed?: number }> {
+  plainArgs(toolId);
   const session = await auth();
   if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
   if (!session.user.roles.some((r) => TOOL_EDIT_ROLES.includes(r)))
@@ -216,6 +219,7 @@ export async function checkoutToolAction(
   toolId: string,
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
+  plainArgs(toolId);
   const session = await auth();
   if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
 
@@ -258,6 +262,7 @@ export async function checkinToolAction(
   checkoutId: string,
   condition: string
 ): Promise<{ success: boolean }> {
+  plainArgs(checkoutId, condition);
   const session = await auth();
   if (!session?.user?.teamId) return { success: false };
   if (!(TOOL_CONDITIONS as readonly string[]).includes(condition)) return { success: false };
@@ -290,6 +295,7 @@ export async function checkinToolAction(
 }
 
 export async function retireToolAction(toolId: string): Promise<{ success: boolean }> {
+  plainArgs(toolId);
   const session = await auth();
   if (!session?.user?.teamId || !session.user.roles.some((r) => TOOL_EDIT_ROLES.includes(r))) return { success: false };
   const retired = await prisma.tool.updateMany({ where: { id: toolId, teamId: session.user.teamId }, data: { retired: true } });

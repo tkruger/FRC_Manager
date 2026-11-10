@@ -2,10 +2,13 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { csvCell } from "@/lib/csv";
+import { isViewOnly } from "@/lib/access/read-only";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.teamId) return new NextResponse("Unauthorized", { status: 401 });
+  // The fleet pages (and their BOMs) aren't shown to view-only accounts (parents)
+  if (isViewOnly(session.user.roles)) return new NextResponse("Forbidden", { status: 403 });
 
   const robotId = req.nextUrl.searchParams.get("robotId");
   if (!robotId) return new NextResponse("Missing robotId", { status: 400 });

@@ -33,6 +33,7 @@ export const authConfig = {
         session.user.displayMode = token.displayMode as string | undefined;
         session.user.isSuperAdmin = token.isSuperAdmin === true;
         session.user.status = token.status as string | undefined;
+        session.user.pendingTeam = token.pendingTeam === true;
       }
       return session;
     },

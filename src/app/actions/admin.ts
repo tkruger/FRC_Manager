@@ -9,6 +9,7 @@ import { revalidatePath } from "next/cache";
 import { teamApproved } from "@/lib/notify/events";
 import { sendApprovalEmail } from "@/lib/notify/approval-email";
 import { after } from "next/server";
+import { plainArgs } from "@/lib/action-args";
 
 type Result = { success: true; message?: string } | { success: false; error: string };
 
@@ -33,6 +34,7 @@ function refresh() {
  * meantime stays pending for that Head Mentor to review.
  */
 export async function approveTeamAction(teamId: string): Promise<Result> {
+  plainArgs(teamId);
   const me = await requireSuperAdmin();
   if (!me) return { success: false, error: "Only super admins can approve teams." };
 
@@ -62,6 +64,7 @@ export async function approveTeamAction(teamId: string): Promise<Result> {
 
 /** Deny a new team: it can't be used, and everyone waiting to join it is denied. */
 export async function denyTeamAction(teamId: string): Promise<Result> {
+  plainArgs(teamId);
   const me = await requireSuperAdmin();
   if (!me) return { success: false, error: "Only super admins can deny teams." };
 
@@ -80,6 +83,7 @@ export async function denyTeamAction(teamId: string): Promise<Result> {
 
 /** Make an existing user a super admin, by email. */
 export async function grantSuperAdminAction(email: string): Promise<Result> {
+  plainArgs(email);
   const me = await requireSuperAdmin();
   if (!me) return { success: false, error: "Only super admins can add super admins." };
 
@@ -98,6 +102,7 @@ export async function grantSuperAdminAction(email: string): Promise<Result> {
 
 /** Remove a super admin. There's always at least one left. */
 export async function revokeSuperAdminAction(userId: string): Promise<Result> {
+  plainArgs(userId);
   const me = await requireSuperAdmin();
   if (!me) return { success: false, error: "Only super admins can remove super admins." };
 

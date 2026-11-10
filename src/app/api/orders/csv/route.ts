@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import type { Prisma, PurchaseStatus } from "@/generated/prisma";
 import { CSV_ITEM_SELECT, itemsToCsv } from "@/lib/orders/items";
 import { verifyExportToken } from "@/lib/orders/export-token";
+import { isViewOnly } from "@/lib/access/read-only";
 
 // Download orders as CSV in the purchasing spreadsheet format (no header row):
 // #XXXX, Vendor, Part Name, Link, Unit Price, Qty, Order Notes, Order Date.
@@ -18,15 +19,17 @@ async function caller(params: URLSearchParams): Promise<Caller | null> {
   if (token) {
     const scope = verifyExportToken(token);
     if (!scope) return null;
-    // The token says who asked; make sure they're still an active member of that team
+    // The token says who asked; make sure they're still an active member of that team (who can see orders)
     const user = await prisma.user.findFirst({
-      where:  { id: scope.userId, teamId: scope.teamId, status: "ACTIVE" },
-      select: { id: true },
+      where:  { id: scope.userId, teamId: scope.teamId, status: "ACTIVE", team: { status: "ACTIVE" } },
+      select: { id: true, roles: { select: { role: true } } },
     });
-    return user ? { userId: scope.userId, teamId: scope.teamId, order: scope.order ?? null, view: scope.view ?? "open" } : null;
+    if (!user || isViewOnly(user.roles.map((r) => r.role))) return null;
+    return { userId: scope.userId, teamId: scope.teamId, order: scope.order ?? null, view: scope.view ?? "open" };
   }
   const session = await auth();
-  if (!session?.user?.teamId) return null;
+  // Orders aren't shown to view-only accounts (parents), so neither is this
+  if (!session?.user?.teamId || isViewOnly(session.user.roles)) return null;
   return { userId: session.user.id, teamId: session.user.teamId, order: params.get("order"), view: params.get("view") ?? "open" };
 }
 

@@ -27,7 +27,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const session = await auth();
   if (!session) redirect("/login");
   // Signed up with Google or Discord: choose a team first, then wait to be approved
-  if (session.user.status === "PENDING") redirect(session.user.teamId ? "/pending" : "/register/finish");
+  // (Their session carries no team until they're approved — see the jwt callback in lib/auth.ts)
+  if (session.user.pendingTeam) redirect("/pending");
+  if (session.user.status === "PENDING") redirect("/register/finish");
 
   let pendingMemberCount = 0;
   let unreadNotificationCount = 0;

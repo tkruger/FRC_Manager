@@ -22,9 +22,10 @@ import { fullNameSchema } from "@/lib/names";
 import { linkNewMember } from "@/lib/parents";
 import { sendChannelMessage, embed, COLORS, explainDiscordError } from "@/lib/discord";
 import {
-  canInvite, checkInviteRoles, newInviteToken, inviteUrl, daysFromNow, findUsableInvite, markInviteUsed,
+  canInvite, checkInviteRoles, newInviteToken, inviteUrl, daysFromNow, findUsableInvite, claimInvite, inviteAddressProblem,
   EMAIL_INVITE_DAYS, LINK_INVITE_DAYS,
 } from "@/lib/invites";
+import { plainArgs } from "@/lib/action-args";
 
 type Fail = { success: false; error: string };
 
@@ -54,6 +55,7 @@ export interface EmailInviteResult {
  * Each gets a personal, single-use invite.
  */
 export async function sendEmailInvitesAction(raw: string, pickedRoles: string[] = ["TEAM_MEMBER"]): Promise<{ success: true; results: EmailInviteResult[] } | Fail> {
+  plainArgs(raw, pickedRoles);
   const session = await requireInviter();
   if (!session) return { success: false, error: "Only Head Mentors and Team Leadership can invite people." };
   const teamId = session.user.teamId!;
@@ -124,6 +126,7 @@ export async function sendEmailInvitesAction(raw: string, pickedRoles: string[] 
 
 /** Post a team join link to a Discord channel. Anyone with it can join until it expires. */
 export async function postDiscordInviteAction(channelId: string, pickedRoles: string[] = ["TEAM_MEMBER"]): Promise<{ success: true; url: string } | Fail> {
+  plainArgs(channelId, pickedRoles);
   const session = await requireInviter();
   if (!session) return { success: false, error: "Only Head Mentors and Team Leadership can invite people." };
   const teamId = session.user.teamId!;
@@ -161,6 +164,7 @@ export async function postDiscordInviteAction(channelId: string, pickedRoles: st
 }
 
 export async function revokeInviteAction(inviteId: string): Promise<{ success: true } | Fail> {
+  plainArgs(inviteId);
   const session = await requireInviter();
   if (!session) return { success: false, error: "Not allowed." };
   await prisma.invite.updateMany({
@@ -183,6 +187,7 @@ const NewAccountSchema = z.object({
 
 /** New to FRC Manager: create an account from the invite — approved, on the team — and sign in. */
 export async function acceptInviteWithNewAccountAction(token: string, input: unknown): Promise<{ success: true } | Fail> {
+  plainArgs(token);
   if (!await rateLimit(`invite-join:ip:${await clientIp()}`, 10, 60 * 60)) return { success: false, error: TOO_MANY };
   const usable = await findUsableInvite(token);
   if (!usable.ok) return { success: false, error: usable.reason };
@@ -198,22 +203,27 @@ export async function acceptInviteWithNewAccountAction(token: string, input: unk
 
   // An emailed invite's token reached this address, so the address is confirmed
   const emailed = usable.invite.kind === "EMAIL" && !!usable.invite.email;
-  const created = await prisma.user.create({
-    select: { id: true },
-    data: {
-      name, email,
-      emailVerified: emailed ? new Date() : null,
-      password:   await bcrypt.hash(password, 12),
-      teamId:     usable.team.id,
-      status:     "ACTIVE",
-      approvedAt: new Date(),
-      registrationNote: "Joined with an invite",
-      parentOf:   parentOf || null,
-      termsAcceptedAt: new Date(),
-      roles:      { create: usable.invite.roles.map((role) => ({ role })) },
-    },
+  const hashed = await bcrypt.hash(password, 12);
+  // Claimed in the same transaction, so an emailed invite can't make two accounts
+  const created = await prisma.$transaction(async (tx) => {
+    if (!await claimInvite(tx, usable.invite)) return null;
+    return tx.user.create({
+      select: { id: true },
+      data: {
+        name, email,
+        emailVerified: emailed ? new Date() : null,
+        password:   hashed,
+        teamId:     usable.team.id,
+        status:     "ACTIVE",
+        approvedAt: new Date(),
+        registrationNote: "Joined with an invite",
+        parentOf:   parentOf || null,
+        termsAcceptedAt: new Date(),
+        roles:      { create: usable.invite.roles.map((role) => ({ role })) },
+      },
+    });
   });
-  await markInviteUsed(usable.invite.id);
+  if (!created) return { success: false, error: "This invite has already been used. Sign in instead, or ask your team for a new one." };
   await linkNewMember(usable.team.id, created.id);
   revalidatePath("/settings/members");
   if (!emailed) after(() => sendVerificationEmail(created.id).then(() => undefined));
@@ -229,14 +239,17 @@ export async function acceptInviteWithNewAccountAction(token: string, input: unk
 
 /** Already signed in (e.g. with Google): join the team from the invite. */
 export async function acceptInviteAsCurrentUserAction(token: string, acceptTerms = false): Promise<{ success: true } | Fail> {
+  plainArgs(token, acceptTerms);
   const session = await auth();
   if (!session?.user?.id) return { success: false, error: "Sign in first." };
 
   const usable = await findUsableInvite(token);
   if (!usable.ok) return { success: false, error: usable.reason };
 
-  const me = await prisma.user.findUnique({ where: { id: session.user.id }, select: { teamId: true, status: true, termsAcceptedAt: true } });
+  const me = await prisma.user.findUnique({ where: { id: session.user.id }, select: { email: true, teamId: true, status: true, termsAcceptedAt: true } });
   if (!me) return { success: false, error: "Account not found." };
+  const wrongAddress = inviteAddressProblem(usable.invite, me.email);
+  if (wrongAddress) return { success: false, error: wrongAddress };
   // Signed up with Google or Discord straight from the invite: agreeing to the terms is part of joining
   if (!me.termsAcceptedAt && !acceptTerms) return { success: false, error: TERMS_REQUIRED };
   if (me.teamId === usable.team.id && me.status === "ACTIVE") return { success: true }; // already in
@@ -245,18 +258,21 @@ export async function acceptInviteAsCurrentUserAction(token: string, acceptTerms
   }
 
   // Joining a team gives exactly the invite's roles (nothing carried over from elsewhere)
-  await prisma.$transaction([
-    prisma.userRole.deleteMany({ where: { userId: session.user.id } }),
-    prisma.user.update({
+  // Claimed in the same transaction, so an emailed invite is used once
+  const joined = await prisma.$transaction(async (tx) => {
+    if (!await claimInvite(tx, usable.invite)) return false;
+    await tx.userRole.deleteMany({ where: { userId: session.user.id } });
+    await tx.user.update({
       where: { id: session.user.id },
       data:  {
         teamId: usable.team.id, status: "ACTIVE", approvedAt: new Date(),
         ...(me.termsAcceptedAt ? {} : { termsAcceptedAt: new Date() }),
         roles: { create: usable.invite.roles.map((role) => ({ role })) },
       },
-    }),
-  ]);
-  await markInviteUsed(usable.invite.id);
+    });
+    return true;
+  });
+  if (!joined) return { success: false, error: "This invite has already been used. Ask your team for a new one." };
   await linkNewMember(usable.team.id, session.user.id);
   revalidatePath("/", "layout");
   return { success: true };

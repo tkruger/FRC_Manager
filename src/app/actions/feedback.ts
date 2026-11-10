@@ -9,6 +9,7 @@ import { ROLE_LABELS } from "@/lib/rbac";
 import { APP_VERSION } from "@/lib/version";
 import { appUrl } from "@/lib/app-url";
 import type { Role } from "@/generated/prisma";
+import { plainObject } from "@/lib/action-args";
 
 const KINDS = { idea: "💡 Idea", bug: "🐞 Problem", other: "💬 Feedback" } as const;
 
@@ -19,6 +20,7 @@ const KINDS = { idea: "💡 Idea", bug: "🐞 Problem", other: "💬 Feedback" }
 export async function sendFeedbackAction(input: {
   message: string; kind: string; page: string; userAgent?: string; viewport?: string;
 }): Promise<{ success: true } | { success: false; error: string }> {
+  plainObject(input);
   const session = await auth();
   if (!session?.user?.id) return { success: false, error: "Sign in to send feedback." };
   const message = String(input.message ?? "").trim().slice(0, 4000);

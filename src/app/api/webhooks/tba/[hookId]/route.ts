@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { open } from "@/lib/security/secret-box";
 import { syncLiveCompetitions } from "@/lib/frc/live-sync";
 import { EVENT_KEY } from "@/lib/frc/links";
+import { rateLimit } from "@/lib/security/rate-limit";
 
 // A team's The Blue Alliance webhook, at the team's own address (/api/webhooks/tba/{hookId} — see
 // Settings → Integrations → The Blue Alliance & Nexus).
@@ -36,8 +37,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ hoo
   try { msg = JSON.parse(body); } catch { return NextResponse.json({ error: "Bad body" }, { status: 400 }); }
 
   if (msg.message_type === "verification") {
-    const code = String(msg.message_data?.verification_key ?? "").slice(0, 100);
-    await prisma.teamFrcSettings.update({ where: { hookId }, data: { tbaVerificationCode: code || null, lastWebhookAt: new Date() } });
+    // Unsigned, so kept to what setting up needs: a few a day, and only something shaped like a code
+    if (!await rateLimit(`tba-verify:${hookId}`, 10, 24 * 60 * 60)) return NextResponse.json({ error: "Too many" }, { status: 429 });
+    const code = String(msg.message_data?.verification_key ?? "");
+    if (!/^[A-Za-z0-9_-]{1,100}$/.test(code)) return NextResponse.json({ error: "Bad code" }, { status: 400 });
+    await prisma.teamFrcSettings.update({ where: { hookId }, data: { tbaVerificationCode: code, lastWebhookAt: new Date() } });
     return NextResponse.json({ ok: true });
   }
 

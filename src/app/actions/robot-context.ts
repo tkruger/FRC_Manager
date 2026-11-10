@@ -1,11 +1,13 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { plainArgs } from "@/lib/action-args";
 
 const COOKIE_NAME = "frc-active-robot";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 
 export async function setActiveRobotAction(robotId: string | null): Promise<void> {
+  plainArgs(robotId);
   const jar = await cookies();
   if (robotId) {
     jar.set(COOKIE_NAME, robotId, { path: "/", maxAge: COOKIE_MAX_AGE, httpOnly: false });

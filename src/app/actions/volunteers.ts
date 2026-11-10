@@ -13,6 +13,7 @@ import { notifyUsers } from "@/lib/notify/deliver";
 import { calendarDayKey, FALLBACK_TIMEZONE, isValidTimezone, localParts } from "@/lib/notify/time";
 import { canCoordinate, coverage, DEFAULT_MIN_ADULTS, isAdult, isCleared, shiftWhen } from "@/lib/volunteers";
 import { notifyVolunteersNeeded } from "@/lib/discord-notify";
+import { plainArgs } from "@/lib/action-args";
 
 type Result = { success: true } | { success: false; error: string };
 
@@ -136,6 +137,7 @@ async function clearedMe() {
 
 /** Sign yourself up for a meeting (confirmed straight away) */
 export async function signUpForShiftAction(meetingId: string): Promise<Result> {
+  plainArgs(meetingId);
   const c = await clearedMe();
   if (c.error !== undefined) return { success: false, error: c.error };
   const { who } = c;
@@ -160,6 +162,7 @@ export async function signUpForShiftAction(meetingId: string): Promise<Result> {
 
 /** Confirm or decline a shift a coordinator asked you to cover */
 export async function respondToShiftAction(meetingId: string, accept: boolean): Promise<Result> {
+  plainArgs(meetingId, accept);
   const c = await clearedMe();
   if (c.error !== undefined) return { success: false, error: c.error };
   const { who } = c;
@@ -189,6 +192,7 @@ export async function respondToShiftAction(meetingId: string, accept: boolean): 
 
 /** Take yourself off a shift */
 export async function withdrawFromShiftAction(meetingId: string): Promise<Result> {
+  plainArgs(meetingId);
   const who = await me();
   if (!who) return { success: false, error: "Not authenticated." };
   const info = await upcomingMeeting(String(meetingId), who.teamId);
@@ -214,6 +218,7 @@ async function coordinator() {
 
 /** Ask a cleared adult to cover a meeting (they confirm or decline) */
 export async function assignVolunteerAction(meetingId: string, userId: string): Promise<Result> {
+  plainArgs(meetingId, userId);
   const c = await coordinator();
   if (c.error !== undefined) return { success: false, error: c.error };
   const { who } = c;
@@ -251,6 +256,7 @@ export async function assignVolunteerAction(meetingId: string, userId: string): 
 
 /** Take someone off a shift */
 export async function removeVolunteerAction(meetingId: string, userId: string): Promise<Result> {
+  plainArgs(meetingId, userId);
   const c = await coordinator();
   if (c.error !== undefined) return { success: false, error: c.error };
   const { who } = c;
@@ -295,6 +301,7 @@ export async function saveVolunteerSettingsAction(input: unknown): Promise<Resul
 
 /** Instructions for one meeting instead of the default (null: back to the default) */
 export async function setMeetingInstructionsAction(meetingId: string, instructions: string | null): Promise<Result> {
+  plainArgs(meetingId, instructions);
   const c = await coordinator();
   if (c.error !== undefined) return { success: false, error: c.error };
   const text = typeof instructions === "string" ? instructions.trim() : "";
@@ -318,6 +325,7 @@ export async function setMeetingInstructionsAction(meetingId: string, instructio
 
 /** Your phone number, for volunteer coordinators (optional) */
 export async function savePhoneAction(phone: string): Promise<Result> {
+  plainArgs(phone);
   const who = await me();
   if (!who) return { success: false, error: "Not authenticated." };
   const p = String(phone ?? "").trim();

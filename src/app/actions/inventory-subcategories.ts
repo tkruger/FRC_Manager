@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { CATEGORY_VALUES, SUGGESTED_SUBCATEGORIES, type CategoryValue } from "@/lib/inventory/categories";
+import { plainArgs } from "@/lib/action-args";
 
 // Inventory → Sub-categories: the team's sub-categories of each category (Gears, Belts, … under
 // Mechanical). Inventory Admins and Head Mentors set them up.
@@ -34,6 +35,7 @@ async function taken(teamId: string, category: CategoryValue, name: string, exce
 }
 
 export async function addSubcategoryAction(category: string, name: string): Promise<Result> {
+  plainArgs(category, name);
   const teamId = await manager();
   if (!teamId) return { success: false, error: "Only Inventory Admins and Head Mentors can change sub-categories." };
   const cat = z.enum(CATEGORY_VALUES).safeParse(category);
@@ -46,6 +48,7 @@ export async function addSubcategoryAction(category: string, name: string): Prom
 }
 
 export async function renameSubcategoryAction(id: string, name: string): Promise<Result> {
+  plainArgs(id, name);
   const teamId = await manager();
   if (!teamId) return { success: false, error: "Only Inventory Admins and Head Mentors can change sub-categories." };
   const n = Name.safeParse(name);
@@ -59,6 +62,7 @@ export async function renameSubcategoryAction(id: string, name: string): Promise
 
 /** Remove a sub-category. Its items stay in the category, without a sub-category. */
 export async function deleteSubcategoryAction(id: string): Promise<Result> {
+  plainArgs(id);
   const teamId = await manager();
   if (!teamId) return { success: false, error: "Only Inventory Admins and Head Mentors can change sub-categories." };
   const res = await prisma.inventorySubcategory.deleteMany({ where: { id, teamId } });
@@ -68,6 +72,7 @@ export async function deleteSubcategoryAction(id: string): Promise<Result> {
 
 /** Add the suggested sub-categories a category doesn't have yet */
 export async function addSuggestedSubcategoriesAction(category: string): Promise<Result & { added?: number }> {
+  plainArgs(category);
   const teamId = await manager();
   if (!teamId) return { success: false, error: "Only Inventory Admins and Head Mentors can change sub-categories." };
   const cat = z.enum(CATEGORY_VALUES).safeParse(category);

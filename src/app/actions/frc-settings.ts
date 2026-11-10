@@ -9,6 +9,7 @@ import { FRC_ADMIN_ROLES } from "@/lib/rbac";
 import { checkTbaKey } from "@/lib/frc/tba";
 import { ensureFrcSettings } from "@/lib/frc/team-keys";
 import type { Role } from "@/generated/prisma";
+import { plainArgs, plainObject } from "@/lib/action-args";
 
 type Result = { success: true; message?: string } | { success: false; error: string };
 
@@ -25,6 +26,7 @@ async function requireAdmin() {
  */
 /** The team's Mouser Search API key (checked with Mouser first); empty removes it */
 export async function saveMouserKeyAction(key: string): Promise<Result> {
+  plainArgs(key);
   const teamId = await requireAdmin();
   if (!teamId) return { success: false, error: "Only Head Mentors and Integration Admins can change these." };
   const k = key.trim();
@@ -45,6 +47,7 @@ export async function saveFrcKeysAction(input: {
   tbaKey?: string; tbaSecret?: string; nexusKey?: string; nexusToken?: string;
   clear?: ("tba" | "tbaSecret" | "nexus" | "nexusToken")[];
 }): Promise<Result> {
+  plainObject(input);
   const teamId = await requireAdmin();
   if (!teamId) return { success: false, error: "Only Head Mentors and Integration Admins can change these." };
   const tbaKey = input.tbaKey?.trim();

@@ -6,12 +6,14 @@ import { prisma } from "@/lib/prisma";
 
 export default async function PendingPage({ searchParams }: { searchParams: Promise<{ team?: string }> }) {
   // Signed up with Google or Discord: they're signed in while they wait
+  // (The session carries no team until they're approved, so read it from their account)
   const session = await auth();
-  if (session?.user?.status === "ACTIVE") redirect("/dashboard");
-  if (session?.user && !session.user.teamId) redirect("/register/finish");
-  const team = session?.user?.teamId
-    ? await prisma.team.findUnique({ where: { id: session.user.teamId }, select: { status: true } })
+  if (session?.user?.teamId) redirect("/dashboard");
+  const me = session?.user?.id
+    ? await prisma.user.findUnique({ where: { id: session.user.id }, select: { teamId: true, team: { select: { status: true } } } })
     : null;
+  if (session?.user && !me?.teamId) redirect("/register/finish");
+  const team = me?.team ?? null;
   // A team that's new to FRC Manager is approved by the FRC Manager admins first
   const newTeam = (await searchParams).team === "new" || team?.status === "PENDING";
 

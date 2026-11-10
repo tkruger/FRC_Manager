@@ -51,9 +51,34 @@ export async function findUsableInvite(token: string): Promise<UsableInvite> {
   };
 }
 
-/** Record that someone joined with this invite */
-export async function markInviteUsed(inviteId: string) {
-  await prisma.invite.update({ where: { id: inviteId }, data: { acceptedAt: new Date(), uses: { increment: 1 } } });
+type InviteTx = Pick<typeof prisma, "invite">;
+
+/**
+ * Record that someone is joining with this invite, inside the transaction that adds them. False when
+ * it can't be used any more — an emailed invite someone else just used (two people opening it at the
+ * same moment), or one revoked or expired since it was checked.
+ */
+export async function claimInvite(tx: InviteTx, invite: { id: string; kind: "EMAIL" | "LINK" }): Promise<boolean> {
+  const now = new Date();
+  const { count } = await tx.invite.updateMany({
+    where: { id: invite.id, revokedAt: null, expiresAt: { gt: now }, ...(invite.kind === "EMAIL" ? { acceptedAt: null } : {}) },
+    data:  { acceptedAt: now, uses: { increment: 1 } },
+  });
+  return count === 1;
+}
+
+/** Roles an emailed invite gives to whoever holds the link, even signed in with another address */
+const ANY_ADDRESS_ROLES: Role[] = ["TEAM_MEMBER", "PARENT"];
+
+/**
+ * An emailed invite is for its address. Anyone signed in with another one (a forwarded email, a
+ * shared screen) may still use it for the basic roles, but not for one that gives more access.
+ */
+export function inviteAddressProblem(invite: { kind: "EMAIL" | "LINK"; email: string | null; roles: Role[] }, accountEmail: string | null | undefined): string | null {
+  if (invite.kind !== "EMAIL" || !invite.email) return null;
+  if (accountEmail && accountEmail.trim().toLowerCase() === invite.email.trim().toLowerCase()) return null;
+  if (invite.roles.every((r) => ANY_ADDRESS_ROLES.includes(r))) return null;
+  return `This invite was sent to ${invite.email}. Sign in with that address to accept it, or ask your team for a new invite.`;
 }
 
 /** The roles an inviter picked, if they're allowed to give them all; otherwise why not */

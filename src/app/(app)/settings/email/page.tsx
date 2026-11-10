@@ -5,7 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { PageTitle } from "@/components/PageHeader";
 import { EmailServerForm } from "./EmailServerForm";
 import { EMAIL_ADMIN_ROLES } from "@/lib/rbac";
-import { gmailConfigured } from "@/lib/gmail-api";
+import { gmailConfigured, GMAIL_REASON_COOKIE } from "@/lib/gmail-api";
+import { cookies } from "next/headers";
 import { MAX_DAILY_LIMIT, MAX_HOURLY_LIMIT, teamMailUsage } from "@/lib/mail-limits";
 
 /** What the Gmail connect flow came back with (?gmail=…) */
@@ -20,9 +21,11 @@ const GMAIL_RESULT: Record<string, { ok: boolean; text: string }> = {
 
 // Settings → Email (Head Mentors, Integration Admins): send the team's emails from its own mail account.
 
-export default async function EmailSettingsPage({ searchParams }: { searchParams: Promise<{ gmail?: string; reason?: string }> }) {
-  const { gmail, reason } = await searchParams;
+export default async function EmailSettingsPage({ searchParams }: { searchParams: Promise<{ gmail?: string }> }) {
+  const { gmail } = await searchParams;
   const gmailResult = gmail ? GMAIL_RESULT[gmail] : undefined;
+  // Google's reason, set by the connect callback (never taken from the address)
+  const reason = gmail === "failed" ? (await cookies()).get(GMAIL_REASON_COOKIE)?.value : undefined;
   const session = await auth();
   if (!session?.user?.teamId) redirect("/dashboard");
   if (!session.user.roles.some((r) => EMAIL_ADMIN_ROLES.includes(r))) redirect("/dashboard");

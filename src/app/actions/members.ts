@@ -11,6 +11,7 @@ import { sendApprovalEmail } from "@/lib/notify/approval-email";
 import { after } from "next/server";
 import { ALL_ROLES, LEADERSHIP_ROLES, ROLE_LABELS, grantableRoles, withImpliedRoles } from "@/lib/rbac";
 import { ActionError, userMessage } from "@/lib/action-error";
+import { plainArgs } from "@/lib/action-args";
 
 async function requireAdmin() {
   const session = await auth();
@@ -80,6 +81,7 @@ export async function approveMemberAction(
   userId: string,
   roles: Role[]
 ): Promise<{ success: boolean; error?: string }> {
+  plainArgs(userId, roles);
   try {
     const session = await requireAdmin();
     const invalid = await checkRoleChange({ id: session.user.id, teamId: session.user.teamId!, roles: session.user.roles }, userId, roles);
@@ -116,13 +118,14 @@ export async function denyMemberAction(
   userId: string,
   reason?: string
 ): Promise<{ success: boolean; error?: string }> {
+  plainArgs(userId, reason);
   try {
     const session = await requireAdmin();
 
     // Deny is for pending registrations only — active members are suspended instead
     const denied = await prisma.user.updateMany({
       where: { id: userId, teamId: session.user.teamId, status: "PENDING" },
-      data: { status: "DENIED", deniedAt: new Date(), deniedReason: reason ?? null },
+      data: { status: "DENIED", deniedAt: new Date(), deniedReason: reason?.trim().slice(0, 500) || null },
     });
     if (denied.count === 0) return { success: false, error: "No pending registration found." };
 
@@ -137,6 +140,7 @@ export async function updateMemberRolesAction(
   userId: string,
   roles: Role[]
 ): Promise<{ success: boolean; error?: string }> {
+  plainArgs(userId, roles);
   try {
     const session = await requireAdmin();
     // Only super admins change their own roles (anyone else could lock themselves out)
@@ -155,6 +159,7 @@ export async function updateMemberRolesAction(
 }
 
 export async function suspendMemberAction(userId: string): Promise<{ success: boolean; error?: string }> {
+  plainArgs(userId);
   try {
     const session = await requireAdmin();
     if (userId === session.user.id) return { success: false, error: "You can't suspend yourself." };
@@ -189,6 +194,7 @@ export async function suspendMemberAction(userId: string): Promise<{ success: bo
  * Task assignments are removed either way. Same Head Mentor rules as suspending.
  */
 export async function deleteMemberAction(userId: string): Promise<{ success: boolean; error?: string; erased?: boolean }> {
+  plainArgs(userId);
   try {
     const session = await requireAdmin();
     if (userId === session.user.id) return { success: false, error: "You can't delete yourself." };
@@ -258,6 +264,7 @@ export async function updateTeamAccessCodeAction(
   code: string,
   generate = false,
 ): Promise<{ success: boolean; error?: string; code?: string | null }> {
+  plainArgs(code, generate);
   try {
     const session = await requireAdmin();
     const value = generate ? newAccessCode() : code.trim();

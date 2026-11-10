@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { EMAIL_ADMIN_ROLES } from "@/lib/rbac";
 import { seal, open } from "@/lib/security/secret-box";
-import { exchangeGmailCode, GmailError, revokeGmail } from "@/lib/gmail-api";
+import { exchangeGmailCode, GmailError, revokeGmail, GMAIL_REASON_COOKIE } from "@/lib/gmail-api";
 import { safeEqual } from "@/lib/security/crypto";
 import { appUrl } from "@/lib/app-url";
 
@@ -55,7 +55,13 @@ export async function GET(request: NextRequest) {
   } catch (e) {
     console.error("[gmail] connect failed:", e instanceof Error ? e.message : e);
     const res = back("failed");
-    if (e instanceof GmailError) res.headers.set("Location", `${appUrl()}/settings/email?gmail=failed&reason=${encodeURIComponent(e.message)}`);
+    // Why, for the settings page — in a short-lived cookie only this route sets, not the address
+    // (a ?reason= in the address would let anyone send a mentor a link showing their own words)
+    if (e instanceof GmailError) {
+      res.cookies.set(GMAIL_REASON_COOKIE, e.message.slice(0, 300), {
+        httpOnly: true, sameSite: "lax", secure: appUrl().startsWith("https:"), path: "/settings/email", maxAge: 120,
+      });
+    }
     return res;
   }
 }

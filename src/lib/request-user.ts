@@ -7,7 +7,8 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import type { PrismaClient } from "@/generated/prisma";
 
-export interface RequestUser { id: string; roles: string[] }
+/** `member`: an approved (ACTIVE) account. Someone who has only asked to join a team isn't. */
+export interface RequestUser { id: string; roles: string[]; member: boolean }
 
 const store = new AsyncLocalStorage<{ userId: string | null; user?: Promise<RequestUser | null> }>();
 
@@ -24,8 +25,8 @@ export function requestUser(base: PrismaClient): Promise<RequestUser | null> {
   if (set) {
     const userId = set.userId;
     if (!userId) return Promise.resolve(null);
-    set.user ??= base.userRole.findMany({ where: { userId }, select: { role: true } })
-      .then((rs) => ({ id: userId, roles: rs.map((r) => r.role as string) }));
+    set.user ??= base.user.findUnique({ where: { id: userId }, select: { status: true, roles: { select: { role: true } } } })
+      .then((u) => ({ id: userId, roles: u?.roles.map((r) => r.role as string) ?? [], member: u?.status === "ACTIVE" }));
     return set.user;
   }
   return fromSession();
@@ -45,7 +46,7 @@ async function fromSession(): Promise<RequestUser | null> {
   if (!p) {
     p = import("@/lib/auth")
       .then(({ auth }) => auth())
-      .then((s) => (s?.user?.id ? { id: s.user.id, roles: (s.user.roles ?? []) as string[] } : null))
+      .then((s) => (s?.user?.id ? { id: s.user.id, roles: (s.user.roles ?? []) as string[], member: s.user.status === "ACTIVE" } : null))
       .catch(() => null);
     perRequest.set(key, p);
   }

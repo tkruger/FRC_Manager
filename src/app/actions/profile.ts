@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { fullNameSchema } from "@/lib/names";
+import { plainArgs } from "@/lib/action-args";
 
 // Email changes go through changeEmailAction (confirmed from the new address)
 const ProfileSchema = z.object({
@@ -36,6 +37,7 @@ export async function updateProfileAction(
 
 /** Home's Overdue tasks tile: the whole team's tasks, or only their own */
 export async function setHomeTeamOverdueAction(on: boolean): Promise<ProfileActionState> {
+  plainArgs(on);
   const session = await auth();
   if (!session?.user?.id) return { success: false, error: "Not authenticated." };
   await prisma.user.update({ where: { id: session.user.id }, data: { homeTeamOverdue: !!on } });

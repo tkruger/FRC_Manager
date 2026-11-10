@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import type { BudgetCategoryType, FundingType } from "@/generated/prisma";
 import { ActionError, userMessage } from "@/lib/action-error";
 import { issueMessage } from "@/lib/validation";
+import { plainArgs } from "@/lib/action-args";
 
 const BUDGET_ROLES = ["HEAD_MENTOR"] as const;
 
@@ -143,6 +144,7 @@ export async function addFundingSourceAction(
   budgetId: string,
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
+  plainArgs(budgetId);
   let session;
   try { session = await requireBudgetRole(); } catch (e) { return { success: false, error: userMessage(e) }; }
   if (!await isTeamBudget(budgetId, session.user.teamId!)) return { success: false, error: "Budget not found." };
@@ -163,6 +165,7 @@ async function findTeamFunding(id: string, teamId: string) {
 
 /** Edit a funding source — e.g. mark a pledge received */
 export async function updateFundingSourceAction(id: string, formData: FormData): Promise<{ success: boolean; error?: string }> {
+  plainArgs(id);
   let session;
   try { session = await requireBudgetRole(); } catch (e) { return { success: false, error: userMessage(e) }; }
   if (!await findTeamFunding(id, session.user.teamId!)) return { success: false, error: "Funding source not found." };
@@ -177,6 +180,7 @@ export async function updateFundingSourceAction(id: string, formData: FormData):
 }
 
 export async function deleteFundingSourceAction(id: string): Promise<{ success: boolean; error?: string }> {
+  plainArgs(id);
   let session;
   try { session = await requireBudgetRole(); } catch (e) { return { success: false, error: userMessage(e) }; }
   if (!await findTeamFunding(id, session.user.teamId!)) return { success: false, error: "Funding source not found." };
@@ -199,6 +203,7 @@ export async function logExpenseAction(
   budgetId: string,
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
+  plainArgs(budgetId);
   let session;
   try { session = await requireBudgetRole(); } catch (e) { return { success: false, error: userMessage(e) }; }
   if (!await isTeamBudget(budgetId, session.user.teamId!)) return { success: false, error: "Budget not found." };

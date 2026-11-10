@@ -17,6 +17,7 @@ import { MAX_DAILY_LIMIT, MAX_HOURLY_LIMIT } from "@/lib/mail-limits";
 import { MAIL_PORTS, PROVIDER_BY_ID, type MailSecurity } from "@/lib/email-providers";
 import { escapeHtml } from "@/lib/html";
 import { EMAIL_ADMIN_ROLES } from "@/lib/rbac";
+import { plainArgs, plainObject } from "@/lib/action-args";
 
 type Result = { success: true } | { success: false; error: string };
 
@@ -105,6 +106,7 @@ export async function sendTestEmailAction(): Promise<Result & { to?: string }> {
 
 /** Pause (back to the app's email) or resume the team's server */
 export async function setEmailServerEnabledAction(enabled: boolean): Promise<Result> {
+  plainArgs(enabled);
   const who = await headMentor();
   if (!who) return { success: false, error: "Only Head Mentors and Integration Admins can set up the team's email." };
   await prisma.teamEmailServer.updateMany({ where: { teamId: who.teamId }, data: { enabled: !!enabled, updatedById: who.id } });
@@ -198,6 +200,7 @@ export async function saveServiceAccountAction(input: unknown): Promise<Result> 
 
 /** Spam guard: the most team emails an hour and a day */
 export async function saveMailLimitsAction(input: { hourly: number; daily: number }): Promise<Result> {
+  plainObject(input);
   const who = await headMentor();
   if (!who) return { success: false, error: "Only Head Mentors and Integration Admins can change the team's email limits." };
   const hourly = Math.round(Number(input.hourly));

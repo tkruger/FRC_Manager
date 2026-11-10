@@ -15,7 +15,7 @@ const isBlobUrl = (url: string) => {
 
 /**
  * A photo address a tool or item may point to: one of this team's stored photos, or an older Vercel
- * Blob upload. Returns it (normalized), or null for anything else.
+ * Blob upload the team already uses. Returns it (normalized), or null for anything else.
  */
 export async function acceptPhotoUrl(url: unknown, teamId: string): Promise<string | null> {
   if (typeof url !== "string" || !url) return null;
@@ -24,7 +24,15 @@ export async function acceptPhotoUrl(url: unknown, teamId: string): Promise<stri
     const ok = await prisma.storedPhoto.count({ where: { id, teamId } });
     return ok ? `/api/photos/${id}` : null;
   }
-  return isBlobUrl(url) ? new URL(url).toString() : null;
+  if (!isBlobUrl(url)) return null;
+  // Photos aren't uploaded to Blob any more: an older one is only kept (a form re-sending the photo
+  // a tool or item already has), never a new address — it could be anyone's Blob store
+  const blob = new URL(url).toString();
+  const [tool, item] = await Promise.all([
+    prisma.tool.findFirst({ where: { teamId, image: { in: [url, blob] } }, select: { image: true } }),
+    prisma.baseInventoryItem.findFirst({ where: { season: { teamId }, image: { in: [url, blob] } }, select: { image: true } }),
+  ]);
+  return tool?.image ?? item?.image ?? null;
 }
 
 /** Remove a photo that was just replaced or removed, unless something else still shows it (best-effort) */

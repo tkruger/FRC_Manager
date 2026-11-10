@@ -5,7 +5,7 @@ import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { SessionProvider } from "next-auth/react";
 import { Analytics } from "@vercel/analytics/next";
 import { auth } from "@/lib/auth";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { APP_ICON_COOKIE, appIconPath, resolveAppIcon } from "@/lib/app-icons";
 import { isTestSite } from "@/lib/test-site";
 
@@ -57,6 +57,8 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   const test = await isTestSite();
+  // The Content Security Policy's nonce for this request (set by the proxy)
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   const VALID_MODES = ["LIGHT", "DARK", "AUTO_SYSTEM", "AUTO_TIME"];
   const serverMode = VALID_MODES.includes(session?.user?.displayMode ?? "")
     ? session!.user.displayMode
@@ -66,7 +68,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
         {/* Blocking theme script — runs before React renders to prevent white flash */}
-        <script dangerouslySetInnerHTML={{ __html: `(function(){try{
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: `(function(){try{
           var m=localStorage.getItem('frc-theme-mode')||'${serverMode}';
           var dark=false;
           if(m==='DARK'){dark=true;}

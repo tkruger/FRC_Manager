@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { SeedVendorsButton } from "./SeedVendorsButton";
 import { AddVendorDialog } from "./AddVendorDialog";
 import { EditVendorDialog } from "./EditVendorDialog";
+import { webHref } from "@/lib/web-url";
 
 const ADMIN_ROLES = ["HEAD_MENTOR", "INVENTORY_ADMIN"];
 
@@ -69,7 +70,7 @@ export default async function VendorsPage() {
                   <div>
                     <p className="font-medium text-(--color-text-primary)">{v.name}</p>
                     {v.website && (
-                      <a href={v.website} target="_blank" rel="noopener noreferrer"
+                      <a href={webHref(v.website)} target="_blank" rel="noopener noreferrer"
                         className="text-small text-(--color-secondary) hover:underline">
                         {v.website.replace(/^https?:\/\//, "")}
                       </a>

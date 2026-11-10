@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import * as notify from "@/lib/notify/events";
 import type { TaskStatus, TaskPriority, SubTeam, DesignReviewStatus } from "@/generated/prisma";
 import { rescheduleAfter } from "@/lib/task-schedule";
+import { plainArgs } from "@/lib/action-args";
 
 const TaskSchema = z.object({
   name:                 z.string().max(300).min(1),
@@ -166,6 +167,7 @@ export async function updateTaskStatusAction(
   taskId: string,
   status: TaskStatus
 ): Promise<{ success: boolean }> {
+  plainArgs(taskId, status);
   const session = await auth();
   if (!session?.user?.teamId) return { success: false };
   if (!TASK_STATUSES.includes(status)) return { success: false };
@@ -191,6 +193,7 @@ export async function updateTaskAction(
   _prev: TaskActionState | null,
   formData: FormData
 ): Promise<TaskActionState> {
+  plainArgs(taskId);
   const session = await auth();
   if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
 
@@ -321,6 +324,7 @@ async function comesAfter(taskId: string, ids: string[], seasonId: string): Prom
 }
 
 export async function deleteTaskAction(taskId: string): Promise<{ success: boolean }> {
+  plainArgs(taskId);
   const session = await auth();
   if (!session?.user?.teamId) return { success: false };
   const gone = await prisma.task.findFirst({
@@ -339,6 +343,7 @@ export async function logActualHoursAction(
   taskId: string,
   hours: number
 ): Promise<{ success: boolean }> {
+  plainArgs(taskId, hours);
   // Previously had no auth check at all
   const session = await auth();
   if (!session?.user?.teamId) return { success: false };
@@ -359,6 +364,7 @@ export async function logActualHoursAction(
  * length. `startDate` is YYYY-MM-DD and must be after today.
  */
 export async function scheduleTaskStartAction(taskId: string, startDate: string): Promise<{ success: boolean; error?: string }> {
+  plainArgs(taskId, startDate);
   const session = await auth();
   if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
   if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) return { success: false, error: "Pick a start date." };

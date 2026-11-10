@@ -8,6 +8,7 @@ import { sendEmail, escapeHtml } from "@/lib/email";
 import { sendChannelMessage, embed } from "@/lib/discord";
 import { appUrl } from "@/lib/app-url";
 import { groupOf, isBroadcastGroup, type BroadcastGroup } from "@/lib/broadcast-groups";
+import { plainArgs, plainObject } from "@/lib/action-args";
 
 type Result<T = object> = ({ success: true } & T) | { success: false; error: string };
 
@@ -25,6 +26,7 @@ const openUrl = (id: string) => `/dashboard?broadcast=${id}`;
 export async function sendBroadcastAction(input: {
   title: string; body: string; groups: string[]; emailGroups: string[]; discord: string[];
 }): Promise<Result<{ id: string; counts: { inApp: number; pushed: number; emailed: number; discord: number } }>> {
+  plainObject(input);
   const session = await auth();
   if (!session?.user?.teamId) return { success: false, error: "Not signed in." };
   if (!session.user.roles.includes("HEAD_MENTOR")) return { success: false, error: "Only Head Mentors can send broadcast messages." };
@@ -103,6 +105,7 @@ export async function sendBroadcastAction(input: {
 
 /** One broadcast, to show when its notification is opened (anyone on the team) */
 export async function getBroadcastAction(id: string): Promise<Result<{ broadcast: { title: string; body: string; from: string | null; sentAt: string } }>> {
+  plainArgs(id);
   const session = await auth();
   if (!session?.user?.teamId) return { success: false, error: "Not signed in." };
   const b = await prisma.broadcast.findFirst({

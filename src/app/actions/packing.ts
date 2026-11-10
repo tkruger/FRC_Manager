@@ -10,6 +10,7 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { canManagePacking } from "@/lib/packing";
 import { resolveScanCode } from "@/lib/scan-code";
+import { plainArgs, plainObject } from "@/lib/action-args";
 
 type Result = { success: true; message?: string } | { success: false; error: string };
 
@@ -49,6 +50,7 @@ function cleanItem(input: PackItemInput) {
 }
 
 export async function addPackItemAction(input: PackItemInput): Promise<Result> {
+  plainObject(input);
   const me = await manager();
   if (!me) return { success: false, error: "Only Team Leadership and Head Mentors can change the pack list." };
   const data = cleanItem(input);
@@ -61,6 +63,8 @@ export async function addPackItemAction(input: PackItemInput): Promise<Result> {
 }
 
 export async function updatePackItemAction(id: string, input: PackItemInput): Promise<Result> {
+  plainObject(input);
+  plainArgs(id);
   const me = await manager();
   if (!me) return { success: false, error: "Only Team Leadership and Head Mentors can change the pack list." };
   const data = cleanItem(input);
@@ -72,6 +76,7 @@ export async function updatePackItemAction(id: string, input: PackItemInput): Pr
 }
 
 export async function deletePackItemAction(id: string): Promise<Result> {
+  plainArgs(id);
   const me = await manager();
   if (!me) return { success: false, error: "Only Team Leadership and Head Mentors can change the pack list." };
   await prisma.packListItem.deleteMany({ where: { id, teamId: me.teamId } });
@@ -81,6 +86,7 @@ export async function deletePackItemAction(id: string): Promise<Result> {
 
 /** Move an item up or down the list */
 export async function movePackItemAction(id: string, direction: "up" | "down"): Promise<Result> {
+  plainArgs(id, direction);
   const me = await manager();
   if (!me) return { success: false, error: "Only Team Leadership and Head Mentors can change the pack list." };
   const items = await prisma.packListItem.findMany({
@@ -98,6 +104,7 @@ export async function movePackItemAction(id: string, direction: "up" | "down"): 
 // ── Packing sessions ─────────────────────────────────────────────────────────
 
 export async function startPackingAction(competitionId: string): Promise<{ success: true; sessionId: string } | { success: false; error: string }> {
+  plainArgs(competitionId);
   const me = await manager();
   if (!me) return { success: false, error: "Only Team Leadership and Head Mentors can start packing." };
 
@@ -117,6 +124,7 @@ export async function startPackingAction(competitionId: string): Promise<{ succe
 }
 
 export async function finishPackingAction(sessionId: string, finished: boolean): Promise<Result> {
+  plainArgs(sessionId, finished);
   const me = await manager();
   if (!me) return { success: false, error: "Only Team Leadership and Head Mentors can finish packing." };
   const { count } = await prisma.packSession.updateMany({
@@ -129,6 +137,7 @@ export async function finishPackingAction(sessionId: string, finished: boolean):
 }
 
 export async function deletePackSessionAction(sessionId: string): Promise<Result> {
+  plainArgs(sessionId);
   const me = await manager();
   if (!me) return { success: false, error: "Only Team Leadership and Head Mentors can delete packing." };
   await prisma.packSession.deleteMany({ where: { id: sessionId, teamId: me.teamId } });
@@ -165,6 +174,7 @@ export type PackScanResult =
  * already packed).
  */
 export async function packScanAction(sessionId: string, code: string, locationId: string | null): Promise<PackScanResult> {
+  plainArgs(sessionId, code, locationId);
   const me = await member();
   if (!me) return { success: false, error: "Not signed in." };
   if (!await openSession(sessionId, me.teamId)) return { success: false, error: "This packing list is finished." };
@@ -179,6 +189,7 @@ export async function packScanAction(sessionId: string, code: string, locationId
 
 /** Pack a tool picked by hand (no barcode handy) */
 export async function packToolAction(sessionId: string, toolId: string, locationId: string | null): Promise<PackScanResult> {
+  plainArgs(sessionId, toolId, locationId);
   const me = await member();
   if (!me) return { success: false, error: "Not signed in." };
   if (!await openSession(sessionId, me.teamId)) return { success: false, error: "This packing list is finished." };
@@ -216,6 +227,7 @@ async function packTool(sessionId: string, me: { userId: string; teamId: string 
 
 /** Tick (or untick) a hand-packed list item */
 export async function tickPackItemAction(sessionId: string, itemId: string, packed: boolean, locationId: string | null): Promise<Result> {
+  plainArgs(sessionId, itemId, packed, locationId);
   const me = await member();
   if (!me) return { success: false, error: "Not signed in." };
   if (!await openSession(sessionId, me.teamId)) return { success: false, error: "This packing list is finished." };
@@ -238,6 +250,7 @@ export async function tickPackItemAction(sessionId: string, itemId: string, pack
 
 /** Say (or change) where a packed tool or item went */
 export async function setPackEntryLocationAction(entryId: string, locationId: string | null): Promise<Result> {
+  plainArgs(entryId, locationId);
   const me = await member();
   if (!me) return { success: false, error: "Not signed in." };
   const entry = await prisma.packEntry.findFirst({
@@ -255,6 +268,7 @@ export async function setPackEntryLocationAction(entryId: string, locationId: st
 
 /** Take something back off the packed list */
 export async function unpackEntryAction(entryId: string): Promise<Result> {
+  plainArgs(entryId);
   const me = await member();
   if (!me) return { success: false, error: "Not signed in." };
   const entry = await prisma.packEntry.findFirst({

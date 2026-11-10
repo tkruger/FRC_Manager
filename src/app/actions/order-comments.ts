@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { isViewOnly } from "@/lib/access/read-only";
 import { notifyUsers } from "@/lib/notify/deliver";
 import { STATUS_OVERRIDE_ROLES } from "@/lib/orders/constants";
+import { plainArgs } from "@/lib/action-args";
 
 type Result = { success: true } | { success: false; error: string };
 
@@ -17,6 +18,7 @@ const Body = z.string().trim().min(1, "Write a comment first.").max(2000, "Keep 
  * the order hears about it: who placed it, everyone who has acted on it, and everyone who commented.
  */
 export async function addOrderCommentAction(requestId: string, text: string): Promise<Result> {
+  plainArgs(requestId, text);
   const session = await auth();
   if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
   if (isViewOnly(session.user.roles)) return { success: false, error: "Your role can read orders but not comment on them." };
@@ -50,6 +52,7 @@ export async function addOrderCommentAction(requestId: string, text: string): Pr
 
 /** Remove a comment — its author, or the Buyer, captains and Head Mentors */
 export async function deleteOrderCommentAction(commentId: string): Promise<Result> {
+  plainArgs(commentId);
   const session = await auth();
   if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
   const c = await prisma.orderComment.findFirst({

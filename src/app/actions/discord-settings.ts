@@ -8,6 +8,7 @@ import { DISCORD_ADMIN_ROLES } from "@/lib/rbac";
 import type { DiscordAudience } from "@/generated/prisma";
 import { explainDiscordError } from "@/lib/discord";
 import { ActionError, userMessage } from "@/lib/action-error";
+import { plainArgs } from "@/lib/action-args";
 
 async function requireAdmin() {
   const session = await auth();
@@ -81,6 +82,7 @@ export async function saveDiscordConfigAction(
 }
 
 export async function disconnectDiscordAction(audienceIn: string = "STUDENT"): Promise<{ success: boolean }> {
+  plainArgs(audienceIn);
   let session;
   try { session = await requireAdmin(); } catch { return { success: false }; }
 
@@ -94,6 +96,7 @@ export async function disconnectDiscordAction(audienceIn: string = "STUDENT"): P
 }
 
 export async function revokeDiscordLinkAction(linkId: string): Promise<{ success: boolean }> {
+  plainArgs(linkId);
   let session;
   try { session = await requireAdmin(); } catch { return { success: false }; }
   const revoked = await prisma.discordLink.updateMany({
@@ -115,6 +118,7 @@ const TEST_MESSAGE = "Thank you for installing the FRC Manager, this message mea
  * configured channel, else the server's system channel.
  */
 export async function sendDiscordTestAction(audienceIn: string = "STUDENT"): Promise<{ success: true; channel: string } | { success: false; error: string }> {
+  plainArgs(audienceIn);
   let session;
   try { session = await requireAdmin(); } catch (e) { return { success: false, error: userMessage(e) }; }
 

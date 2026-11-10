@@ -2,7 +2,7 @@
 
 import { nextStockTag } from "@/lib/inventory/stock-tags";
 import { z } from "zod";
-import { issueMessage } from "@/lib/validation";
+import { issueMessage, optionalWebUrl } from "@/lib/validation";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
@@ -11,6 +11,7 @@ import { performAction, type WorkflowAction, type Actor, type ActionResult } fro
 import { CATEGORY_VALUES, DEFAULT_CATEGORY } from "@/lib/inventory/categories";
 import { createOrder, type NewItem } from "@/lib/orders/create";
 import { editableDrafts } from "@/lib/orders/drafts";
+import { plainArgs } from "@/lib/action-args";
 
 // Form-based order entry points (inventory "Order" buttons). The full order form
 // uses createOrderAction in ./orders; both go through lib/orders/create.
@@ -70,7 +71,7 @@ const Importance = z.enum(["ROUTINE", "URGENT", "EMERGENCY"]).default("ROUTINE")
 const LineItemSchema = z.object({
   name:             z.string().trim().max(300).min(1),
   partNumber:       z.string().max(300).optional(),
-  vendorProductUrl: z.string().max(2000).optional(),
+  vendorProductUrl: optionalWebUrl(),
   vendorName:       z.string().max(300).optional(),
   quantity:         z.coerce.number().positive(),
   unitCost:         z.coerce.number().min(0).optional(),
@@ -129,7 +130,7 @@ const NewItemSchema = z.object({
   quantity:          z.coerce.number().positive("Enter how many you need."),
   unitCost:          z.coerce.number().min(0).optional(),
   preferredSupplier: z.string().trim().max(300).max(120).optional(),
-  vendorProductUrl:  z.string().trim().max(2000).url("Enter a full product link (https://…), or leave it blank.").optional(),
+  vendorProductUrl:  optionalWebUrl("Enter a full product link (https://…), or leave it blank."),
   priority:          Importance,
   justification:     z.string().trim().max(2000).optional(),
 });
@@ -214,13 +215,16 @@ async function run(requestId: string, stepKey: string, action: WorkflowAction, i
 }
 
 export async function approvePurchaseRequestAction(requestId: string, stepKey: string, note?: string): Promise<ActionResult> {
+  plainArgs(requestId, stepKey, note);
   return run(requestId, stepKey, "approve", { note: note?.trim() || undefined });
 }
 
 export async function denyPurchaseRequestAction(requestId: string, stepKey: string, reason: string): Promise<ActionResult> {
+  plainArgs(requestId, stepKey, reason);
   return run(requestId, stepKey, "deny", { note: reason.trim() || undefined });
 }
 
 export async function cancelPurchaseRequestAction(requestId: string, stepKey: string, reason: string): Promise<ActionResult> {
+  plainArgs(requestId, stepKey, reason);
   return run(requestId, stepKey, "cancel", { note: reason.trim() || undefined });
 }

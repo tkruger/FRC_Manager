@@ -7,6 +7,7 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import type { RobotRole, RobotStatus } from "@/generated/prisma";
 import { ROBOT_EDIT_ROLES } from "@/lib/rbac";
+import { plainArgs } from "@/lib/action-args";
 
 const RobotSchema = z.object({
   name:         z.string().trim().min(1, "Enter a robot name.").max(60),
@@ -20,6 +21,7 @@ export async function updateRobotAction(
   robotId: string,
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
+  plainArgs(robotId);
   const session = await auth();
   if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
   if (!session.user.roles.some((r) => ROBOT_EDIT_ROLES.includes(r))) {
@@ -64,6 +66,7 @@ export async function logWeightSnapshotAction(
   weight: number,
   notes?: string
 ): Promise<{ success: boolean; error?: string }> {
+  plainArgs(robotId, weight, notes);
   const session = await auth();
   if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
   if (!Number.isFinite(weight) || weight <= 0) return { success: false, error: "Enter a valid weight." };
@@ -72,7 +75,7 @@ export async function logWeightSnapshotAction(
   if (!robot) return { success: false, error: "Robot not found." };
 
   await prisma.weightSnapshot.create({
-    data: { robotId, weight, notes: notes ?? null },
+    data: { robotId, weight, notes: notes?.trim().slice(0, 500) || null },
   });
 
   revalidatePath(`/fleet/${robotId}`);
@@ -80,6 +83,7 @@ export async function logWeightSnapshotAction(
 }
 
 export async function archiveRobotAction(robotId: string): Promise<{ success: boolean }> {
+  plainArgs(robotId);
   // Same rule as creating robots (Season settings): Head Mentors only
   const session = await auth();
   if (!session?.user?.teamId || !session.user.roles.includes("HEAD_MENTOR")) return { success: false };

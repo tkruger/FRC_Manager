@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { MAX_RECEIPT_BYTES } from "@/lib/expense-claims";
+import { sensibleImage, teamUploadProblem } from "@/lib/security/uploads";
 
 // Upload one receipt (a photo or PDF) for an expense claim the person is filling in. It's
 // kept unattached until the claim is submitted with its id; unattached receipts are removed
@@ -37,6 +38,11 @@ export async function POST(request: Request) {
   const bytes = new Uint8Array(await file.arrayBuffer());
   const kind = sniff(bytes.subarray(0, 16));
   if (!kind) return NextResponse.json({ error: `“${file.name}” isn't a photo (JPEG, PNG, WebP) or a PDF.` }, { status: 415 });
+  if (kind.type !== "application/pdf" && !sensibleImage(bytes, kind.type)) {
+    return NextResponse.json({ error: `“${file.name}” is too large a picture (or isn't a photo).` }, { status: 400 });
+  }
+  const full = await teamUploadProblem(session.user.teamId, bytes.length);
+  if (full) return NextResponse.json({ error: full }, { status: 429 });
 
   // A tidy name: the original without its path or odd characters, with the real extension
   const base = file.name.replace(/^.*[\\/]/, "").replace(/\.[^.]*$/, "").replace(/[^\w .()-]+/g, "").trim().slice(0, 80) || "receipt";

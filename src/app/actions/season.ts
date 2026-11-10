@@ -13,6 +13,7 @@ import { revalidatePath } from "next/cache";
 import crypto from "crypto";
 import { STAGE_INFO, designation } from "@/lib/competition";
 import { ActionError, userMessage } from "@/lib/action-error";
+import { plainArgs } from "@/lib/action-args";
 
 async function requireHeadMentor() {
   const session = await auth();
@@ -170,6 +171,7 @@ export async function updateSeasonAction(
   _prev: SeasonActionState | null,
   formData: FormData
 ): Promise<SeasonActionState> {
+  plainArgs(seasonId);
   let session;
   try { session = await requireHeadMentor(); } catch (e) { return { success: false, error: userMessage(e) }; }
 
@@ -264,6 +266,7 @@ export async function createRobotAction(
   seasonId: string,
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
+  plainArgs(seasonId);
   let session;
   try { session = await requireHeadMentor(); } catch (e) { return { success: false, error: userMessage(e) }; }
 
@@ -371,14 +374,17 @@ async function saveCompetition(
 }
 
 export async function addCompetitionAction(seasonId: string, formData: FormData): Promise<CompetitionResult> {
+  plainArgs(seasonId);
   return saveCompetition(seasonId, null, formData);
 }
 
 export async function updateCompetitionAction(seasonId: string, competitionId: string, formData: FormData): Promise<CompetitionResult> {
+  plainArgs(seasonId, competitionId);
   return saveCompetition(seasonId, competitionId, formData);
 }
 
 export async function deleteCompetitionAction(competitionId: string): Promise<CompetitionResult> {
+  plainArgs(competitionId);
   let session;
   try { session = await requireHeadMentor(); } catch (e) { return { success: false, error: userMessage(e) }; }
   const deleted = await prisma.competitionEvent.deleteMany({

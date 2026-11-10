@@ -9,6 +9,7 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import * as notify from "@/lib/notify/events";
 import { ActionError, userMessage } from "@/lib/action-error";
+import { plainArgs, plainObject } from "@/lib/action-args";
 
 const LEADERSHIP = ["HEAD_MENTOR", "TEAM_LEADERSHIP", "BUILD_LEAD"] as const;
 
@@ -34,6 +35,7 @@ const isSubTeam = (v: string) => SUBTEAM_OPTIONS.some((o) => o.value === v);
 export async function generateMeetingsAction(
   seasonId: string
 ): Promise<{ success: boolean; error?: string; count?: number }> {
+  plainArgs(seasonId);
   let session;
   try { session = await requireLeadership(); } catch (e) { return { success: false, error: userMessage(e) }; }
 
@@ -63,6 +65,8 @@ export async function updateMeetingAction(
     subTeam?: string | null;
   }
 ): Promise<{ success: boolean; error?: string }> {
+  plainObject(data);
+  plainArgs(meetingId);
   let session;
   try { session = await requireLeadership(); } catch (e) { return { success: false, error: userMessage(e) }; }
   if (data.subTeam && !isSubTeam(data.subTeam)) return { success: false, error: "Unknown sub-team." };
@@ -114,6 +118,7 @@ export async function cancelMeetingAction(
   meetingId: string,
   reason?: string
 ): Promise<{ success: boolean; error?: string }> {
+  plainArgs(meetingId, reason);
   let session;
   try { session = await requireLeadership(); } catch (e) { return { success: false, error: userMessage(e) }; }
   if (!await findTeamMeeting(meetingId, session.user.teamId!)) return { success: false, error: "Meeting not found." };
@@ -129,6 +134,7 @@ export async function cancelMeetingAction(
 }
 
 export async function restoreMeetingAction(meetingId: string): Promise<{ success: boolean }> {
+  plainArgs(meetingId);
   let session;
   try { session = await requireLeadership(); } catch { return { success: false }; }
   if (!await findTeamMeeting(meetingId, session.user.teamId!)) return { success: false };
@@ -142,6 +148,7 @@ export async function addMeetingAction(
   seasonId: string,
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
+  plainArgs(seasonId);
   let session;
   try { session = await requireLeadership(); } catch (e) { return { success: false, error: userMessage(e) }; }
 
@@ -171,6 +178,7 @@ export async function addMeetingAction(
 export async function generateCalendarTokenAction(
   seasonId: string
 ): Promise<{ success: boolean; token?: string; error?: string }> {
+  plainArgs(seasonId);
   // Regenerating the token breaks everyone's existing calendar subscriptions
   let session;
   try { session = await requireLeadership(); } catch (e) { return { success: false, error: userMessage(e) }; }

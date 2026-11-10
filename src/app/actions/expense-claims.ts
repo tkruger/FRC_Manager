@@ -14,6 +14,7 @@ import { notifyUsers } from "@/lib/notify/deliver";
 import { canReviewClaims, MAX_RECEIPTS } from "@/lib/expense-claims";
 import { formatCurrency } from "@/lib/utils";
 import type { Prisma } from "@/generated/prisma";
+import { plainArgs } from "@/lib/action-args";
 
 type Result<T = object> = ({ success: true } & T) | { success: false; error: string };
 
@@ -140,6 +141,7 @@ export async function submitClaimAction(input: unknown): Promise<Result<{ id: st
 
 /** Take back your own claim before it's reviewed */
 export async function withdrawClaimAction(id: string): Promise<Result> {
+  plainArgs(id);
   const who = await me();
   if (!who) return { success: false, error: "Not authenticated." };
   const { count } = await prisma.expenseClaim.updateMany({
@@ -175,6 +177,7 @@ const ApproveSchema = z.object({
 
 /** Approve: record it in the budget (in the category picked); a refund then waits to be paid */
 export async function approveClaimAction(id: string, input: unknown): Promise<Result> {
+  plainArgs(id);
   const r = await reviewable(id);
   if (r.error !== undefined) return { success: false, error: r.error };
   const { who, claim } = r;
@@ -213,6 +216,7 @@ export async function approveClaimAction(id: string, input: unknown): Promise<Re
 
 /** Deny, with the reason (the submitter is told) */
 export async function denyClaimAction(id: string, reason: string): Promise<Result> {
+  plainArgs(id, reason);
   const r = await reviewable(id);
   if (r.error !== undefined) return { success: false, error: r.error };
   const { who, claim } = r;
@@ -245,6 +249,7 @@ const PaidSchema = z.object({
 
 /** An approved refund was paid: close it */
 export async function markClaimPaidAction(id: string, input: unknown): Promise<Result> {
+  plainArgs(id);
   const r = await reviewable(id);
   if (r.error !== undefined) return { success: false, error: r.error };
   const { who, claim } = r;

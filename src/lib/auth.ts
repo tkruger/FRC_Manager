@@ -121,17 +121,26 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (!token?.id) return token;
       const user = await prisma.user.findUnique({
         where:  { id: token.id as string },
-        select: { status: true, teamId: true, isSuperAdmin: true, sessionVersion: true, roles: { select: { role: true } } },
+        select: {
+          status: true, teamId: true, isSuperAdmin: true, sessionVersion: true, roles: { select: { role: true } },
+          team: { select: { status: true } },
+        },
       });
       if (!user || user.status === "SUSPENDED" || user.status === "DENIED") return null;
       // Password changes, resets and "sign out everywhere" bump sessionVersion: sessions
       // from before that stop working. (Sessions from before this check count as version 0.)
       if (params.user) token.sv = user.sessionVersion;
       else if ((token.sv ?? 0) !== user.sessionVersion) return null;
-      token.teamId = user.teamId ?? undefined;
+      // The team goes on the session only for an approved member of an approved team. Every API
+      // route and server action scopes by session.user.teamId, so someone who has only asked to
+      // join (or whose team is still waiting for approval) must not carry it: they'd be able to
+      // read and change that team's data. `pendingTeam` tells the app to show the waiting screen.
+      const member = user.status === "ACTIVE" && !!user.teamId && user.team?.status === "ACTIVE";
+      token.teamId = member ? user.teamId! : undefined;
+      token.pendingTeam = !!user.teamId && !member;
       token.status = user.status;
       // Effective roles (withImpliedRoles — no role implies another right now)
-      token.roles  = user.status === "ACTIVE" ? withImpliedRoles(user.roles.map((r) => r.role)) : [];
+      token.roles  = member ? withImpliedRoles(user.roles.map((r) => r.role)) : [];
       token.isSuperAdmin = user.status === "ACTIVE" && user.isSuperAdmin;
       return token;
     },

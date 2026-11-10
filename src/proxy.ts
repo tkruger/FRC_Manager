@@ -3,6 +3,7 @@
 import NextAuth from "next-auth";
 import { authConfig } from "@/lib/auth.config";
 import { NextResponse } from "next/server";
+import { contentSecurityPolicy, newNonce } from "@/lib/security/csp";
 
 const { auth } = NextAuth(authConfig);
 
@@ -34,12 +35,26 @@ const PUBLIC_PREFIXES = [
 export default auth((req) => {
   const { pathname } = req.nextUrl;
 
+  // A fresh nonce for this request's Content Security Policy: Next.js reads it from the request's
+  // CSP header for its own inline scripts; app/layout.tsx reads x-nonce for the theme script.
+  // (The service worker has its own policy, in next.config.ts.)
+  const csp = pathname === "/sw.js" ? null : contentSecurityPolicy(newNonce());
+  const next = () => {
+    if (!csp) return NextResponse.next();
+    const headers = new Headers(req.headers);
+    headers.set("x-nonce", /'nonce-([^']+)'/.exec(csp)![1]);
+    headers.set("Content-Security-Policy", csp);
+    const res = NextResponse.next({ request: { headers } });
+    res.headers.set("Content-Security-Policy", csp);
+    return res;
+  };
+
   const isPublic = PUBLIC_EXACT.has(pathname) || PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));
-  if (isPublic) return NextResponse.next();
+  if (isPublic) return next();
 
   // CSV exports opened in Safari from the iPhone app carry a signed, short-lived
   // token instead of a login (the route verifies it)
-  if (pathname === "/api/orders/csv" && req.nextUrl.searchParams.has("token")) return NextResponse.next();
+  if (pathname === "/api/orders/csv" && req.nextUrl.searchParams.has("token")) return next();
 
   if (!req.auth) {
     const loginUrl = new URL("/login", req.url);
@@ -48,7 +63,7 @@ export default auth((req) => {
     return NextResponse.redirect(loginUrl);
   }
 
-  return NextResponse.next();
+  return next();
 });
 
 export const config = {

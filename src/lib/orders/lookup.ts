@@ -10,8 +10,9 @@
 // numbers, listed from a published spreadsheet). Amazon gets its own parser.
 
 import { lookupMouser } from "./mouser";
-import { lookup as dnsLookup } from "node:dns/promises";
+import { lookup as dnsLookup, type LookupAddress, type LookupOptions } from "node:dns";
 import { isIP } from "node:net";
+import { Agent, fetch as undiciFetch } from "undici";
 import { AsyncLocalStorage } from "node:async_hooks";
 
 /** Why the store's pages didn't come back (for the message under the link) — one list per lookup */
@@ -99,15 +100,39 @@ function isPrivateIp(ip: string): boolean {
          (a === 192 && b === 0) || a >= 224;
 }
 
-async function assertPublicUrl(url: URL) {
+/** The link's form: a web page on a real domain name (not a bare IP or a local name), on the normal ports */
+function assertPublicUrl(url: URL) {
   if (url.protocol !== "https:" && url.protocol !== "http:") throw new Error("Only web links are supported.");
   if (url.port && url.port !== "80" && url.port !== "443") throw new Error("Unsupported link.");
   if (url.username || url.password) throw new Error("Unsupported link.");
-  // Product pages live on real domain names, not bare IPs or local names
   const host = url.hostname.replace(/^\[|\]$/g, "");
   if (isIP(host) || !host.includes(".") || /\.(local|internal|localhost)$/i.test(host)) throw new Error("Unsupported link.");
-  const addresses = await dnsLookup(url.hostname, { all: true });
-  if (addresses.length === 0 || addresses.some((a) => isPrivateIp(a.address))) throw new Error("Unsupported link.");
+}
+
+type LookupCallback = (err: NodeJS.ErrnoException | null, address: string | LookupAddress[], family?: number) => void;
+
+/**
+ * Where the name points is checked as the connection is made, and the connection goes to exactly
+ * the addresses that were checked. (Checking first and then letting fetch look the name up again
+ * would let a name answer with a public address for the check and a private one for the fetch.)
+ */
+function publicLookup(hostname: string, options: LookupOptions, callback: LookupCallback) {
+  dnsLookup(hostname, { ...options, all: true }, (err, addresses) => {
+    if (err) return callback(err, "");
+    if (addresses.length === 0 || addresses.some((a) => isPrivateIp(a.address))) {
+      return callback(Object.assign(new Error("Unsupported link."), { code: "EPRIVATE" }), "");
+    }
+    if (options.all) return callback(null, addresses);
+    callback(null, addresses[0].address, addresses[0].family);
+  });
+}
+
+const publicOnly = new Agent({ connect: { lookup: publicLookup as never } });
+
+/** fetch, but only ever to public addresses (every redirect hop is checked too: they're manual) */
+function fetchPublic(url: URL, init: { headers: Record<string, string> }) {
+  assertPublicUrl(url);
+  return undiciFetch(url, { ...init, redirect: "manual", signal: AbortSignal.timeout(6000), dispatcher: publicOnly });
 }
 
 const MAX_BYTES = 2_000_000;
@@ -115,13 +140,10 @@ const MAX_BYTES = 2_000_000;
 async function safeFetch(url: URL, accept: string, headers: Record<string, string> = {}): Promise<string | null> {
   let current = url;
   for (let hop = 0; hop < 4; hop++) {
-    await assertPublicUrl(current);
-    let res: Response;
+    let res: Awaited<ReturnType<typeof fetchPublic>>;
     try {
-      res = await fetch(current, {
-        redirect: "manual",
-        signal:   AbortSignal.timeout(6000),
-        headers:  { Accept: accept, "User-Agent": "FRC-Manager/1.0 (team order list)", ...headers },
+      res = await fetchPublic(current, {
+        headers: { Accept: accept, "User-Agent": "FRC-Manager/1.0 (team order list)", ...headers },
       });
     } catch (e) {
       noteFailure((e as Error)?.name === "TimeoutError" ? "timeout" : "network");
@@ -307,8 +329,7 @@ async function resolveShortLink(url: URL): Promise<URL> {
   if (!AMAZON_SHORT.test(url.hostname)) return url;
   let current = url;
   for (let hop = 0; hop < 5 && !asinFrom(current); hop++) {
-    await assertPublicUrl(current);
-    const res = await fetch(current, { redirect: "manual", signal: AbortSignal.timeout(6000), headers: BROWSER_HEADERS });
+    const res = await fetchPublic(current, { headers: BROWSER_HEADERS });
     const next = res.headers.get("location");
     if (next && res.status >= 300 && res.status < 400) { current = new URL(next, current); continue; }
     if (res.ok) {

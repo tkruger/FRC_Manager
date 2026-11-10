@@ -14,6 +14,7 @@ import type { Prisma, TaskPriority, SubTeam } from "@/generated/prisma";
 import { scheduleTemplate, wouldLoop, type EventTarget } from "@/lib/template-timeline";
 import { rescheduleAfter } from "@/lib/task-schedule";
 import { ActionError, userMessage } from "@/lib/action-error";
+import { plainArgs, plainObjects } from "@/lib/action-args";
 
 const MENTOR_ROLES = ["HEAD_MENTOR", "BUILD_LEAD"] as const;
 
@@ -61,6 +62,7 @@ export async function updateTemplateAction(
   templateId: string,
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
+  plainArgs(templateId);
   let session;
   try { session = await requireMentor(); } catch (e) { return { success: false, error: userMessage(e) }; }
   if (!await findTeamTemplate(templateId, session.user.teamId!)) return { success: false, error: "Template not found." };
@@ -79,6 +81,7 @@ export async function updateTemplateAction(
 }
 
 export async function deleteTemplateAction(templateId: string): Promise<{ success: boolean; error?: string }> {
+  plainArgs(templateId);
   let session;
   try { session = await requireMentor(); } catch (e) { return { success: false, error: userMessage(e) }; }
   if (!await findTeamTemplate(templateId, session.user.teamId!)) return { success: false, error: "Template not found." };
@@ -184,6 +187,7 @@ export async function addTemplateTaskAction(
   _prev: { success: boolean; error?: string } | null,
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
+  plainArgs(templateId);
   let session;
   try { session = await requireMentor(); } catch (e) { return { success: false, error: userMessage(e) }; }
   if (!await findTeamTemplate(templateId, session.user.teamId!)) return { success: false, error: "Template not found." };
@@ -203,6 +207,7 @@ export async function updateTemplateTaskAction(
   taskId: string,
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
+  plainArgs(taskId);
   let session;
   try { session = await requireMentor(); } catch (e) { return { success: false, error: userMessage(e) }; }
   const task = await findTeamTemplateTask(taskId, session.user.teamId!);
@@ -229,6 +234,7 @@ export async function updateTemplateTaskAction(
 }
 
 export async function deleteTemplateTaskAction(taskId: string): Promise<{ success: boolean }> {
+  plainArgs(taskId);
   let session;
   try { session = await requireMentor(); } catch { return { success: false }; }
   const task = await findTeamTemplateTask(taskId, session.user.teamId!);
@@ -287,6 +293,7 @@ export async function saveSeasonAsTemplateAction(
   name: string,
   description?: string
 ): Promise<{ success: boolean; error?: string; id?: string }> {
+  plainArgs(name, description);
   let session;
   try { session = await requireMentor(); } catch (e) { return { success: false, error: userMessage(e) }; }
 
@@ -489,6 +496,7 @@ async function linkPrerequisites<T extends ApplicableTask>(
 }
 
 export async function applyCustomTemplateAction(templateId: string): Promise<ApplyTemplateResult> {
+  plainArgs(templateId);
   let session;
   try { session = await requireHeadMentor(); } catch (e) { return { success: false, error: userMessage(e) }; }
 
@@ -528,6 +536,8 @@ export async function importTemplateTasksAction(
     anchorTaskName?: string | null;
   }[]
 ): Promise<{ success: boolean; error?: string; count?: number }> {
+  plainObjects(tasks);
+  plainArgs(templateId);
   let session;
   try { session = await requireMentor(); } catch (e) { return { success: false, error: userMessage(e) }; }
 

@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { ActionError, userMessage } from "@/lib/action-error";
+import { optionalWebUrl } from "@/lib/validation";
+import { plainArgs } from "@/lib/action-args";
 
 const ADMIN_ROLES = ["HEAD_MENTOR", "INVENTORY_ADMIN"] as const;
 
@@ -53,7 +55,7 @@ export async function seedFrcVendorsAction(): Promise<{ success: boolean; error?
 
 const VendorSchema = z.object({
   name: z.string().max(300).min(1),
-  website: z.string().max(2000).url().optional().or(z.literal("")),
+  website: optionalWebUrl("Enter the vendor's website (https://…), or leave it blank."),
   frcDiscount: z.string().max(300).optional(),
   typicalLeadDays: z.coerce.number().int().min(0).optional(),
   primaryContact: z.string().max(300).optional(),
@@ -95,6 +97,7 @@ export async function updateVendorAction(
   vendorId: string,
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
+  plainArgs(vendorId);
   let session;
   try { session = await requireAdmin(); }
   catch (e) { return { success: false, error: userMessage(e) }; }

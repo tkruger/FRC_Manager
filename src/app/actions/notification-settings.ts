@@ -9,6 +9,7 @@ import { TOPIC_BY_ID } from "@/lib/notify/topics";
 import { notifyUsers } from "@/lib/notify/deliver";
 import { FALLBACK_TIMEZONE, isValidTimezone, localParts, zonedTimeToUtc } from "@/lib/notify/time";
 import { eventWindow } from "@/lib/frc/event-live";
+import { plainArgs, plainObject } from "@/lib/action-args";
 
 type Result = { success: true } | { success: false; error: string };
 
@@ -30,6 +31,7 @@ export async function savePushSubscriptionAction(
   timezone: string | null,
   userAgent: string | null,
 ): Promise<Result> {
+  plainArgs(timezone, userAgent);
   const session = await currentUser();
   if (!session) return { success: false, error: "Not authenticated." };
 
@@ -54,6 +56,7 @@ export async function savePushSubscriptionAction(
 }
 
 export async function removePushSubscriptionAction(endpoint: string): Promise<Result> {
+  plainArgs(endpoint);
   const session = await currentUser();
   if (!session) return { success: false, error: "Not authenticated." };
   await prisma.pushSubscription.deleteMany({ where: { endpoint, userId: session.user.id } });
@@ -62,6 +65,7 @@ export async function removePushSubscriptionAction(endpoint: string): Promise<Re
 }
 
 export async function setTopicPreferenceAction(topic: string, inApp: boolean, push: boolean, email?: boolean): Promise<Result> {
+  plainArgs(topic, inApp, push, email);
   const session = await currentUser();
   if (!session) return { success: false, error: "Not authenticated." };
   const def = TOPIC_BY_ID[topic];
@@ -85,6 +89,7 @@ export async function saveDeliverySettingsAction(input: {
   quietHoursEnd:   number;
   timezone:        string | null;
 }): Promise<Result> {
+  plainObject(input);
   const session = await currentUser();
   if (!session) return { success: false, error: "Not authenticated." };
 
@@ -102,6 +107,7 @@ export async function saveDeliverySettingsAction(input: {
 }
 
 export async function setTeamTimezoneAction(timezone: string): Promise<Result> {
+  plainArgs(timezone);
   const session = await currentUser();
   if (!session?.user.teamId) return { success: false, error: "Not authenticated." };
   if (!session.user.roles.some((r) => LEADERSHIP_ROLES.includes(r))) {
@@ -140,6 +146,7 @@ export async function sendTestNotificationAction(): Promise<Result & { pushed?: 
  * 30), "event" (until the competition happening now ends), or "off".
  */
 export async function snoozeCompetitionAlertsAction(choice: "2h" | "morning" | "days" | "event" | "off", days = 1): Promise<{ success: true; until: string | null } | { success: false; error: string }> {
+  plainArgs(choice, days);
   const session = await currentUser();
   if (!session?.user.teamId) return { success: false, error: "Not authenticated." };
   const me = await prisma.user.findUnique({ where: { id: session.user.id }, select: { timezone: true, team: { select: { timezone: true } } } });

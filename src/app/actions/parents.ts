@@ -5,6 +5,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { linkParentByNames, teamStudents } from "@/lib/parents";
+import { plainArgs } from "@/lib/action-args";
 
 type Result = { success: true; linked?: number } | { success: false; error: string };
 
@@ -23,6 +24,7 @@ function refresh() {
 
 /** Link (or unlink) one of the team's students as this parent's */
 export async function setMyStudentAction(studentId: string, linked: boolean): Promise<Result> {
+  plainArgs(studentId, linked);
   const me = await requireParent();
   if (!me) return { success: false, error: "Only parents can do this." };
   if (linked) {
@@ -38,6 +40,7 @@ export async function setMyStudentAction(studentId: string, linked: boolean): Pr
 
 /** Whose parent they are, in their own words; names matching students on the team get linked too */
 export async function saveParentOfAction(text: string): Promise<Result> {
+  plainArgs(text);
   const me = await requireParent();
   if (!me) return { success: false, error: "Only parents can do this." };
   const parsed = z.string().trim().max(300, "Keep it under 300 characters.").safeParse(text);

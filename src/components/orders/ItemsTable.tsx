@@ -9,6 +9,7 @@ import { cn, formatCurrency } from "@/lib/utils";
 import { addTrackingAction, markArrivedAction, setItemStatusAction } from "@/app/actions/orders";
 import { ITEM_STATUSES, ITEM_STATUS_INFO, itemRef, type ItemStatus } from "@/lib/orders/constants";
 import { useViewOnly } from "@/components/access/ViewOnly";
+import { webHref } from "@/lib/web-url";
 
 export interface OrderItemRow {
   id:          string;
@@ -196,7 +197,7 @@ export function ItemsTable({ items, canTrack, canOverride, canChange = true, sho
                     <p className="min-w-0 text-sm text-(--color-text-primary)">
                       <span className="font-mono text-xs font-semibold text-(--color-text-secondary) mr-2">{itemRef(i)}</span>
                       {i.link && !changing ? (
-                        <a href={i.link} target="_blank" rel="noopener noreferrer" className="font-medium text-(--color-secondary) hover:underline">
+                        <a href={webHref(i.link)} target="_blank" rel="noopener noreferrer" className="font-medium text-(--color-secondary) hover:underline">
                           {i.name} ↗
                         </a>
                       ) : <span className="font-medium">{i.name}</span>}
@@ -224,7 +225,7 @@ export function ItemsTable({ items, canTrack, canOverride, canChange = true, sho
                     <Badge variant={info.badge}>{info.label}</Badge>
                     {i.importance !== "ROUTINE" && <Badge variant={IMPORTANCE_BADGE[i.importance] ?? "neutral"}>{i.importance.toLowerCase()}</Badge>}
                     {i.tracking && !changing && (
-                      <a href={i.tracking.url} target="_blank" rel="noopener noreferrer" className="text-small text-(--color-secondary) hover:underline">
+                      <a href={webHref(i.tracking.url)} target="_blank" rel="noopener noreferrer" className="text-small text-(--color-secondary) hover:underline">
                         Track{i.tracking.label ? `: ${i.tracking.label}` : " package"} ↗
                       </a>
                     )}

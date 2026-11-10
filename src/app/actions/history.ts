@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { toHistoryEntries, type HistoryEntry } from "@/lib/audit/history";
 import { canReviewClaims } from "@/lib/expense-claims";
+import { plainArgs } from "@/lib/action-args";
 
 const Input = z.object({
   entityType: z.enum(["order", "task", "meeting", "member", "expense", "broadcast", "budget"]),
@@ -13,6 +14,7 @@ const Input = z.object({
 
 /** An order's, task's or meeting's change history, newest first (the caller's team only) */
 export async function getChangeHistoryAction(entityType: string, entityId: string): Promise<{ success: true; entries: HistoryEntry[] } | { success: false; error: string }> {
+  plainArgs(entityType, entityId);
   const session = await auth();
   if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
   const parsed = Input.safeParse({ entityType, entityId });

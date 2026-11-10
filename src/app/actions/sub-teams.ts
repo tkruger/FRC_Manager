@@ -7,12 +7,14 @@ import { LEADERSHIP_ROLES } from "@/lib/rbac";
 import { isViewOnly } from "@/lib/access/read-only";
 import { SUBTEAM_OPTIONS } from "@/lib/schedule-helpers";
 import type { Role, SubTeam } from "@/generated/prisma";
+import { plainArgs } from "@/lib/action-args";
 
 /**
  * Set someone's sub-teams (any number). Anyone can set their own; Head Mentors and Team Leadership
  * can set anyone's on their team. Sub-team meetings remind these members.
  */
 export async function setSubTeamsAction(userId: string, subTeams: string[]): Promise<{ success: true } | { success: false; error: string }> {
+  plainArgs(userId, subTeams);
   const session = await auth();
   if (!session?.user?.teamId) return { success: false, error: "Not signed in." };
   const self = userId === session.user.id;

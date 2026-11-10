@@ -41,6 +41,9 @@ export function gmailAuthUrl(state: string, loginHint?: string): string {
 /** A message safe to show a Head Mentor */
 export class GmailError extends Error {}
 
+/** Why connecting failed, handed from the OAuth callback to the settings page */
+export const GMAIL_REASON_COOKIE = "gmail_connect_reason";
+
 async function tokenRequest(body: Record<string, string>) {
   const res = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",

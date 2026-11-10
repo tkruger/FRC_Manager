@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { canEditLocations, locationCode } from "@/lib/packing";
+import { plainArgs } from "@/lib/action-args";
 
 type Result = { success: true; message?: string } | { success: false; error: string };
 
@@ -29,6 +30,7 @@ async function nameTaken(teamId: string, name: string, exceptId?: string) {
 }
 
 export async function createLocationAction(rawName: string): Promise<Result> {
+  plainArgs(rawName);
   const me = await requireEditor();
   if (!me) return { success: false, error: "You don't have permission to add locations." };
   const name = rawName.trim().slice(0, 80);
@@ -54,6 +56,7 @@ export async function createLocationAction(rawName: string): Promise<Result> {
 
 /** Rename a location; tools there move with it */
 export async function renameLocationAction(id: string, rawName: string): Promise<Result> {
+  plainArgs(id, rawName);
   const me = await requireEditor();
   if (!me) return { success: false, error: "You don't have permission to rename locations." };
   const name = rawName.trim().slice(0, 80);
@@ -74,6 +77,7 @@ export async function renameLocationAction(id: string, rawName: string): Promise
 
 /** Delete a location. Tools there keep the name as plain text; packing records lose the link. */
 export async function deleteLocationAction(id: string): Promise<Result> {
+  plainArgs(id);
   const me = await requireEditor();
   if (!me) return { success: false, error: "You don't have permission to delete locations." };
   const loc = await prisma.toolLocation.findFirst({ where: { id, teamId: me.teamId } });
@@ -85,6 +89,7 @@ export async function deleteLocationAction(id: string): Promise<Result> {
 
 /** Put a tool away at a location (sets its home location). Anyone on the team can. */
 export async function moveToolToLocationAction(toolId: string, locationId: string): Promise<Result> {
+  plainArgs(toolId, locationId);
   const session = await auth();
   if (!session?.user?.teamId) return { success: false, error: "Not signed in." };
   const teamId = session.user.teamId;

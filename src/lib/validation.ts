@@ -6,8 +6,16 @@
 // issue (which field, what's wrong) so it reads well whatever the locale.
 
 import { z } from "zod";
+import { isWebUrl, withScheme } from "@/lib/web-url";
 
 z.config(z.locales.en());
+
+/**
+ * An optional link field: blank, or a web address (http/https — never javascript: or data:).
+ * A bare "site.com/…" gets https:// added.
+ */
+export const optionalWebUrl = (message = "Enter a full link (https://…), or leave it blank.") =>
+  z.string().trim().max(2000).transform(withScheme).refine((s) => s === "" || isWebUrl(s), message).optional();
 
 type Issue = z.core.$ZodIssue;
 

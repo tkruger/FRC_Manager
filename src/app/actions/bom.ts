@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { plainArgs } from "@/lib/action-args";
 
 const BomItemSchema = z.object({
   partName:   z.string().max(300).min(1),
@@ -19,6 +20,7 @@ export async function addBomItemAction(
   robotId: string,
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
+  plainArgs(robotId);
   const session = await auth();
   if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
 
@@ -59,6 +61,7 @@ export async function addBomItemAction(
 }
 
 export async function deleteBomItemAction(itemId: string): Promise<{ success: boolean }> {
+  plainArgs(itemId);
   const session = await auth();
   if (!session?.user?.teamId) return { success: false };
   const deleted = await prisma.bomItem.deleteMany({

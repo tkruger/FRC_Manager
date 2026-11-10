@@ -7,6 +7,7 @@ import { WorkflowSchema, type WorkflowDef } from "@/lib/workflow/types";
 import { DEFAULT_PURCHASE_WORKFLOW } from "@/lib/workflow/default-purchase";
 import type { Prisma } from "@/generated/prisma";
 import { issueMessage } from "@/lib/validation";
+import { plainArgs } from "@/lib/action-args";
 
 export type WorkflowSaveResult =
   | { success: true; version: number }
@@ -73,6 +74,7 @@ export async function resetWorkflowAction(): Promise<WorkflowSaveResult> {
 }
 
 export async function restoreWorkflowVersionAction(definitionId: string): Promise<WorkflowSaveResult> {
+  plainArgs(definitionId);
   const who = await requireHeadMentor();
   if (!who) return { success: false, error: "Only Head Mentors can change the workflow." };
 

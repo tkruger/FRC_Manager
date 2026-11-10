@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { safetyIncidentFiled } from "@/lib/notify/events";
 import type { IncidentSeverity, CertStatus } from "@/generated/prisma";
+import { plainArgs, plainObject } from "@/lib/action-args";
 
 const IncidentSchema = z.object({
   incidentDate:    z.string().max(300).min(1),
@@ -118,6 +119,7 @@ export async function revokeCertificationAction(
   userId: string,
   certName: string
 ): Promise<{ success: boolean }> {
+  plainArgs(userId, certName);
   const session = await auth();
   if (!session?.user?.teamId || !canManageCerts(session.user.roles)) return { success: false };
 
@@ -135,6 +137,7 @@ export async function createInspectionChecklistAction(
   robotId: string,
   eventName: string
 ): Promise<{ success: boolean; checklistId?: string }> {
+  plainArgs(robotId, eventName);
   const session = await auth();
   if (!session?.user?.teamId) return { success: false };
 
@@ -179,6 +182,7 @@ export async function updateCheckItemAction(
   itemId: string,
   status: "PASS" | "FAIL" | "NOT_CHECKED"
 ): Promise<void> {
+  plainArgs(itemId, status);
   // Previously had no auth check at all
   const session = await auth();
   if (!session?.user?.teamId) return;
@@ -204,6 +208,8 @@ export async function updatePrecheckAction(
   robotId: string,
   input: { url?: string | null; status?: string },
 ): Promise<{ success: true } | { success: false; error: string }> {
+  plainObject(input);
+  plainArgs(robotId);
   const session = await auth();
   if (!session?.user?.teamId) return { success: false, error: "Not authenticated." };
 

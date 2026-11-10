@@ -17,9 +17,12 @@ import { definitionFor, canEditOrder } from "@/lib/workflow/engine";
 import { BUDGET_CATEGORY_LABELS } from "@/lib/budget-categories";
 import { ORDER_BUDGET_CATEGORIES } from "@/lib/budget-categories";
 import type { BudgetCategoryType } from "@/generated/prisma";
-import { issueMessage } from "@/lib/validation";
+import { issueMessage, optionalWebUrl } from "@/lib/validation";
 import { editableDrafts } from "@/lib/orders/drafts";
 import { notifyUsers } from "@/lib/notify/deliver";
+import { rateLimit, rateLimitAll } from "@/lib/security/rate-limit";
+import { isViewOnly } from "@/lib/access/read-only";
+import { plainArgs, plainObject, plainObjects } from "@/lib/action-args";
 
 const CATEGORIES = ORDER_BUDGET_CATEGORIES as [BudgetCategoryType, ...BudgetCategoryType[]];
 /** An order's budget category (required) */
@@ -48,7 +51,7 @@ const ItemSchema = z.object({
   name:       z.string().trim().max(300).min(1, "Every item needs a name.").max(200),
   vendorName: z.string().trim().max(300).max(120).optional(),
   partNumber: z.string().trim().max(300).max(120).optional(),
-  link:       z.string().trim().max(2000).optional(),
+  link:       optionalWebUrl("Item links need to be web addresses (https://…)."),
   unitCost:   z.number().min(0).max(1_000_000).nullable().optional(),
   quantity:   z.number().positive("Quantity must be more than 0.").max(100_000),
   subTeam:    z.enum(["MECHANICAL", "ELECTRICAL", "PROGRAMMING", "DRIVE_TEAM", "STRATEGY", "DESIGN", "OUTREACH", "OPERATIONS"]).nullable().optional(),
@@ -142,6 +145,7 @@ export async function saveOrderDraftAction(input: unknown): Promise<Result<{ dra
 
 /** Invite a teammate to work on your draft (its maker only) */
 export async function inviteDraftCollaboratorAction(draftId: string, userId: string): Promise<Result> {
+  plainArgs(draftId, userId);
   const who = await actor();
   if (!who) return { success: false, error: "Not authenticated." };
   const draft = await prisma.orderDraft.findFirst({ where: { id: draftId, teamId: who.teamId }, select: { id: true, name: true, userId: true } });
@@ -166,6 +170,7 @@ export async function inviteDraftCollaboratorAction(draftId: string, userId: str
 
 /** Take someone off a draft — its maker can remove anyone; a collaborator can leave */
 export async function removeDraftCollaboratorAction(draftId: string, userId: string): Promise<Result> {
+  plainArgs(draftId, userId);
   const who = await actor();
   if (!who) return { success: false, error: "Not authenticated." };
   const draft = await prisma.orderDraft.findFirst({ where: { id: draftId, teamId: who.teamId }, select: { userId: true } });
@@ -178,6 +183,7 @@ export async function removeDraftCollaboratorAction(draftId: string, userId: str
 }
 
 export async function deleteOrderDraftAction(draftId: string): Promise<Result> {
+  plainArgs(draftId);
   const who = await actor();
   if (!who) return { success: false, error: "Not authenticated." };
   await prisma.orderDraft.deleteMany({ where: { id: draftId, userId: who.id } });
@@ -212,12 +218,19 @@ export async function editOrderAction(input: unknown): Promise<Result> {
 }
 
 export async function lookupProductAction(url: string): Promise<Result<{ product: ProductInfo }>> {
+  plainArgs(url);
   const who = await actor();
   if (!who) return { success: false, error: "Not authenticated." };
+  if (typeof url !== "string" || url.length > 2000) return { success: false, error: "That doesn't look like a link." };
   try {
     new URL(url);
   } catch {
     return { success: false, error: "That doesn't look like a link." };
+  }
+  // Each Fill makes the server fetch another site's pages: keep it to what a person filling in
+  // an order needs, so nobody can use the app to hammer a store (or get the app blocked by one)
+  if (!await rateLimitAll([[`lookup:user:${who.id}`, 60, 10 * 60], [`lookup:team:${who.teamId}`, 300, 60 * 60]])) {
+    return { success: false, error: "That's a lot of Fills in a short time. Wait a few minutes, then try again." };
   }
   try {
     return { success: true, product: await lookupProduct(url, { teamId: who.teamId }) };
@@ -230,14 +243,19 @@ export async function lookupProductAction(url: string): Promise<Result<{ product
 
 /** Buyer and captains: look up the current price of each item still to be ordered */
 export async function checkOrderPricesAction(requestId: string): Promise<Result<{ items: PriceCheck[] }>> {
+  plainArgs(requestId);
   const who = await actor();
   if (!who) return { success: false, error: "Not authenticated." };
   if (!who.roles.some((r) => ORDER_ADMIN_ROLES.includes(r))) return { success: false, error: "Only the Buyer or captains can check prices." };
+  // Up to 50 store pages each time
+  if (!await rateLimit(`pricecheck:team:${who.teamId}`, 10, 60 * 60)) return { success: false, error: "Prices were checked a lot in the last hour. Try again later." };
   return checkOrderPrices(who.teamId, requestId);
 }
 
 /** Save the prices the Buyer accepted (history + everyone on the order is told) */
 export async function applyOrderPricesAction(requestId: string, prices: { id: string; unitCost: number }[]): Promise<Result<{ count: number }>> {
+  plainObjects(prices);
+  plainArgs(requestId);
   const who = await actor();
   if (!who) return { success: false, error: "Not authenticated." };
   if (!who.roles.some((r) => ORDER_ADMIN_ROLES.includes(r))) return { success: false, error: "Only the Buyer or captains can change prices." };
@@ -257,6 +275,7 @@ async function requestIdsFor(itemIds: string[]) {
 }
 
 export async function addTrackingAction(itemIds: string[], url: string, label?: string): Promise<Result<{ count: number }>> {
+  plainArgs(itemIds, url, label);
   const who = await actor();
   if (!who) return { success: false, error: "Not authenticated." };
   if (!who.roles.some((r) => ORDER_ADMIN_ROLES.includes(r))) return { success: false, error: "Only the Buyer or captains can add tracking links." };
@@ -268,6 +287,7 @@ export async function addTrackingAction(itemIds: string[], url: string, label?: 
 }
 
 export async function setItemStatusAction(itemIds: string[], status: string): Promise<Result<{ count: number }>> {
+  plainArgs(itemIds, status);
   const who = await actor();
   if (!who) return { success: false, error: "Not authenticated." };
   if (!who.roles.some((r) => STATUS_OVERRIDE_ROLES.includes(r))) return { success: false, error: "Only the Buyer or captains can change an item's status." };
@@ -282,6 +302,7 @@ export async function setItemStatusAction(itemIds: string[], status: string): Pr
 
 /** Anyone on the team can mark items arrived when the box shows up. */
 export async function markArrivedAction(itemIds: string[]): Promise<Result<{ count: number }>> {
+  plainArgs(itemIds);
   const who = await actor();
   if (!who) return { success: false, error: "Not authenticated." };
   if (!Ids.safeParse(itemIds).success) return { success: false, error: "Choose at least one item." };
@@ -292,6 +313,7 @@ export async function markArrivedAction(itemIds: string[]): Promise<Result<{ cou
 }
 
 export async function exportToOrderCsvAction(opts: { itemIds?: string[]; onlyNew?: boolean }): Promise<Result<{ csv: string; count: number }>> {
+  plainObject(opts);
   const who = await actor();
   if (!who) return { success: false, error: "Not authenticated." };
   if (!who.roles.some((r) => ORDER_ADMIN_ROLES.includes(r))) return { success: false, error: "Only the Buyer or captains can export orders." };
@@ -306,8 +328,11 @@ export async function exportToOrderCsvAction(opts: { itemIds?: string[]; onlyNew
  * home-screen app opens it in Safari, which can download files.
  */
 export async function createOrderExportLinkAction(scope: { order?: string; view?: string }): Promise<Result<{ path: string }>> {
+  plainObject(scope);
   const who = await actor();
   if (!who) return { success: false, error: "Not authenticated." };
+  // Orders aren't shown to view-only accounts (parents), so neither are their exports
+  if (isViewOnly(who.roles)) return { success: false, error: "Your account can't export orders." };
 
   const view = z.enum(["open", "mine", "all"]).catch("open").parse(scope.view);
   if (scope.order) {
