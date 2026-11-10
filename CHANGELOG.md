@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.19.3 — 2026-11-10
+
+- **What's new** has a floating ✕ at the top right when opened from the app (closes the window or tab, or goes back to the app on a phone)
+- What's new, Terms and Privacy scroll in the home-screen app (the app keeps the window itself from scrolling, which left them stuck)
 ## 1.19.2 — 2026-11-10
 
 - **What's new page**: the version number in the footer opens a public page (/changelog) of what has shipped in each 1.x release — in the browser, outside the home-screen app
