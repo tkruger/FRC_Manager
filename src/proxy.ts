@@ -13,6 +13,7 @@ const PUBLIC_EXACT = new Set([
   "/login", "/register", "/register/finish", "/pending",
   "/forgot-password",
   "/terms", "/privacy",          // Legal pages — linked from Discord and the sign-in screens
+  "/changelog",                  // What's new — linked from the version number in the footer
   "/sw.js",                      // Service worker (push notifications)
   "/manifest.webmanifest",
   "/api/manifest",               // Web app manifest (chosen home-screen icon)

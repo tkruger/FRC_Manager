@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+## 1.19.2 — 2026-11-10
+
+- **What's new page**: the version number in the footer opens a public page (/changelog) of what has shipped in each 1.x release — in the browser, outside the home-screen app
 ## 1.19.1 — 2026-11-10
 
 - **Fill says why it couldn't read a link**: when a store turns the app away, the message under the link now says so — asked to slow down, refused, timed out or an error — instead of a general "couldn't read that page"
