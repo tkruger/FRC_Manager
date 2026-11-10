@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.19.1 — 2026-11-10
+
 - **Fill says why it couldn't read a link**: when a store turns the app away, the message under the link now says so — asked to slow down, refused, timed out or an error — instead of a general "couldn't read that page"
 - **Security fixes** (from the 2026-11-10 review):
   - Someone who has only *asked* to join a team (signed in with Google or Discord, waiting for approval) can no longer read or change that team's data — their session carries no team until they're approved, and the database refuses their changes
