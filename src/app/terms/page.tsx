@@ -4,9 +4,11 @@ import { LegalPage, LegalContact, SOURCE_URL } from "@/components/legal/LegalPag
 
 export const metadata: Metadata = { title: "Terms of Service — FRC Manager" };
 
-export default function TermsPage() {
+export default async function TermsPage({ searchParams }: { searchParams: Promise<{ from?: string }> }) {
+  // Reached from What's new opened in the app: keep its ✕
+  const fromApp = (await searchParams).from === "app";
   return (
-    <LegalPage title="Terms of Service" updated="October 31, 2026">
+    <LegalPage title="Terms of Service" updated="October 31, 2026" closable={fromApp}>
       <p>
         These terms apply to the FRC Manager web app and the FRC Manager Discord bot (together, &ldquo;the service&rdquo;).
         By creating an account, signing in, or using the bot, you agree to these terms. If you don&apos;t agree, please
@@ -49,7 +51,7 @@ export default function TermsPage() {
       <p>
         Your team owns the records it puts into the service, such as tasks, inventory, orders and photos. You allow us to
         store, process and display that content only as needed to run the service for your team. See the{" "}
-        <Link href="/privacy">Privacy Policy</Link> for how information is handled.
+        <Link href={fromApp ? "/privacy?from=app" : "/privacy"}>Privacy Policy</Link> for how information is handled.
       </p>
 
       <h2>Orders and purchasing</h2>

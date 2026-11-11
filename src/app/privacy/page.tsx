@@ -3,9 +3,11 @@ import { LegalPage, LegalContact } from "@/components/legal/LegalPage";
 
 export const metadata: Metadata = { title: "Privacy Policy — FRC Manager" };
 
-export default function PrivacyPage() {
+export default async function PrivacyPage({ searchParams }: { searchParams: Promise<{ from?: string }> }) {
+  // Reached from What's new opened in the app: keep its ✕
+  const fromApp = (await searchParams).from === "app";
   return (
-    <LegalPage title="Privacy Policy" updated="October 4, 2026">
+    <LegalPage title="Privacy Policy" updated="October 4, 2026" closable={fromApp}>
       <p>
         FRC Manager is a team management app for FIRST Robotics Competition (FRC) teams, covering tasks, tools,
         inventory, orders, budgets, meetings and safety records. This policy explains what information the app

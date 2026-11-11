@@ -5,17 +5,19 @@ import { ClosePageButton } from "./ClosePageButton";
 export const SOURCE_URL = "https://github.com/tkruger/FRC_Manager";
 
 /** Shared layout for the public Terms of Service, Privacy Policy and What's new pages. */
-/** closable: opened from the app in its own window or tab — a floating ✕ closes it. */
+/** closable: opened from the app in its own window or tab — a floating ✕ closes it, and the links
+ *  between these pages keep ?from=app so it stays as you move between them. */
 export function LegalPage({ title, updated, updatedLabel = "Last updated", closable = false, children }: { title: string; updated: string; updatedLabel?: string; closable?: boolean; children: React.ReactNode }) {
+  const q = closable ? "?from=app" : "";
   return (
     <div className="page-scroll min-h-screen bg-(--color-surface)">
       {closable && <ClosePageButton />}
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 space-y-6">
         <nav className={`flex flex-wrap gap-4 text-small text-(--color-text-secondary) ${closable ? "pr-12" : ""}`}>
           <Link href="/" className="font-semibold text-(--color-text-primary) hover:text-(--color-primary)">FRC Manager</Link>
-          <Link href="/terms" className="hover:text-(--color-primary)">Terms of Service</Link>
-          <Link href="/privacy" className="hover:text-(--color-primary)">Privacy Policy</Link>
-          <Link href="/changelog" className="hover:text-(--color-primary)">What&apos;s new</Link>
+          <Link href={`/terms${q}`} className="hover:text-(--color-primary)">Terms of Service</Link>
+          <Link href={`/privacy${q}`} className="hover:text-(--color-primary)">Privacy Policy</Link>
+          <Link href={`/changelog${q}`} className="hover:text-(--color-primary)">What&apos;s new</Link>
           <a href={SOURCE_URL} target="_blank" rel="noopener noreferrer" className="hover:text-(--color-primary)">Source code</a>
         </nav>
         <header>

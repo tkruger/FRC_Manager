@@ -3,11 +3,10 @@
 import { X } from "lucide-react";
 
 // Floating ✕ for a page the app opened in its own window or tab (What's new from the footer).
-// Closes it where the browser allows (a tab or window opened by a link); otherwise — e.g. iPhone's
-// home-screen app showing it over the app — goes back, or to the app.
+// Closes it where the browser allows (a tab or window opened by a link), even after moving on to
+// Terms or Privacy; otherwise — e.g. iPhone's home-screen app showing it over the app — goes to the app.
 export function ClosePageButton() {
   const close = () => {
-    if (window.history.length > 1) { window.history.back(); return; }
     window.close();
     // Still open: this browser won't close it
     setTimeout(() => { window.location.href = "/dashboard"; }, 300);
