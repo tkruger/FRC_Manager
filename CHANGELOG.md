@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+## 1.19.4 — 2026-11-11
+
+- The ✕ on What's new stays on Terms and Privacy when you move to them from there, and always closes the window or tab (it used to go back a page)
 ## 1.19.3 — 2026-11-10
 
 - **What's new** has a floating ✕ at the top right when opened from the app (closes the window or tab, or goes back to the app on a phone)
