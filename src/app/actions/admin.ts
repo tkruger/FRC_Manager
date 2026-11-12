@@ -81,6 +81,40 @@ export async function denyTeamAction(teamId: string): Promise<Result> {
   return { success: true, message: `Team ${team.teamNumber} denied.` };
 }
 
+/**
+ * Delete a new team's request — for one made by mistake (a wrong team number, a duplicate).
+ * Unlike Deny, the team number can register again: the team and the accounts waiting on it
+ * are removed, as if they never signed up (they can sign up again with the same email).
+ * A team still waiting can't have any data of its own, so nothing else is lost.
+ */
+export async function deleteTeamRequestAction(teamId: string): Promise<Result> {
+  plainArgs(teamId);
+  const me = await requireSuperAdmin();
+  if (!me) return { success: false, error: "Only super admins can delete team requests." };
+
+  const team = await prisma.team.findUnique({ where: { id: teamId }, select: { id: true, teamNumber: true, status: true } });
+  if (!team) return { success: false, error: "Team not found." };
+  if (team.status !== "PENDING") return { success: false, error: "This team has already been reviewed." };
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const users = await tx.user.findMany({ where: { teamId: team.id }, select: { id: true, status: true } });
+      // Only ever people still waiting (a waiting team has no access code, so nobody is approved on it)
+      if (users.some((u) => u.status !== "PENDING" && u.status !== "DENIED")) throw new Error("active");
+      const ids = users.map((u) => u.id);
+      await tx.notification.deleteMany({ where: { userId: { in: ids } } });
+      await tx.parentLink.deleteMany({ where: { OR: [{ parentId: { in: ids } }, { studentId: { in: ids } }] } });
+      await tx.user.deleteMany({ where: { id: { in: ids } } }); // sign-ins and devices follow (cascade)
+      await tx.team.delete({ where: { id: team.id } });          // its suggested sub-categories follow
+    });
+  } catch {
+    return { success: false, error: `Team ${team.teamNumber} couldn't be deleted — it has members or data. Deny it instead.` };
+  }
+
+  refresh();
+  return { success: true, message: `Team ${team.teamNumber}'s request was deleted. The team number can register again.` };
+}
+
 /** Make an existing user a super admin, by email. */
 export async function grantSuperAdminAction(email: string): Promise<Result> {
   plainArgs(email);

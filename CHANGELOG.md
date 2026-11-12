@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Delete a team request made by mistake**: on Team approvals, super admins have **Delete request** beside Approve and Deny. It removes the team and the accounts waiting on it as if they never signed up, so the team number (and those people) can register again — unlike Deny, which blocks the number
+- **Cancel my request**: someone who signed up with Google or Discord and is waiting for approval can take back their request on the waiting screen (say they picked the wrong team) and choose again. A new team only they asked for goes away with it
+
 ## 1.19.4 — 2026-11-11
 
 - The ✕ on What's new stays on Terms and Privacy when you move to them from there, and always closes the window or tab (it used to go back a page)

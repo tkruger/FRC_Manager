@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { auth, signOut } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { CancelRequestButton } from "./CancelRequestButton";
 
 export default async function PendingPage({ searchParams }: { searchParams: Promise<{ team?: string }> }) {
   // Signed up with Google or Discord: they're signed in while they wait
@@ -56,9 +57,13 @@ export default async function PendingPage({ searchParams }: { searchParams: Prom
         </ol>
       </div>
       {session?.user ? (
-        <form action={signOutAction}>
-          <Button type="submit" variant="outline" className="w-full">Sign out</Button>
-        </form>
+        <div className="space-y-2">
+          {/* Picked the wrong team (or registered one by mistake): take it back and choose again */}
+          <CancelRequestButton newTeam={newTeam} />
+          <form action={signOutAction}>
+            <Button type="submit" variant="outline" className="w-full">Sign out</Button>
+          </form>
+        </div>
       ) : (
         <Link href="/login">
           <Button variant="outline" className="w-full">Back to sign in</Button>

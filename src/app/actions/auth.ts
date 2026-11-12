@@ -11,6 +11,7 @@ import { clientIp } from "@/lib/security/request";
 import { safeEqual } from "@/lib/security/crypto";
 import { sendVerificationEmail } from "@/lib/notify/auth-emails";
 import { after } from "next/server";
+import { redirect } from "next/navigation";
 import { TERMS_REQUIRED } from "@/components/legal/TermsCheckbox";
 import { fullNameSchema } from "@/lib/names";
 import { linkNewMember } from "@/lib/parents";
@@ -185,6 +186,31 @@ export async function finishRegistrationAction(
 export type LoginState =
   | { success: true }
   | { success: false; error: string };
+
+/**
+ * Signed in and waiting for approval (Google or Discord): take back the request to join — say
+ * the wrong team was picked — and choose again. A new team they asked for that nobody else is
+ * waiting on goes away with it, so its number can register again.
+ */
+export async function cancelJoinRequestAction(): Promise<{ success: false; error: string }> {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false, error: "Your sign-in expired. Sign in again." };
+  const me = await prisma.user.findUnique({
+    where:  { id: session.user.id },
+    select: { id: true, status: true, teamId: true, team: { select: { status: true } } },
+  });
+  if (!me?.teamId || me.status !== "PENDING") return { success: false, error: "There's no request to cancel." };
+  const teamId = me.teamId;
+
+  await prisma.$transaction(async (tx) => {
+    await tx.parentLink.deleteMany({ where: { OR: [{ parentId: me.id }, { studentId: me.id }] } });
+    await tx.user.update({ where: { id: me.id }, data: { teamId: null, registrationNote: null, parentOf: null } });
+    if (me.team?.status === "PENDING" && await tx.user.count({ where: { teamId } }) === 0) {
+      await tx.team.delete({ where: { id: teamId } });
+    }
+  });
+  redirect("/register/finish");
+}
 
 export async function loginAction(
   _prev: LoginState | null,
