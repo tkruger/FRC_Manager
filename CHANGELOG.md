@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.19.6 — 2026-11-12
+
 - **Team emails only go out from the team's own email**: notifications, invites, welcome emails and broadcasts are emailed only once the team has set up its email (Settings → Integrations → Team email), and not while it's paused or failing — FRC Manager's email no longer sends them instead. Notifications still show in the app and as pushes, and invites give you the links to send yourself. Account emails (confirming an address, password resets), a new team's approval, and feedback for super admins still come from FRC Manager
 - Broadcast: the email choices are turned off (with a link to set it up) until the team has its own email; Notifications settings say when nothing is emailed for that reason
 
