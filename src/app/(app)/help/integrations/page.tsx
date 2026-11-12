@@ -67,7 +67,7 @@ export default function IntegrationGuidePage() {
           ["GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET", "Sign in with Google, and Connect with Google for Gmail team email (see Gmail below)."],
           ["DISCORD_APPLICATION_ID, DISCORD_PUBLIC_KEY, DISCORD_BOT_TOKEN", "The Discord bot (see Discord below)."],
           ["DISCORD_CLIENT_SECRET", "Sign in with Discord (uses DISCORD_APPLICATION_ID as the client ID, or DISCORD_CLIENT_ID)."],
-          ["RESEND_API_KEY, EMAIL_FROM", "The app's own email (resend.com) — account emails, and the fallback for teams without their own. EMAIL_FROM like FRC Manager <noreply@yourdomain>, on a domain verified in Resend."],
+          ["RESEND_API_KEY, EMAIL_FROM", "The app's own email (resend.com) — account emails (confirming an address, password resets) and platform emails to super admins. Team emails only go out through each team's own email. EMAIL_FROM like FRC Manager <noreply@yourdomain>, on a domain verified in Resend."],
           ["VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT", "Push notifications (see Push below)."],
           ["BLOB_READ_WRITE_TOKEN", "Optional — only for tool photos uploaded before photos were stored in the app's database (Vercel Blob)."],
           ["CRON_SECRET", "Protects the background job addresses; the same value goes in the GitHub secret."],

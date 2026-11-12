@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 import { sendBroadcastAction } from "@/app/actions/broadcast";
@@ -21,7 +22,7 @@ function Check({ checked, onChange, disabled, children }: { checked: boolean; on
   );
 }
 
-export function BroadcastForm({ counts, servers }: { counts: Counts; servers: Server[] }) {
+export function BroadcastForm({ counts, servers, teamEmail }: { counts: Counts; servers: Server[]; teamEmail: boolean }) {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -107,11 +108,14 @@ export function BroadcastForm({ counts, servers }: { counts: Counts; servers: Se
       <section className="card space-y-3">
         <div>
           <h2 className="text-h3 text-(--color-text-primary)">3. Also email</h2>
-          <p className="text-small text-(--color-text-secondary)">From the team&apos;s email if it&apos;s set up.</p>
+          <p className="text-small text-(--color-text-secondary)">
+            {teamEmail ? "From the team's email."
+              : <>Needs the team&apos;s own email — set it up in <Link href="/settings/email" className="text-(--color-secondary) hover:underline">Settings → Integrations → Team email</Link>.</>}
+          </p>
         </div>
         <div className="grid gap-2 sm:grid-cols-3">
           {BROADCAST_GROUPS.map((g) => (
-            <Check key={g.id} checked={emailGroups.includes(g.id)} onChange={() => setEmailGroups((l) => toggle(l, g.id))}>
+            <Check key={g.id} checked={emailGroups.includes(g.id)} disabled={!teamEmail} onChange={() => setEmailGroups((l) => toggle(l, g.id))}>
               <b>{g.label}</b> <span className="text-(--color-text-secondary)">({counts[g.id]?.emails ?? 0} emails)</span>
             </Check>
           ))}

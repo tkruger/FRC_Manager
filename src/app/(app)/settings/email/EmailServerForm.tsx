@@ -90,11 +90,11 @@ export function EmailServerForm({ saved, teamNumber, googleAvailable, maxHourly,
                   : `${PROVIDER_BY_ID[saved.provider]?.label ?? "Mail server"} · ${saved.host}:${saved.port}`}
               </p>
             </div>
-            <Badge variant={saved.enabled ? "success" : "neutral"}>{saved.enabled ? "In use" : "Paused — using FRC Manager's email"}</Badge>
+            <Badge variant={saved.enabled ? "success" : "neutral"}>{saved.enabled ? "In use" : "Paused — team emails aren't sent"}</Badge>
           </div>
           {saved.lastError && (!saved.lastSentAt || (saved.lastErrorAt && saved.lastErrorAt > saved.lastSentAt)) && (
             <div className="rounded-md bg-(--color-danger)/10 px-3 py-2 text-sm text-(--color-danger)">
-              Last problem{saved.lastErrorAt ? ` (${when(saved.lastErrorAt)})` : ""}: {saved.lastError} FRC Manager&apos;s email sent those messages instead.
+              Last problem{saved.lastErrorAt ? ` (${when(saved.lastErrorAt)})` : ""}: {saved.lastError} Those emails weren&apos;t sent.
             </div>
           )}
           {saved.lastSentAt && <p className="text-small text-(--color-text-secondary)">Last sent {when(saved.lastSentAt)}.</p>}
@@ -130,11 +130,11 @@ export function EmailServerForm({ saved, teamNumber, googleAvailable, maxHourly,
             }}>Send me a test email</Button>
             <Button size="sm" variant="outline" disabled={pending} onClick={() => setEditing(true)}>{saSaved ? "Change key or mailbox" : gmailSaved ? "Change account" : "Change settings"}</Button>
             <Button size="sm" variant="outline" disabled={pending}
-              onClick={() => act(() => setEmailServerEnabledAction(!saved.enabled), saved.enabled ? "Paused — FRC Manager's email is used" : "The team's email is in use again")}>
+              onClick={() => act(() => setEmailServerEnabledAction(!saved.enabled), saved.enabled ? "Paused — team emails aren't sent until you resume" : "The team's email is in use again")}>
               {saved.enabled ? "Pause" : "Resume"}
             </Button>
             <Button size="sm" variant="danger" disabled={pending}
-              onClick={() => { if (confirm("Remove the team's mail server? Emails will come from FRC Manager again.")) act(removeEmailServerAction, "Removed — emails come from FRC Manager", () => setEditing(true)); }}>
+              onClick={() => { if (confirm("Remove the team's email? Team emails stop until it's set up again.")) act(removeEmailServerAction, "Removed — team emails are off", () => setEditing(true)); }}>
               Remove
             </Button>
           </div>

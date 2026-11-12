@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/PageHeader";
 import { BROADCAST_GROUPS, groupOf } from "@/lib/broadcast-groups";
+import { teamEmailReady } from "@/lib/email";
 import { BroadcastForm } from "./BroadcastForm";
 
 // Broadcast message (Head Mentors): one message to students, parents and/or mentors — in the app
@@ -18,13 +19,14 @@ export default async function BroadcastPage() {
   if (!session.user.roles.includes("HEAD_MENTOR")) redirect("/dashboard");
   const teamId = session.user.teamId;
 
-  const [members, configs, recent] = await Promise.all([
+  const [members, configs, recent, teamEmail] = await Promise.all([
     prisma.user.findMany({ where: { teamId, status: "ACTIVE", deletedAt: null }, select: { email: true, roles: { select: { role: true } } } }),
     prisma.discordConfig.findMany({ where: { teamId, active: true }, select: { audience: true, guildName: true, channelAnnouncements: true, channelGeneral: true } }),
     prisma.broadcast.findMany({
       where: { teamId }, orderBy: { createdAt: "desc" }, take: 10,
       select: { id: true, title: true, groups: true, emailGroups: true, discord: true, counts: true, createdAt: true, sentBy: { select: { name: true } } },
     }),
+    teamEmailReady(teamId),
   ]);
 
   // How many people each choice reaches
@@ -52,7 +54,7 @@ export default async function BroadcastPage() {
       <PageHeader title="Broadcast message" help="notifications"
         subtitle="One message to students, parents and/or mentors — in the app with a push notification, on Discord, and by email." />
 
-      <BroadcastForm counts={counts} servers={servers} />
+      <BroadcastForm counts={counts} servers={servers} teamEmail={teamEmail} />
 
       {recent.length > 0 && (
         <section className="space-y-3">

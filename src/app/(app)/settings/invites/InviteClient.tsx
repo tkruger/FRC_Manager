@@ -79,7 +79,7 @@ export function EmailInvites({ emailReady, days, roles: roleOptions }: { emailRe
         <p className="text-small text-(--color-text-secondary) mt-1">
           Separate people with commas or new lines. Add a name as <span className="whitespace-nowrap">Dana Starler &lt;dana@example.com&gt;</span> to
           fill in their sign-up — or paste straight from an email&apos;s To: line. Each person gets their own link, good for {days} days.
-          {!emailReady && " Email isn't set up yet, so you'll get the links to send yourself."}
+          {!emailReady && " The team's email isn't set up (Settings → Integrations → Team email), so you'll get the links to send yourself."}
         </p>
       </div>
       <form onSubmit={send} className="space-y-3">

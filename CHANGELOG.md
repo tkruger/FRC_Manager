@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Team emails only go out from the team's own email**: notifications, invites, welcome emails and broadcasts are emailed only once the team has set up its email (Settings → Integrations → Team email), and not while it's paused or failing — FRC Manager's email no longer sends them instead. Notifications still show in the app and as pushes, and invites give you the links to send yourself. Account emails (confirming an address, password resets), a new team's approval, and feedback for super admins still come from FRC Manager
+- Broadcast: the email choices are turned off (with a link to set it up) until the team has its own email; Notifications settings say when nothing is emailed for that reason
+
 ## 1.19.5 — 2026-11-12
 
 - **Delete a team request made by mistake**: on Team approvals, super admins have **Delete request** beside Approve and Deny. It removes the team and the accounts waiting on it as if they never signed up, so the team number (and those people) can register again — unlike Deny, which blocks the number

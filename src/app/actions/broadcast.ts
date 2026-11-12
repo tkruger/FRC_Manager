@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { notifyUsers } from "@/lib/notify/deliver";
-import { sendEmail, escapeHtml } from "@/lib/email";
+import { sendEmail, escapeHtml, teamEmailReady } from "@/lib/email";
 import { sendChannelMessage, embed } from "@/lib/discord";
 import { appUrl } from "@/lib/app-url";
 import { groupOf, isBroadcastGroup, type BroadcastGroup } from "@/lib/broadcast-groups";
@@ -40,6 +40,7 @@ export async function sendBroadcastAction(input: {
   const emailGroups = [...new Set(input.emailGroups ?? [])].filter(isBroadcastGroup);
   const discord = [...new Set(input.discord ?? [])].filter((d) => d === "STUDENT" || d === "PARENT") as ("STUDENT" | "PARENT")[];
   if (!groups.length && !emailGroups.length && !discord.length) return { success: false, error: "Pick who it goes to." };
+  if (emailGroups.length && !await teamEmailReady(teamId)) return { success: false, error: "The team's email isn't set up, so the broadcast can't be emailed. Set it up in Settings → Integrations → Team email." };
 
   const [members, team, sender, configs] = await Promise.all([
     prisma.user.findMany({
@@ -71,7 +72,7 @@ export async function sendBroadcastAction(input: {
       })
     : { inApp: 0, pushed: 0 };
 
-  // Email (from the team's own mail server if it has one)
+  // Email (only from the team's own email)
   const link = `${appUrl()}${url}`;
   const teamName = team ? `Team ${team.teamNumber}` : "your team";
   const emails = await Promise.allSettled(

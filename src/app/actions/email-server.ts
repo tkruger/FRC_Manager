@@ -1,7 +1,7 @@
 "use server";
 
-// A team's own mail server (Settings → Email, Head Mentors only). Team emails go out through
-// it; account emails, and anything it fails to send, use the app's service.
+// A team's own mail server (Settings → Email, Head Mentors only). Team emails only go out
+// through it (none without it); account emails use the app's service.
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
@@ -104,7 +104,7 @@ export async function sendTestEmailAction(): Promise<Result & { to?: string }> {
   return res.sent ? { success: true, to: me.email } : { success: false, error: res.error };
 }
 
-/** Pause (back to the app's email) or resume the team's server */
+/** Pause (no team emails meanwhile) or resume the team's server */
 export async function setEmailServerEnabledAction(enabled: boolean): Promise<Result> {
   plainArgs(enabled);
   const who = await headMentor();

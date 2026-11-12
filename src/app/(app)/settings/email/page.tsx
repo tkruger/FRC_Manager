@@ -50,8 +50,8 @@ export default async function EmailSettingsPage({ searchParams }: { searchParams
         <p className="text-body text-(--color-text-secondary) mt-1">
           Send the team&apos;s emails — notifications like volunteer shifts, invites and welcome emails — from your own email
           account (for example the team&apos;s Gmail), so they come from an address families recognize. Account emails
-          (confirming an address, resetting a password) still come from FRC Manager, and if your server ever fails, FRC
-          Manager&apos;s email sends the message instead.
+          (confirming an address, resetting a password) still come from FRC Manager. Until it&apos;s set up — or while
+          it&apos;s paused or failing — team emails aren&apos;t sent at all; notifications still show in the app and as pushes.
         </p>
       </div>
       {gmailResult && (

@@ -1,8 +1,9 @@
 // Sending email. Server-only.
 //
-// Team emails (notifications, invites, welcomes — callers pass the team) go through the
-// team's own mail server when it has one (Settings → Email); if that fails, or for account
-// emails (verification, password reset — no team passed), the app's service sends it:
+// Team emails (notifications, invites, welcomes, broadcasts — callers pass the team) only go out
+// through the team's own email (Settings → Integrations → Team email): a team without one, or
+// whose email fails, gets none. Account and platform emails (verification, password reset,
+// feedback and new teams for super admins — no team passed) use the app's service:
 //
 //   RESEND_API_KEY  the API key (Resend — https://resend.com); without it nothing is sent
 //                   (callers fall back to showing links)
@@ -17,38 +18,44 @@ export function emailConfigured(): boolean {
   return !!process.env.RESEND_API_KEY;
 }
 
+/** Why a team email wasn't sent: the team hasn't set up its own email */
+export const TEAM_EMAIL_OFF = "The team's email isn't set up (Settings → Integrations → Team email), so team emails aren't sent.";
+
+/** Whether the team's own email is set up and turned on — team emails only go out through it */
+export async function teamEmailReady(teamId: string): Promise<boolean> {
+  const server = await prisma.teamEmailServer.findUnique({ where: { teamId }, select: { enabled: true } });
+  return !!server?.enabled;
+}
+
 type Mail = { to: string; subject: string; html: string; text: string; /** Replies go here (e.g. feedback → its sender) */ replyTo?: string };
 
 /**
- * Send an email. Pass `teamId` for team emails: they go through the team's mail server first.
- * Leave it out for account emails, which always use the app's service.
+ * Send an email. Pass `teamId` for team emails: they only go out through the team's own email,
+ * and aren't sent when it has none. Leave it out for account and platform emails, which use the
+ * app's service.
  */
 export async function sendEmail(msg: Mail, opts: { teamId?: string | null } = {}): Promise<{ sent: boolean; error?: string }> {
-  if (opts.teamId) {
-    // Spam guard: the team's hourly / daily limits cover its emails whichever way they go out
-    const allowed = await countTeamMail(opts.teamId);
-    if (!allowed.ok) return { sent: false, error: allowed.error };
-    const viaTeam = await sendViaTeam(opts.teamId, msg);
-    if (viaTeam) return { sent: true };
-  }
-  return sendViaService(msg);
+  return opts.teamId ? sendViaTeam(opts.teamId, msg) : sendViaService(msg);
 }
 
-/** Through the team's own server; false when it has none (or it failed — the error is kept for Settings → Email) */
-async function sendViaTeam(teamId: string, msg: Mail): Promise<boolean> {
+/** Through the team's own server (a failure is kept for the Team email page) */
+async function sendViaTeam(teamId: string, msg: Mail): Promise<{ sent: boolean; error?: string }> {
   try {
     const server = await prisma.teamEmailServer.findUnique({ where: { teamId } });
-    if (!server?.enabled) return false;
+    if (!server?.enabled) return { sent: false, error: TEAM_EMAIL_OFF };
+    // Spam guard: the team's hourly / daily limits
+    const allowed = await countTeamMail(teamId);
+    if (!allowed.ok) return { sent: false, error: allowed.error };
     const res = await sendThroughTeam(server, msg);
     await prisma.teamEmailServer.update({
       where: { teamId },
       data:  res.sent ? { lastSentAt: new Date() } : { lastError: res.error, lastErrorAt: new Date() },
     });
-    if (!res.sent) console.warn(`[email] Team mail server failed for team ${teamId}, using the app's instead: ${res.error}`);
-    return res.sent;
+    if (!res.sent) console.warn(`[email] Team mail server failed for team ${teamId}: ${res.error}`);
+    return res.sent ? { sent: true } : { sent: false, error: `The team's email couldn't send it: ${res.error}` };
   } catch (e) {
     console.error("[email] Team mail server:", e);
-    return false;
+    return { sent: false, error: "The team's email couldn't send it." };
   }
 }
 

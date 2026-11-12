@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { PageTitle } from "@/components/PageHeader";
 import { withImpliedRoles, grantableRoles, ROLE_LABELS } from "@/lib/rbac";
 import { canInvite, inviteUrl, EMAIL_INVITE_DAYS, LINK_INVITE_DAYS } from "@/lib/invites";
-import { emailConfigured } from "@/lib/email";
+import { teamEmailReady } from "@/lib/email";
 import { discordRequest } from "@/lib/discord";
 import { EmailInvites, DiscordInvite, InviteList } from "./InviteClient";
 
@@ -59,7 +59,7 @@ export default async function InvitesPage() {
         </p>
       </div>
 
-      <EmailInvites emailReady={emailConfigured()} days={EMAIL_INVITE_DAYS} roles={roleOptions} />
+      <EmailInvites emailReady={await teamEmailReady(teamId)} days={EMAIL_INVITE_DAYS} roles={roleOptions} />
 
       <DiscordInvite roles={roleOptions} connected={discord.length > 0} channels={channels} defaultChannel={discord[0]?.channelGeneral ?? channels[0]?.id ?? ""} days={LINK_INVITE_DAYS} />
 

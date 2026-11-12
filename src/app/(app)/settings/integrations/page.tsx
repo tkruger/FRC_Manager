@@ -46,7 +46,7 @@ export default async function IntegrationsPage() {
       title: "Team email",
       href:  "/settings/email",
       desc:  "Send the team's emails from your own account, so they come from an address families recognize.",
-      status: !server ? <Badge variant="neutral">Using FRC Manager&apos;s email</Badge>
+      status: !server ? <Badge variant="neutral">Not set up — no team emails</Badge>
         : !server.enabled ? <Badge variant="neutral">Turned off</Badge>
         : emailFailing ? <Badge variant="danger">Failing — check the settings</Badge>
         : <Badge variant="success">Sending from {server.fromEmail}</Badge>,

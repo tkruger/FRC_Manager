@@ -128,7 +128,8 @@ async function sendEmails(to: { email: string; name: string; teamNumber: number 
         <p><a href="${url}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-weight:600">Open in FRC Manager</a></p>
         <p style="font-size:12px;color:#666">Sent by FRC Manager for ${escapeHtml(team)}. To stop these emails, turn email off for this notification in Settings → Notifications.</p>
       </div>`,
-    }, { teamId: r.teamId });
+    // Team notifications come from the team's own email (none without it); platform-admin ones from the app's
+    }, { teamId: n.topic.startsWith("admin.") ? null : r.teamId });
   }));
   return results.filter((x) => x.status === "fulfilled" && x.value.sent).length;
 }

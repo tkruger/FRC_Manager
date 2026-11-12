@@ -10,6 +10,7 @@ import { PageTitle } from "@/components/PageHeader";
 import type { TopicDef } from "@/lib/notify/topics";
 import { canCoordinate, isAdult } from "@/lib/volunteers";
 import { canReviewClaims } from "@/lib/expense-claims";
+import { teamEmailReady } from "@/lib/email";
 import { SnoozeAlerts } from "@/components/competitions/SnoozeAlerts";
 import { eventWindow } from "@/lib/frc/event-live";
 import { FALLBACK_TIMEZONE, isValidTimezone, localParts } from "@/lib/notify/time";
@@ -45,6 +46,8 @@ export default async function NotificationSettingsPage() {
   }));
 
   const isLeadership = session.user.roles.some((r) => LEADERSHIP_ROLES.includes(r));
+  // Team notifications are only emailed from the team's own email
+  const teamEmail = session.user.teamId ? await teamEmailReady(session.user.teamId) : false;
 
   // A competition on now? (offers snoozing until it ends)
   const now = new Date();
@@ -62,6 +65,11 @@ export default async function NotificationSettingsPage() {
         <p className="text-body text-(--color-text-secondary) mt-1">
           Choose what you hear about, and whether it shows up in the app, as a push notification, or both. Volunteer shifts can also come by email.
         </p>
+        {!teamEmail && (
+          <p className="text-small text-(--color-text-secondary) mt-2">
+            Your team hasn&apos;t set up its own email yet, so nothing is emailed for now — the email choices apply once a Head Mentor sets it up.
+          </p>
+        )}
       </div>
 
       <PushDeviceCard
