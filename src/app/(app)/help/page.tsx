@@ -244,14 +244,14 @@ export default function HelpPage() {
           rows={[
             ["Queued", "The order is waiting for approval."],
             ["To order", "Approved and sent to the Buyer to purchase."],
-            ["Ordered", "The Buyer added a tracking link."],
+            ["Ordered", "The Buyer added a tracking link or number."],
             ["Arrived", "Someone marked it arrived — it's been added to inventory."],
           ]}
         />
         <H3>What happens next</H3>
         <Steps>
           <li><b>Approval</b> — Order Approvers or Head Mentors approve or deny the order. Routine orders of $50 or less are approved automatically; emergencies always need approval. Approved items become <b>To order</b>.</li>
-          <li><b>Buyer orders</b> — on <b>Orders → Buyer</b>, the Buyer copies or downloads the to-order items as CSV for the purchasing spreadsheet (no header; grouped by vendor; columns #XXXX item ID, Vendor, Part Name, Link, Unit Price, Qty, Order Notes, Order Date), places the orders, then selects the items that shipped together and adds one <b>tracking link</b> — they become <b>Ordered</b>. On each order&apos;s page, under <b>Tax &amp; shipping</b>, the Buyer enters the tax and shipping charged by each vendor (the approved total is the items only).</li>
+          <li><b>Buyer orders</b> — on <b>Orders → Buyer</b>, the Buyer copies or downloads the to-order items as CSV for the purchasing spreadsheet (no header; grouped by vendor; columns #XXXX item ID, Vendor, Part Name, Link, Unit Price, Qty, Order Notes, Order Date), places the orders, then selects the items that shipped together and adds one <b>tracking link or number</b> — they become <b>Ordered</b>. With the team&apos;s <Link href="/help/integrations#track123" className="link">Track123 key</Link>, the item list shows where the package is, and everyone on the order is told when it&apos;s delivered. On each order&apos;s page, under <b>Tax &amp; shipping</b>, the Buyer enters the tax and shipping charged by each vendor (the approved total is the items only).</li>
           <li><b>Arrival</b> — when a box shows up, anyone can tick the items and tap <b>Mark arrived</b>. Each item is added to inventory (matched by its inventory link, part number or name, or created new) and becomes <b>Arrived</b>.</li>
         </Steps>
         <ul className="list">
@@ -479,7 +479,7 @@ export default function HelpPage() {
             ["Inventory Admin", "Manage inventory and tools, award certifications."],
             ["Order Approver", "Approve or deny orders, and edit open ones. (The budget is the Head Mentor's.)"],
             ["Safety Captain", "Award and revoke certifications; notified of safety incidents."],
-            ["Buyer", "Get approved items to order, export the purchasing CSV, add tracking links and set item statuses."],
+            ["Buyer", "Get approved items to order, export the purchasing CSV, add tracking links or numbers and set item statuses."],
             ["Team Leadership", "Approve members and give the Team roles (Team Member, Build Lead, Inventory Admin, Safety Captain, Team Leadership), invite people, manage meetings, Discord and the team time zone; act as captains on orders (Buyer page, item statuses); view the purchase workflow."],
             ["Mentor", "The same as Team Member — add other roles for more."],
             ["Parent", "View-only: see tasks, tools, inventory, the calendar and safety (not orders or robots), help pack for competitions and scan tools into locations. Once cleared, sign up to volunteer at meetings."],

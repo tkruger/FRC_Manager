@@ -8,6 +8,7 @@ import { DISCORD_ADMIN_ROLES, EMAIL_ADMIN_ROLES, FRC_ADMIN_ROLES } from "@/lib/r
 import { tbaKeyFor } from "@/lib/frc/team-keys";
 import { mouserKeyFor } from "@/lib/orders/mouser";
 import { MouserKeyForm } from "./MouserKeyForm";
+import { track123KeyFor } from "@/lib/orders/track123";
 
 // Settings → Integrations (Head Mentors, Team Leadership, Integration Admins): the services the app
 // connects to, each with where it stands and a link to set it up.
@@ -21,12 +22,16 @@ export default async function IntegrationsPage() {
   const frc = roles.some((r) => FRC_ADMIN_ROLES.includes(r));
   if (!discord && !email && !frc) redirect("/dashboard");
 
-  const [configs, server, frcSettings, tbaKey, mouserKey] = await Promise.all([
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  const [configs, server, frcSettings, tbaKey, mouserKey, trackKey, trackedThisMonth] = await Promise.all([
     discord ? prisma.discordConfig.findMany({ where: { teamId: session.user.teamId }, select: { audience: true } }) : [],
     email ? prisma.teamEmailServer.findUnique({ where: { teamId: session.user.teamId }, select: { enabled: true, fromEmail: true, lastError: true, lastErrorAt: true, lastSentAt: true } }) : null,
     frc ? prisma.teamFrcSettings.findUnique({ where: { teamId: session.user.teamId }, select: { nexusKeyEnc: true, tbaWebhookSecretEnc: true, nexusWebhookTokenEnc: true } }) : null,
     frc ? tbaKeyFor(session.user.teamId) : null,
     frc ? mouserKeyFor(session.user.teamId) : null,
+    frc ? track123KeyFor(session.user.teamId) : null,
+    // Packages registered this month — each is one of the Track123 plan's monthly shipments
+    frc ? prisma.tracking.count({ where: { teamId: session.user.teamId, registeredAt: { gte: monthStart } } }) : 0,
   ]);
   const webhooks = [frcSettings?.tbaWebhookSecretEnc && "TBA", frcSettings?.nexusWebhookTokenEnc && "Nexus"].filter(Boolean);
   const student = configs.some((c) => c.audience === "STUDENT");
@@ -72,6 +77,14 @@ export default async function IntegrationsPage() {
         : mouserKey?.source === "shared" ? <Badge variant="info">Shared key</Badge>
         : <Badge variant="neutral">Not set up</Badge>,
       extra: <MouserKeyForm saved={mouserKey?.source === "team"} canEdit={frc} />,
+    }] : []),
+    ...(frc ? [{
+      title: "Package tracking (Track123)",
+      desc:  `Follows the tracking numbers the Buyer adds to ordered items — UPS, FedEx, USPS, DHL and more — shows where each package is, and tells everyone on the order when it's delivered. Paste a tracking number or a carrier's tracking link. Each package uses one of your Track123 plan's monthly shipments (the free plan has 50)${trackKey ? `; ${trackedThisMonth} so far this month` : ""}. Get a key at track123.com → Developers → API.`,
+      status: trackKey?.source === "team" ? <Badge variant="success">Your key</Badge>
+        : trackKey?.source === "shared" ? <Badge variant="info">Shared key</Badge>
+        : <Badge variant="neutral">Not set up</Badge>,
+      extra: <MouserKeyForm service="track123" saved={trackKey?.source === "team"} canEdit={frc} />,
     }] : []),
   ];
 

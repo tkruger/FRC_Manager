@@ -18,6 +18,7 @@ const SECTIONS = [
   { id: "discord",    title: "Discord" },
   { id: "tba",        title: "The Blue Alliance" },
   { id: "nexus",      title: "FRC Nexus" },
+  { id: "track123",   title: "Package tracking (Track123)" },
   { id: "push",       title: "Push notifications" },
   { id: "storage",    title: "Storage & housekeeping (Vercel)" },
   { id: "security",   title: "How your data is protected" },
@@ -72,6 +73,7 @@ export default function IntegrationGuidePage() {
           ["BLOB_READ_WRITE_TOKEN", "Optional — only for tool photos uploaded before photos were stored in the app's database (Vercel Blob)."],
           ["CRON_SECRET", "Protects the background job addresses; the same value goes in the GitHub secret."],
           ["TBA_API_KEY", "Optional shared The Blue Alliance key, used by teams that haven't added their own."],
+          ["TRACK123_API_KEY", "Optional shared Track123 key for package tracking, used by teams that haven't added their own (every team's packages count against its plan)."],
           ["DEFAULT_TIMEZONE", "Time zone for teams that haven't set one (default America/New_York)."],
           ["LEGAL_CONTACT_EMAIL", "Contact address on the Terms and Privacy pages."],
           ["TEST_SITE", "Set to 1 to mark a copy as the test site (hazard stripe, TEST tag)."],
@@ -216,6 +218,24 @@ export default function IntegrationGuidePage() {
           <li>Get an API key at <a className="link" href="https://frc.nexus/api" target="_blank" rel="noopener noreferrer">frc.nexus/api</a> and paste it under <b>API key</b> (Settings → Integrations → The Blue Alliance &amp; Nexus).</li>
           <li>Optional, for instant alerts: register the team&apos;s Nexus webhook URL there (<code>{base}/api/webhooks/nexus/…</code>, shown on the settings page) for your team number, and paste the <b>token</b> Nexus gives you under <b>Webhook token</b>.</li>
         </Steps>
+      </Section>
+
+      <Section id="track123" title="Package tracking (Track123)">
+        <p>
+          Track123 follows packages across UPS, FedEx, USPS, DHL and many other carriers. With a team&apos;s key, every tracking number the Buyer
+          adds is followed: the item list shows where each package is and when it&apos;s due, and when the carrier delivers it, the person who
+          placed the order and everyone who worked on it are told (<b>Packages delivered</b> in notification settings) so someone unpacks it and marks it arrived.
+        </p>
+        <Steps>
+          <li>Sign up at <a className="link" href="https://www.track123.com/" target="_blank" rel="noopener noreferrer">track123.com</a> and open <b>Developers → API</b> in its admin portal. Copy the API key.</li>
+          <li>Settings → Integrations → <b>Package tracking (Track123)</b> → paste the key → <b>Save</b>. It&apos;s checked with Track123 first and stored encrypted.</li>
+          <li>On an order (or Orders → Buyer), <b>Change status</b> → <b>Ordered</b> → paste the carrier&apos;s tracking link or just the tracking number. The number is read from UPS, FedEx, USPS, DHL and OnTrac links; Track123 works out the carrier.</li>
+        </Steps>
+        <ul className="list">
+          <li>Each package uses one of the plan&apos;s monthly shipments (the free plan has 50); the settings page shows how many this month. Numbers added before the key was saved are followed if they&apos;re less than two weeks old.</li>
+          <li>Packages are checked hourly by the <b>Notification reminders</b> job, for up to 45 days, and no longer once every item in them has arrived.</li>
+          <li>Amazon links don&apos;t carry a tracking number, so those packages aren&apos;t followed. <code>TRACK123_API_KEY</code> in Vercel is an optional shared key for teams without one.</li>
+        </ul>
       </Section>
 
       <Section id="push" title="Push notifications">

@@ -9,6 +9,7 @@ import { pruneChangeLog } from "@/lib/audit/changes";
 import { postVolunteerDigests } from "@/lib/notify/discord-volunteers";
 import { sweepUnusedToolPhotos } from "@/lib/blob-cleanup";
 import { sweepUnusedStoredPhotos } from "@/lib/photos";
+import { checkPackages } from "@/lib/orders/packages";
 
 const DAY = 86_400_000;
 
@@ -30,6 +31,8 @@ export async function GET(request: Request) {
   const result = await runReminders();
   // Parent Discord servers: the morning list of meetings that need adults
   const volunteerPosts = await postVolunteerDigests().catch((e) => { console.error("[cron] volunteer digests", e); return 0; });
+  // Packages on their way (Track123): delivered ones tell everyone on their orders
+  const packages = await checkPackages().catch((e) => { console.error("[cron] packages", e); return null; });
   // Housekeeping: expired rate-limit counters and one-time email links, and change history over a year old
   const [rateLimitsCleared, tokensCleared] = await Promise.all([pruneRateLimits(), pruneAuthTokens()]).catch(() => [0, 0]);
   const changesCleared = await pruneChangeLog(prisma).catch(() => 0);
@@ -50,7 +53,7 @@ export async function GET(request: Request) {
       + (await sweepUnusedStoredPhotos().catch((e) => { console.error("[cron] stored photo sweep", e); return 0; }))
     : 0;
   return NextResponse.json({
-    ...result, seasonsSwitched, rateLimitsCleared, tokensCleared, changesCleared, receiptsCleared, volunteerPosts,
+    ...result, seasonsSwitched, packages, rateLimitsCleared, tokensCleared, changesCleared, receiptsCleared, volunteerPosts,
     notificationsCleared, remindersCleared, discordLogsCleared, photosCleared, ms: Date.now() - started,
   });
 }

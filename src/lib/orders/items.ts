@@ -8,7 +8,9 @@ import { definitionFor, resolveCurrentStep, performCurrentStepAction, type Actor
 import { itemRef } from "./constants";
 import { assignItemNumbers } from "./numbers";
 import { csvCell } from "@/lib/csv";
-import { isWebUrl } from "@/lib/web-url";
+import { after } from "next/server";
+import { parseTrackingInput } from "./tracking-number";
+import { registerPackage } from "./packages";
 
 type Tx = Prisma.TransactionClient;
 
@@ -32,18 +34,21 @@ async function logItemEvent(tx: Tx | typeof prisma, requestId: string, actorId: 
 
 // ── Tracking ────────────────────────────────────────────────────────────────
 
-/** One tracking link for many items (they shipped together); those items become Ordered. */
-export async function addTracking(teamId: string, actor: Actor, itemIds: string[], url: string, label?: string) {
-  const link = url.trim();
-  if (!isWebUrl(link)) return { success: false as const, error: "Enter a full tracking link (https://…)." };
+/**
+ * One tracking link or number for many items (they shipped together); those items become Ordered.
+ * With the team's Track123 key the number is followed, and its orders hear when it's delivered.
+ */
+export async function addTracking(teamId: string, actor: Actor, itemIds: string[], input: string, label?: string) {
+  const parsed = parseTrackingInput(input);
+  if (!parsed) return { success: false as const, error: "Enter the tracking link (https://…) or the tracking number." };
 
   const items = (await teamItems(teamId, itemIds)).filter((i) => i.status === "TO_ORDER" || i.status === "ORDERED");
   if (items.length === 0) return { success: false as const, error: "Choose items that are To order or Ordered." };
 
   const now = new Date();
-  await prisma.$transaction(async (tx) => {
+  const trackingId = await prisma.$transaction(async (tx) => {
     const tracking = await tx.tracking.create({
-      data: { teamId, url: link, label: label?.trim() || null, createdById: actor.id },
+      data: { teamId, url: parsed.url, number: parsed.number, label: label?.trim() || null, createdById: actor.id },
     });
     await tx.purchaseLineItem.updateMany({
       where: { id: { in: items.map((i) => i.id) } },
@@ -55,12 +60,15 @@ export async function addTracking(teamId: string, actor: Actor, itemIds: string[
     });
     for (const [requestId, group] of groupBy(items, (i) => i.requestId)) {
       await logItemEvent(tx, requestId, actor.id,
-        `Ordered — tracking added for ${group.map((i) => itemRef(i)).join(", ")}.`);
+        `Ordered — tracking added for ${group.map((i) => itemRef(i)).join(", ")}${parsed.number ? ` (${parsed.number})` : ""}.`);
     }
+    return tracking.id;
   });
 
   await syncOrders(items.map((i) => i.requestId), actor);
-  return { success: true as const, count: items.length };
+  // Start following it (after the response — Track123 can be slow)
+  if (parsed.number) after(() => registerPackage(trackingId).catch((e) => console.error("[packages] register", e)));
+  return { success: true as const, count: items.length, number: parsed.number };
 }
 
 // ── Status changes ──────────────────────────────────────────────────────────

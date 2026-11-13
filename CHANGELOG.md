@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **Package tracking with Track123**: add a team Track123 key (Settings → Integrations → Package tracking) and every tracking number the Buyer adds is followed across UPS, FedEx, USPS, DHL and more. The item list shows where each package is and when it's due, and when it's delivered, the person who placed the order and everyone who worked on it are told (new **Packages delivered** notification, in the app, by push and by email) so someone unpacks it and marks it arrived
+- Ordered items take a tracking **link or just the number** — the number is read from UPS, FedEx, USPS, DHL and OnTrac links, and a number on its own gets the carrier's tracking link once Track123 knows it
+- The settings page shows how many packages were followed this month (the free Track123 plan has 50)
+
 ## 1.19.6 — 2026-11-12
 
 - **Team emails only go out from the team's own email**: notifications, invites, welcome emails and broadcasts are emailed only once the team has set up its email (Settings → Integrations → Team email), and not while it's paused or failing — FRC Manager's email no longer sends them instead. Notifications still show in the app and as pushes, and invites give you the links to send yourself. Account emails (confirming an address, password resets), a new team's approval, and feedback for super admins still come from FRC Manager

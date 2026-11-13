@@ -1,6 +1,7 @@
 "use server";
 
 import { checkMouserKey } from "@/lib/orders/mouser";
+import { checkTrack123Key } from "@/lib/orders/track123";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -38,6 +39,26 @@ export async function saveMouserKeyAction(key: string): Promise<Result> {
     where:  { teamId },
     create: { teamId, mouserKeyEnc: k ? seal(k) : null },
     update: { mouserKeyEnc: k ? seal(k) : null },
+  });
+  revalidatePath("/settings/integrations");
+  return { success: true };
+}
+
+/** The team's Track123 API key (checked with Track123 first); empty removes it */
+export async function saveTrack123KeyAction(key: string): Promise<Result> {
+  plainArgs(key);
+  const teamId = await requireAdmin();
+  if (!teamId) return { success: false, error: "Only Head Mentors and Integration Admins can change these." };
+  const k = key.trim();
+  if (k.length > 200) return { success: false, error: "That's too long for a key." };
+  if (k) {
+    const check = await checkTrack123Key(k);
+    if (!check.ok) return { success: false, error: `Track123 didn't accept that key (${check.error.replace(/^Track123: /, "")}) — copy it from Track123 → Developers → API.` };
+  }
+  await prisma.teamVendorKeys.upsert({
+    where:  { teamId },
+    create: { teamId, track123KeyEnc: k ? seal(k) : null },
+    update: { track123KeyEnc: k ? seal(k) : null },
   });
   revalidatePath("/settings/integrations");
   return { success: true };

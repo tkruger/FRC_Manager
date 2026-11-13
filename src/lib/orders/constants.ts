@@ -6,7 +6,7 @@ export type ItemStatus = (typeof ITEM_STATUSES)[number];
 export const ITEM_STATUS_INFO: Record<ItemStatus, { label: string; badge: "neutral" | "warning" | "info" | "success"; help: string }> = {
   QUEUED:   { label: "Queued",   badge: "neutral", help: "Waiting for the order to be approved" },
   TO_ORDER: { label: "To order", badge: "warning", help: "Approved — with the Buyer to purchase" },
-  ORDERED:  { label: "Ordered",  badge: "info",    help: "Purchased; a tracking link has been added" },
+  ORDERED:  { label: "Ordered",  badge: "info",    help: "Purchased; tracking has been added" },
   ARRIVED:  { label: "Arrived",  badge: "success", help: "Delivered and added to inventory" },
 };
 

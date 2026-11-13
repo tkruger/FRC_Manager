@@ -1004,17 +1004,38 @@ enum OrderItemStatus {
   ARRIVED
 }
 
-/// A shipment tracking link, shared by every item that ships together
+/// A shipment, shared by every item that ships together: its tracking link and/or number. With the
+/// team's Track123 key, the number is followed and everyone on its orders hears when it's delivered.
 model Tracking {
   id          String   @id @default(cuid())
   teamId      String
   team        Team     @relation(fields: [teamId], references: [id])
-  url         String
+  /// The carrier's tracking page (null when only a number was entered and no link is known yet)
+  url         String?
   label       String?
+  /// The tracking number — typed in, or read from the link
+  number      String?
+  /// Track123's carrier code and name (detected by Track123 when not known)
+  carrier     String?
+  carrierName String?
+  /// Track123's transit status (IN_TRANSIT, DELIVERED, …) and its latest event
+  status       String?
+  statusDetail String?
+  expectedDelivery DateTime?
+  deliveredAt      DateTime?
+  /// Everyone on its orders was told it was delivered
+  deliveredNotifiedAt DateTime?
+  /// Registered with Track123 (one of the plan's monthly shipments)
+  registeredAt  DateTime?
+  lastCheckedAt DateTime?
+  /// Why Track123 couldn't follow it (shown to the Buyer)
+  trackError    String?
   createdById String?
   createdAt   DateTime @default(now())
 
   items PurchaseLineItem[]
+
+  @@index([registeredAt, deliveredAt])
 }
 
 // ─────────────────────────────────────────────
@@ -1747,11 +1768,13 @@ model Meeting {
 }
 
 /// A team's keys for vendor product lookups (encrypted) — Mouser's Search API fills in Mouser links.
-/// Without one, the deployment's MOUSER_API_KEY (if any) is used.
+/// Without one, the deployment's MOUSER_API_KEY (if any) is used. Track123 follows packages.
 model TeamVendorKeys {
   teamId       String   @id
   team         Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   mouserKeyEnc String?
+  /// Track123 API key: follows tracking numbers and tells the order when a package is delivered
+  track123KeyEnc String?
   updatedAt    DateTime @updatedAt
 }
 

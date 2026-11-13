@@ -53,6 +53,13 @@ export const TOPICS = [
     defaultInApp: true, defaultPush: true, defaultEmail: true,
   },
   {
+    id: "purchase.deliveries", group: "Purchasing",
+    label: "Packages delivered",
+    description: "The carrier delivers a package with items from an order you're part of — so someone can unpack it and mark it arrived. Needs the team's Track123 key.",
+    audience: "The person who placed the order and everyone who has worked on it",
+    defaultInApp: true, defaultPush: true, defaultEmail: true,
+  },
+  {
     id: "purchase.draft_invites", group: "Purchasing",
     label: "Invited to a draft order",
     description: "Someone invites you to work on an order draft with them — add items, edit and submit it.",

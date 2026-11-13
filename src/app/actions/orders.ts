@@ -274,12 +274,16 @@ async function requestIdsFor(itemIds: string[]) {
   return [...new Set((await prisma.purchaseLineItem.findMany({ where: { id: { in: itemIds } }, select: { requestId: true } })).map((i) => i.requestId))];
 }
 
-export async function addTrackingAction(itemIds: string[], url: string, label?: string): Promise<Result<{ count: number }>> {
+/** A tracking link or number for items that shipped together (they become Ordered) */
+export async function addTrackingAction(itemIds: string[], url: string, label?: string): Promise<Result<{ count: number; number: string | null }>> {
   plainArgs(itemIds, url, label);
   const who = await actor();
   if (!who) return { success: false, error: "Not authenticated." };
-  if (!who.roles.some((r) => ORDER_ADMIN_ROLES.includes(r))) return { success: false, error: "Only the Buyer or captains can add tracking links." };
+  if (!who.roles.some((r) => ORDER_ADMIN_ROLES.includes(r))) return { success: false, error: "Only the Buyer or captains can add tracking." };
   if (!Ids.safeParse(itemIds).success) return { success: false, error: "Choose at least one item." };
+  if (typeof url !== "string" || url.length > 2000 || (label != null && (typeof label !== "string" || label.length > 100))) {
+    return { success: false, error: "That tracking link or label is too long." };
+  }
 
   const res = await addTracking(who.teamId, who, itemIds, url, label);
   if (res.success) refresh(await requestIdsFor(itemIds));

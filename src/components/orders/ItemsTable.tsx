@@ -10,6 +10,7 @@ import { addTrackingAction, markArrivedAction, setItemStatusAction } from "@/app
 import { ITEM_STATUSES, ITEM_STATUS_INFO, itemRef, type ItemStatus } from "@/lib/orders/constants";
 import { useViewOnly } from "@/components/access/ViewOnly";
 import { webHref } from "@/lib/web-url";
+import { packageStatus } from "@/lib/orders/tracking-number";
 
 export interface OrderItemRow {
   id:          string;
@@ -27,7 +28,12 @@ export interface OrderItemRow {
   reasoning:   string | null;
   notes:       string | null;
   status:      ItemStatus;
-  tracking:    { url: string; label: string | null } | null;
+  tracking:    {
+    url: string | null; label: string | null; number: string | null; carrierName: string | null;
+    /** Track123's status, its latest event, and when it's due or was delivered */
+    status: string | null; statusDetail: string | null; expectedDelivery: string | null; deliveredAt: string | null;
+    trackError: string | null;
+  } | null;
   exportedAt:  string | null;
 }
 
@@ -150,9 +156,10 @@ export function ItemsTable({ items, canTrack, canOverride, canChange = true, sho
             <div className="flex flex-wrap items-end gap-2">
               <label className="flex-1 min-w-48 space-y-1">
                 <span className="block text-sm font-medium text-(--color-text-primary)">
-                  Tracking link {!needsLink && <span className="font-normal text-(--color-text-secondary)">(optional)</span>}
+                  Tracking link or number {!needsLink && <span className="font-normal text-(--color-text-secondary)">(optional)</span>}
                 </span>
-                <input className={cn(inputCls, "w-full")} type="url" placeholder="https://…" value={url} onChange={(e) => setUrl(e.target.value)} />
+                <input className={cn(inputCls, "w-full")} placeholder="https://… or 1Z999AA10123456784" autoComplete="off" spellCheck={false}
+                  value={url} onChange={(e) => setUrl(e.target.value)} />
               </label>
               <label className="w-40 space-y-1">
                 <span className="block text-sm font-medium text-(--color-text-primary)">Label</span>
@@ -224,11 +231,7 @@ export function ItemsTable({ items, canTrack, canOverride, canChange = true, sho
                   <div className="flex flex-wrap items-center gap-2 pt-0.5">
                     <Badge variant={info.badge}>{info.label}</Badge>
                     {i.importance !== "ROUTINE" && <Badge variant={IMPORTANCE_BADGE[i.importance] ?? "neutral"}>{i.importance.toLowerCase()}</Badge>}
-                    {i.tracking && !changing && (
-                      <a href={webHref(i.tracking.url)} target="_blank" rel="noopener noreferrer" className="text-small text-(--color-secondary) hover:underline">
-                        Track{i.tracking.label ? `: ${i.tracking.label}` : " package"} ↗
-                      </a>
-                    )}
+                    {i.tracking && !changing && <PackageLine t={i.tracking} canTrack={canTrack} />}
                     {i.status === "TO_ORDER" && i.exportedAt && <span className="text-xs text-(--color-text-secondary)">in spreadsheet</span>}
                   </div>
                 </div>
@@ -238,5 +241,32 @@ export function ItemsTable({ items, canTrack, canOverride, canChange = true, sho
         })}
       </ul>
     </div>
+  );
+}
+
+const shortDate = (iso: string) => new Date(iso).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+
+/** The package an item shipped in: its link, and where it is (with the team's Track123 key) */
+function PackageLine({ t, canTrack }: { t: NonNullable<OrderItemRow["tracking"]>; canTrack: boolean }) {
+  const s = packageStatus(t.deliveredAt ? "DELIVERED" : t.status);
+  const name = t.label ? `: ${t.label}` : t.carrierName ? ` (${t.carrierName})` : " package";
+  return (
+    <>
+      {t.url ? (
+        <a href={webHref(t.url)} target="_blank" rel="noopener noreferrer" className="text-small text-(--color-secondary) hover:underline">
+          Track{name} ↗
+        </a>
+      ) : <span className="text-small text-(--color-text-secondary)">Tracking{name}: <span className="font-mono">{t.number}</span></span>}
+      {s && (
+        <span title={t.statusDetail ?? undefined} suppressHydrationWarning>
+          <Badge variant={s.badge}>
+            {s.label}
+            {t.deliveredAt ? ` ${shortDate(t.deliveredAt)}` : t.expectedDelivery ? ` · due ${shortDate(t.expectedDelivery)}` : ""}
+          </Badge>
+        </span>
+      )}
+      {/* Only the Buyer needs to know why it isn't followed */}
+      {!s && t.trackError && canTrack && <span className="text-xs text-(--color-danger)" title={t.trackError}>Not followed: {t.trackError.replace(/^Track123: /, "")}</span>}
+    </>
   );
 }
