@@ -11,6 +11,14 @@ type Release = { version: string; date: string; title: string; items: React.Reac
 
 const RELEASES: Release[] = [
   {
+    version: "1.20", date: "November 2026", title: "Package tracking",
+    items: [
+      <><b>Know when packages arrive.</b> With a Track123 key, tracking numbers are followed across UPS, FedEx, USPS, DHL and more — everyone on the order is told when it&apos;s delivered.</>,
+      <>Where each package is and when it&apos;s due, right on the order&apos;s items.</>,
+      <>Add tracking as a link or just the tracking number.</>,
+    ],
+  },
+  {
     version: "1.19", date: "November 2026", title: "Shared order drafts",
     items: [
       <><b>Order drafts are shared with the team.</b> Whoever starts a draft can invite teammates, who can edit it, add items (also from Inventory) and submit it.</>,
