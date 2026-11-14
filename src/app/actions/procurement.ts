@@ -39,6 +39,8 @@ async function addToDraft(session: Session, draftId: string | null, name: string
     link: i.link ?? "", vendorName: i.vendorName ?? "", name: i.name, partNumber: i.partNumber ?? "",
     unitCost: i.unitCost != null ? String(i.unitCost) : "", quantity: String(i.quantity), subTeam: i.subTeam ?? "",
     importance: i.importance ?? "ROUTINE", reasoning: i.reasoning ?? "", notes: "", budgetCategory: "",
+    // Ordered from inventory: it restocks it
+    destination: i.baseItemId ? "INVENTORY" : "",
   }));
   if (draftId) {
     const draft = await prisma.orderDraft.findFirst({ where: { id: draftId, teamId: session.user.teamId!, ...editableDrafts(session.user.id) }, select: { id: true, name: true, items: true } });

@@ -229,7 +229,7 @@ export default function HelpPage() {
         </p>
         <H3>Placing an order</H3>
         <Steps>
-          <li>Go to <b>Orders → + New order</b>, give it a name, and pick its <b>Budget category</b> (Robot Parts — Mechanical, Tools &amp; Equipment, …). That&apos;s where its spend shows on the budget. An item that belongs somewhere else can have its own category.</li>
+          <li>Go to <b>Orders → + New order</b>, give it a name, and pick its <b>Budget category</b> (Robot Parts — Mechanical, Tools &amp; Equipment, …). That&apos;s where its spend shows on the budget. An item that belongs somewhere else can have its own category. Each item also says <b>When it arrives</b>: <b>Not added anywhere</b> (the default — consumables, services, shirts), <b>Add to inventory</b>, or <b>Add to tools</b>. Items ordered from Inventory are set to inventory.</li>
           <li>For each item, paste the product <b>link</b> — for most FRC vendors (REV, AndyMark, WCP and other Shopify stores) the vendor, name, part number and price fill in automatically. Some sites (McMaster-Carr, Amazon) block this; just type the details.</li>
           <li>Set the quantity, sub-team, importance (Routine, Urgent or Emergency), why it&apos;s needed, and any notes for the Buyer.</li>
           <li>Paste a product link to fill in the item. If the page sells several products (a WCP parts page, or a product with sizes), you&apos;ll get a list to pick from: tick one or more and each becomes its own item. Amazon links fill in the name, price and ASIN.</li>
@@ -245,14 +245,14 @@ export default function HelpPage() {
             ["Queued", "The order is waiting for approval."],
             ["To order", "Approved and sent to the Buyer to purchase."],
             ["Ordered", "The Buyer added a tracking link or number."],
-            ["Arrived", "Someone marked it arrived — it's been added to inventory."],
+            ["Arrived", "Someone marked it arrived — and it's been added to inventory or tools, if the order said so."],
           ]}
         />
         <H3>What happens next</H3>
         <Steps>
           <li><b>Approval</b> — Order Approvers or Head Mentors approve or deny the order. Routine orders of $50 or less are approved automatically; emergencies always need approval. Approved items become <b>To order</b>.</li>
           <li><b>Buyer orders</b> — on <b>Orders → Buyer</b>, the Buyer copies or downloads the to-order items as CSV for the purchasing spreadsheet (no header; grouped by vendor; columns #XXXX item ID, Vendor, Part Name, Link, Unit Price, Qty, Order Notes, Order Date), places the orders, then selects the items that shipped together and adds one <b>tracking link or number</b> — they become <b>Ordered</b>. With the team&apos;s <Link href="/help/integrations#track123" className="link">Track123 key</Link>, the item list shows where the package is, and everyone on the order is told when it&apos;s delivered. On each order&apos;s page, under <b>Tax &amp; shipping</b>, the Buyer enters the tax and shipping charged by each vendor (the approved total is the items only).</li>
-          <li><b>Arrival</b> — when a box shows up, anyone can tick the items and tap <b>Mark arrived</b>. Each item is added to inventory (matched by its inventory link, part number or name, or created new) and becomes <b>Arrived</b>.</li>
+          <li><b>Arrival</b> — when a box shows up, anyone can tick the items and tap <b>Mark arrived</b>. Each becomes <b>Arrived</b> and goes where the order says: <b>inventory</b> adds it to stock (matched by its inventory link, part number or name, or created new); <b>tools</b> adds one tool per unit, each with its own TOOL-#### tag (fill in its type, location and certification on Tools); <b>not added anywhere</b> just marks it arrived.</li>
         </Steps>
         <ul className="list">
           <li><b>Export CSV</b> on an order, or on the Orders list (for every order on the tab you&apos;re viewing), downloads the items in the same spreadsheet format (no header row). In the iPhone app it opens in Safari so you can save the file.</li>

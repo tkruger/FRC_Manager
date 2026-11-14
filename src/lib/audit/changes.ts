@@ -16,7 +16,7 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma";
 import { STATUS_CONFIG, PRIORITY_CONFIG, SUBTEAM_OPTIONS } from "@/lib/schedule-helpers";
 import { statusLabel } from "@/lib/procurement-helpers";
-import { ITEM_STATUS_INFO, IMPORTANCE_OPTIONS, itemRef } from "@/lib/orders/constants";
+import { DESTINATION_LABELS, ITEM_STATUS_INFO, IMPORTANCE_OPTIONS, itemRef } from "@/lib/orders/constants";
 import { BUDGET_CATEGORY_LABELS } from "@/lib/budget-categories";
 import { ROLE_LABELS } from "@/lib/rbac";
 import { FUNDING_TYPE_LABELS } from "@/lib/funding";
@@ -100,6 +100,7 @@ const ITEM_FIELDS: Spec["fields"] = {
   quantity:         { label: "Quantity",        kind: "number" },
   unitCost:         { label: "Unit price",      kind: "money" },
   budgetCategory:   { label: "Budget category", kind: { enum: BUDGET_CATEGORY_LABELS } },
+  destination:      { label: "When it arrives", kind: { enum: DESTINATION_LABELS } },
   subTeam:          { label: "Sub-team",        kind: { enum: labels(SUBTEAM_OPTIONS) } },
   importance:       { label: "Importance",      kind: { enum: labels(IMPORTANCE_OPTIONS) } },
   reasoning:        { label: "Why it's needed", kind: "long" },

@@ -11,12 +11,13 @@ import { csvCell } from "@/lib/csv";
 import { after } from "next/server";
 import { parseTrackingInput } from "./tracking-number";
 import { registerPackage } from "./packages";
+import { allocateToolTags } from "@/lib/tool-tags";
 
 type Tx = Prisma.TransactionClient;
 
 const ITEM_SELECT = {
   id: true, requestId: true, orderNumber: true, name: true, partNumber: true, vendorName: true,
-  quantity: true, unitCost: true, subTeam: true, status: true, baseItemId: true,
+  quantity: true, unitCost: true, subTeam: true, status: true, baseItemId: true, destination: true,
   request: { select: { seasonId: true, title: true } },
 } as const;
 
@@ -108,7 +109,7 @@ async function numberDrafts(tx: Tx, teamId: string, items: { id: string; orderNu
   for (const i of drafts) i.orderNumber = numbers.get(i.id) ?? null;
 }
 
-/** Mark items arrived: each is added to inventory and set to Arrived. */
+/** Mark items arrived: each goes where its order says (inventory, tools, or nowhere) and is set to Arrived. */
 export async function markArrived(teamId: string, actor: Actor, itemIds: string[], opts: { allowQueued?: boolean } = {}) {
   const items = (await teamItems(teamId, itemIds)).filter((i) =>
     i.status === "TO_ORDER" || i.status === "ORDERED" || (opts.allowQueued && i.status === "QUEUED"));
@@ -120,13 +121,22 @@ export async function markArrived(teamId: string, actor: Actor, itemIds: string[
   await prisma.$transaction(async (tx) => {
     await numberDrafts(tx, teamId, items);
     for (const item of items) {
-      const stocked = await stockItem(tx, item);
-      await tx.purchaseLineItem.update({
-        where: { id: item.id },
-        data:  { status: "ARRIVED", arrivedAt: now, arrivedById: actor.id, qtyReceived: item.quantity, baseItemId: stocked.id },
-      });
-      await logItemEvent(tx, item.requestId, actor.id,
-        `${itemRef(item)} ${item.name} arrived — ${item.quantity} ${stocked.created ? "added to inventory as a new item" : "added to inventory stock"}.`);
+      // qtyReceived is set either way, so the workflow's receive step doesn't stock it again
+      const arrived = { status: "ARRIVED" as const, arrivedAt: now, arrivedById: actor.id, qtyReceived: item.quantity };
+      let note: string;
+      if (item.destination === "INVENTORY") {
+        const stocked = await stockItem(tx, item);
+        await tx.purchaseLineItem.update({ where: { id: item.id }, data: { ...arrived, baseItemId: stocked.id } });
+        note = `${item.quantity} ${stocked.created ? "added to inventory as a new item" : "added to inventory stock"}`;
+      } else if (item.destination === "TOOLS") {
+        const tags = await addTools(tx, teamId, item);
+        await tx.purchaseLineItem.update({ where: { id: item.id }, data: arrived });
+        note = `added to tools as ${tags.join(", ")}`;
+      } else {
+        await tx.purchaseLineItem.update({ where: { id: item.id }, data: arrived });
+        note = "not added to inventory or tools";
+      }
+      await logItemEvent(tx, item.requestId, actor.id, `${itemRef(item)} ${item.name} arrived — ${note}.`);
     }
   }, { timeout: 20_000 });
 
@@ -139,6 +149,25 @@ const CATEGORY_BY_SUBTEAM: Partial<Record<string, ItemCategory>> = {
   PROGRAMMING: "ELECTRONICS",
   MECHANICAL:  "MECHANICAL",
 };
+
+/** Most tools made from one order item (a bigger quantity is surely a typo or not tools) */
+const MAX_TOOLS_PER_ITEM = 50;
+
+/** An arrived item that's tools: one tool per unit, each with the next TOOL-#### tag */
+async function addTools(tx: Tx, teamId: string, item: Awaited<ReturnType<typeof teamItems>>[number]) {
+  const count = Math.min(MAX_TOOLS_PER_ITEM, Math.max(1, Math.round(item.quantity)));
+  const tags = await allocateToolTags(tx, teamId, count);
+  await tx.tool.createMany({
+    data: tags.map((assetTag) => ({
+      teamId, assetTag,
+      name:            item.name,
+      model:           item.partNumber,
+      replacementCost: item.unitCost,
+      notes:           `Added when order item ${itemRef(item)} arrived ("${item.request.title}")${item.vendorName ? ` from ${item.vendorName}` : ""}.`,
+    })),
+  });
+  return tags;
+}
 
 /** Add an arrived item's quantity to inventory, finding or creating the inventory item. */
 async function stockItem(tx: Tx, item: Awaited<ReturnType<typeof teamItems>>[number]) {

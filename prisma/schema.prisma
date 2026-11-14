@@ -984,6 +984,8 @@ model PurchaseLineItem {
   reasoning        String?
   notes            String?
   status           OrderItemStatus @default(QUEUED)
+  /// Where it goes when it arrives: nowhere (used up, or for someone), inventory stock, or tools
+  destination      ItemDestination @default(NONE)
   trackingId       String?
   tracking         Tracking?       @relation(fields: [trackingId], references: [id], onDelete: SetNull)
   /// Which of its vendor's orders it's on (null: the vendor's first)
@@ -1002,6 +1004,16 @@ enum OrderItemStatus {
   TO_ORDER
   ORDERED
   ARRIVED
+}
+
+/// Where an order item goes when it arrives
+enum ItemDestination {
+  /// Not added anywhere
+  NONE
+  /// Added to inventory stock (found by its inventory link, part number or name, or created)
+  INVENTORY
+  /// One tool per unit, each with its own asset tag
+  TOOLS
 }
 
 /// A shipment, shared by every item that ships together: its tracking link and/or number. With the

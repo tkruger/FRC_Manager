@@ -491,13 +491,14 @@ async function flush(outbox: Outbox) {
 async function addStock(tx: Tx, requestId: string, step: WorkflowStep, actorId: string) {
   const lines = await tx.purchaseLineItem.findMany({
     where:  { requestId, qtyReceived: null },
-    select: { id: true, name: true, quantity: true, baseItemId: true },
+    select: { id: true, name: true, quantity: true, baseItemId: true, destination: true },
   });
   if (lines.length === 0) return; // every item was stocked when it arrived
   const added: { item: string; qty: number }[] = [];
   for (const li of lines) {
     await tx.purchaseLineItem.update({ where: { id: li.id }, data: { qtyReceived: li.quantity } });
-    if (!li.baseItemId) continue;
+    // Only items the order sends to inventory (tools and the rest aren't stock)
+    if (!li.baseItemId || li.destination !== "INVENTORY") continue;
     await tx.baseInventoryItem.update({
       where: { id: li.baseItemId },
       data:  { currentStock: { increment: li.quantity } },

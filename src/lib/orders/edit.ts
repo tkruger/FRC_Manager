@@ -6,11 +6,11 @@
 // Every change is written to the order's history, field by field, and everyone on the order is told.
 
 import { prisma } from "@/lib/prisma";
-import type { BudgetCategoryType, RequestPriority, SubTeam } from "@/generated/prisma";
+import type { BudgetCategoryType, ItemDestination, RequestPriority, SubTeam } from "@/generated/prisma";
 import { BUDGET_CATEGORY_LABELS } from "@/lib/budget-categories";
 import { syncOrderSpend } from "./spend";
 import { definitionFor, canEditOrder, canResubmitOrder, resubmitWorkflow, type Actor } from "@/lib/workflow/engine";
-import { highestImportance, itemRef, type Importance } from "./constants";
+import { DESTINATION_LABELS, highestImportance, itemRef, type Importance } from "./constants";
 import { assignItemNumbers } from "./numbers";
 import { syncOrders } from "./items";
 import type { NewItem } from "./create";
@@ -18,7 +18,7 @@ import { notifyUsers } from "@/lib/notify/deliver";
 
 export type EditedItem = NewItem & { id?: string };
 
-const EDITABLE_FIELDS = ["name", "vendorName", "partNumber", "vendorProductUrl", "unitCost", "quantity", "subTeam", "importance", "reasoning", "notes", "budgetCategory"] as const;
+const EDITABLE_FIELDS = ["name", "vendorName", "partNumber", "vendorProductUrl", "unitCost", "quantity", "subTeam", "importance", "reasoning", "notes", "budgetCategory", "destination"] as const;
 
 export async function editOrder(input: {
   actor:     Actor;
@@ -38,7 +38,7 @@ export async function editOrder(input: {
       id: true, title: true, status: true, currentStepKey: true, workflowDefinitionId: true, budgetCategory: true, requestedById: true,
       lineItems: { select: { id: true, orderNumber: true, status: true, name: true, vendorName: true, partNumber: true,
         vendorProductUrl: true, unitCost: true, quantity: true, subTeam: true, importance: true, reasoning: true,
-        notes: true, baseItemId: true, budgetCategory: true } },
+        notes: true, baseItemId: true, budgetCategory: true, destination: true } },
     },
   });
   if (!order) return { success: false, error: "Order not found." };
@@ -119,6 +119,8 @@ export async function editOrder(input: {
         notes:            i.notes?.trim() || null,
         // Only stored when it differs from the order's
         budgetCategory:   (i.budgetCategory && i.budgetCategory !== budgetCategory ? i.budgetCategory : null) as BudgetCategoryType | null,
+        // Not sent: keep what it was (a new item goes nowhere). Arrived: it's already where it went
+        destination:      (i.id && (existing.get(i.id)!.status === "ARRIVED" || !i.destination) ? existing.get(i.id)!.destination : i.destination ?? "NONE") as ItemDestination,
       };
       if (i.id) {
         const before = existing.get(i.id)!;
@@ -187,6 +189,7 @@ export async function editOrder(input: {
 const FIELD_LABELS: Record<(typeof EDITABLE_FIELDS)[number], string> = {
   name: "name", vendorName: "vendor", partNumber: "part number", vendorProductUrl: "link", unitCost: "unit price",
   quantity: "quantity", subTeam: "sub-team", importance: "importance", reasoning: "reasoning", notes: "notes", budgetCategory: "budget category",
+  destination: "when it arrives",
 };
 const money = (v: unknown) => `$${Number(v).toFixed(2)}`;
 
@@ -200,6 +203,7 @@ function describe(field: (typeof EDITABLE_FIELDS)[number], from: unknown, to: un
     if (v == null || v === "") return "none";
     if (field === "unitCost") return money(v);
     if (field === "budgetCategory") return BUDGET_CATEGORY_LABELS[v as BudgetCategoryType] ?? String(v);
+    if (field === "destination") return DESTINATION_LABELS[v as ItemDestination] ?? String(v);
     if (field === "importance" || field === "subTeam") return String(v).charAt(0) + String(v).slice(1).toLowerCase().replace(/_/g, " ");
     return field === "quantity" ? String(v) : `"${String(v)}"`;
   };

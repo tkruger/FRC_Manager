@@ -10,7 +10,7 @@ import { editOrder } from "@/lib/orders/edit";
 import { addTracking, setItemStatus, markArrived, toOrderCsv } from "@/lib/orders/items";
 import { lookupProduct, type ProductInfo } from "@/lib/orders/lookup";
 import { applyOrderPrices, checkOrderPrices, type PriceCheck } from "@/lib/orders/prices";
-import { ORDER_ADMIN_ROLES, STATUS_OVERRIDE_ROLES } from "@/lib/orders/constants";
+import { DESTINATIONS, ORDER_ADMIN_ROLES, STATUS_OVERRIDE_ROLES } from "@/lib/orders/constants";
 import { createExportToken } from "@/lib/orders/export-token";
 import { syncOrderSpend, canSetOrderBudget } from "@/lib/orders/spend";
 import { definitionFor, canEditOrder } from "@/lib/workflow/engine";
@@ -41,6 +41,7 @@ async function actor(): Promise<Actor | null> {
 function refresh(requestIds: string[] = []) {
   revalidatePath("/procurement", "layout");
   revalidatePath("/inventory");
+  revalidatePath("/tools");
   revalidatePath("/budget");
   for (const id of requestIds) revalidatePath(`/procurement/requests/${id}`);
 }
@@ -60,6 +61,8 @@ const ItemSchema = z.object({
   notes:      z.string().trim().max(5000).max(2000).optional(),
   /** Charge this item to another budget category than the order's */
   budgetCategory: BudgetCategory.nullable().optional(),
+  /** Where it goes when it arrives */
+  destination: z.enum(DESTINATIONS).optional(),
 });
 
 const OrderSchema = z.object({
@@ -74,7 +77,7 @@ const OrderSchema = z.object({
 const ITEM_FIELDS: Record<string, string> = {
   name: "Name", vendorName: "Vendor", partNumber: "Part number", link: "Link", unitCost: "Unit cost",
   quantity: "Quantity", subTeam: "Sub-team", importance: "Importance", reasoning: "Reasoning", notes: "Notes",
-  budgetCategory: "Budget category",
+  budgetCategory: "Budget category", destination: "When it arrives",
 };
 function orderLabel(input: unknown) {
   return (path: PropertyKey[]): string | null => {
@@ -120,6 +123,7 @@ const DraftSchema = z.object({
     unitCost: z.string().max(20), quantity: z.string().max(20), subTeam: z.string().max(40), importance: z.string().max(20),
     reasoning: z.string().max(2000), notes: z.string().max(2000),
     budgetCategory: z.string().max(40).optional(),
+    destination: z.string().max(20).optional(),
   })).max(100),
 });
 

@@ -7,8 +7,18 @@ export const ITEM_STATUS_INFO: Record<ItemStatus, { label: string; badge: "neutr
   QUEUED:   { label: "Queued",   badge: "neutral", help: "Waiting for the order to be approved" },
   TO_ORDER: { label: "To order", badge: "warning", help: "Approved — with the Buyer to purchase" },
   ORDERED:  { label: "Ordered",  badge: "info",    help: "Purchased; tracking has been added" },
-  ARRIVED:  { label: "Arrived",  badge: "success", help: "Delivered and added to inventory" },
+  ARRIVED:  { label: "Arrived",  badge: "success", help: "Delivered — and added to inventory or tools if the order says so" },
 };
+
+/** Where an item goes when it arrives (the order form's "When it arrives") */
+export const DESTINATIONS = ["NONE", "INVENTORY", "TOOLS"] as const;
+export type Destination = (typeof DESTINATIONS)[number];
+export const DESTINATION_LABELS: Record<Destination, string> = {
+  NONE:      "Not added anywhere",
+  INVENTORY: "Inventory",
+  TOOLS:     "Tools",
+};
+export const DESTINATION_OPTIONS = DESTINATIONS.map((value) => ({ value, label: DESTINATION_LABELS[value] }));
 
 export const IMPORTANCE_OPTIONS = [
   { value: "ROUTINE",   label: "Routine" },

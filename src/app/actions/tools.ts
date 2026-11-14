@@ -7,6 +7,7 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import type { ToolType, ToolSpace, ToolCondition } from "@/generated/prisma";
 import { plainArgs } from "@/lib/action-args";
+import { allocateToolTags } from "@/lib/tool-tags";
 
 // Every physical tool is its own record. "Two drills" = two Tool rows with the same
 // name, each with its own asset tag, condition, checkouts and barcode.
@@ -52,26 +53,6 @@ function parseToolForm(formData: FormData) {
   });
 }
 
-/** Next free auto tags for the team: TOOL-0001, TOOL-0002, … (skips any already in use). */
-async function allocateToolTags(teamId: string, count: number): Promise<string[]> {
-  const tags: string[] = [];
-  while (tags.length < count) {
-    const need = count - tags.length;
-    const { nextToolNumber } = await prisma.team.update({
-      where:  { id: teamId },
-      data:   { nextToolNumber: { increment: need } },
-      select: { nextToolNumber: true },
-    });
-    const candidates = Array.from({ length: need }, (_, i) => `TOOL-${String(nextToolNumber - need + i).padStart(4, "0")}`);
-    const taken = new Set((await prisma.tool.findMany({
-      where:  { teamId, assetTag: { in: candidates } },
-      select: { assetTag: true },
-    })).map((t) => t.assetTag));
-    tags.push(...candidates.filter((c) => !taken.has(c)));
-  }
-  return tags;
-}
-
 async function tagInUse(teamId: string, tag: string, exceptToolId?: string) {
   return !!await prisma.tool.findFirst({
     where:  { teamId, assetTag: { equals: tag, mode: "insensitive" }, ...(exceptToolId ? { id: { not: exceptToolId } } : {}) },
@@ -102,7 +83,7 @@ export async function createToolAction(
       if (await tagInUse(teamId, tag)) return { success: false, error: `Asset tag "${tag}" is already used by another tool.` };
     }
   } else {
-    tags = await allocateToolTags(teamId, count);
+    tags = await allocateToolTags(prisma, teamId, count);
   }
 
   // Only photos uploaded to the app (not any address on the internet)
@@ -176,7 +157,7 @@ export async function updateToolAction(
   if (!existing) return { success: false, error: "Tool not found." };
 
   // Every tool keeps a tag; clearing it assigns the next TOOL-#### number
-  const assetTag = d.assetTag || existing.assetTag || (await allocateToolTags(teamId, 1))[0];
+  const assetTag = d.assetTag || existing.assetTag || (await allocateToolTags(prisma, teamId, 1))[0];
   if (assetTag !== existing.assetTag && await tagInUse(teamId, assetTag, toolId)) {
     return { success: false, error: `Asset tag "${assetTag}" is already used by another tool.` };
   }

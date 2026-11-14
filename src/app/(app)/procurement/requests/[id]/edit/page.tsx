@@ -22,7 +22,7 @@ export default async function EditOrderPage({ params }: { params: Promise<{ id: 
         lineItems: {
           orderBy: [{ orderNumber: "asc" }, { id: "asc" }],
           select: { id: true, orderNumber: true, status: true, name: true, vendorName: true, partNumber: true,
-            vendorProductUrl: true, unitCost: true, quantity: true, subTeam: true, importance: true, reasoning: true, notes: true, budgetCategory: true },
+            vendorProductUrl: true, unitCost: true, quantity: true, subTeam: true, importance: true, reasoning: true, notes: true, budgetCategory: true, destination: true },
         },
       },
     }),
@@ -86,6 +86,7 @@ export default async function EditOrderPage({ params }: { params: Promise<{ id: 
             reasoning:  l.reasoning ?? "",
             notes:      l.notes ?? "",
             budgetCategory: l.budgetCategory ?? "",
+            destination: l.destination,
           })),
           locked: [],
           resubmit,

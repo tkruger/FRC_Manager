@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Choose where each ordered item goes when it arrives**: every item on an order has **When it arrives** — **Not added anywhere** (the default, for consumables, services, shirts…), **Add to inventory**, or **Add to tools**. Bought tools no longer end up in inventory: marking one arrived adds one tool per unit, each with its own TOOL-#### tag, its model (the part number) and price as replacement cost
+- Items ordered from Inventory (low stock, the order queue, Order a new item) are set to inventory, as before; items already on orders keep going to inventory. It can be changed with Edit order until the item arrives, and the item list shows where each one goes
+
 ## 1.20.0 — 2026-11-14
 
 - **Package tracking with Track123**: add a team Track123 key (Settings → Integrations → Package tracking) and every tracking number the Buyer adds is followed across UPS, FedEx, USPS, DHL and more. The item list shows where each package is and when it's due, and when it's delivered, the person who placed the order and everyone who worked on it are told (new **Packages delivered** notification, in the app, by push and by email) so someone unpacks it and marks it arrived

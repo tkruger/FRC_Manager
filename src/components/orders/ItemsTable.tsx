@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn, formatCurrency } from "@/lib/utils";
 import { addTrackingAction, markArrivedAction, setItemStatusAction } from "@/app/actions/orders";
-import { ITEM_STATUSES, ITEM_STATUS_INFO, itemRef, type ItemStatus } from "@/lib/orders/constants";
+import { DESTINATION_LABELS, ITEM_STATUSES, ITEM_STATUS_INFO, itemRef, type Destination, type ItemStatus } from "@/lib/orders/constants";
 import { useViewOnly } from "@/components/access/ViewOnly";
 import { webHref } from "@/lib/web-url";
 import { packageStatus } from "@/lib/orders/tracking-number";
@@ -28,6 +28,8 @@ export interface OrderItemRow {
   reasoning:   string | null;
   notes:       string | null;
   status:      ItemStatus;
+  /** Where it goes when it arrives */
+  destination: Destination;
   tracking:    {
     url: string | null; label: string | null; number: string | null; carrierName: string | null;
     /** Track123's status, its latest event, and when it's due or was delivered */
@@ -108,7 +110,7 @@ export function ItemsTable({ items, canTrack, canOverride, canChange = true, sho
 
   function apply() {
     const ids = [...selected];
-    if (status === "ARRIVED" && !confirm(`Mark ${n} item${n === 1 ? "" : "s"} arrived? They'll be added to inventory, and arrived items can't be changed back.`)) return;
+    if (status === "ARRIVED" && !confirm(`Mark ${n} item${n === 1 ? "" : "s"} arrived? Items for inventory or tools are added there, and arrived items can't be changed back.`)) return;
     setMsg(null);
     start(async () => {
       const link = url.trim();
@@ -176,7 +178,7 @@ export function ItemsTable({ items, canTrack, canOverride, canChange = true, sho
             </label>
             <p className="text-small text-(--color-text-secondary)">
               {n === 0 ? "Tick the items to change below." : <>Your change will apply to <b className="text-(--color-text-primary)">{n} item{n === 1 ? "" : "s"}</b>.</>}
-              {status === "ARRIVED" && " Arrived items are added to inventory and can't be changed back."}
+              {status === "ARRIVED" && " Items for inventory or tools are added there, and arrived items can't be changed back."}
             </p>
           </div>
         </div>
@@ -230,6 +232,11 @@ export function ItemsTable({ items, canTrack, canOverride, canChange = true, sho
                   )}
                   <div className="flex flex-wrap items-center gap-2 pt-0.5">
                     <Badge variant={info.badge}>{info.label}</Badge>
+                    {i.destination !== "NONE" && (
+                      <span className="text-xs text-(--color-text-secondary)">
+                        {i.status === "ARRIVED" ? "In" : "→"} {DESTINATION_LABELS[i.destination].toLowerCase()}
+                      </span>
+                    )}
                     {i.importance !== "ROUTINE" && <Badge variant={IMPORTANCE_BADGE[i.importance] ?? "neutral"}>{i.importance.toLowerCase()}</Badge>}
                     {i.tracking && !changing && <PackageLine t={i.tracking} canTrack={canTrack} />}
                     {i.status === "TO_ORDER" && i.exportedAt && <span className="text-xs text-(--color-text-secondary)">in spreadsheet</span>}

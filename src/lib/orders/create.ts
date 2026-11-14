@@ -2,7 +2,7 @@
 // and Discord /order request, so every path assigns item IDs and queue entries the same way.
 
 import { prisma } from "@/lib/prisma";
-import type { BudgetCategoryType, RequestPriority, SubTeam } from "@/generated/prisma";
+import type { BudgetCategoryType, ItemDestination, RequestPriority, SubTeam } from "@/generated/prisma";
 import { budgetCategoryForItem } from "@/lib/budget-categories";
 import { startWorkflow, describeRequestState, type Actor } from "@/lib/workflow/engine";
 import { highestImportance, type Importance } from "./constants";
@@ -22,6 +22,8 @@ export interface NewItem {
   baseItemId?: string | null;
   /** Charge this item to a different budget category than the order's */
   budgetCategory?: BudgetCategoryType | null;
+  /** Where it goes when it arrives. Unset: inventory when it restocks an inventory item, else nowhere */
+  destination?: ItemDestination | null;
 }
 
 export type CreateOrderResult =
@@ -97,6 +99,7 @@ export async function createOrder(input: {
       lineItems: {
         // No item IDs yet — they're drafts until the order is approved (see numbers.ts)
         create: items.map((i) => ({
+          destination:      i.destination ?? (i.baseItemId && validItemIds.has(i.baseItemId) ? "INVENTORY" : "NONE"),
           name:             i.name.trim(),
           vendorName:       i.vendorName?.trim() || null,
           partNumber:       i.partNumber?.trim() || null,

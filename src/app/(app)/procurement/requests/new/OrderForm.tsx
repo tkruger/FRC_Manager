@@ -8,7 +8,7 @@ import { createOrderAction, editOrderAction, lookupProductAction, saveOrderDraft
 import type { ProductChoice } from "@/lib/orders/lookup";
 import { ProductPicker } from "./ProductPicker";
 import { toast } from "@/components/ui/toast";
-import { IMPORTANCE_OPTIONS } from "@/lib/orders/constants";
+import { DESTINATION_OPTIONS, IMPORTANCE_OPTIONS } from "@/lib/orders/constants";
 import { SUBTEAM_OPTIONS } from "@/lib/schedule-helpers";
 import { ORDER_BUDGET_OPTIONS, BUDGET_CATEGORY_LABELS } from "@/lib/budget-categories";
 import { parseOrderCsv } from "@/lib/orders/import-csv";
@@ -34,6 +34,8 @@ interface Item {
   notes:      string;
   /** "" = same as the order */
   budgetCategory: string;
+  /** Where it goes when it arrives: NONE, INVENTORY or TOOLS */
+  destination: string;
   lookup:     "idle" | "loading" | "done" | "failed";
   /** Why the link couldn't be read, when the store said */
   lookupProblem?: string | null;
@@ -57,7 +59,7 @@ let nextKey = 1;
 function blankItem(defaults?: Partial<Item>): Item {
   return {
     key: nextKey++, link: "", vendorName: "", name: "", partNumber: "", unitCost: "", quantity: "1",
-    subTeam: defaults?.subTeam ?? "", importance: "ROUTINE", reasoning: "", notes: "", budgetCategory: "", lookup: "idle",
+    subTeam: defaults?.subTeam ?? "", importance: "ROUTINE", reasoning: "", notes: "", budgetCategory: "", destination: defaults?.destination ?? "NONE", lookup: "idle",
   };
 }
 
@@ -93,7 +95,7 @@ export function OrderForm({ vendors, edit, draft, unusedCategories = [] }: {
   const [items, setItems] = useState<Item[]>(() => {
     const start = edit?.items ?? draft?.items;
     // Saved items keep their looked-up details, so don't look them up again on blur
-    return start?.length ? start.map((i) => ({ ...i, budgetCategory: i.budgetCategory ?? "", key: nextKey++, lookup: i.link ? "done" as const : "idle" as const })) : [blankItem()];
+    return start?.length ? start.map((i) => ({ ...i, budgetCategory: i.budgetCategory ?? "", destination: i.destination || "NONE", key: nextKey++, lookup: i.link ? "done" as const : "idle" as const })) : [blankItem()];
   });
   const [draftId, setDraftId]   = useState(draft?.id ?? null);
   const [savingDraft, setSaving] = useState(false);
@@ -167,6 +169,7 @@ export function OrderForm({ vendors, edit, draft, unusedCategories = [] }: {
       ...(idx === 0 ? target : blankItem({ subTeam: target.subTeam })),
       importance: target.importance,
       budgetCategory: target.budgetCategory,
+      destination: target.destination,
       reasoning:  target.reasoning,
       link:       c.url,
       vendorName: target.vendorName || picker.vendorName || "",
@@ -191,7 +194,7 @@ export function OrderForm({ vendors, edit, draft, unusedCategories = [] }: {
       items: items.map((i): DraftItem => ({
         link: i.link, vendorName: i.vendorName, name: i.name, partNumber: i.partNumber, unitCost: i.unitCost,
         quantity: i.quantity, subTeam: i.subTeam, importance: i.importance, reasoning: i.reasoning, notes: i.notes,
-        budgetCategory: i.budgetCategory,
+        budgetCategory: i.budgetCategory, destination: i.destination,
       })),
     });
     setSaving(false);
@@ -224,6 +227,7 @@ export function OrderForm({ vendors, edit, draft, unusedCategories = [] }: {
         reasoning:  i.reasoning || undefined,
         notes:      i.notes || undefined,
         budgetCategory: i.budgetCategory || null,
+        destination: i.destination || "NONE",
       })),
     };
     start(async () => {
@@ -264,7 +268,7 @@ export function OrderForm({ vendors, edit, draft, unusedCategories = [] }: {
     // Still on an empty last item: stay there rather than piling up blank ones
     const last = items[items.length - 1];
     if (last && !last.link.trim() && !last.name.trim()) { linkBox(last.key)?.focus(); return; }
-    const added = blankItem({ subTeam: items[items.length - 1]?.subTeam });
+    const added = blankItem({ subTeam: items[items.length - 1]?.subTeam, destination: items[items.length - 1]?.destination });
     focusAdded.current = added.key;
     setItems((list) => [...list, added]);
   }
@@ -413,6 +417,17 @@ export function OrderForm({ vendors, edit, draft, unusedCategories = [] }: {
                 {ORDER_BUDGET_OPTIONS.filter((o) => o.value !== category && (o.value === item.budgetCategory || !unusedCategories.includes(o.value))).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </Labeled>
+            <Labeled label="When it arrives">
+              <select className={`${inputCls} disabled:opacity-60`} value={item.destination} disabled={item.status === "ARRIVED"}
+                onChange={(e) => update(item.key, { destination: e.target.value })}>
+                {DESTINATION_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.value === "NONE" ? o.label : `Add to ${o.label.toLowerCase()}`}</option>)}
+              </select>
+              <span className="block text-small text-(--color-text-secondary)">
+                {item.destination === "TOOLS" ? "Each one becomes a tool with its own tag."
+                  : item.destination === "INVENTORY" ? "Added to inventory stock."
+                  : "Not added to inventory or tools — consumables, services, shirts…"}
+              </span>
+            </Labeled>
           </div>
           <Labeled label="Reasoning">
             <textarea className={cn(inputCls, "min-h-16")} rows={2} value={item.reasoning}
@@ -427,7 +442,7 @@ export function OrderForm({ vendors, edit, draft, unusedCategories = [] }: {
 
       {!edit?.complete && (
         <button type="button"
-          onClick={() => setItems((list) => [...list, blankItem({ subTeam: list[list.length - 1]?.subTeam })])}
+          onClick={() => setItems((list) => [...list, blankItem({ subTeam: list[list.length - 1]?.subTeam, destination: list[list.length - 1]?.destination })])}
           className="w-full rounded-lg border-2 border-dashed border-(--color-border) py-3 text-sm font-medium text-(--color-text-secondary) hover:border-(--color-primary) hover:text-(--color-primary) transition-colors">
           + Add another item
         </button>

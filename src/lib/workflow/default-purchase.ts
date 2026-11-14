@@ -46,7 +46,7 @@ export const DEFAULT_PURCHASE_WORKFLOW: WorkflowDef = {
       key: "receive",
       type: "receive",
       name: "Arrive & stock",
-      description: "Anyone marks items Arrived as they show up; each is added to inventory. Done when every item has arrived.",
+      description: "Anyone marks items Arrived as they show up; each goes to inventory or tools if the order says so. Done when every item has arrived.",
       roles: ["TEAM_MEMBER", "BUILD_LEAD", "INVENTORY_ADMIN", "ORDER_APPROVER", "SAFETY_CAPTAIN", "BUYER", "TEAM_LEADERSHIP", "MENTOR", "HEAD_MENTOR"],
       notify:  { roles: [], requester: true, discord: false },
       effects: { addStock: true, recordExpense: true },
