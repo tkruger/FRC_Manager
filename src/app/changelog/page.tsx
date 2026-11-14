@@ -11,11 +11,12 @@ type Release = { version: string; date: string; title: string; items: React.Reac
 
 const RELEASES: Release[] = [
   {
-    version: "1.20", date: "November 2026", title: "Package tracking",
+    version: "1.20", date: "November 2026", title: "Package tracking & where items go",
     items: [
       <><b>Know when packages arrive.</b> With a Track123 key, tracking numbers are followed across UPS, FedEx, USPS, DHL and more — everyone on the order is told when it&apos;s delivered.</>,
       <>Where each package is and when it&apos;s due, right on the order&apos;s items.</>,
       <>Add tracking as a link or just the tracking number.</>,
+      <><b>Choose where bought items go</b> — inventory, tools (one per unit, each with its own tag), or nowhere.</>,
     ],
   },
   {

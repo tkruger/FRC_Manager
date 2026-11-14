@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.20.1 — 2026-11-14
+
 - **Choose where each ordered item goes when it arrives**: every item on an order has **When it arrives** — **Not added anywhere** (the default, for consumables, services, shirts…), **Add to inventory**, or **Add to tools**. Bought tools no longer end up in inventory: marking one arrived adds one tool per unit, each with its own TOOL-#### tag, its model (the part number) and price as replacement cost
 - Items ordered from Inventory (low stock, the order queue, Order a new item) are set to inventory, as before; items already on orders keep going to inventory. It can be changed with Edit order until the item arrives, and the item list shows where each one goes
 
