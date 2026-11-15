@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { LegalPage } from "@/components/legal/LegalPage";
 import { APP_VERSION } from "@/lib/version";
 
@@ -10,6 +11,13 @@ export const metadata: Metadata = { title: "What's new — FRC Manager" };
 type Release = { version: string; date: string; title: string; items: React.ReactNode[] };
 
 const RELEASES: Release[] = [
+  {
+    version: "1.21", date: "November 2026", title: "What's FRC Manager?",
+    items: [
+      <><b>A new <Link href="/about">About page</Link></b> for anyone wondering what FRC Manager is — the main features with screenshots, and the short version of the terms.</>,
+      <>The sign-in page links to it with a colorful <b>What&apos;s FRC Manager?</b> card — beside the sign-in card on a computer, a banner above it on phones.</>,
+    ],
+  },
   {
     version: "1.20", date: "November 2026", title: "Package tracking & where items go",
     items: [
