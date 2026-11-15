@@ -1,31 +1,42 @@
 import Link from "next/link";
 import { SOURCE_URL } from "@/components/legal/LegalPage";
+import { LogoMark } from "@/components/brand/LogoMark";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-(--color-surface) px-4 py-12">
+    <div className="relative min-h-screen flex items-center justify-center bg-(--color-surface) px-4 py-12">
+      {/* For anyone who lands here not knowing what this is: the public About page.
+          Top right on wide screens; on phones it sits in the flow above the wordmark. */}
+      <Link
+        href="/about"
+        className="hidden sm:inline-flex absolute top-5 right-5 items-center gap-1.5 rounded-full border border-(--color-border) bg-(--color-surface-raised) px-3.5 py-1.5 text-small font-medium text-(--color-text-secondary) hover:text-(--color-primary) hover:border-(--color-primary)/40 transition-colors"
+      >
+        What&apos;s FRC Manager? <span aria-hidden="true">→</span>
+      </Link>
       <div className="w-full max-w-md">
         {/* Logo / wordmark */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 rounded bg-(--color-primary) flex items-center justify-center">
-              <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-white" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z" />
-              </svg>
-            </div>
+            <LogoMark />
             <span className="text-h2 font-bold text-(--color-text-primary)">FRC Manager</span>
           </div>
           <p className="text-small text-(--color-text-secondary)">
             Team Management Suite
+            <span className="sm:hidden">
+              <span className="mx-1.5">·</span>
+              <Link href="/about" className="font-medium text-(--color-secondary) hover:underline">What&apos;s this?</Link>
+            </span>
           </p>
         </div>
         {children}
         <p className="mt-8 text-center text-small text-(--color-text-secondary)">
-          <Link href="/terms" className="hover:text-(--color-primary)">Terms of Service</Link>
+          <Link href="/about" className="whitespace-nowrap hover:text-(--color-primary)">About</Link>
           <span className="mx-2">·</span>
-          <Link href="/privacy" className="hover:text-(--color-primary)">Privacy Policy</Link>
+          <Link href="/terms" className="whitespace-nowrap hover:text-(--color-primary)">Terms of Service</Link>
           <span className="mx-2">·</span>
-          <a href={SOURCE_URL} target="_blank" rel="noopener noreferrer" className="hover:text-(--color-primary)">Source code</a>
+          <Link href="/privacy" className="whitespace-nowrap hover:text-(--color-primary)">Privacy Policy</Link>
+          <span className="mx-2">·</span>
+          <a href={SOURCE_URL} target="_blank" rel="noopener noreferrer" className="whitespace-nowrap hover:text-(--color-primary)">Source code</a>
         </p>
       </div>
     </div>

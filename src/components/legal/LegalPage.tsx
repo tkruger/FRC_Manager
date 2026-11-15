@@ -15,6 +15,7 @@ export function LegalPage({ title, updated, updatedLabel = "Last updated", closa
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 space-y-6">
         <nav className={`flex flex-wrap gap-4 text-small text-(--color-text-secondary) ${closable ? "pr-12" : ""}`}>
           <Link href="/" className="font-semibold text-(--color-text-primary) hover:text-(--color-primary)">FRC Manager</Link>
+          <Link href="/about" className="hover:text-(--color-primary)">About</Link>
           <Link href={`/terms${q}`} className="hover:text-(--color-primary)">Terms of Service</Link>
           <Link href={`/privacy${q}`} className="hover:text-(--color-primary)">Privacy Policy</Link>
           <Link href={`/changelog${q}`} className="hover:text-(--color-primary)">What&apos;s new</Link>

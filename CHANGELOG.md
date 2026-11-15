@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **About page** (/about): a public page explaining what FRC Manager is — the main features with screenshots, everything else at a glance, and the short version of the Terms of Service (free, open source, run on a best-effort basis). Linked from the sign-in screens ("What’s FRC Manager?" top right; "What’s this?" under the name on phones) and the legal pages. The sign-in page is still where the site opens
+
 ## 1.20.1 — 2026-11-14
 
 - **Choose where each ordered item goes when it arrives**: every item on an order has **When it arrives** — **Not added anywhere** (the default, for consumables, services, shirts…), **Add to inventory**, or **Add to tools**. Bought tools no longer end up in inventory: marking one arrived adds one tool per unit, each with its own TOOL-#### tag, its model (the part number) and price as replacement cost

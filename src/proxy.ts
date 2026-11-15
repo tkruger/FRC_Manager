@@ -12,6 +12,7 @@ const { auth } = NextAuth(authConfig);
 const PUBLIC_EXACT = new Set([
   "/login", "/register", "/register/finish", "/pending",
   "/forgot-password",
+  "/about",                      // What FRC Manager is — linked from the sign-in screens
   "/terms", "/privacy",          // Legal pages — linked from Discord and the sign-in screens
   "/changelog",                  // What's new — linked from the version number in the footer
   "/sw.js",                      // Service worker (push notifications)
