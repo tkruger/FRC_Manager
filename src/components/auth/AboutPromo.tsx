@@ -10,13 +10,16 @@ const CHIPS = [
   ["🏆", "Competitions"],
 ] as const;
 
+/** The promo colors: the theme color into its second color */
+const PROMO_GRADIENT = "linear-gradient(140deg, color-mix(in srgb, var(--color-primary) 92%, black) 10%, var(--color-secondary) 100%)";
+
 /** Beside the sign-in card on wide screens: what FRC Manager is, linking to the About page */
 export function AboutPromo({ className = "" }: { className?: string }) {
   return (
     <Link
       href="/about"
       className={`group relative block overflow-hidden rounded-2xl p-8 pb-0 text-white shadow-2xl shadow-black/30 ring-1 ring-white/10 transition-transform duration-200 hover:-translate-y-0.5 ${className}`}
-      style={{ background: "linear-gradient(140deg, color-mix(in srgb, var(--color-primary) 92%, black) 10%, var(--color-secondary) 100%)" }}
+      style={{ background: PROMO_GRADIENT }}
     >
       {/* Soft glows */}
       <div aria-hidden="true" className="pointer-events-none absolute -top-24 -right-16 h-64 w-64 rounded-full bg-white/15 blur-3xl" />
@@ -54,6 +57,25 @@ export function AboutPromo({ className = "" }: { className?: string }) {
           <Image src="/about/tasks.png" alt="" width={1440} height={900} sizes="560px" className="w-full h-auto rounded-lg" priority />
         </div>
       </div>
+    </Link>
+  );
+}
+
+/** Narrower screens: a slim banner in the same colors, between the wordmark and the sign-in card */
+export function AboutBanner({ className = "" }: { className?: string }) {
+  return (
+    <Link
+      href="/about"
+      className={`group relative flex items-center gap-3 overflow-hidden rounded-xl px-4 py-3 text-white shadow-lg shadow-black/25 ring-1 ring-white/10 ${className}`}
+      style={{ background: PROMO_GRADIENT }}
+    >
+      <div aria-hidden="true" className="pointer-events-none absolute -top-10 -right-6 h-24 w-24 rounded-full bg-white/20 blur-2xl" />
+      <span aria-hidden="true" className="relative text-2xl leading-none">🤖</span>
+      <span className="relative min-w-0 flex-1">
+        <span className="block text-[0.6875rem] font-semibold uppercase tracking-wider text-white/75">New here?</span>
+        <span className="block font-bold leading-tight">What&apos;s FRC Manager?</span>
+      </span>
+      <span aria-hidden="true" className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-gray-900 shadow-md transition-transform duration-200 group-hover:translate-x-0.5">→</span>
     </Link>
   );
 }
