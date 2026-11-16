@@ -12,6 +12,12 @@ type Release = { version: string; date: string; title: string; items: React.Reac
 
 const RELEASES: Release[] = [
   {
+    version: "1.23", date: "November 2026", title: "Find any order",
+    items: [
+      <>The <b>All</b> tab on Orders is now a list of every order — finished ones too — that you can <b>search</b> (items, vendors, part numbers, who asked), <b>filter</b> by status, person and season, <b>sort</b> by any column, and page through.</>,
+    ],
+  },
+  {
     version: "1.22", date: "November 2026", title: "Split an order",
     items: [
       <><b>Split off items</b> from a draft into a new order of its own — tick the items, name it, done. The new draft is shared with the same people.</>,
