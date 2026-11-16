@@ -12,6 +12,12 @@ type Release = { version: string; date: string; title: string; items: React.Reac
 
 const RELEASES: Release[] = [
   {
+    version: "1.22", date: "November 2026", title: "Split an order",
+    items: [
+      <><b>Split off items</b> from a draft into a new order of its own — tick the items, name it, done. The new draft is shared with the same people.</>,
+    ],
+  },
+  {
     version: "1.21", date: "November 2026", title: "What's FRC Manager?",
     items: [
       <><b>A new <Link href="/about">About page</Link></b> for anyone wondering what FRC Manager is — the main features with screenshots, and the short version of the terms.</>,

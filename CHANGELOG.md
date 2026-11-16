@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.22.0 — 2026-11-16
+
 - **Split an order**: on a draft or a new order, **Split off items** lets you tick items and move them into a new draft of their own (name it as you go). The order keeps the rest and is saved; the new draft is shared with the same people as the original, with the same budget category
 
 ## 1.21.0 — 2026-11-15
