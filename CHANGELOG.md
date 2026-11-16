@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Orders → All is now a list**: every order, including the finished ones that drop off Open, in a table you can search (titles, items, vendors, part numbers, who asked), filter by status, requester and season, sort by any column, and page through (25, 50 or 100 at a time). Filters live in the address, so a filtered list can be bookmarked or shared
+
 ## 1.22.0 — 2026-11-16
 
 - **Split an order**: on a draft or a new order, **Split off items** lets you tick items and move them into a new draft of their own (name it as you go). The order keeps the rest and is saved; the new draft is shared with the same people as the original, with the same budget category

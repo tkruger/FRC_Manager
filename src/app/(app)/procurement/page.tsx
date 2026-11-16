@@ -11,11 +11,13 @@ import { definitionFor, resolveCurrentStep } from "@/lib/workflow/engine";
 import { ITEM_STATUSES, ITEM_STATUS_INFO, ORDER_ADMIN_ROLES } from "@/lib/orders/constants";
 import { PageHeader } from "@/components/PageHeader";
 import { DeleteDraftButton } from "./DeleteDraftButton";
+import { AllOrdersList, type AllOrdersParams } from "./AllOrdersList";
 
 const OPEN = ["SUBMITTED", "APPROVED", "ORDERED", "PARTIAL_RECEIVED"] as const;
 
-export default async function OrdersPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
-  const { view = "open" } = await searchParams;
+export default async function OrdersPage({ searchParams }: { searchParams: Promise<{ view?: string } & AllOrdersParams> }) {
+  const sp = await searchParams;
+  const view = sp.view ?? "open";
   const session = await auth();
   if (!session?.user?.teamId) redirect("/dashboard");
 
@@ -42,7 +44,8 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   };
 
   const [orders, itemCounts, drafts] = await Promise.all([
-    prisma.purchaseRequest.findMany({
+    // The All tab loads its own list (search, filters, sorting, pages)
+    view !== "open" && view !== "mine" ? [] : prisma.purchaseRequest.findMany({
       where,
       include: {
         requestedBy: { select: { name: true } },
@@ -176,6 +179,8 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
             ))}
           </div>
         )
+      ) : view === "all" ? (
+        <AllOrdersList teamId={session.user.teamId} activeSeasonId={activeSeason.id} params={sp} />
       ) : rows.length === 0 ? (
         <div className="card text-center py-10">
           <p className="text-body text-(--color-text-secondary) mb-4">{view === "open" ? "No open orders." : "No orders yet."}</p>
