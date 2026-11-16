@@ -147,6 +147,62 @@ export async function saveOrderDraftAction(input: unknown): Promise<Result<{ dra
   return { success: true, draftId: created.id };
 }
 
+const SplitSchema = DraftSchema.extend({
+  /** The items being split off into a new draft (the rest stay in `items`) */
+  moved:   DraftSchema.shape.items,
+  newName: z.string().max(120),
+});
+
+/**
+ * Split some items off an in-progress order into a draft of their own. Saves what's left
+ * (creating the draft if it wasn't saved yet) and the new draft together. The new draft is
+ * the splitter's, shared with the same people as the one it came from.
+ */
+export async function splitOrderDraftAction(input: unknown): Promise<Result<{ draftId: string; newDraftId: string; newName: string }>> {
+  const who = await actor();
+  if (!who) return { success: false, error: "Not authenticated." };
+  if (isViewOnly(who.roles)) return { success: false, error: "You can't change orders." };
+  const parsed = SplitSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: "Couldn't split this order." };
+
+  const { draftId, items, moved } = parsed.data;
+  const hasContent = (i: { name: string; link: string }) => !!(i.name.trim() || i.link.trim());
+  if (!moved.some(hasContent)) return { success: false, error: "Pick the items to split off." };
+  if (!items.some(hasContent)) return { success: false, error: "Leave at least one item on this order." };
+
+  const budgetCategory = parsed.data.budgetCategory ?? null;
+  const name = parsed.data.name.trim() || "Untitled order";
+  const newName = parsed.data.newName.trim() || `${name} (split)`;
+
+  const existing = draftId
+    ? await prisma.orderDraft.findFirst({
+        where:  { id: draftId, teamId: who.teamId, ...editableDrafts(who.id) },
+        select: { id: true, userId: true, collaborators: { select: { userId: true } } },
+      })
+    : null;
+  if (draftId && !existing) return { success: false, error: "That draft is gone, or you can't change it. Save it as a new draft first." };
+
+  // Everyone who could work on the original can work on the split-off part
+  const sharedWith = existing
+    ? [...new Set([existing.userId, ...existing.collaborators.map((c) => c.userId)])].filter((id) => id !== who.id)
+    : [];
+
+  const [kept, created] = await prisma.$transaction([
+    existing
+      ? prisma.orderDraft.update({ where: { id: existing.id }, data: { name, items, budgetCategory, lastEditedById: who.id }, select: { id: true } })
+      : prisma.orderDraft.create({ data: { teamId: who.teamId, userId: who.id, name, items, budgetCategory, lastEditedById: who.id }, select: { id: true } }),
+    prisma.orderDraft.create({
+      data: {
+        teamId: who.teamId, userId: who.id, name: newName, items: moved, budgetCategory, lastEditedById: who.id,
+        collaborators: sharedWith.length ? { create: sharedWith.map((userId) => ({ userId })) } : undefined,
+      },
+      select: { id: true },
+    }),
+  ]);
+  revalidatePath("/procurement");
+  return { success: true, draftId: kept.id, newDraftId: created.id, newName };
+}
+
 /** Invite a teammate to work on your draft (its maker only) */
 export async function inviteDraftCollaboratorAction(draftId: string, userId: string): Promise<Result> {
   plainArgs(draftId, userId);

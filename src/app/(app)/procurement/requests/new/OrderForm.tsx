@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { cn, formatCurrency } from "@/lib/utils";
-import { createOrderAction, editOrderAction, lookupProductAction, saveOrderDraftAction } from "@/app/actions/orders";
+import { createOrderAction, editOrderAction, lookupProductAction, saveOrderDraftAction, splitOrderDraftAction } from "@/app/actions/orders";
 import type { ProductChoice } from "@/lib/orders/lookup";
 import { ProductPicker } from "./ProductPicker";
 import { toast } from "@/components/ui/toast";
@@ -12,7 +13,7 @@ import { DESTINATION_OPTIONS, IMPORTANCE_OPTIONS } from "@/lib/orders/constants"
 import { SUBTEAM_OPTIONS } from "@/lib/schedule-helpers";
 import { ORDER_BUDGET_OPTIONS, BUDGET_CATEGORY_LABELS } from "@/lib/budget-categories";
 import { parseOrderCsv } from "@/lib/orders/import-csv";
-import { Upload } from "lucide-react";
+import { Scissors, Upload } from "lucide-react";
 
 interface Item {
   key:        number;
@@ -66,6 +67,14 @@ function blankItem(defaults?: Partial<Item>): Item {
 /** The form's own fields, as saved in a draft */
 export type DraftItem = Omit<Item, "key" | "lookup" | "id" | "ref">;
 
+/** An item as saved in a draft */
+const toDraftItem = (i: Item): DraftItem => ({
+  link: i.link, vendorName: i.vendorName, name: i.name, partNumber: i.partNumber, unitCost: i.unitCost,
+  quantity: i.quantity, subTeam: i.subTeam, importance: i.importance, reasoning: i.reasoning, notes: i.notes,
+  budgetCategory: i.budgetCategory, destination: i.destination,
+});
+const hasItemContent = (i: Item) => !!(i.name.trim() || i.link.trim());
+
 /** Values for editing an existing order */
 export interface OrderFormEdit {
   requestId: string;
@@ -99,6 +108,12 @@ export function OrderForm({ vendors, edit, draft, unusedCategories = [] }: {
   });
   const [draftId, setDraftId]   = useState(draft?.id ?? null);
   const [savingDraft, setSaving] = useState(false);
+  // Splitting items off into a draft of their own: which are picked, and what the new one is called
+  const [splitting, setSplitting] = useState(false);
+  const [picked, setPicked] = useState<Set<number>>(new Set());
+  const [splitName, setSplitName] = useState("");
+  const [splitPending, setSplitPending] = useState(false);
+  const [splitDone, setSplitDone] = useState<{ id: string; name: string; count: number } | null>(null);
   // A link that sells several products waits here for the person to pick
   const [picker, setPicker] = useState<{ itemKey: number; vendorName: string | null; choices: ProductChoice[] } | null>(null);
   const locked = edit?.locked ?? [];
@@ -191,11 +206,7 @@ export function OrderForm({ vendors, edit, draft, unusedCategories = [] }: {
       draftId,
       name,
       budgetCategory: category || null,
-      items: items.map((i): DraftItem => ({
-        link: i.link, vendorName: i.vendorName, name: i.name, partNumber: i.partNumber, unitCost: i.unitCost,
-        quantity: i.quantity, subTeam: i.subTeam, importance: i.importance, reasoning: i.reasoning, notes: i.notes,
-        budgetCategory: i.budgetCategory, destination: i.destination,
-      })),
+      items: items.map(toDraftItem),
     });
     setSaving(false);
     if (!res.success) { setError(res.error); return; }
@@ -203,6 +214,39 @@ export function OrderForm({ vendors, edit, draft, unusedCategories = [] }: {
     // Keep the draft in the address so a refresh (or a bookmark) brings it back
     router.replace(`/procurement/requests/new?draft=${res.draftId}`, { scroll: false });
     toast.success("Draft saved — find it under Orders → Drafts");
+  }
+
+  function startSplit() {
+    setSplitDone(null);
+    setPicked(new Set());
+    setSplitName(name.trim() ? `${name.trim()} (part 2)` : "");
+    setSplitting(true);
+  }
+  function togglePicked(key: number) {
+    setPicked((p) => { const n = new Set(p); if (n.has(key)) n.delete(key); else n.add(key); return n; });
+  }
+
+  /** Move the picked items to a new draft; this one keeps the rest (and is saved) */
+  async function splitOff() {
+    setError(null);
+    const moved = items.filter((i) => picked.has(i.key));
+    const kept  = items.filter((i) => !picked.has(i.key));
+    if (!moved.some(hasItemContent)) { setError("Pick the items to split off."); return; }
+    if (!kept.some(hasItemContent)) { setError("Leave at least one item on this order — or just rename it."); return; }
+    setSplitPending(true);
+    const res = await splitOrderDraftAction({
+      draftId, name, budgetCategory: category || null,
+      items: kept.map(toDraftItem), moved: moved.map(toDraftItem), newName: splitName,
+    });
+    setSplitPending(false);
+    if (!res.success) { setError(res.error); return; }
+    setItems(kept);
+    setDraftId(res.draftId);
+    setSplitting(false);
+    setPicked(new Set());
+    setSplitDone({ id: res.newDraftId, name: res.newName, count: moved.length });
+    router.replace(`/procurement/requests/new?draft=${res.draftId}`, { scroll: false });
+    toast.success(`Moved ${moved.length} item${moved.length === 1 ? "" : "s"} to “${res.newName}”`);
   }
 
   const total = items.reduce((s, i) => s + (Number(i.unitCost) || 0) * (Number(i.quantity) || 0), 0);
@@ -322,14 +366,41 @@ export function OrderForm({ vendors, edit, draft, unusedCategories = [] }: {
 
       <datalist id="vendor-names">{vendors.map((v) => <option key={v} value={v} />)}</datalist>
 
+      {splitDone && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-(--color-success)/30 bg-(--color-success)/10 px-4 py-3 text-sm text-(--color-text-primary)">
+          <span>Moved {splitDone.count} item{splitDone.count === 1 ? "" : "s"} to the draft <b>{splitDone.name}</b>. This order is saved with the rest.</span>
+          <Link href={`/procurement/requests/new?draft=${splitDone.id}`} className="font-medium text-(--color-secondary) hover:underline">Open it →</Link>
+        </div>
+      )}
+
+      {/* Split some items off into an order of their own (new orders and drafts) */}
+      {!edit && items.filter(hasItemContent).length > 1 && !splitting && (
+        <div className="flex justify-end">
+          <Button type="button" size="sm" variant="outline" onClick={startSplit}>
+            <Scissors className="h-4 w-4" aria-hidden /> Split off items
+          </Button>
+        </div>
+      )}
+      {splitting && (
+        <p className="rounded-lg border border-(--color-secondary)/30 bg-(--color-secondary)/10 px-4 py-3 text-sm text-(--color-text-primary)">
+          <b>Pick the items to move to a new order.</b> They become a draft of their own — name it below; this order keeps the rest.
+        </p>
+      )}
+
       {items.map((item, idx) => (
-        <fieldset key={item.key} data-item-key={item.key} className="card space-y-3">
-          <div className="flex items-center justify-between">
-            <legend className="text-h3 text-(--color-text-primary)">
+        <fieldset key={item.key} data-item-key={item.key} className={cn("card space-y-3", splitting && picked.has(item.key) && "ring-2 ring-(--color-secondary)")}>
+          <div className="flex items-center justify-between gap-3">
+            <legend className="flex items-center gap-2.5 text-h3 text-(--color-text-primary)">
+              {splitting && (
+                <input type="checkbox" className="h-5 w-5 shrink-0 accent-(--color-secondary) cursor-pointer" checked={picked.has(item.key)}
+                  onChange={() => togglePicked(item.key)} aria-label={`Split off ${item.name || `item ${idx + 1}`}`} />
+              )}
+              <span>
               {item.ref ? <><span className="font-mono text-sm text-(--color-text-secondary) mr-2">{item.ref}</span>{item.name || `Item ${idx + 1}`}</> : `${edit ? "New item" : "Item"} ${idx + 1}`}
               {isPaid(item) && <span className="ml-2 align-middle badge badge-info">{item.status === "ARRIVED" ? "Arrived" : "Ordered"}</span>}
+              </span>
             </legend>
-            {(items.length > 1 || locked.length > 0) && !isPaid(item) && (
+            {(items.length > 1 || locked.length > 0) && !isPaid(item) && !splitting && (
               <Button type="button" variant="dangerOutline" size="sm"
                 onClick={() => setItems((list) => list.filter((i) => i.key !== item.key))}>
                 Remove
@@ -448,6 +519,21 @@ export function OrderForm({ vendors, edit, draft, unusedCategories = [] }: {
         </button>
       )}
 
+      {splitting ? (
+      <div className="sticky-above-tabs z-10 space-y-2 rounded-lg bg-(--color-surface) border border-(--color-secondary)/50 p-3 shadow-lg">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-sm text-(--color-text-primary) shrink-0"><b>{picked.size}</b> picked</p>
+          <input className={cn(inputCls, "min-w-0 flex-1 basis-48")} maxLength={120} value={splitName} onChange={(e) => setSplitName(e.target.value)}
+            placeholder="Name for the new order" aria-label="Name for the new order" />
+        </div>
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="outline" onClick={() => { setSplitting(false); setPicked(new Set()); setError(null); }}>Cancel</Button>
+          <Button type="button" onClick={splitOff} isLoading={splitPending} disabled={picked.size === 0}>
+            Move {picked.size || ""} to new draft
+          </Button>
+        </div>
+      </div>
+      ) : (
       <div className="sticky-above-tabs z-10 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-(--color-surface) border border-(--color-border) p-3 shadow-lg">
         <p className="text-sm text-(--color-text-primary)">
           {items.length} item{items.length === 1 ? "" : "s"} · <b>{formatCurrency(total)}</b>
@@ -466,6 +552,7 @@ export function OrderForm({ vendors, edit, draft, unusedCategories = [] }: {
           <Button type="submit" isLoading={pending}>{edit ? (edit.resubmit ? "Resubmit order" : "Save changes") : "Submit order"}</Button>
         </div>
       </div>
+      )}
     </form>
   );
 }

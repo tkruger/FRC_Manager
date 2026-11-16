@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Split an order**: on a draft or a new order, **Split off items** lets you tick items and move them into a new draft of their own (name it as you go). The order keeps the rest and is saved; the new draft is shared with the same people as the original, with the same budget category
+
 ## 1.21.0 — 2026-11-15
 
 - **About page** (/about): a public page explaining what FRC Manager is — the main features with screenshots, everything else at a glance, and the short version of the Terms of Service (free, open source, run on a best-effort basis). Linked from the sign-in screens — a colorful "What’s FRC Manager?" card beside the sign-in card on wide screens, and a slim banner in the same colors above it on phones and tablets — and from the legal pages. The sign-in page is still where the site opens
