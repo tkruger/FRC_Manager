@@ -3,7 +3,7 @@
 // notification, sends web push to their devices, and — for topics that can — emails them.
 // Server-only.
 
-import webpush from "web-push";
+import * as webpush from "web-push";
 import { prisma } from "@/lib/prisma";
 import { rolesThatImply } from "@/lib/rbac";
 import type { NotificationType, Role } from "@/generated/prisma";

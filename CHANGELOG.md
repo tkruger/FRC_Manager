@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Dependencies upgraded**: Next.js 16.4.6 (fixes a moderate security advisory), React 19.3, Prisma 7.10.1, and every other package to its latest release in range; plus major updates to web-push 4, dotenv 18, @hookform/resolvers 7 and ESLint 10. An older copy of zod pulled in by Vercel Blob is pinned to the app's zod, so `npm audit` reports no vulnerabilities
 - **Registering a new team is clearly for the Head Mentor**: Create account says up front that a team new to FRC Manager has to be registered by its Head Mentor. Typing a team number that isn't on FRC Manager yet shows a prominent notice — registering makes you the Head Mentor, students and other mentors should ask theirs instead, and the FRC Manager admins will likely email you to confirm — with a required "I'm the Head Mentor of Team N" box (also checked on the server, for Google/Discord sign-ups too). The waiting page tells new teams to watch their email
 
 ## 1.23.0 — 2026-11-16
