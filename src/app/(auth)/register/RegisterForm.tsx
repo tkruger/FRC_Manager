@@ -10,6 +10,7 @@ import { Field } from "@/components/ui/field";
 import { OAuthButtons, OrDivider, type OAuthProvider } from "@/components/auth/OAuthButtons";
 import { TermsCheckbox } from "@/components/legal/TermsCheckbox";
 import { ParentOfField } from "@/components/auth/ParentOfField";
+import { TeamNumberField } from "@/components/auth/TeamNumberField";
 import { FULL_NAME_HINT } from "@/lib/names";
 
 export function RegisterForm({ providers }: { providers: OAuthProvider[] }) {
@@ -28,8 +29,11 @@ export function RegisterForm({ providers }: { providers: OAuthProvider[] }) {
   return (
     <div className="card">
       <h1 className="text-h2 text-(--color-text-primary) mb-1">Create account</h1>
-      <p className="text-small text-(--color-text-secondary) mb-6">
+      <p className="text-small text-(--color-text-secondary) mb-3">
         Enter your team&apos;s access code to join instantly, or submit a request for admin approval.
+      </p>
+      <p className="text-small text-(--color-text-secondary) mb-6 rounded-md bg-(--color-warning)/10 border border-(--color-warning)/30 px-3 py-2">
+        <b className="text-(--color-text-primary)">Team not on FRC Manager yet?</b> Your <b className="text-(--color-text-primary)">Head Mentor</b> has to register it first — the admins usually confirm that by email.
       </p>
 
       {state?.success && state.activated && (
@@ -84,14 +88,7 @@ export function RegisterForm({ providers }: { providers: OAuthProvider[] }) {
           placeholder="At least 8 characters"
           error={errors.password?.[0]}
         />
-        <Field
-          label="FRC Team Number"
-          name="teamNumber"
-          type="number"
-          required
-          placeholder="e.g. 254"
-          error={errors.teamNumber?.[0]}
-        />
+        <TeamNumberField error={errors.teamNumber?.[0]} />
 
         <ParentOfField error={errors.parentOf?.[0]} />
 

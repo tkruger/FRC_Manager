@@ -66,8 +66,13 @@ export async function registerAction(
     return { success: false, error: "An account with this email already exists." };
   }
 
+  const confirmHeadMentor = formData.get("confirmHeadMentor") === "on";
+  if (!confirmHeadMentor && !await prisma.team.count({ where: { teamNumber } })) {
+    return { success: false, error: "Please fix the errors below.", fieldErrors: { teamNumber: [NEW_TEAM_HEAD_MENTOR(teamNumber)] } };
+  }
+
   const hashed = await bcrypt.hash(password, 12);
-  const result = await joinTeamOnRegistration({ name, teamNumber, accessCode, registrationNote, parentOf, create: { email, password: hashed } });
+  const result = await joinTeamOnRegistration({ name, teamNumber, accessCode, registrationNote, parentOf, confirmHeadMentor, create: { email, password: hashed } });
 
   // Ask them to confirm the address (needed before Google/Discord can link to this account)
   if (result.success) {
@@ -88,6 +93,8 @@ async function joinTeamOnRegistration(opts: {
   accessCode?: string;
   registrationNote?: string;
   parentOf?: string;
+  /** Ticked "I'm this team's Head Mentor" — required to register a team that's new to FRC Manager */
+  confirmHeadMentor: boolean;
   create?: { email: string; password: string };
   userId?: string;
 }): Promise<RegisterState> {
@@ -98,6 +105,9 @@ async function joinTeamOnRegistration(opts: {
   let team = await prisma.team.findUnique({ where: { teamNumber } });
   const newTeam = !team;
   if (!team) {
+    if (!opts.confirmHeadMentor) {
+      return { success: false, error: "Please fix the errors below.", fieldErrors: { teamNumber: [NEW_TEAM_HEAD_MENTOR(teamNumber)] } };
+    }
     team = await prisma.team.create({
       data: { teamNumber, name: `Team ${teamNumber}`, status: "PENDING", inventorySubcategories: { create: suggestedSubcategories() } },
     });
@@ -180,7 +190,23 @@ export async function finishRegistrationAction(
     };
   }
 
-  return joinTeamOnRegistration({ ...parsed.data, userId: me.id });
+  return joinTeamOnRegistration({ ...parsed.data, confirmHeadMentor: formData.get("confirmHeadMentor") === "on", userId: me.id });
+}
+
+const NEW_TEAM_HEAD_MENTOR = (n: number) =>
+  `Team ${n} isn't on FRC Manager yet, and only its Head Mentor can register it. If that's you, tick the box to confirm; otherwise ask your Head Mentor to register the team first.`;
+
+export type TeamNumberStatus = "new" | "joining" | "unavailable";
+
+/**
+ * While signing up: is this team on FRC Manager yet? A new team can only be registered by its
+ * Head Mentor, so the form says so before they submit. Limited per address.
+ */
+export async function teamNumberStatusAction(teamNumber: number): Promise<TeamNumberStatus | null> {
+  if (!Number.isInteger(teamNumber) || teamNumber < 1 || teamNumber > 99999) return null;
+  if (!await rateLimit(`teamlookup:ip:${await clientIp()}`, 120, 60 * 60)) return null;
+  const team = await prisma.team.findUnique({ where: { teamNumber }, select: { status: true } });
+  return !team ? "new" : team.status === "DENIED" ? "unavailable" : "joining";
 }
 
 export type LoginState =

@@ -35,7 +35,7 @@ export default async function PendingPage({ searchParams }: { searchParams: Prom
       </h1>
       <p className="text-body text-(--color-text-secondary) mb-6">
         {newTeam
-          ? "Your team is new to FRC Manager, so the FRC Manager admins review it first. Once it's approved you can sign in as your team's Head Mentor."
+          ? "Your team is new to FRC Manager, so the FRC Manager admins review it first — usually by emailing you to confirm you're the team's Head Mentor. Once it's approved you can sign in as the Head Mentor."
           : "Your request to join the team has been submitted. A Head Mentor or team leader will review it shortly."}
       </p>
       <div className="rounded-md bg-(--color-surface-overlay) px-4 py-3 text-small text-(--color-text-secondary) text-left mb-6">
@@ -44,6 +44,7 @@ export default async function PendingPage({ searchParams }: { searchParams: Prom
           {newTeam ? (
             <>
               <li>An FRC Manager admin reviews your team</li>
+              <li><b className="text-(--color-text-primary)">Watch your email</b> — they&apos;ll likely ask you to confirm you&apos;re the Head Mentor. Reply to that email (check spam too)</li>
               <li>Once approved, sign in — you&apos;re the team&apos;s Head Mentor</li>
               <li>Invite your team; you approve them in Team members</li>
             </>

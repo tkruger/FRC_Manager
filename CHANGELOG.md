@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Registering a new team is clearly for the Head Mentor**: Create account says up front that a team new to FRC Manager has to be registered by its Head Mentor. Typing a team number that isn't on FRC Manager yet shows a prominent notice — registering makes you the Head Mentor, students and other mentors should ask theirs instead, and the FRC Manager admins will likely email you to confirm — with a required "I'm the Head Mentor of Team N" box (also checked on the server, for Google/Discord sign-ups too). The waiting page tells new teams to watch their email
+
 ## 1.23.0 — 2026-11-16
 
 - **Orders → All is now a list**: every order, including the finished ones that drop off Open, in a table you can search (titles, items, vendors, part numbers, who asked), filter by status, requester and season, sort by any column, and page through (25, 50 or 100 at a time). Filters live in the address, so a filtered list can be bookmarked or shared

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { TermsCheckbox } from "@/components/legal/TermsCheckbox";
 import { ParentOfField } from "@/components/auth/ParentOfField";
+import { TeamNumberField } from "@/components/auth/TeamNumberField";
 import { FULL_NAME_HINT } from "@/lib/names";
 
 export function FinishRegistrationForm({ name }: { name: string }) {
@@ -33,7 +34,7 @@ export function FinishRegistrationForm({ name }: { name: string }) {
 
       <form action={action} className="space-y-4">
         <Field label="First and last name" name="name" type="text" autoComplete="name" required defaultValue={name} hint={FULL_NAME_HINT} error={errors.name?.[0]} />
-        <Field label="FRC Team Number" name="teamNumber" type="number" inputMode="numeric" required placeholder="e.g. 254" error={errors.teamNumber?.[0]} />
+        <TeamNumberField error={errors.teamNumber?.[0]} />
 
         <ParentOfField error={errors.parentOf?.[0]} />
 
