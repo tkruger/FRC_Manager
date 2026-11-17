@@ -12,6 +12,13 @@ type Release = { version: string; date: string; title: string; items: React.Reac
 
 const RELEASES: Release[] = [
   {
+    version: "1.24", date: "November 2026", title: "New teams start with the Head Mentor",
+    items: [
+      <>Signing up with a team number that isn&apos;t on FRC Manager yet now says plainly that <b>only the team&apos;s Head Mentor</b> should register it, and that the FRC Manager admins will likely <b>email to confirm</b>. Students and other mentors are pointed to their Head Mentor instead.</>,
+      <>Under the hood: everything FRC Manager is built on has been updated, including a security fix.</>,
+    ],
+  },
+  {
     version: "1.23", date: "November 2026", title: "Find any order",
     items: [
       <>The <b>All</b> tab on Orders is now a list of every order — finished ones too — that you can <b>search</b> (items, vendors, part numbers, who asked), <b>filter</b> by status, person and season, <b>sort</b> by any column, and page through.</>,
