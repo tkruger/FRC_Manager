@@ -27,7 +27,11 @@ export async function teamEmailReady(teamId: string): Promise<boolean> {
   return !!server?.enabled;
 }
 
-type Mail = { to: string; subject: string; html: string; text: string; /** Replies go here (e.g. feedback → its sender) */ replyTo?: string };
+type Mail = {
+  to: string; subject: string; html: string; text: string;
+  /** Replies go here (e.g. feedback → its sender) */ replyTo?: string;
+  /** App-service emails only: copied to these addresses, who also get replies */ cc?: string[];
+};
 
 /**
  * Send an email. Pass `teamId` for team emails: they only go out through the team's own email,
@@ -76,7 +80,8 @@ async function sendViaService(msg: Mail): Promise<{ sent: boolean; error?: strin
         subject: msg.subject,
         html:    msg.html,
         text:    msg.text,
-        ...(msg.replyTo ? { reply_to: msg.replyTo } : {}),
+        ...(msg.cc?.length ? { cc: msg.cc } : {}),
+        ...(msg.replyTo || msg.cc?.length ? { reply_to: [...(msg.replyTo ? [msg.replyTo] : []), ...(msg.cc ?? [])] } : {}),
       }),
       signal: AbortSignal.timeout(10_000),
     });

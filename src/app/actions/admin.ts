@@ -8,6 +8,7 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { teamApproved } from "@/lib/notify/events";
 import { sendApprovalEmail } from "@/lib/notify/approval-email";
+import { sendTeamRequestEmail } from "@/lib/notify/team-request-email";
 import { after } from "next/server";
 import { plainArgs } from "@/lib/action-args";
 
@@ -113,6 +114,18 @@ export async function deleteTeamRequestAction(teamId: string): Promise<Result> {
 
   refresh();
   return { success: true, message: `Team ${team.teamNumber}'s request was deleted. The team number can register again.` };
+}
+
+/** Email the person who registered a waiting team (again) to check they're its Head Mentor, super admins on CC. */
+export async function resendTeamRequestEmailAction(teamId: string): Promise<Result> {
+  plainArgs(teamId);
+  const me = await requireSuperAdmin();
+  if (!me) return { success: false, error: "Only super admins can email team requests." };
+
+  const res = await sendTeamRequestEmail(teamId);
+  if (!res.sent) return { success: false, error: res.error ?? "The email couldn't be sent." };
+  refresh();
+  return { success: true, message: `Emailed ${res.to}${res.cc ? ` (${res.cc} super admin${res.cc === 1 ? "" : "s"} on CC)` : ""}.` };
 }
 
 /** Make an existing user a super admin, by email. */

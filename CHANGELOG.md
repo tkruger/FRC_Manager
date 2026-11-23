@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Head Mentor check email for new teams**: when someone registers a team that's new to FRC Manager, they're emailed ("FRC Manager request for team N") asking whether they're the Head Mentor, or who is — with every super admin on CC, so replies reach them. Team approvals shows when it was last sent and has a **Send / Resend email** button on each waiting team (including ones that registered before this)
+
 ## 1.24.0 — 2026-11-17
 
 - **Dependencies upgraded**: Next.js 16.4.6 (fixes a moderate security advisory), React 19.3, Prisma 7.10.1, and every other package to its latest release in range; plus major updates to web-push 4, dotenv 18, @hookform/resolvers 7 and ESLint 10. An older copy of zod pulled in by Vercel Blob is pinned to the app's zod, so `npm audit` reports no vulnerabilities

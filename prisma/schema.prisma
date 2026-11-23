@@ -251,6 +251,9 @@ model Team {
   reviewedAt  DateTime?
   reviewedById String?
   reviewedBy  User?      @relation("TeamReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+  /// While it waits: when a super admin last emailed the person who registered it to check they are the Head Mentor (and how many times)
+  headMentorCheckSentAt    DateTime?
+  headMentorCheckSentCount Int       @default(0)
 
   users         User[]
   seasons       Season[]

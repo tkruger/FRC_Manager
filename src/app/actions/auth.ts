@@ -10,6 +10,7 @@ import { rateLimit, TOO_MANY } from "@/lib/security/rate-limit";
 import { clientIp } from "@/lib/security/request";
 import { safeEqual } from "@/lib/security/crypto";
 import { sendVerificationEmail } from "@/lib/notify/auth-emails";
+import { sendTeamRequestEmail } from "@/lib/notify/team-request-email";
 import { after } from "next/server";
 import { redirect } from "next/navigation";
 import { TERMS_REQUIRED } from "@/components/legal/TermsCheckbox";
@@ -151,6 +152,9 @@ async function joinTeamOnRegistration(opts: {
 
   if (newTeam) {
     await teamAwaitingApproval(teamNumber, name);
+    // Ask them to confirm they're the Head Mentor (super admins on CC)
+    const newTeamId = team.id;
+    after(() => sendTeamRequestEmail(newTeamId).then(() => undefined));
   } else if (!codeMatch && team.status === "ACTIVE") {
     // (A team still awaiting approval has no Head Mentor yet; its founder reviews these later)
     await memberAwaitingApproval(team.id, name);

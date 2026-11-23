@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { PageTitle } from "@/components/PageHeader";
 import { formatDate } from "@/lib/utils";
 import { TeamReviewButtons } from "./TeamReviewButtons";
+import { TeamRequestEmailButton } from "./TeamRequestEmailButton";
 import { SuperAdmins } from "./SuperAdmins";
 
 /** Platform admin: approve teams that are new to FRC Manager, and manage super admins. */
@@ -20,7 +21,7 @@ export default async function AdminPage() {
       where:   { status: "PENDING" },
       orderBy: { createdAt: "asc" },
       select:  {
-        id: true, teamNumber: true, name: true, createdAt: true,
+        id: true, teamNumber: true, name: true, createdAt: true, headMentorCheckSentAt: true, headMentorCheckSentCount: true,
         users: { orderBy: { createdAt: "asc" }, select: { id: true, name: true, email: true, emailVerified: true, registrationNote: true, createdAt: true } },
       },
     }),
@@ -86,6 +87,15 @@ export default async function AdminPage() {
                     {founder.registrationNote && (
                       <p className="text-small italic text-(--color-text-primary) pt-1">&ldquo;{founder.registrationNote}&rdquo;</p>
                     )}
+                    {/* The "are you the Head Mentor?" email (super admins on CC) */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
+                      <p className="text-small text-(--color-text-secondary)">
+                        {t.headMentorCheckSentAt
+                          ? <>Head Mentor check emailed {formatDate(t.headMentorCheckSentAt)}{t.headMentorCheckSentCount > 1 && ` (sent ${t.headMentorCheckSentCount} times)`}</>
+                          : <span className="text-(--color-warning)">Head Mentor check not emailed yet</span>}
+                      </p>
+                      <TeamRequestEmailButton teamId={t.id} teamNumber={t.teamNumber} email={founder.email} sent={!!t.headMentorCheckSentAt} />
+                    </div>
                   </div>
                 ) : (
                   <p className="text-small text-(--color-text-secondary)">No one is waiting to join this team.</p>
