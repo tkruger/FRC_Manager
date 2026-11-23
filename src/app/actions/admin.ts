@@ -8,7 +8,7 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { teamApproved } from "@/lib/notify/events";
 import { sendApprovalEmail } from "@/lib/notify/approval-email";
-import { sendTeamRequestEmail } from "@/lib/notify/team-request-email";
+import { sendTeamRequestEmail, sendTeamRequestTestEmail, saveTeamRequestEmailSettings, TeamRequestEmailSchema } from "@/lib/notify/team-request-email";
 import { after } from "next/server";
 import { plainArgs } from "@/lib/action-args";
 
@@ -126,6 +126,29 @@ export async function resendTeamRequestEmailAction(teamId: string): Promise<Resu
   if (!res.sent) return { success: false, error: res.error ?? "The email couldn't be sent." };
   refresh();
   return { success: true, message: `Emailed ${res.to}${res.cc ? ` (${res.cc} super admin${res.cc === 1 ? "" : "s"} on CC)` : ""}.` };
+}
+
+/** Save the Head Mentor check email: its subject and text, and whether it goes out when a new team registers. */
+export async function saveTeamRequestEmailAction(input: unknown): Promise<Result> {
+  const me = await requireSuperAdmin();
+  if (!me) return { success: false, error: "Only super admins can change this email." };
+  const parsed = TeamRequestEmailSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Check the email." };
+  await saveTeamRequestEmailSettings(parsed.data, me.id);
+  refresh();
+  return { success: true, message: "Email saved." };
+}
+
+/** Send the Head Mentor check email as written (saved or not) to yourself only, to see how it looks. */
+export async function sendTeamRequestTestEmailAction(input: unknown): Promise<Result> {
+  const me = await requireSuperAdmin();
+  if (!me) return { success: false, error: "Only super admins can send this." };
+  const parsed = TeamRequestEmailSchema.pick({ subject: true, body: true }).safeParse(input);
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Check the email." };
+  const user = await prisma.user.findUnique({ where: { id: me.id }, select: { email: true } });
+  if (!user) return { success: false, error: "Account not found." };
+  const res = await sendTeamRequestTestEmail(parsed.data, user.email);
+  return res.sent ? { success: true, message: `Test sent to ${user.email}.` } : { success: false, error: res.error ?? "The test couldn't be sent." };
 }
 
 /** Make an existing user a super admin, by email. */

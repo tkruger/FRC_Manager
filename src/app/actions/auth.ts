@@ -154,7 +154,7 @@ async function joinTeamOnRegistration(opts: {
     await teamAwaitingApproval(teamNumber, name);
     // Ask them to confirm they're the Head Mentor (super admins on CC)
     const newTeamId = team.id;
-    after(() => sendTeamRequestEmail(newTeamId).then(() => undefined));
+    after(() => sendTeamRequestEmail(newTeamId, { auto: true }).then(() => undefined));
   } else if (!codeMatch && team.status === "ACTIVE") {
     // (A team still awaiting approval has no Head Mentor yet; its founder reviews these later)
     await memberAwaitingApproval(team.id, name);

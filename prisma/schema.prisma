@@ -2030,3 +2030,11 @@ model OrderVendorCharge {
 
   @@index([requestId, vendorName])
 }
+
+/// Platform-wide settings that super admins change (not tied to a team), one row per key; the value is JSON
+model PlatformSetting {
+  key         String   @id
+  value       Json
+  updatedAt   DateTime @updatedAt
+  updatedById String?
+}

@@ -7,6 +7,8 @@ import { PageTitle } from "@/components/PageHeader";
 import { formatDate } from "@/lib/utils";
 import { TeamReviewButtons } from "./TeamReviewButtons";
 import { TeamRequestEmailButton } from "./TeamRequestEmailButton";
+import { TeamRequestEmailSettings } from "./TeamRequestEmailSettings";
+import { DEFAULT_TEAM_REQUEST_EMAIL, TEAM_REQUEST_PLACEHOLDERS, getTeamRequestEmailSettings } from "@/lib/notify/team-request-email";
 import { SuperAdmins } from "./SuperAdmins";
 
 /** Platform admin: approve teams that are new to FRC Manager, and manage super admins. */
@@ -16,7 +18,7 @@ export default async function AdminPage() {
   const me = await prisma.user.findUnique({ where: { id: session.user.id }, select: { isSuperAdmin: true, status: true } });
   if (!me?.isSuperAdmin || me.status !== "ACTIVE") redirect("/dashboard");
 
-  const [pending, reviewed, admins] = await Promise.all([
+  const [pending, reviewed, admins, emailSettings] = await Promise.all([
     prisma.team.findMany({
       where:   { status: "PENDING" },
       orderBy: { createdAt: "asc" },
@@ -36,6 +38,7 @@ export default async function AdminPage() {
       orderBy: { name: "asc" },
       select:  { id: true, name: true, email: true, team: { select: { teamNumber: true } } },
     }),
+    getTeamRequestEmailSettings(),
   ]);
 
   return (
@@ -127,6 +130,8 @@ export default async function AdminPage() {
           </div>
         </section>
       )}
+
+      <TeamRequestEmailSettings saved={emailSettings} defaults={DEFAULT_TEAM_REQUEST_EMAIL} placeholders={TEAM_REQUEST_PLACEHOLDERS} />
 
       <SuperAdmins
         currentUserId={session.user.id}
