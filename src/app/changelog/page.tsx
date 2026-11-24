@@ -12,6 +12,12 @@ type Release = { version: string; date: string; title: string; items: React.Reac
 
 const RELEASES: Release[] = [
   {
+    version: "1.25", date: "November 2026", title: "A quick check for new teams",
+    items: [
+      <>Registering a team that&apos;s new to FRC Manager now sends you an <b>email from the FRC Manager admins</b> asking whether you&apos;re the team&apos;s Head Mentor — just reply to it, and your team can be approved sooner.</>,
+    ],
+  },
+  {
     version: "1.24", date: "November 2026", title: "New teams start with the Head Mentor",
     items: [
       <>Signing up with a team number that isn&apos;t on FRC Manager yet now says plainly that <b>only the team&apos;s Head Mentor</b> should register it, and that the FRC Manager admins will likely <b>email to confirm</b>. Students and other mentors are pointed to their Head Mentor instead.</>,
