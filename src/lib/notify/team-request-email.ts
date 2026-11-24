@@ -23,8 +23,11 @@ export const TEAM_REQUEST_PLACEHOLDERS = [
 export const DEFAULT_TEAM_REQUEST_EMAIL: TeamRequestEmailSettings = {
   subject: "FRC Manager request for team {team}",
   body: [
-    "I saw a request for an account on frcmanager.com - To grant it I need a head mentor to be the first person that applies so I can approve that role first. Please let me know if either 1. you are the head mentor or 2. who I should be looking for from a name perspective?",
-    "Ps. If you are looking for the game from Chief Delphi this is not it.",
+    "Hi {firstName},",
+    "Thank you for requesting an account for team {team} on frcmanager.com. Before I can approve a new team, the first person to register needs to be the team's Head Mentor. I approve that account first, and the Head Mentor then approves everyone else on the team.",
+    "Could you let me know which of these applies?",
+    "1. You are the Head Mentor. If so, please reply with a link that confirms it, such as your team's website or another page that lists you as a mentor.\n2. You are not the Head Mentor. If so, please tell me their name so I know whose registration to look for.",
+    "P.S. If you were looking for the game from Chief Delphi, this isn't it.",
     "Thank you!",
     "~\nFRC Manager Server Admin\nTeam 8738 SLICE",
   ].join("\n\n"),
