@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **About page shows FRC Manager on a phone**: each feature's computer screenshot now has the same page on a phone in front of it, and a new **On your phone** section covers installing it from the home screen, push notifications, scanning tool tags with the camera, and the bottom tabs that fit each role
+
 ## 1.25.0 — 2026-11-23
 
 - **Head Mentor check email for new teams**: when someone registers a team that's new to FRC Manager, they're emailed ("FRC Manager request for team N") asking whether they're the Head Mentor, or who is — with every super admin on CC, so replies reach them. Team approvals shows when it was last sent and has a **Send / Resend email** button on each waiting team (including ones that registered before this). Super admins can **edit the email** there — subject and text, with fill-ins for the team number and the applicant's name — send themselves a test, reset it to the original, or turn off sending it automatically

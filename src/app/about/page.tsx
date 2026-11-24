@@ -41,6 +41,33 @@ const HIGHLIGHTS = [
   },
 ] as const;
 
+/** Phone-sized screenshots (public/about/phone-*.png — the training videos' demo team) */
+const PHONE_W = 585;
+const PHONE_H = 1266;
+
+function Phone({ img, alt, className = "" }: { img: string; alt: string; className?: string }) {
+  return (
+    <div className={`rounded-[1.75rem] border border-(--color-border-strong) bg-[#0b0d12] p-1 shadow-2xl shadow-black/40 ${className}`}>
+      <Image
+        src={`/about/phone-${img}.png`}
+        alt={alt}
+        width={PHONE_W}
+        height={PHONE_H}
+        sizes="(min-width: 1024px) 200px, 40vw"
+        className="w-full h-auto rounded-[1.5rem]"
+      />
+    </div>
+  );
+}
+
+/** What's different on a phone */
+const ON_THE_PHONE = [
+  { icon: "📲", title: "Install it like an app", body: "On iPhone, tap Share → Add to Home Screen; on Android, Install app. It opens full screen from its icon — no app store needed." },
+  { icon: "🔔", title: "Push notifications", body: "Approvals, deliveries, shift reminders and “now queuing” at competitions arrive on your phone as they happen." },
+  { icon: "📷", title: "Scan tool tags", body: "Tap Scan and point your camera at a tool’s QR tag to check it out or back in, right at the tool wall." },
+  { icon: "👆", title: "Tabs for what you do", body: "The bar along the bottom shows your pages first — tasks and tools for students, orders and budget for mentors, shifts for parents." },
+] as const;
+
 /** Everything else, briefly */
 const MORE = [
   { icon: "🧰", title: "Tools", body: "Every tool tagged and scannable. Check out, check in, locations and competition pack lists." },
@@ -115,20 +142,57 @@ export default function AboutPage() {
                 ))}
               </ul>
             </div>
-            <figure className={`lg:col-span-3 ${i % 2 ? "lg:order-1" : ""}`}>
+            {/* The computer screen, with the same page on a phone in front of it */}
+            <figure className={`relative pb-10 sm:pb-12 ${i % 2 ? "lg:order-1 pl-[14%] sm:pl-[10%]" : "pr-[14%] sm:pr-[10%]"} lg:col-span-3`}>
               <div className="rounded-xl border border-(--color-border-strong) bg-[#0b0d12] p-1.5 shadow-2xl shadow-black/30">
                 <Image
                   src={`/about/${h.img}.png`}
-                  alt={`FRC Manager — ${h.kicker}`}
+                  alt={`FRC Manager on a computer — ${h.kicker}`}
                   width={1440}
                   height={900}
                   sizes="(min-width: 1024px) 680px, 100vw"
                   className="w-full h-auto rounded-lg"
                 />
               </div>
+              <Phone
+                img={h.img}
+                alt={`FRC Manager on a phone — ${h.kicker}`}
+                className={`absolute bottom-0 w-[30%] sm:w-[24%] ${i % 2 ? "left-0" : "right-0"}`}
+              />
             </figure>
           </div>
         ))}
+      </section>
+
+      {/* On your phone */}
+      <section className="relative mt-16 sm:mt-24 overflow-hidden border-y border-(--color-border) bg-(--color-surface-raised)/60">
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,color-mix(in_srgb,var(--color-primary)_14%,transparent),transparent_60%)]" />
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24 grid gap-12 lg:grid-cols-2 lg:gap-16 items-center">
+          <div>
+            <p className="text-small font-semibold uppercase tracking-wider text-(--color-primary)">On your phone</p>
+            <h2 className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight">The whole team in your pocket</h2>
+            <p className="mt-4 text-(--color-text-secondary) leading-relaxed">
+              Everything on the shop computer works on a phone too, laid out for one hand — check a task off at the
+              bench, approve an order from the stands, or sign up for a shift from the car line.
+            </p>
+            <ul className="mt-8 grid gap-5 sm:grid-cols-2">
+              {ON_THE_PHONE.map((f) => (
+                <li key={f.title}>
+                  <p className="flex items-center gap-2 font-semibold">
+                    <span aria-hidden="true" className="text-lg">{f.icon}</span>{f.title}
+                  </p>
+                  <p className="mt-1 text-sm text-(--color-text-secondary) leading-relaxed">{f.body}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+          {/* Three phones, the middle one raised */}
+          <div className="flex items-end justify-center gap-3 sm:gap-5">
+            <Phone img="tools" alt="FRC Manager on a phone — Tools, with Scan" className="w-[30%] max-w-[200px] mb-8" />
+            <Phone img="home" alt="FRC Manager on a phone — Home" className="w-[34%] max-w-[220px] mb-16" />
+            <Phone img="events" alt="FRC Manager on a phone — a competition" className="w-[30%] max-w-[200px]" />
+          </div>
+        </div>
       </section>
 
       {/* Everything else */}
