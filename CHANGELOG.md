@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.25.1 — 2026-11-23
+
 - **About page shows FRC Manager on a phone**: each feature's computer screenshot now has the same page on a phone in front of it, and a new **On your phone** section covers installing it from the home screen, push notifications, scanning tool tags with the camera, and the bottom tabs that fit each role
 
 ## 1.25.0 — 2026-11-23

@@ -12,6 +12,12 @@ type Release = { version: string; date: string; title: string; items: React.Reac
 
 const RELEASES: Release[] = [
   {
+    version: "1.25.1", date: "November 2026", title: "FRC Manager on your phone",
+    items: [
+      <>The <Link href="/about">About page</Link> now shows every feature on a phone too, with a new <b>On your phone</b> section — installing it from your home screen, push notifications, scanning tool tags and tabs that fit your role.</>,
+    ],
+  },
+  {
     version: "1.25", date: "November 2026", title: "A quick check for new teams",
     items: [
       <>Registering a team that&apos;s new to FRC Manager now sends you an <b>email from the FRC Manager admins</b> asking whether you&apos;re the team&apos;s Head Mentor — just reply to it, and your team can be approved sooner.</>,
